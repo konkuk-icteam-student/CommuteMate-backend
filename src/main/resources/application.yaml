@@ -8,9 +8,10 @@ spring:
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:4}
-    jackson:
-      date-format: yyyy-MM-dd
-      time-format: HH:mm
+
+  jackson:
+    date-format: yyyy-MM-dd
+    time-format: HH:mm
   jpa:
     database: postgresql
     hibernate:
