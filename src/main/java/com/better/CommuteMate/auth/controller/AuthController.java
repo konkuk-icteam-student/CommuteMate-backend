@@ -1,6 +1,6 @@
-package com.better.CommuteMate.auth.api;
+package com.better.CommuteMate.auth.controller;
 
-import com.better.CommuteMate.auth.api.dto.RegisterRequest;
+import com.better.CommuteMate.auth.controller.dto.RegisterRequest;
 import com.better.CommuteMate.auth.application.AuthService;
 import com.better.CommuteMate.auth.domain.UserEntity;
 import jakarta.validation.Valid;

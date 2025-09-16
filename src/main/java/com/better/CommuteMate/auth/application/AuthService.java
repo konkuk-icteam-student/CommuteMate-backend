@@ -1,6 +1,6 @@
 package com.better.CommuteMate.auth.application;
 
-import com.better.CommuteMate.auth.api.dto.RegisterRequest;
+import com.better.CommuteMate.auth.controller.dto.RegisterRequest;
 import com.better.CommuteMate.auth.domain.UserEntity;
 import com.better.CommuteMate.auth.domain.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
