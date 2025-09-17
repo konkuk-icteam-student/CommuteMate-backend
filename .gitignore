@@ -1,0 +1,34 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+
+# Logs & temp
+*.log
+logs/
+tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local env & secrets
+.env
+.env.*
+src/main/resources/application-local.yml
+src/main/resources/application-*.local.yml
+*.jks
+*.p12
+*.keystore
+*.pem
+*.key
+*.crt
+*.pfx
+
+# DB dump
+*.sql
+dump/
