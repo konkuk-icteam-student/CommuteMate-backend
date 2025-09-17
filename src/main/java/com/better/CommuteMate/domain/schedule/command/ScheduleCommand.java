@@ -1,11 +1,9 @@
 package com.better.CommuteMate.domain.schedule.command;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 public record ScheduleCommand(
         String email,
-        LocalDate date,
-        LocalTime start,
-        LocalTime end) {
+        LocalDateTime start,
+        LocalDateTime end) {
 }
