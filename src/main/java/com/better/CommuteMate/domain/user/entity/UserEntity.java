@@ -1,4 +1,4 @@
-package com.better.CommuteMate.auth.domain;
+package com.better.CommuteMate.domain.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

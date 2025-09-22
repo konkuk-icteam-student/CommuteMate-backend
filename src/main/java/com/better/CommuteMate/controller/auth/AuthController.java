@@ -1,8 +1,8 @@
-package com.better.CommuteMate.auth.controller;
+package com.better.CommuteMate.controller.auth;
 
-import com.better.CommuteMate.auth.controller.dto.RegisterRequest;
-import com.better.CommuteMate.auth.application.AuthService;
-import com.better.CommuteMate.auth.domain.UserEntity;
+import com.better.CommuteMate.controller.auth.dto.RegisterRequest;
+import com.better.CommuteMate.application.auth.AuthService;
+import com.better.CommuteMate.domain.user.entity.UserEntity;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
