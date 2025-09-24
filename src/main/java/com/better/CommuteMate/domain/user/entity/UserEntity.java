@@ -36,6 +36,9 @@ public class UserEntity {
     @Column(name = "role_code", length = 4, nullable = false)
     private String roleCode;
 
+    @Column(name = "refresh_token", length = 512)
+    private String refreshToken;
+
     @Column(name = "created_at")
     private Instant createdAt;
 
