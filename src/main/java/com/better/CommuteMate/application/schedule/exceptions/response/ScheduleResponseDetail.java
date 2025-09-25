@@ -1,21 +1,21 @@
 package com.better.CommuteMate.application.schedule.exceptions.response;
 
-import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
+import com.better.CommuteMate.controller.schedule.dtos.WorkScheduleDTO;
+import com.better.CommuteMate.application.schedule.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.global.controller.dtos.ErrorResponseDetail;
-import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import lombok.Builder;
 
 import java.util.List;
 
 @Builder
 public class ScheduleResponseDetail extends ErrorResponseDetail {
-    List<WorkSchedule> success;
-    List<WorkSchedule> failure;
+    List<WorkScheduleDTO> success;
+    List<WorkScheduleDTO> failure;
 
-    public  static ScheduleResponseDetail of(List<WorkSchedule> success, List<WorkSchedule> failure){
+    public static ScheduleResponseDetail of(ApplyScheduleResultCommand command){
         return ScheduleResponseDetail.builder()
-                .success(success)
-                .failure(failure)
+                .success(command.success())
+                .failure(command.fail())
                 .build();
     }
 }

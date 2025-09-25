@@ -3,8 +3,8 @@ package com.better.CommuteMate.controller.schedule;
 import com.better.CommuteMate.application.schedule.ScheduleService;
 import com.better.CommuteMate.controller.schedule.dtos.ApplyWorkSchedule;
 import com.better.CommuteMate.controller.schedule.dtos.ApplyWorkScheduleResponseDetail;
-import com.better.CommuteMate.domain.schedule.command.ApplyScheduleResultCommand;
-import com.better.CommuteMate.domain.schedule.command.ScheduleCommand;
+import com.better.CommuteMate.application.schedule.dtos.ApplyScheduleResultCommand;
+import com.better.CommuteMate.application.schedule.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,7 +23,7 @@ public class WorkScheduleController {
     public ResponseEntity<Response> applyWorkSchedule(@RequestBody ApplyWorkSchedule request, @RequestBody String email) {
         // @RequestBody String email은 추후 인증로직이 추가되면 제거할 예정
         ApplyScheduleResultCommand applyResult = scheduleService.applyWorkSchedules(
-                request.slots().stream().map(slot -> new ScheduleCommand(
+                request.slots().stream().map(slot -> new WorkScheduleCommand(
                         email, slot.start(), slot.end()
                 )).toList()
         );
