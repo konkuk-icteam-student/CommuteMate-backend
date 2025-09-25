@@ -15,3 +15,7 @@ spring:
     database: postgresql
     hibernate:
       ddl-auto: update
+app:
+  schedule:
+    concurrent:
+      max: ${SCHEDULE_CONCURRENT_MAX:5}

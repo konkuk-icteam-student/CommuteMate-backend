@@ -4,13 +4,18 @@ import com.better.CommuteMate.application.schedule.exceptions.ScheduleAllFailure
 import com.better.CommuteMate.application.schedule.exceptions.ScheduleErrorCode;
 import com.better.CommuteMate.application.schedule.exceptions.SchedulePartialFailureException;
 import com.better.CommuteMate.application.schedule.exceptions.response.ScheduleResponseDetail;
-import com.better.CommuteMate.controller.schedule.dtos.ApplyWorkSchedule;
-import com.better.CommuteMate.domain.schedule.command.ApplyScheduleResultCommand;
-import com.better.CommuteMate.domain.schedule.command.ScheduleCommand;
-import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
+import com.better.CommuteMate.controller.schedule.dtos.WorkScheduleDTO;
+import com.better.CommuteMate.domain.auth.repository.UserRepository;
+import com.better.CommuteMate.application.schedule.dtos.ApplyScheduleResultCommand;
+import com.better.CommuteMate.application.schedule.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
+import com.better.CommuteMate.domain.user.entity.UserEntity;
+import com.better.CommuteMate.global.exceptions.UserNotFoundException;
+import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
+import com.better.CommuteMate.global.exceptions.response.UserNotFoundResponseDetail;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,31 +25,35 @@ import java.util.List;
 public class ScheduleService {
 
     private final WorkSchedulesRepository workSchedulesRepository;
+    private final UserRepository userRepository;
+    private final ScheduleValidator scheduleValidator;
 
+    @Transactional(noRollbackFor = {ScheduleAllFailureException.class, SchedulePartialFailureException.class})
+    public ApplyScheduleResultCommand applyWorkSchedules(List<WorkScheduleCommand> slots) {
+        List<WorkScheduleDTO> success = new ArrayList<>();
+        List<WorkScheduleDTO> failure = new ArrayList<>();
 
-    public ApplyScheduleResultCommand applyWorkSchedules(List<ScheduleCommand> slots) {
-        List<WorkSchedule> success = new ArrayList<>();
-        List<WorkSchedule> failure = new ArrayList<>();
-
-        for (ScheduleCommand slot : slots) {
-            try {
-                //ScheduleCommand saved = workSchedulesRepository.save(slot);
-                //success.add(saved);
-            } catch (Exception e) {
-                //fail.add(slot);
+        for (WorkScheduleCommand slot : slots) {
+            if(scheduleValidator.isScheduleInsertable(slot)){
+                UserEntity user = userRepository.findById(slot.email())
+                        .orElseThrow(() -> UserNotFoundException.of(
+                                GlobalErrorCode.USER_NOT_FOUND, UserNotFoundResponseDetail.of(slot.email())));
+                workSchedulesRepository.save(WorkScheduleCommand.toEntity(slot, user));
+                success.add(WorkScheduleDTO.from(slot));
+            }else{
+                failure.add(WorkScheduleDTO.from(slot));
             }
         }
-        // 이런 형식으로, 성공/실패에 대한 내용을 담아서 오류 반환->GlobalExceptionHandler에서 처리
+        ApplyScheduleResultCommand result = new ApplyScheduleResultCommand(success, failure);
+
         if(success.isEmpty()){
-            throw ScheduleAllFailureException.of(ScheduleErrorCode.SCHEDULE_FAILURE, ScheduleResponseDetail.of(success,failure));
+            throw ScheduleAllFailureException.of(
+                    ScheduleErrorCode.SCHEDULE_FAILURE, ScheduleResponseDetail.of(result));
         }else if(!failure.isEmpty()){
-            throw SchedulePartialFailureException.of(ScheduleErrorCode.SCHEDULE_PARTIAL_FAILURE, ScheduleResponseDetail.of(success,failure));
+            throw SchedulePartialFailureException.of(
+                    ScheduleErrorCode.SCHEDULE_PARTIAL_FAILURE, ScheduleResponseDetail.of(result));
         }
-        // 오류 발생 안하는 경우->전부 성공한 경우
-        return null;
-//        return new ApplyScheduleResultCommand(
-//            success.stream().map(slot -> new WorkSchedule(slot.start(), slot.end())).toList(),
-//            fail.stream().map(slot -> new WorkSchedule(slot.start(), slot.end())).toList()
-//        );
+        return result;
+
     }
 }
