@@ -33,7 +33,6 @@ public class JwtTokenProvider {
 
    private byte[] secretBytes;
 
-    /** Precomputes the byte array for the secret key after dependency injection is complete. */
     @PostConstruct
     public void init() {
         this.secretBytes = secret.getBytes(StandardCharsets.UTF_8);

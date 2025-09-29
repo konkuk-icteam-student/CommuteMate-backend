@@ -32,7 +32,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthTokens tokens = authService.login(request.getEmail(), request.getPassword());
-        // Set access token as HttpOnly cookie
+        // HttpOnly cookie에 access token 주입
         long maxAgeSeconds = Math.max((tokens.getExpiresAt() - System.currentTimeMillis()) / 1000, 0);
         ResponseCookie cookie = ResponseCookie.from("accessToken", tokens.getAccessToken())
                 .httpOnly(true)
