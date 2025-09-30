@@ -1,37 +1,29 @@
-package com.better.CommuteMate.domain.schedule.entity;
+package com.better.CommuteMate.domain.organization.entity;
 
-import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "work_schedule")
+@Table(name = "organization")
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class WorkSchedule {
+public class Organization {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "schedule_id", nullable = false)
-    private Integer scheduleId;
+    @Column(name = "organization_id", nullable = false)
+    private Integer organizationId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "name", length = 100, nullable = false)
+    private String name;
 
-    @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
-
-    @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
-
-    @Column(name = "status_code", length = 4, nullable = false)
-    private String statusCode;
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
