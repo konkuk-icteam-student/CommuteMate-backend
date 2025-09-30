@@ -12,5 +12,6 @@ import java.util.List;
 @Repository
 public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Integer>{
 
-    List<WorkSchedule> findByDate(LocalDate date);
+    @Query("SELECT w FROM WorkSchedule w WHERE DATE(w.startTime) = :date")
+    List<WorkSchedule> findByDate(@Param("date") LocalDate date);
 }
