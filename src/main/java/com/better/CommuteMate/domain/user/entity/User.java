@@ -1,16 +1,14 @@
 package com.better.CommuteMate.domain.user.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "\"user\"")
+@Table(name = "\"user\"", indexes = {
+    @Index(name = "uq_user_email", columnList = "email", unique = true)
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,11 +16,12 @@ import java.util.UUID;
 @Builder
 public class User {
     @Id
-    @Column(name = "user_id", length = 36)
-    private String userId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id", nullable = false)
+    private Integer userId;
 
-    @Column(name = "organization_id", length = 36, nullable = false)
-    private String organizationId;
+    @Column(name = "organization_id", nullable = false)
+    private Integer organizationId;
 
     @Column(nullable = false, unique = true, length = 100)
     private String email;
@@ -36,30 +35,36 @@ public class User {
     @Column(name = "role_code", length = 4, nullable = false)
     private String roleCode;
 
-    @Column(name = "created_at")
-    private Instant createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "created_by", length = 36)
-    private String createdBy;
+    @Column(name = "created_by")
+    private Integer createdBy;
 
     @Column(name = "updated_at")
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
-    @Column(name = "updated_by", length = 36)
-    private String updatedBy;
+    @Column(name = "updated_by")
+    private Integer updatedBy;
 
-    public static User create(String email, String rawPassword, String name, String organizationId, String roleCode) {
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public static User create(String email, String rawPassword, String name, Integer organizationId, String roleCode) {
         return User.builder()
-                .userId(UUID.randomUUID().toString())
                 .organizationId(organizationId)
                 .email(email)
                 .password(rawPassword)
                 .name(name)
                 .roleCode(roleCode)
-                .createdAt(Instant.now())
-                .createdBy(null)
-                .updatedAt(null)
-                .updatedBy(null)
                 .build();
     }
 }

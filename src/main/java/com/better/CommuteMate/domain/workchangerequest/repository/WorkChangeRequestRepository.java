@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface WorkChangeRequestRepository extends JpaRepository<WorkChangeRequest, String> {
-    List<WorkChangeRequest> findByUser_UserId(String userId);
-    List<WorkChangeRequest> findBySchedule_ScheduleId(String scheduleId);
+public interface WorkChangeRequestRepository extends JpaRepository<WorkChangeRequest, Integer> {
+    List<WorkChangeRequest> findByUser_UserId(Integer userId);
+    List<WorkChangeRequest> findBySchedule_ScheduleId(Integer scheduleId);
 }

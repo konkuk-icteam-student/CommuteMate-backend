@@ -4,65 +4,55 @@ import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.LocalDateTime;
 
 @Entity
-@Table
+@Table(name = "work_schedule")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class WorkSchedule {
 
     @Id
-    @Column(name = "schedule_id", columnDefinition = "CHAR(36)", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String scheduleId;
+    @Column(name = "schedule_id", nullable = false)
+    private Integer scheduleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "date", nullable = false)
-    private LocalDate date;
-
     @Column(name = "start_time", nullable = false)
-    private LocalTime startTime;
+    private LocalDateTime startTime;
 
     @Column(name = "end_time", nullable = false)
-    private LocalTime endTime;
+    private LocalDateTime endTime;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)
-    private WorkScheduleStatusCode statusCode;
+    @Column(name = "status_code", length = 4, nullable = false)
+    private String statusCode;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "created_by", columnDefinition = "CHAR(36)")
-    private String createdBy;
+    @Column(name = "created_by", nullable = false, updatable = false)
+    private Integer createdBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "updated_by", columnDefinition = "CHAR(36)")
-    private String updatedBy;
+    @Column(name = "updated_by")
+    private Integer updatedBy;
 
-    @Builder
-    public WorkSchedule(
-            User user,
-            LocalDate date,
-            LocalTime startTime,
-            LocalTime endTime
-    ) {
-        this.user = user;
-        this.date = date;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.statusCode = WorkScheduleStatusCode.WS02;
-        this.createdBy = LocalDateTime.now().toString();
-        this.updatedBy = LocalDateTime.now().toString();
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

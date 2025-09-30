@@ -33,8 +33,8 @@ public class ScheduleValidator {
 
             long overlappingCount = daySchedules.stream()
                 .filter(schedule ->
-                    schedule.getStartTime().isBefore(finalCheckPoint) && // 15분 시점이 스케줄 범위에 포함되는지
-                    schedule.getEndTime().isAfter(finalCheckPoint))
+                    schedule.getStartTime().toLocalTime().isBefore(finalCheckPoint) && // 15분 시점이 스케줄 범위에 포함되는지
+                    schedule.getEndTime().toLocalTime().isAfter(finalCheckPoint))
                 .count();
 
             if (overlappingCount >= MAX_CONCURRENT_SCHEDULES) {

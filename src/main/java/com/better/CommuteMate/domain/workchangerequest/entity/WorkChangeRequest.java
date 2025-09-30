@@ -5,10 +5,13 @@ import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "work_change_request")
+@Table(name = "work_change_request", indexes = {
+    @Index(name = "idx_wcr_user", columnList = "user_id"),
+    @Index(name = "idx_wcr_schedule", columnList = "schedule_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,8 +20,9 @@ import java.time.Instant;
 public class WorkChangeRequest {
 
     @Id
-    @Column(name = "request_id", length = 36, nullable = false)
-    private String requestId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "request_id", nullable = false)
+    private Integer requestId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -28,24 +32,35 @@ public class WorkChangeRequest {
     @JoinColumn(name = "schedule_id", nullable = false)
     private WorkSchedule schedule;
 
-    @Column(name = "type_code", columnDefinition = "CHAR(4)", nullable = false)
+    @Column(name = "type_code", length = 4, nullable = false)
     private String typeCode;
 
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;
 
-    @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)
+    @Column(name = "status_code", length = 4, nullable = false)
     private String statusCode;
 
-    @Column(name = "created_at")
-    private Instant createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "created_by", length = 36)
-    private String createdBy;
+    @Column(name = "created_by", nullable = false, updatable = false)
+    private Integer createdBy;
 
     @Column(name = "updated_at")
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
-    @Column(name = "updated_by", length = 36)
-    private String updatedBy;
+    @Column(name = "updated_by")
+    private Integer updatedBy;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

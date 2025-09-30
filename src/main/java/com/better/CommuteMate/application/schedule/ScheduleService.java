@@ -35,7 +35,7 @@ public class ScheduleService {
 
         for (WorkScheduleCommand slot : slots) {
             if(scheduleValidator.isScheduleInsertable(slot)){
-                User user = userRepository.findById(slot.email())
+                User user = userRepository.findByEmail(slot.email())
                         .orElseThrow(() -> UserNotFoundException.of(
                                 GlobalErrorCode.USER_NOT_FOUND, UserNotFoundResponseDetail.of(slot.email())));
                 workSchedulesRepository.save(WorkScheduleCommand.toEntity(slot, user));

@@ -5,10 +5,13 @@ import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "work_attendance")
+@Table(name = "work_attendance", indexes = {
+    @Index(name = "idx_wa_user_time", columnList = "user_id, check_time"),
+    @Index(name = "idx_wa_schedule", columnList = "schedule_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,8 +20,9 @@ import java.time.Instant;
 public class WorkAttendance {
 
     @Id
-    @Column(name = "attendance_id", length = 36, nullable = false)
-    private String attendanceId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "attendance_id", nullable = false)
+    private Integer attendanceId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -29,24 +33,35 @@ public class WorkAttendance {
     private WorkSchedule schedule;
 
     @Column(name = "check_time", nullable = false)
-    private Instant checkTime;
+    private LocalDateTime checkTime;
 
-    @Column(name = "check_type_code", columnDefinition = "CHAR(4)", nullable = false)
+    @Column(name = "check_type_code", length = 4, nullable = false)
     private String checkTypeCode;
 
     @Builder.Default
     @Column(name = "verified")
     private Boolean verified = false;
 
-    @Column(name = "created_at")
-    private Instant createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "created_by", length = 36)
-    private String createdBy;
+    @Column(name = "created_by")
+    private Integer createdBy;
 
     @Column(name = "updated_at")
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
-    @Column(name = "updated_by", length = 36)
-    private String updatedBy;
+    @Column(name = "updated_by")
+    private Integer updatedBy;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
