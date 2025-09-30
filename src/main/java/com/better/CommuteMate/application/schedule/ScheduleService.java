@@ -5,11 +5,11 @@ import com.better.CommuteMate.application.schedule.exceptions.ScheduleErrorCode;
 import com.better.CommuteMate.application.schedule.exceptions.SchedulePartialFailureException;
 import com.better.CommuteMate.application.schedule.exceptions.response.ScheduleResponseDetail;
 import com.better.CommuteMate.controller.schedule.dtos.WorkScheduleDTO;
-import com.better.CommuteMate.domain.auth.repository.UserRepository;
+import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.application.schedule.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.application.schedule.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
-import com.better.CommuteMate.domain.user.entity.UserEntity;
+import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.exceptions.UserNotFoundException;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.global.exceptions.response.UserNotFoundResponseDetail;
@@ -35,7 +35,7 @@ public class ScheduleService {
 
         for (WorkScheduleCommand slot : slots) {
             if(scheduleValidator.isScheduleInsertable(slot)){
-                UserEntity user = userRepository.findById(slot.email())
+                User user = userRepository.findById(slot.email())
                         .orElseThrow(() -> UserNotFoundException.of(
                                 GlobalErrorCode.USER_NOT_FOUND, UserNotFoundResponseDetail.of(slot.email())));
                 workSchedulesRepository.save(WorkScheduleCommand.toEntity(slot, user));

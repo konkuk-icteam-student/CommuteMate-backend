@@ -4,10 +4,10 @@ import com.better.CommuteMate.application.schedule.dtos.ApplyScheduleResultComma
 import com.better.CommuteMate.application.schedule.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.application.schedule.exceptions.ScheduleAllFailureException;
 import com.better.CommuteMate.application.schedule.exceptions.SchedulePartialFailureException;
-import com.better.CommuteMate.domain.auth.repository.UserRepository;
+import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
-import com.better.CommuteMate.domain.user.entity.UserEntity;
+import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.exceptions.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ class ScheduleServiceTest {
     @DisplayName("모든 일정이 성공적으로 등록되는 경우")
     void applyWorkSchedules_AllSuccess() {
         // Given
-        UserEntity mockUser = UserEntity.builder()
+        User mockUser = User.builder()
                 .email("test@example.com")
                 .name("Test User")
                 .build();
@@ -107,7 +107,7 @@ class ScheduleServiceTest {
     @DisplayName("일부 일정 등록이 실패하는 경우 - SchedulePartialFailureException 발생")
     void applyWorkSchedules_PartialFailure() {
         // Given
-        UserEntity mockUser = UserEntity.builder()
+        User mockUser = User.builder()
                 .email("test@example.com")
                 .name("Test User")
                 .build();
@@ -180,7 +180,7 @@ class ScheduleServiceTest {
     @DisplayName("동일한 사용자의 여러 시간대 일정 등록")
     void applyWorkSchedules_SameUserMultipleSlots() {
         // Given
-        UserEntity mockUser = UserEntity.builder()
+        User mockUser = User.builder()
                 .email("test@example.com")
                 .name("Test User")
                 .build();
@@ -215,12 +215,12 @@ class ScheduleServiceTest {
     @DisplayName("서로 다른 사용자의 일정 등록")
     void applyWorkSchedules_DifferentUsers() {
         // Given
-        UserEntity user1 = UserEntity.builder()
+        User user1 = User.builder()
                 .email("user1@example.com")
                 .name("User 1")
                 .build();
 
-        UserEntity user2 = UserEntity.builder()
+        User user2 = User.builder()
                 .email("user2@example.com")
                 .name("User 2")
                 .build();

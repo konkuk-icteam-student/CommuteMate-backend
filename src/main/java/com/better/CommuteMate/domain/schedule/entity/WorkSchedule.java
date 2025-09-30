@@ -1,6 +1,6 @@
 package com.better.CommuteMate.domain.schedule.entity;
 
-import com.better.CommuteMate.domain.user.entity.UserEntity;
+import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,7 +22,7 @@ public class WorkSchedule {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    private User user;
 
     @Column(name = "date", nullable = false)
     private LocalDate date;
@@ -51,7 +51,7 @@ public class WorkSchedule {
 
     @Builder
     public WorkSchedule(
-            UserEntity user,
+            User user,
             LocalDate date,
             LocalTime startTime,
             LocalTime endTime
