@@ -2,7 +2,7 @@ package com.better.CommuteMate.controller.auth;
 
 import com.better.CommuteMate.controller.auth.dto.RegisterRequest;
 import com.better.CommuteMate.application.auth.AuthService;
-import com.better.CommuteMate.domain.user.entity.UserEntity;
+import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +18,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserEntity> register(@Valid @RequestBody RegisterRequest request) {
-        UserEntity user = authService.register(request);
+    public ResponseEntity<User> register(@Valid @RequestBody RegisterRequest request) {
+        User user = authService.register(request);
         return ResponseEntity.ok(user);
     }
 }

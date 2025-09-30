@@ -1,8 +1,8 @@
 package com.better.CommuteMate.application.auth;
 
 import com.better.CommuteMate.controller.auth.dto.RegisterRequest;
-import com.better.CommuteMate.domain.user.entity.UserEntity;
-import com.better.CommuteMate.domain.auth.repository.UserRepository;
+import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.domain.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,12 +19,12 @@ public class AuthService {
     }
 
     @Transactional
-    public UserEntity register(RegisterRequest request) {
+    public User register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalStateException("Email already registered");
         }
         String hashedPassword = passwordEncoder.encode(request.getPassword());
-        UserEntity user = UserEntity.create(
+        User user = User.create(
                 request.getEmail(),
                 hashedPassword,
                 request.getName(),
