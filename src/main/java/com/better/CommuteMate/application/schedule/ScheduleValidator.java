@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -21,7 +23,11 @@ public class ScheduleValidator {
 
     // 입력 일정의 분 단위가 00분, 30분 만 존재한다고 가정
     public boolean isScheduleInsertable(WorkScheduleCommand slot) {
-        List<WorkSchedule> daySchedules = workSchedulesRepository.findByDate(slot.start().toLocalDate());
+        LocalDate date = slot.start().toLocalDate();  // 찾고 싶은 날짜
+        LocalDateTime startOfDay = date.atStartOfDay();  // 찾고 싶은 날짜
+        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();   // 찾고 싶은 날짜 + 1일
+
+        List<WorkSchedule> daySchedules = workSchedulesRepository.findByDate(startOfDay,endOfDay);
 
         LocalTime startTime = slot.start().toLocalTime();
         LocalTime endTime = slot.end().toLocalTime();

@@ -4,7 +4,7 @@ import com.better.CommuteMate.application.schedule.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.WorkScheduleStatusCode;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
-import com.better.CommuteMate.domain.user.entity.UserEntity;
+import com.better.CommuteMate.domain.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,13 +32,13 @@ class ScheduleValidatorTest {
     @InjectMocks
     private ScheduleValidator scheduleValidator;
 
-    private UserEntity testUser;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(scheduleValidator, "MAX_CONCURRENT_SCHEDULES", 3);
 
-        testUser = UserEntity.builder()
+        testUser = User.builder()
                 .email("test@example.com")
                 .name("Test User")
                 .build();
@@ -54,7 +54,7 @@ class ScheduleValidatorTest {
                 LocalDateTime.of(2023, 10, 1, 11, 0)
         );
 
-        when(workSchedulesRepository.findByDate(any(LocalDate.class))).thenReturn(List.of());
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of());
 
         // When
         boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
@@ -78,7 +78,7 @@ class ScheduleValidatorTest {
                 createWorkSchedule(LocalTime.of(10, 30), LocalTime.of(12, 0))
         );
 
-        when(workSchedulesRepository.findByDate(any(LocalDate.class))).thenReturn(existingSchedules);
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(existingSchedules);
 
         // When
         boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
@@ -103,7 +103,7 @@ class ScheduleValidatorTest {
                 createWorkSchedule(LocalTime.of(9, 30), LocalTime.of(11, 30))
         );
 
-        when(workSchedulesRepository.findByDate(any(LocalDate.class))).thenReturn(existingSchedules);
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(existingSchedules);
 
         // When
         boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
@@ -128,7 +128,7 @@ class ScheduleValidatorTest {
                 createWorkSchedule(LocalTime.of(11, 0), LocalTime.of(13, 0))
         );
 
-        when(workSchedulesRepository.findByDate(any(LocalDate.class))).thenReturn(existingSchedules);
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(existingSchedules);
 
         // When
         boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
@@ -147,7 +147,7 @@ class ScheduleValidatorTest {
                 LocalDateTime.of(2023, 10, 1, 9, 0)
         );
 
-        when(workSchedulesRepository.findByDate(any(LocalDate.class))).thenReturn(List.of());
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of());
 
         // When
         boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
@@ -176,7 +176,7 @@ class ScheduleValidatorTest {
                 createWorkSchedule(LocalTime.of(9, 35), LocalTime.of(9, 55))  // 9:45에 겹침
         );
 
-        when(workSchedulesRepository.findByDate(any(LocalDate.class))).thenReturn(existingSchedules);
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(existingSchedules);
 
         // When
         boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
@@ -202,7 +202,7 @@ class ScheduleValidatorTest {
                 createWorkSchedule(LocalTime.of(9, 10), LocalTime.of(9, 20))  // 9:15에 겹침
         );
 
-        when(workSchedulesRepository.findByDate(any(LocalDate.class))).thenReturn(existingSchedules);
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(existingSchedules);
 
         // When
         boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
@@ -212,11 +212,148 @@ class ScheduleValidatorTest {
     }
 
     private WorkSchedule createWorkSchedule(LocalTime startTime, LocalTime endTime) {
+        LocalDate date = LocalDate.of(2023, 10, 1);
         return WorkSchedule.builder()
                 .user(testUser)
-                .date(LocalDate.of(2023, 10, 1))
+                .startTime(LocalDateTime.of(date, startTime))
+                .endTime(LocalDateTime.of(date, endTime))
+                .statusCode("WS02")
+                .build();
+    }
+
+    private WorkSchedule createWorkScheduleWithDate(LocalDateTime startTime, LocalDateTime endTime) {
+        return WorkSchedule.builder()
+                .user(testUser)
                 .startTime(startTime)
                 .endTime(endTime)
+                .statusCode("WS02")
                 .build();
+    }
+
+    @Test
+    @DisplayName("엣지케이스 - MAX_CONCURRENT_SCHEDULES - 1개일 때 등록 가능")
+    void isScheduleInsertable_OneBelowLimit_ReturnsTrue() {
+        // Given
+        WorkScheduleCommand newSchedule = new WorkScheduleCommand(
+                "test@example.com",
+                LocalDateTime.of(2023, 10, 1, 9, 0),
+                LocalDateTime.of(2023, 10, 1, 10, 0)
+        );
+
+        // 9:15 체크포인트에서 정확히 2개가 겹치도록 설정 (MAX=3, 2개는 허용)
+        List<WorkSchedule> existingSchedules = List.of(
+                createWorkSchedule(LocalTime.of(9, 0), LocalTime.of(9, 30)),   // 9:15에 겹침
+                createWorkSchedule(LocalTime.of(9, 10), LocalTime.of(9, 45))  // 9:15에 겹침
+        );
+
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(existingSchedules);
+
+        // When
+        boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("엣지케이스 - 정시가 아닌 시간의 스케줄")
+    void isScheduleInsertable_NonStandardTime_ReturnsTrue() {
+        // Given
+        WorkScheduleCommand newSchedule = new WorkScheduleCommand(
+                "test@example.com",
+                LocalDateTime.of(2023, 10, 1, 9, 7),
+                LocalDateTime.of(2023, 10, 1, 10, 23)
+        );
+
+        List<WorkSchedule> existingSchedules = List.of(
+                createWorkSchedule(LocalTime.of(9, 5), LocalTime.of(9, 35)),
+                createWorkSchedule(LocalTime.of(9, 15), LocalTime.of(9, 45))
+        );
+
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(existingSchedules);
+
+        // When
+        boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("엣지케이스 - 정시가 아닌 시간에서 최대 허용치 초과")
+    void isScheduleInsertable_NonStandardTimeExceedsLimit_ReturnsFalse() {
+        // Given
+        WorkScheduleCommand newSchedule = new WorkScheduleCommand(
+                "test@example.com",
+                LocalDateTime.of(2023, 10, 1, 9, 7),
+                LocalDateTime.of(2023, 10, 1, 10, 23)
+        );
+
+        // 9:22 (첫 체크포인트)와 9:52 체크포인트에서 3개씩 겹치도록 설정
+        List<WorkSchedule> existingSchedules = List.of(
+                createWorkSchedule(LocalTime.of(9, 0), LocalTime.of(10, 0)),
+                createWorkSchedule(LocalTime.of(9, 10), LocalTime.of(10, 10)),
+                createWorkSchedule(LocalTime.of(9, 15), LocalTime.of(10, 15))
+        );
+
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(existingSchedules);
+
+        // When
+        boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
+
+        // Then
+        assertThat(result).isFalse();
+    }
+
+
+    @Test
+    @DisplayName("엣지케이스 - 체크포인트 경계에서의 겹침 확인")
+    void isScheduleInsertable_BoundaryCheckpoint() {
+        // Given
+        WorkScheduleCommand newSchedule = new WorkScheduleCommand(
+                "test@example.com",
+                LocalDateTime.of(2023, 10, 1, 9, 0),
+                LocalDateTime.of(2023, 10, 1, 9, 30)
+        );
+
+        // 9:15 체크포인트에서만 정확히 겹치는 스케줄들
+        List<WorkSchedule> existingSchedules = List.of(
+                createWorkSchedule(LocalTime.of(9, 0), LocalTime.of(9, 20)),   // 9:15에 겹침
+                createWorkSchedule(LocalTime.of(9, 10), LocalTime.of(9, 25))  // 9:15에 겹침
+        );
+
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(existingSchedules);
+
+        // When
+        boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("엣지케이스 - 여러 체크포인트 중 하나만 초과하는 경우")
+    void isScheduleInsertable_OneCheckpointExceeds_ReturnsFalse() {
+        // Given
+        WorkScheduleCommand newSchedule = new WorkScheduleCommand(
+                "test@example.com",
+                LocalDateTime.of(2023, 10, 1, 9, 0),
+                LocalDateTime.of(2023, 10, 1, 11, 0)
+        );
+
+        // 9:45 체크포인트에서만 3개가 겹치도록 설정
+        List<WorkSchedule> existingSchedules = List.of(
+                createWorkSchedule(LocalTime.of(9, 30), LocalTime.of(10, 0)),   // 9:45에 겹침
+                createWorkSchedule(LocalTime.of(9, 40), LocalTime.of(10, 10)),  // 9:45에 겹침
+                createWorkSchedule(LocalTime.of(9, 35), LocalTime.of(9, 55))   // 9:45에 겹침
+        );
+
+        when(workSchedulesRepository.findByDate(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(existingSchedules);
+
+        // When
+        boolean result = scheduleValidator.isScheduleInsertable(newSchedule);
+
+        // Then
+        assertThat(result).isFalse();
     }
 }
