@@ -28,6 +28,7 @@ public class ScheduleService {
     private final UserRepository userRepository;
     private final ScheduleValidator scheduleValidator;
 
+    // 일정 추가
     @Transactional(noRollbackFor = {ScheduleAllFailureException.class, SchedulePartialFailureException.class})
     public ApplyScheduleResultCommand applyWorkSchedules(List<WorkScheduleCommand> slots) {
         List<WorkScheduleDTO> success = new ArrayList<>();
