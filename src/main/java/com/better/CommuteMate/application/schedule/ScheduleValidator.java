@@ -1,7 +1,9 @@
 package com.better.CommuteMate.application.schedule;
 
 import com.better.CommuteMate.application.schedule.dtos.WorkScheduleCommand;
+import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleLimit;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
+import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleLimitRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,15 +19,19 @@ import java.util.List;
 public class ScheduleValidator {
 
     private final WorkSchedulesRepository workSchedulesRepository;
+    private final MonthlyScheduleLimitRepository monthlyScheduleLimitRepository;
 
     @Value("${app.schedule.concurrent.max}")
-    private int MAX_CONCURRENT_SCHEDULES;
+    private int DEFAULT_MAX_CONCURRENT_SCHEDULES;
 
     // 입력 일정의 분 단위가 00분, 30분 만 존재한다고 가정
     public boolean isScheduleInsertable(WorkScheduleCommand slot) {
         LocalDate date = slot.start().toLocalDate();  // 찾고 싶은 날짜
         LocalDateTime startOfDay = date.atStartOfDay();  // 찾고 싶은 날짜
         LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();   // 찾고 싶은 날짜 + 1일
+
+        // 월별 최대 동시 스케줄 수 조회
+        int maxConcurrentSchedules = getMaxConcurrentSchedules(date.getYear(), date.getMonthValue());
 
         List<WorkSchedule> daySchedules = workSchedulesRepository.findByDate(startOfDay,endOfDay);
 
@@ -43,13 +49,19 @@ public class ScheduleValidator {
                     schedule.getEndTime().toLocalTime().isAfter(finalCheckPoint))
                 .count();
 
-            if (overlappingCount >= MAX_CONCURRENT_SCHEDULES) {
+            if (overlappingCount >= maxConcurrentSchedules) {
                 return false;
             }
 
             currentCheckPoint = currentCheckPoint.plusMinutes(30);
         }
         return true;
+    }
+
+    private int getMaxConcurrentSchedules(int scheduleYear, int scheduleMonth) {
+        return monthlyScheduleLimitRepository.findByScheduleYearAndScheduleMonth(scheduleYear, scheduleMonth)
+                .map(MonthlyScheduleLimit::getMaxConcurrent)
+                .orElse(DEFAULT_MAX_CONCURRENT_SCHEDULES); // 존재하지 않을 경우, 기본값 5로 반환
     }
 
 
