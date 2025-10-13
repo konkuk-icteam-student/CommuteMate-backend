@@ -29,7 +29,7 @@ public class AuthService {
                 hashedPassword,
                 request.getName(),
                 request.getOrganizationId(),
-                "RL02" //임시로 넣은 코드
+                request.getRoleCode()
         );
         return userRepository.save(user);
     }
