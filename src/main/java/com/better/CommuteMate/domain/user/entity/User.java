@@ -1,5 +1,7 @@
 package com.better.CommuteMate.domain.user.entity;
 
+import com.better.CommuteMate.global.code.CodeType;
+import com.better.CommuteMate.global.code.CodeTypeConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,8 +34,9 @@ public class User {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(name = "role_code", length = 4, nullable = false)
-    private String roleCode;
+    @Convert(converter = CodeTypeConverter.class)
+    @Column(name = "role_code", columnDefinition = "CHAR(4)", nullable = false)
+    private CodeType roleCode;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -58,7 +61,7 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
-    public static User create(String email, String rawPassword, String name, Integer organizationId, String roleCode) {
+    public static User create(String email, String rawPassword, String name, Integer organizationId, CodeType roleCode) {
         return User.builder()
                 .organizationId(organizationId)
                 .email(email)
