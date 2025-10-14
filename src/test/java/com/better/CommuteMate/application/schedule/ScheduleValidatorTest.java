@@ -5,6 +5,7 @@ import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleLimitRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.global.code.CodeType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -226,7 +227,7 @@ class ScheduleValidatorTest {
                 .user(testUser)
                 .startTime(LocalDateTime.of(date, startTime))
                 .endTime(LocalDateTime.of(date, endTime))
-                .statusCode("WS02")
+                .statusCode(CodeType.WS02)
                 .build();
     }
 
@@ -235,7 +236,7 @@ class ScheduleValidatorTest {
                 .user(testUser)
                 .startTime(startTime)
                 .endTime(endTime)
-                .statusCode("WS02")
+                .statusCode(CodeType.WS02)
                 .build();
     }
 
