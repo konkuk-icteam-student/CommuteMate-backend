@@ -1,10 +1,14 @@
 package com.better.CommuteMate.domain.code.entity;
 
+import com.better.CommuteMate.global.code.CodeType;
+import com.better.CommuteMate.global.code.CodeTypeConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "code")
+@Table(name = "code", indexes = {
+    @Index(name = "uq_code_major_sub", columnList = "major_code, sub_code", unique = true)
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,8 +17,9 @@ import lombok.*;
 public class Code {
 
     @Id
-    @Column(name = "code_id", columnDefinition = "CHAR(4)", nullable = false)
-    private String codeId;
+    @Convert(converter = CodeTypeConverter.class)
+    @Column(name = "full_code", columnDefinition = "CHAR(4)", nullable = false)
+    private CodeType fullCode;
 
     @Column(name = "major_code", columnDefinition = "CHAR(2)", nullable = false)
     private String majorCode;
