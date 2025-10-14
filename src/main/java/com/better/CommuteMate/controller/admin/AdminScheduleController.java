@@ -1,6 +1,7 @@
 package com.better.CommuteMate.controller.admin;
 
 import com.better.CommuteMate.application.schedule.MonthlyScheduleLimitService;
+import com.better.CommuteMate.application.schedule.dtos.MonthlyScheduleLimitCommand;
 import com.better.CommuteMate.controller.admin.dtos.MonthlyLimitResponse;
 import com.better.CommuteMate.controller.admin.dtos.MonthlyLimitsResponse;
 import com.better.CommuteMate.controller.admin.dtos.SetMonthlyLimitRequest;
@@ -28,10 +29,12 @@ public class AdminScheduleController {
         // @RequestHeader userId는 추후 인증로직이 추가되면 변경될 예정
 
         MonthlyScheduleLimit result = monthlyScheduleLimitService.setMonthlyLimit(
-                request.scheduleYear(),
-                request.scheduleMonth(),
-                request.maxConcurrent(),
-                userId
+                MonthlyScheduleLimitCommand.from(
+                        request.scheduleYear(),
+                        request.scheduleMonth(),
+                        request.maxConcurrent(),
+                        userId
+                )
         );
 
         return ResponseEntity.status(HttpStatus.OK).body(Response.of(

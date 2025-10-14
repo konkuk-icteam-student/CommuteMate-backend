@@ -2,7 +2,7 @@ package com.better.CommuteMate.application.schedule;
 
 import com.better.CommuteMate.application.schedule.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
-import com.better.CommuteMate.domain.schedule.entity.WorkScheduleStatusCode;
+import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleLimitRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,9 +18,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +31,9 @@ class ScheduleValidatorTest {
     @Mock
     private WorkSchedulesRepository workSchedulesRepository;
 
+    @Mock
+    private MonthlyScheduleLimitRepository monthlyScheduleLimitRepository;
+
     @InjectMocks
     private ScheduleValidator scheduleValidator;
 
@@ -36,7 +41,11 @@ class ScheduleValidatorTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(scheduleValidator, "MAX_CONCURRENT_SCHEDULES", 3);
+        ReflectionTestUtils.setField(scheduleValidator, "DEFAULT_MAX_CONCURRENT_SCHEDULES", 3);
+
+        // 월별 제한이 없는 경우 기본값(3) 사용하도록 모킹
+        when(monthlyScheduleLimitRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
+                .thenReturn(Optional.empty());
 
         testUser = User.builder()
                 .email("test@example.com")
