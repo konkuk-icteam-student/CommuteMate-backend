@@ -1,5 +1,7 @@
 package com.better.CommuteMate.domain.schedule.entity;
 
+import com.better.CommuteMate.global.code.CodeType;
+import com.better.CommuteMate.global.code.CodeTypeConverter;
 import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,8 +32,9 @@ public class WorkSchedule {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    @Column(name = "status_code", length = 4, nullable = false)
-    private String statusCode;
+    @Convert(converter = CodeTypeConverter.class)
+    @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)
+    private CodeType statusCode;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
