@@ -1,6 +1,7 @@
 package com.better.CommuteMate.controller.admin;
 
 import com.better.CommuteMate.application.schedule.MonthlyScheduleLimitService;
+import com.better.CommuteMate.application.schedule.dtos.MonthlyScheduleLimitCommand;
 import com.better.CommuteMate.controller.admin.dtos.SetMonthlyLimitRequest;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleLimit;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -51,7 +52,7 @@ class AdminScheduleControllerTest {
                 .updatedBy(1)
                 .build();
 
-        when(monthlyScheduleLimitService.setMonthlyLimit(anyInt(), anyInt(), anyInt(), anyInt()))
+        when(monthlyScheduleLimitService.setMonthlyLimit(any(MonthlyScheduleLimitCommand.class)))
                 .thenReturn(savedLimit);
 
         // When & Then
@@ -67,7 +68,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.details.maxConcurrent").value(6));
 
         verify(monthlyScheduleLimitService, times(1))
-                .setMonthlyLimit(2025, 10, 6, 1);
+                .setMonthlyLimit(any(MonthlyScheduleLimitCommand.class));
     }
 
     @Test
@@ -85,7 +86,7 @@ class AdminScheduleControllerTest {
                 .updatedBy(1)
                 .build();
 
-        when(monthlyScheduleLimitService.setMonthlyLimit(anyInt(), anyInt(), anyInt(), anyInt()))
+        when(monthlyScheduleLimitService.setMonthlyLimit(any(MonthlyScheduleLimitCommand.class)))
                 .thenReturn(updatedLimit);
 
         // When & Then
@@ -99,7 +100,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.details.maxConcurrent").value(8));
 
         verify(monthlyScheduleLimitService, times(1))
-                .setMonthlyLimit(2025, 10, 8, 1);
+                .setMonthlyLimit(any(MonthlyScheduleLimitCommand.class));
     }
 
     @Test
@@ -185,11 +186,11 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.message").value("모든 월별 스케줄 제한을 조회했습니다."))
                 .andExpect(jsonPath("$.details.limits").isArray())
                 .andExpect(jsonPath("$.details.limits.length()").value(2))
-                .andExpect(jsonPath("$.details.limits[0].scheduleYear").value(2025))
-                .andExpect(jsonPath("$.details.limits[0].scheduleMonth").value(10))
+                .andExpect(jsonPath("$.details.limits[0].year").value(2025))
+                .andExpect(jsonPath("$.details.limits[0].month").value(10))
                 .andExpect(jsonPath("$.details.limits[0].maxConcurrent").value(6))
-                .andExpect(jsonPath("$.details.limits[1].scheduleYear").value(2025))
-                .andExpect(jsonPath("$.details.limits[1].scheduleMonth").value(11))
+                .andExpect(jsonPath("$.details.limits[1].year").value(2025))
+                .andExpect(jsonPath("$.details.limits[1].month").value(11))
                 .andExpect(jsonPath("$.details.limits[1].maxConcurrent").value(5));
 
         verify(monthlyScheduleLimitService, times(1)).getAllMonthlyLimits();
