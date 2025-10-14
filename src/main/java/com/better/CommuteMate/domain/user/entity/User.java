@@ -1,7 +1,6 @@
 package com.better.CommuteMate.domain.user.entity;
 
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.code.CodeTypeConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,7 +33,7 @@ public class User {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Convert(converter = CodeTypeConverter.class)
+    @Enumerated(EnumType.STRING)
     @Column(name = "role_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType roleCode;
 

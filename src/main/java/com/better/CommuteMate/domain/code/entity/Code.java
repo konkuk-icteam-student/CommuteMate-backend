@@ -1,7 +1,6 @@
 package com.better.CommuteMate.domain.code.entity;
 
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.code.CodeTypeConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,7 +16,7 @@ import lombok.*;
 public class Code {
 
     @Id
-    @Convert(converter = CodeTypeConverter.class)
+    @Enumerated(EnumType.STRING)
     @Column(name = "full_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType fullCode;
 

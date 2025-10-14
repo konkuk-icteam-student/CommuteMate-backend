@@ -1,7 +1,6 @@
 package com.better.CommuteMate.domain.workattendance.entity;
 
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.code.CodeTypeConverter;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import jakarta.persistence.*;
@@ -37,7 +36,7 @@ public class WorkAttendance {
     @Column(name = "check_time", nullable = false)
     private LocalDateTime checkTime;
 
-    @Convert(converter = CodeTypeConverter.class)
+    @Enumerated(EnumType.STRING)
     @Column(name = "check_type_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType checkTypeCode;
 

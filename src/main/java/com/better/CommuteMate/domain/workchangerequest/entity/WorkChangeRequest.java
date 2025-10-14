@@ -1,7 +1,6 @@
 package com.better.CommuteMate.domain.workchangerequest.entity;
 
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.code.CodeTypeConverter;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import jakarta.persistence.*;
@@ -34,14 +33,14 @@ public class WorkChangeRequest {
     @JoinColumn(name = "schedule_id", nullable = false)
     private WorkSchedule schedule;
 
-    @Convert(converter = CodeTypeConverter.class)
+    @Enumerated(EnumType.STRING)
     @Column(name = "type_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType typeCode;
 
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;
 
-    @Convert(converter = CodeTypeConverter.class)
+    @Enumerated(EnumType.STRING)
     @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType statusCode;
 
