@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.HttpStatus;
 import jakarta.servlet.http.HttpServletRequest;
+import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +25,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserEntity> register(@Valid @RequestBody RegisterRequest request) {
-        UserEntity user = authService.register(request);
+    public ResponseEntity<User> register(@Valid @RequestBody RegisterRequest request) {
+        User user = authService.register(request);
         return ResponseEntity.ok(user);
     }
 

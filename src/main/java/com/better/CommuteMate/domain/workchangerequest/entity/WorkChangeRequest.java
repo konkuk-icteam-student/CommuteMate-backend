@@ -1,35 +1,44 @@
-package com.better.CommuteMate.domain.schedule.entity;
+package com.better.CommuteMate.domain.workchangerequest.entity;
 
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "work_schedule")
+@Table(name = "work_change_request", indexes = {
+    @Index(name = "idx_wcr_user", columnList = "user_id"),
+    @Index(name = "idx_wcr_schedule", columnList = "schedule_id")
+})
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class WorkSchedule {
+public class WorkChangeRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "schedule_id", nullable = false)
-    private Integer scheduleId;
+    @Column(name = "request_id", nullable = false)
+    private Integer requestId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_id", nullable = false)
+    private WorkSchedule schedule;
 
-    @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_code", columnDefinition = "CHAR(4)", nullable = false)
+    private CodeType typeCode;
+
+    @Column(name = "reason", columnDefinition = "TEXT")
+    private String reason;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)

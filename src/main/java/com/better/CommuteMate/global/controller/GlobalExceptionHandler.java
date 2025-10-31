@@ -15,10 +15,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(BasicException.class)
     protected ResponseEntity<Response> handleBasicException(final BasicException e) {
+        log.error("BasicException caught: {}", e.getMessage(), e);
         final Response response = new Response(false, e.getMessage(), e.getErrorResponseDetail());
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
     @ExceptionHandler(ScheduleAllFailureException.class)
     public ResponseEntity<Response> handleScheduleAllFailureException(final ScheduleAllFailureException e) {
         log.error("Failed to schedule all items - complete scheduling failure: {}", e.getMessage(), e);

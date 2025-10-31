@@ -1,39 +1,33 @@
 package com.better.CommuteMate.domain.schedule.entity;
 
-import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "work_schedule")
+@Table(name = "monthly_schedule_limit",
+       uniqueConstraints = @UniqueConstraint(columnNames = {"schedule_year", "schedule_month"}))
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class WorkSchedule {
+public class MonthlyScheduleLimit {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "schedule_id", nullable = false)
-    private Integer scheduleId;
+    @Column(name = "limit_id", nullable = false)
+    private Integer limitId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "schedule_year", nullable = false)
+    private Integer scheduleYear;
 
-    @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    @Column(name = "schedule_month", nullable = false)
+    private Integer scheduleMonth;
 
-    @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)
-    private CodeType statusCode;
+    @Column(name = "max_concurrent", nullable = false)
+    private Integer maxConcurrent;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

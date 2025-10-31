@@ -1,7 +1,9 @@
 package com.better.CommuteMate.controller.auth.dto;
 
+import com.better.CommuteMate.global.code.CodeType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,7 +22,9 @@ public class RegisterRequest {
     @NotBlank
     private String name;
 
-    @NotBlank
-    private String organizationId;
+    @NotNull
+    private CodeType roleCode;
+
+    private Integer organizationId;
 
 }

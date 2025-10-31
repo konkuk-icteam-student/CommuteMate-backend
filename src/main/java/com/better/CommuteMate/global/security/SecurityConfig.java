@@ -29,13 +29,13 @@ public class SecurityConfig {
                                                    JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
-                        .requestMatchers("/auth/logout").authenticated()
-                        .anyRequest().authenticated()
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/**", "/h2-console/**").permitAll()
+                        .anyRequest().permitAll()
+                );
         return http.build();
     }
 
