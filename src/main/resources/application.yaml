@@ -27,3 +27,13 @@ app:
   schedule:
     concurrent:
       max: ${SCHEDULE_CONCURRENT_MAX:5}
+      ddl-auto: ${JPA_DDL_AUTO:create-drop}
+      # create-drop: 시작 시 생성, 종료 시 삭제 (H2용)
+      # update: 기존 스키마 유지하며 변경사항만 반영 (PostgreSQL용)
+    show-sql: true
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-expiration: ${JWT_ACCESS_EXPIRATION_MS}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS}
+  algorithm: ${JWT_ALGORITHM}
