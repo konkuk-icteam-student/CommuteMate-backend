@@ -6,7 +6,6 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.security.jwt.JwtTokenProvider;
 import com.better.CommuteMate.application.auth.TokenBlacklistService;
 import com.better.CommuteMate.application.auth.dto.AuthTokens;
-import com.better.CommuteMate.domain.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +52,7 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid email or password");
         }
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRoleCode());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), user.getRoleCode());
         // refresh token 저장
         user.setRefreshToken(refreshToken);
         userRepository.save(user);
@@ -80,14 +79,14 @@ public class AuthService {
     public AuthTokens refresh(String refreshToken) {
         jwtTokenProvider.validateToken(refreshToken);
         String email = jwtTokenProvider.getEmail(refreshToken);
-        UserEntity user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         String stored = user.getRefreshToken();
         if (stored == null || !stored.equals(refreshToken)) {
             throw new IllegalArgumentException("Invalid refresh token");
         }
         String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRoleCode());
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), user.getRoleCode());
         user.setRefreshToken(newRefreshToken);
         userRepository.save(user);
         long expiresAt = jwtTokenProvider.getExpiration(newAccessToken);

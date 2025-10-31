@@ -1,6 +1,7 @@
 package com.better.CommuteMate.application.auth;
 
-import com.better.CommuteMate.domain.user.entity.UserEntity;
+import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.global.code.CodeType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,15 +10,15 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class CustomUserDetails implements UserDetails {
-    private final UserEntity user;
+    private final User user;
 
-    public CustomUserDetails(UserEntity user) {
+    public CustomUserDetails(User user) {
         this.user = user;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        String role = user.getRoleCode();
+        CodeType role = user.getRoleCode();
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
     }
 
@@ -51,7 +52,7 @@ public class CustomUserDetails implements UserDetails {
         return true;
     }
 
-    public UserEntity getUser() {
+    public User getUser() {
         return user;
     }
 }

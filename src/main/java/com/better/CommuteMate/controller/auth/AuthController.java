@@ -4,7 +4,7 @@ import com.better.CommuteMate.controller.auth.dto.RegisterRequest;
 import com.better.CommuteMate.controller.auth.dto.LoginRequest;
 import com.better.CommuteMate.controller.auth.dto.LoginResponse;
 import com.better.CommuteMate.application.auth.AuthService;
-import com.better.CommuteMate.domain.user.entity.UserEntity;
+import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.application.auth.dto.AuthTokens;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;

@@ -1,5 +1,7 @@
 package com.better.CommuteMate.global.security.jwt;
 
+import com.better.CommuteMate.domain.code.entity.Code;
+import com.better.CommuteMate.global.code.CodeType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -38,15 +40,15 @@ public class JwtTokenProvider {
         this.secretBytes = secret.getBytes(StandardCharsets.UTF_8);
     }
 
-    public String createAccessToken(String email, String role) {
+    public String createAccessToken(String email, CodeType role) {
         return createToken(email, role, accessValidityInMs);
     }
 
-    public String createRefreshToken(String email) {
-        return createToken(email, "REFRESH", refreshValidityInMs);
+    public String createRefreshToken(String email, CodeType role) {
+        return createToken(email, role, refreshValidityInMs);
     }
 
-    private String createToken(String email, String role, long validityInMs) {
+    private String createToken(String email, CodeType role, long validityInMs) {
         long nowMillis = System.currentTimeMillis();
         long expMillis = nowMillis + validityInMs;
         String headerJson = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";

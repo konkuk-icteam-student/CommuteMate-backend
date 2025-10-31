@@ -37,8 +37,3 @@ jwt:
   access-expiration: ${JWT_ACCESS_EXPIRATION_MS}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS}
   algorithm: ${JWT_ALGORITHM}
-
-app:
-  schedule:
-    concurrent:
-      max: ${SCHEDULE_CONCURRENT_MAX:5}

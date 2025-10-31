@@ -49,6 +49,9 @@ public class User {
     @Column(name = "updated_by")
     private Integer updatedBy;
 
+    @Column(name = "refresh_token", length = 512)
+    private String refreshToken;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
