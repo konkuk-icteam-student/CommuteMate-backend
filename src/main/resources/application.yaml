@@ -33,7 +33,7 @@ app:
     show-sql: true
 
 jwt:
-  secret: ${JWT_SECRET}
-  access-expiration: ${JWT_ACCESS_EXPIRATION_MS}
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS}
-  algorithm: ${JWT_ALGORITHM}
+  secret: ${JWT_SECRET:your-secret-key-change-in-production}
+  access-expiration: ${JWT_ACCESS_EXPIRATION_MS:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+  algorithm: ${JWT_ALGORITHM:HmacSHA256}
