@@ -35,7 +35,7 @@ public class WorkScheduleController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Response.of(
                 true,
-                "신청하신 일정이 모두 등록되었습니다.",
+                "신청하신 일정이 모두 신청되었습니다.",
                 ApplyWorkScheduleResponseDetail.from(applyResult)
         ));
     }
