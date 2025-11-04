@@ -78,7 +78,7 @@ public class WorkScheduleController {
                 )))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.of(
                         false,
-                        "해당 월의 스케줄 제한 설정을 찾을 수 없습니다.",
+                        "해당 월의 스케줄 제한 설정을 찾을 수 없습니다. 기본값은 5명 입니다.",
                         null
                 )));
     }
@@ -90,7 +90,7 @@ public class WorkScheduleController {
 
         return ResponseEntity.ok(Response.of(
                 true,
-                "모든 월별 스케줄 제한을 조회했습니다.",
+                "모든 월별 스케줄 제한을 조회했습니다. 기본값은 5명 입니다.",
                 MonthlyLimitsResponse.from(limits)
         ));
     }
