@@ -1,4 +1,4 @@
-package com.better.CommuteMate.application.schedule.exceptions;
+package com.better.CommuteMate.schedule.application.exceptions;
 
 import com.better.CommuteMate.global.exceptions.error.CustomErrorCode;
 

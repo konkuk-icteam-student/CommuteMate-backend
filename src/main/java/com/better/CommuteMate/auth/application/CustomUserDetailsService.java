@@ -1,4 +1,4 @@
-package com.better.CommuteMate.application.auth;
+package com.better.CommuteMate.auth.application;
 
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.user.entity.User;

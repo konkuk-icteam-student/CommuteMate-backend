@@ -1,10 +1,10 @@
-package com.better.CommuteMate.controller.admin;
+package com.better.CommuteMate.schedule.controller.admin;
 
-import com.better.CommuteMate.application.schedule.MonthlyScheduleLimitService;
-import com.better.CommuteMate.application.schedule.dtos.MonthlyScheduleLimitCommand;
-import com.better.CommuteMate.controller.admin.dtos.MonthlyLimitResponse;
-import com.better.CommuteMate.controller.admin.dtos.MonthlyLimitsResponse;
-import com.better.CommuteMate.controller.admin.dtos.SetMonthlyLimitRequest;
+import com.better.CommuteMate.schedule.application.MonthlyScheduleLimitService;
+import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleLimitCommand;
+import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitsResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.SetMonthlyLimitRequest;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleLimit;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import lombok.RequiredArgsConstructor;

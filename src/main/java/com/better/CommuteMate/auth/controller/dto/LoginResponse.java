@@ -1,4 +1,4 @@
-package com.better.CommuteMate.controller.auth.dto;
+package com.better.CommuteMate.auth.controller.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

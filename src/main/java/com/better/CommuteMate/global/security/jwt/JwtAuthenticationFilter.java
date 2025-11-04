@@ -1,7 +1,7 @@
 package com.better.CommuteMate.global.security.jwt;
 
-import com.better.CommuteMate.application.auth.CustomUserDetailsService;
-import com.better.CommuteMate.application.auth.TokenBlacklistService;
+import com.better.CommuteMate.auth.application.CustomUserDetailsService;
+import com.better.CommuteMate.auth.application.TokenBlacklistService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

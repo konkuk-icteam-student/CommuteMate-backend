@@ -1,10 +1,12 @@
 package com.better.CommuteMate.application.schedule;
 
-import com.better.CommuteMate.application.schedule.dtos.ApplyScheduleResultCommand;
-import com.better.CommuteMate.application.schedule.dtos.WorkScheduleCommand;
-import com.better.CommuteMate.application.schedule.exceptions.ScheduleAllFailureException;
-import com.better.CommuteMate.application.schedule.exceptions.SchedulePartialFailureException;
-import com.better.CommuteMate.application.schedule.exceptions.response.ScheduleResponseDetail;
+import com.better.CommuteMate.schedule.application.ScheduleService;
+import com.better.CommuteMate.schedule.application.ScheduleValidator;
+import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
+import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
+import com.better.CommuteMate.schedule.application.exceptions.ScheduleAllFailureException;
+import com.better.CommuteMate.schedule.application.exceptions.SchedulePartialFailureException;
+import com.better.CommuteMate.schedule.application.exceptions.response.ScheduleResponseDetail;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;

@@ -1,4 +1,4 @@
-package com.better.CommuteMate.application.schedule.dtos;
+package com.better.CommuteMate.schedule.application.dtos;
 
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.user.entity.User;
