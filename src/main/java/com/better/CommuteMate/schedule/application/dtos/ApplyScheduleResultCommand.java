@@ -1,6 +1,6 @@
-package com.better.CommuteMate.application.schedule.dtos;
+package com.better.CommuteMate.schedule.application.dtos;
 
-import com.better.CommuteMate.controller.schedule.dtos.WorkScheduleDTO;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
 
 import java.util.List;
 

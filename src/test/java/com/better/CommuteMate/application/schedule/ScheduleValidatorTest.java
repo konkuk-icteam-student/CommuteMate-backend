@@ -1,6 +1,7 @@
 package com.better.CommuteMate.application.schedule;
 
-import com.better.CommuteMate.application.schedule.dtos.WorkScheduleCommand;
+import com.better.CommuteMate.schedule.application.ScheduleValidator;
+import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleLimitRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;

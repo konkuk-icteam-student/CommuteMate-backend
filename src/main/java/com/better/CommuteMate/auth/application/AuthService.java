@@ -1,11 +1,10 @@
-package com.better.CommuteMate.application.auth;
+package com.better.CommuteMate.auth.application;
 
-import com.better.CommuteMate.controller.auth.dto.RegisterRequest;
+import com.better.CommuteMate.auth.controller.dto.RegisterRequest;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.security.jwt.JwtTokenProvider;
-import com.better.CommuteMate.application.auth.TokenBlacklistService;
-import com.better.CommuteMate.application.auth.dto.AuthTokens;
+import com.better.CommuteMate.auth.application.dto.AuthTokens;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

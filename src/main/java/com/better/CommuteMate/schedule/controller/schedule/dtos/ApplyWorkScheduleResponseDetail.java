@@ -1,6 +1,6 @@
-package com.better.CommuteMate.controller.schedule.dtos;
+package com.better.CommuteMate.schedule.controller.schedule.dtos;
 
-import com.better.CommuteMate.application.schedule.dtos.ApplyScheduleResultCommand;
+import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import lombok.Builder;
 import lombok.Getter;

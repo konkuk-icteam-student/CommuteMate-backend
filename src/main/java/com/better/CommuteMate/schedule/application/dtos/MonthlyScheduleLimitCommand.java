@@ -1,4 +1,4 @@
-package com.better.CommuteMate.application.schedule.dtos;
+package com.better.CommuteMate.schedule.application.dtos;
 
 public record MonthlyScheduleLimitCommand(
         Integer scheduleYear,

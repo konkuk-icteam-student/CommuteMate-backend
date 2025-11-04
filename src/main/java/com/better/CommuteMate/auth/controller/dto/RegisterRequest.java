@@ -1,4 +1,4 @@
-package com.better.CommuteMate.controller.auth.dto;
+package com.better.CommuteMate.auth.controller.dto;
 
 import com.better.CommuteMate.global.code.CodeType;
 import jakarta.validation.constraints.Email;

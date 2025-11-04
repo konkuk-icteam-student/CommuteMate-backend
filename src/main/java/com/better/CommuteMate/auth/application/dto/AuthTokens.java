@@ -1,4 +1,4 @@
-package com.better.CommuteMate.application.auth.dto;
+package com.better.CommuteMate.auth.application.dto;
 
 public class AuthTokens {
     private final String accessToken;

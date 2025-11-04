@@ -1,16 +1,15 @@
-package com.better.CommuteMate.controller.auth;
+package com.better.CommuteMate.auth.controller;
 
-import com.better.CommuteMate.controller.auth.dto.RegisterRequest;
-import com.better.CommuteMate.controller.auth.dto.LoginRequest;
-import com.better.CommuteMate.controller.auth.dto.LoginResponse;
-import com.better.CommuteMate.application.auth.AuthService;
+import com.better.CommuteMate.auth.controller.dto.RegisterRequest;
+import com.better.CommuteMate.auth.controller.dto.LoginRequest;
+import com.better.CommuteMate.auth.controller.dto.LoginResponse;
+import com.better.CommuteMate.auth.application.AuthService;
 import com.better.CommuteMate.domain.user.entity.User;
-import com.better.CommuteMate.application.auth.dto.AuthTokens;
+import com.better.CommuteMate.auth.application.dto.AuthTokens;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.HttpStatus;
 import jakarta.servlet.http.HttpServletRequest;
-import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

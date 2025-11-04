@@ -1,10 +1,10 @@
-package com.better.CommuteMate.controller.schedule;
+package com.better.CommuteMate.schedule.controller.schedule;
 
-import com.better.CommuteMate.application.schedule.ScheduleService;
-import com.better.CommuteMate.controller.schedule.dtos.ApplyWorkSchedule;
-import com.better.CommuteMate.controller.schedule.dtos.ApplyWorkScheduleResponseDetail;
-import com.better.CommuteMate.application.schedule.dtos.ApplyScheduleResultCommand;
-import com.better.CommuteMate.application.schedule.dtos.WorkScheduleCommand;
+import com.better.CommuteMate.schedule.application.ScheduleService;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.ApplyWorkSchedule;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.ApplyWorkScheduleResponseDetail;
+import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
+import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

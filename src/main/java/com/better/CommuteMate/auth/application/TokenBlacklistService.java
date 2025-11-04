@@ -1,4 +1,4 @@
-package com.better.CommuteMate.application.auth;
+package com.better.CommuteMate.auth.application;
 
 import org.springframework.stereotype.Service;
 

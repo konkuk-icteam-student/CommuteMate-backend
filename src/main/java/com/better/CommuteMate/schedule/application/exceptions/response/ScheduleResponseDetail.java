@@ -1,7 +1,7 @@
-package com.better.CommuteMate.application.schedule.exceptions.response;
+package com.better.CommuteMate.schedule.application.exceptions.response;
 
-import com.better.CommuteMate.controller.schedule.dtos.WorkScheduleDTO;
-import com.better.CommuteMate.application.schedule.dtos.ApplyScheduleResultCommand;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
+import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.global.controller.dtos.ErrorResponseDetail;
 import lombok.Builder;
 import lombok.Getter;

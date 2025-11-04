@@ -1,4 +1,4 @@
-package com.better.CommuteMate.controller.schedule.dtos;
+package com.better.CommuteMate.schedule.controller.schedule.dtos;
 
 import java.util.List;
 
