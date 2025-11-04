@@ -3,28 +3,95 @@
 
 ## 프로젝트 구조
 
+### 계층형 아키텍처
+```
+Controller (HTTP 엔드포인트)
+    ↓
+Application (비즈니스 로직)
+    ↓
+Domain (엔티티, 리포지토리)
+    ↓
+Global (공통 코드, 설정)
+```
+
 ### 주요 패키지
-- `domain/` - 도메인 엔티티 및 리포지토리
-  - `code/` - 코드 마스터 (CodeMajor, CodeSub, Code)
-  - `organization/` - 조직 관리
-  - `user/` - 사용자
-  - `schedule/` - 근무 일정
-  - `workchangerequest/` - 근무 변경 요청
-  - `workattendance/` - 출근 기록
-  - `faq/` - **FAQ 시스템 (신규)** ✨
-- `application/` - 비즈니스 로직 및 서비스
-  - `auth/` - 인증
-  - `schedule/` - 근무 일정 비즈니스 로직
-- `controller/` - REST API 컨트롤러
-  - `auth/` - 인증 관련
-  - `schedule/` - 근무 일정 관련
-  - `admin/` - 관리자 기능
-- `global/` - 전역 설정 및 공통 코드
-  - `code/` - **CodeType Enum 및 Converter**
-  - `config/` - Spring 설정
-  - `security/` - 보안 설정
-  - `exceptions/` - 예외 처리
-  - `controller/` - 전역 예외 핸들러
+
+#### `auth/` - 인증 모듈 (계층형 재구조화 완료)
+```
+auth/
+├── controller/
+│   ├── AuthController.java
+│   └── dto/
+│       ├── LoginRequest.java
+│       ├── LoginResponse.java
+│       └── RegisterRequest.java
+└── application/
+    ├── AuthService.java
+    ├── CustomUserDetails.java
+    ├── CustomUserDetailsService.java
+    ├── TokenBlacklistService.java
+    └── dto/
+        └── AuthTokens.java
+```
+- JWT 기반 인증 (AccessToken + RefreshToken)
+- 토큰 블랙리스트 기반 로그아웃
+- RegisterRequest에서 CodeType 사용
+
+#### `schedule/` - 근무 일정 모듈 (계층형 재구조화 완료)
+```
+schedule/
+├── controller/
+│   ├── schedule/
+│   │   ├── WorkScheduleController.java
+│   │   └── dtos/
+│   └── admin/
+│       ├── AdminScheduleController.java
+│       └── dtos/
+└── application/
+    ├── ScheduleService.java
+    ├── MonthlyScheduleLimitService.java
+    ├── ScheduleValidator.java
+    ├── dtos/
+    └── exceptions/
+```
+- 근무 일정 신청/조회/수정
+- 월별 일정 제한 관리
+- 부분 성공/실패 처리 (HTTP 207, 422)
+
+#### `domain/` - 도메인 엔티티 및 리포지토리
+각 도메인은 `entity/` + `repository/` 구조:
+- `code/` - 코드 마스터 (CodeMajor, CodeSub, Code)
+- `organization/` - 조직 관리
+- `user/` - 사용자
+- `schedule/` - 근무 일정 (WorkSchedule, MonthlyScheduleLimit)
+- `workchangerequest/` - 근무 변경 요청
+- `workattendance/` - 출근 기록
+- `faq/` - **FAQ 시스템 (신규)** ✨
+  - Category, SubCategory, Faq, FaqHistory
+
+#### `global/` - 전역 설정 및 공통 코드
+```
+global/
+├── code/
+│   ├── CodeType.java                # 타입 안전한 코드 Enum
+│   └── CodeTypeConverter.java       # JPA 자동 변환
+├── security/
+│   └── jwt/
+│       ├── JwtTokenProvider.java
+│       └── JwtAuthenticationFilter.java
+├── exceptions/
+│   ├── BasicException.java          # 베이스 예외
+│   ├── error/
+│   │   ├── CustomErrorCode.java
+│   │   └── GlobalErrorCode.java
+│   └── response/
+└── controller/
+    ├── GlobalExceptionHandler.java  # 전역 예외 핸들러
+    └── dtos/
+        ├── Response.java            # 모든 응답 래퍼
+        ├── ResponseDetail.java
+        └── ErrorResponseDetail.java
+```
 
 ## 코드 시스템
 
