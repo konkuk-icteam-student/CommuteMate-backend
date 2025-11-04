@@ -1,4 +1,4 @@
-package com.better.CommuteMate.schedule.controller.admin.dtos;
+package com.better.CommuteMate.schedule.controller.dtos;
 
 public record SetMonthlyLimitRequest(
         Integer scheduleYear,

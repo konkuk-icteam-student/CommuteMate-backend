@@ -1,4 +1,4 @@
-package com.better.CommuteMate.schedule.controller.schedule.dtos;
+package com.better.CommuteMate.schedule.controller.dtos;
 
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
 

@@ -2,8 +2,8 @@ package com.better.CommuteMate.controller.admin;
 
 import com.better.CommuteMate.schedule.application.MonthlyScheduleLimitService;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleLimitCommand;
-import com.better.CommuteMate.schedule.controller.admin.AdminScheduleController;
-import com.better.CommuteMate.schedule.controller.admin.dtos.SetMonthlyLimitRequest;
+import com.better.CommuteMate.schedule.controller.AdminScheduleController;
+import com.better.CommuteMate.schedule.controller.dtos.SetMonthlyLimitRequest;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleLimit;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;

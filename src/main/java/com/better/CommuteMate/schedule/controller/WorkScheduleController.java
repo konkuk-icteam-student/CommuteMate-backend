@@ -1,11 +1,12 @@
-package com.better.CommuteMate.schedule.controller.admin;
+package com.better.CommuteMate.schedule.controller;
 
-import com.better.CommuteMate.schedule.application.MonthlyScheduleLimitService;
-import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleLimitCommand;
-import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitResponse;
-import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitsResponse;
-import com.better.CommuteMate.schedule.controller.admin.dtos.SetMonthlyLimitRequest;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleLimit;
+import com.better.CommuteMate.schedule.application.MonthlyScheduleLimitService;
+import com.better.CommuteMate.schedule.application.ScheduleService;
+import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleLimitCommand;
+import com.better.CommuteMate.schedule.controller.dtos.*;
+import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
+import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,12 +16,31 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/v1/admin/schedule")
+@RequestMapping("api/v1/work-schedules")
 @RequiredArgsConstructor
-public class AdminScheduleController {
+public class WorkScheduleController {
 
+    private final ScheduleService scheduleService;
     private final MonthlyScheduleLimitService monthlyScheduleLimitService;
 
+
+    @PostMapping("/apply")
+    public ResponseEntity<Response> applyWorkSchedule(@RequestBody ApplyWorkSchedule request, @RequestHeader String email) {
+        // @RequestHeader String email은 추후 인증로직이 추가되면 제거할 예정
+        ApplyScheduleResultCommand applyResult = scheduleService.applyWorkSchedules(
+                request.slots().stream().map(slot -> new WorkScheduleCommand(
+                        email, slot.start(), slot.end()
+                )).toList()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(Response.of(
+                true,
+                "신청하신 일정이 모두 등록되었습니다.",
+                ApplyWorkScheduleResponseDetail.from(applyResult)
+        ));
+    }
+
+    // TODO: 반드시 Admin 권한만 수정이 가능하게 해야 함!
     // 월별 스케줄 제한 설정
     @PostMapping("/monthly-limit")
     public ResponseEntity<Response> setMonthlyLimit(
@@ -74,4 +94,5 @@ public class AdminScheduleController {
                 MonthlyLimitsResponse.from(limits)
         ));
     }
+
 }

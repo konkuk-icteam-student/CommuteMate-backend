@@ -1,4 +1,4 @@
-package com.better.CommuteMate.schedule.controller.admin.dtos;
+package com.better.CommuteMate.schedule.controller.dtos;
 
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleLimit;
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;

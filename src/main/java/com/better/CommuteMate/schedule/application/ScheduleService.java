@@ -4,7 +4,7 @@ import com.better.CommuteMate.schedule.application.exceptions.ScheduleAllFailure
 import com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.application.exceptions.SchedulePartialFailureException;
 import com.better.CommuteMate.schedule.application.exceptions.response.ScheduleResponseDetail;
-import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
+import com.better.CommuteMate.schedule.controller.dtos.WorkScheduleDTO;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
