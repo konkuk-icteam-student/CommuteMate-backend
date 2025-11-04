@@ -2,6 +2,7 @@ package com.better.CommuteMate.domain.faq.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -48,4 +49,11 @@ public class FaqHistory {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "faq_id", nullable = false)
     private Faq faq;
+
+    @PrePersist
+    protected void onCreate() {
+        if (editedAt == null) {
+            editedAt = LocalDateTime.now();
+        }
+    }
 }

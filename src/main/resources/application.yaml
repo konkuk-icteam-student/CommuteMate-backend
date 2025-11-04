@@ -1,17 +1,39 @@
 spring:
   application:
-    name: ${SPRING_APPLICATION_NAME}
+    name: ${SPRING_APPLICATION_NAME:CommuteMate}
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:4}
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      # H2 웹 콘솔 활성화 (http://localhost:8080/h2-console)
   jackson:
     date-format: yyyy-MM-dd HH:mm
 
   jpa:
-    database: postgresql
+    database-platform: ${JPA_DATABASE_PLATFORM:org.hibernate.dialect.H2Dialect}
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${JPA_DDL_AUTO:create-drop}
+      # create-drop: 시작 시 생성, 종료 시 삭제 (H2용)
+      # update: 기존 스키마 유지하며 변경사항만 반영 (PostgreSQL용)
+    show-sql: true
+app:
+  schedule:
+    concurrent:
+      max: ${SCHEDULE_CONCURRENT_MAX:5}
+      ddl-auto: ${JPA_DDL_AUTO:create-drop}
+      # create-drop: 시작 시 생성, 종료 시 삭제 (H2용)
+      # update: 기존 스키마 유지하며 변경사항만 반영 (PostgreSQL용)
+    show-sql: true
+
+jwt:
+  secret: ${JWT_SECRET:your-secret-key-change-in-production}
+  access-expiration: ${JWT_ACCESS_EXPIRATION_MS:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+  algorithm: ${JWT_ALGORITHM:HmacSHA256}

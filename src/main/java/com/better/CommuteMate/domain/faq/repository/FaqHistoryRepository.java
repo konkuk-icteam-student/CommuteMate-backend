@@ -1,7 +1,6 @@
 package com.better.CommuteMate.domain.faq.repository;
 
 import com.better.CommuteMate.domain.faq.entity.FaqHistory;
-import com.better.CommuteMate.domain.faq.entity.Faq;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

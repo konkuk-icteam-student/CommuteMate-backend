@@ -1,48 +1,75 @@
 package com.better.CommuteMate.domain.user.entity;
 
+import com.better.CommuteMate.global.code.CodeType;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user", indexes = {
+@Table(name = "\"user\"", indexes = {
     @Index(name = "uq_user_email", columnList = "email", unique = true)
 })
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
-
     @Id
-    @Column(name = "user_id", columnDefinition = "CHAR(36)", nullable = false)
-    private String userId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id", nullable = false)
+    private Integer userId;
 
-    @Column(name = "organization_id", columnDefinition = "CHAR(36)", nullable = false)
-    private String organizationId;
+    @Column(name = "organization_id", nullable = false)
+    private Integer organizationId;
 
-    @Column(name = "email", length = 100, nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(name = "password", length = 255, nullable = false)
+    @Column(nullable = false, length = 255)
     private String password;
 
-    @Column(name = "name", length = 50, nullable = false)
+    @Column(nullable = false, length = 50)
     private String name;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role_code", columnDefinition = "CHAR(4)", nullable = false)
-    private String roleCode;
+    private CodeType roleCode;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "created_by", columnDefinition = "CHAR(36)")
-    private String createdBy;
+    @Column(name = "created_by")
+    private Integer createdBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "updated_by", columnDefinition = "CHAR(36)")
-    private String updatedBy;
+    @Column(name = "updated_by")
+    private Integer updatedBy;
 
+    @Column(name = "refresh_token", length = 512)
+    private String refreshToken;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public static User create(String email, String rawPassword, String name, Integer organizationId, CodeType roleCode) {
+        return User.builder()
+                .organizationId(organizationId)
+                .email(email)
+                .password(rawPassword)
+                .name(name)
+                .roleCode(roleCode)
+                .build();
+    }
 }

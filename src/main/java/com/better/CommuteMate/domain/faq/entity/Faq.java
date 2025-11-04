@@ -3,6 +3,7 @@ package com.better.CommuteMate.domain.faq.entity;
 import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -68,4 +69,10 @@ public class Faq {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_category_id", nullable = false)
     private SubCategory subCategoryEntity;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        lastEditedAt = LocalDateTime.now();
+    }
 }
