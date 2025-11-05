@@ -1,4 +1,4 @@
-package com.better.CommuteMate.domain.faq.entity;
+package com.better.CommuteMate.domain.category.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

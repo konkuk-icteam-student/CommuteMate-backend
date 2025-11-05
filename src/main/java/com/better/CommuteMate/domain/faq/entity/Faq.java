@@ -1,5 +1,6 @@
 package com.better.CommuteMate.domain.faq.entity;
 
+import com.better.CommuteMate.domain.category.entity.SubCategory;
 import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;

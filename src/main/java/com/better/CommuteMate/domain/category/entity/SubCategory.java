@@ -1,7 +1,10 @@
-package com.better.CommuteMate.domain.faq.entity;
+package com.better.CommuteMate.domain.category.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "sub_category")
@@ -23,4 +26,8 @@ public class SubCategory {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    // 이 subCategory를 어떤 users가 담당하는지 저장하는 리스트
+    @OneToMany(mappedBy = "subCategory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ManagerSubCategory> managers = new ArrayList<>();
 }
