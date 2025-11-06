@@ -1,5 +1,6 @@
 package com.better.CommuteMate.domain.faq.entity;
 
+import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.entity.SubCategory;
 import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -20,11 +21,15 @@ public class Faq {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 100, nullable = false)
-    private String category;
+    // category 엔티티와 FK 연관관계
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
-    @Column(name = "sub_category", length = 100, nullable = false)
-    private String subCategory;
+    // sub_category 엔티티와 FK 연관관계
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sub_category_id", nullable = false)
+    private SubCategory subCategory;
 
     @Column(length = 100, nullable = false)
     private String title;
@@ -66,10 +71,6 @@ public class Faq {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_editor_id", nullable = false)
     private User lastEditor;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sub_category_id", nullable = false)
-    private SubCategory subCategoryEntity;
 
     @PrePersist
     protected void onCreate() {

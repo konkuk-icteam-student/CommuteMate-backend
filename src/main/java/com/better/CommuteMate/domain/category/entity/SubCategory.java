@@ -27,6 +27,11 @@ public class SubCategory {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    // 즐겨찾기 여부 (기본값 false)
+    @Column(name = "favorite", nullable = false)
+    @Builder.Default
+    private boolean favorite = false;
+
     // 이 subCategory를 어떤 users가 담당하는지 저장하는 리스트
     @OneToMany(mappedBy = "subCategory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ManagerSubCategory> managers = new ArrayList<>();

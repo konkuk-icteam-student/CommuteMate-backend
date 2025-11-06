@@ -14,7 +14,7 @@ import java.util.List;
 
 @Tag(name = "FAQ", description = "FAQ 관련 API")
 @RestController
-@RequestMapping("/faq")
+@RequestMapping("/faq") // Todo 수정해야 함
 public class FaqController {
 
     @Operation(
