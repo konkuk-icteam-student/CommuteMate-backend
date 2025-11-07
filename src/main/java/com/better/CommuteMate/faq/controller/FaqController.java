@@ -1,4 +1,4 @@
-package com.better.CommuteMate.domain.faq.controller;
+package com.better.CommuteMate.faq.controller;
 
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import io.swagger.v3.oas.annotations.Operation;
