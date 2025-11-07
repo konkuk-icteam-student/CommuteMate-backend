@@ -1,5 +1,6 @@
 package com.better.CommuteMate.auth.controller;
 
+import com.better.CommuteMate.auth.application.AuthErrorCode;
 import com.better.CommuteMate.auth.controller.dto.RegisterRequest;
 import com.better.CommuteMate.auth.controller.dto.LoginRequest;
 import com.better.CommuteMate.auth.controller.dto.LoginResponse;
@@ -66,30 +67,26 @@ public class AuthController {
     public ResponseEntity<LoginResponse> refresh(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            throw new IllegalArgumentException(AuthErrorCode.AUTHORIZATION_HEADER_MISSING.getMessage());
         }
         String refreshToken = header.substring(7);
-        try {
-            AuthTokens tokens = authService.refresh(refreshToken);
-            long maxAgeSeconds = Math.max((tokens.getExpiresAt() - System.currentTimeMillis()) / 1000, 0);
-            ResponseCookie cookie = ResponseCookie.from("accessToken", tokens.getAccessToken())
-                    .httpOnly(true)
-                    .secure(true)
-                    .path("/")
-                    .maxAge(maxAgeSeconds)
-                    .sameSite("Strict")
-                    .build();
-            LoginResponse response = LoginResponse.builder()
-                    .accessToken(tokens.getAccessToken())
-                    .refreshToken(tokens.getRefreshToken())
-                    .tokenType("Bearer")
-                    .expiresAt(tokens.getExpiresAt())
-                    .build();
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                    .body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        AuthTokens tokens = authService.refresh(refreshToken);
+        long maxAgeSeconds = Math.max((tokens.getExpiresAt() - System.currentTimeMillis()) / 1000, 0);
+        ResponseCookie cookie = ResponseCookie.from("accessToken", tokens.getAccessToken())
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(maxAgeSeconds)
+                .sameSite("Strict")
+                .build();
+        LoginResponse response = LoginResponse.builder()
+                .accessToken(tokens.getAccessToken())
+                .refreshToken(tokens.getRefreshToken())
+                .tokenType("Bearer")
+                .expiresAt(tokens.getExpiresAt())
+                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(response);
     }
 }

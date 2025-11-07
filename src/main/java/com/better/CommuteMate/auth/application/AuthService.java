@@ -30,7 +30,7 @@ public class AuthService {
     @Transactional
     public User register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalStateException("Email already registered");
+            throw new IllegalStateException(AuthErrorCode.EMAIL_ALREADY_REGISTERED.getMessage());
         }
         String hashedPassword = passwordEncoder.encode(request.getPassword());
         User user = User.create(
@@ -46,9 +46,9 @@ public class AuthService {
     @Transactional
     public AuthTokens login(String email, String password) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+                .orElseThrow(() -> new IllegalArgumentException(AuthErrorCode.INVALID_CREDENTIALS.getMessage()));
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("Invalid email or password");
+            throw new IllegalArgumentException(AuthErrorCode.INVALID_CREDENTIALS.getMessage());
         }
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRoleCode());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), user.getRoleCode());
@@ -79,10 +79,10 @@ public class AuthService {
         jwtTokenProvider.validateToken(refreshToken);
         String email = jwtTokenProvider.getEmail(refreshToken);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException(AuthErrorCode.USER_NOT_FOUND.getMessage()));
         String stored = user.getRefreshToken();
         if (stored == null || !stored.equals(refreshToken)) {
-            throw new IllegalArgumentException("Invalid refresh token");
+            throw new IllegalArgumentException(AuthErrorCode.INVALID_REFRESH_TOKEN.getMessage());
         }
         String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRoleCode());
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), user.getRoleCode());
