@@ -1,5 +1,7 @@
 package com.better.CommuteMate.domain.faq.entity;
 
+import com.better.CommuteMate.domain.category.entity.Category;
+import com.better.CommuteMate.domain.category.entity.SubCategory;
 import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,29 +12,32 @@ import java.time.LocalDateTime;
 @Table(name = "faq")
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 public class Faq {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
-    @Column(name = "category", length = 100, nullable = false)
-    private String category;
+    // category 엔티티와 FK 연관관계
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
-    @Column(name = "sub_category", length = 100, nullable = false)
-    private String subCategory;
+    // sub_category 엔티티와 FK 연관관계
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sub_category_id", nullable = false)
+    private SubCategory subCategory;
 
-    @Column(name = "title", length = 100, nullable = false)
+    @Column(length = 100, nullable = false)
     private String title;
 
-    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(name = "etc", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String etc;
 
     @Column(name = "attachment_url", length = 150)
@@ -47,30 +52,25 @@ public class Faq {
     @Column(name = "last_editor_name", length = 30, nullable = false)
     private String lastEditorName;
 
-    @Column(name = "manager", length = 30, nullable = false)
+    @Column(length = 30, nullable = false)
     private String manager;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Builder.Default
     @Column(name = "deleted_flag", nullable = false)
-    private Boolean deletedFlag = false;
+    private Boolean deletedFlag;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "writer_id")
+    @JoinColumn(name = "writer_id", nullable = false)
     private User writer;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "last_editor_id")
+    @JoinColumn(name = "last_editor_id", nullable = false)
     private User lastEditor;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sub_category_id")
-    private SubCategory subCategoryEntity;
 
     @PrePersist
     protected void onCreate() {
