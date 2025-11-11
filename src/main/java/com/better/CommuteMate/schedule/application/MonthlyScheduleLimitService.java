@@ -1,7 +1,7 @@
 package com.better.CommuteMate.schedule.application;
 
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleLimitCommand;
-import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleLimit;
+import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleLimitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,19 +18,19 @@ public class MonthlyScheduleLimitService {
     private final MonthlyScheduleLimitRepository monthlyScheduleLimitRepository;
 
     @Transactional
-    public MonthlyScheduleLimit setMonthlyLimit(MonthlyScheduleLimitCommand command) {
-        Optional<MonthlyScheduleLimit> existingLimit = monthlyScheduleLimitRepository
+    public MonthlyScheduleConfig setMonthlyLimit(MonthlyScheduleLimitCommand command) {
+        Optional<MonthlyScheduleConfig> existingLimit = monthlyScheduleLimitRepository
                 .findByScheduleYearAndScheduleMonth(command.scheduleYear(), command.scheduleMonth());
 
         if (existingLimit.isPresent()) {
             // 업데이트
-            MonthlyScheduleLimit limit = existingLimit.get();
+            MonthlyScheduleConfig limit = existingLimit.get();
             limit.setMaxConcurrent(command.maxConcurrent());
             limit.setUpdatedBy(command.userId());
             return monthlyScheduleLimitRepository.save(limit);
         } else {
             // 신규 생성
-            MonthlyScheduleLimit newLimit = MonthlyScheduleLimit.builder()
+            MonthlyScheduleConfig newLimit = MonthlyScheduleConfig.builder()
                     .scheduleYear(command.scheduleYear())
                     .scheduleMonth(command.scheduleMonth())
                     .maxConcurrent(command.maxConcurrent())
@@ -41,11 +41,11 @@ public class MonthlyScheduleLimitService {
         }
     }
 
-    public Optional<MonthlyScheduleLimit> getMonthlyLimit(Integer scheduleYear, Integer scheduleMonth) {
+    public Optional<MonthlyScheduleConfig> getMonthlyLimit(Integer scheduleYear, Integer scheduleMonth) {
         return monthlyScheduleLimitRepository.findByScheduleYearAndScheduleMonth(scheduleYear, scheduleMonth);
     }
 
-    public List<MonthlyScheduleLimit> getAllMonthlyLimits() {
+    public List<MonthlyScheduleConfig> getAllMonthlyLimits() {
         return monthlyScheduleLimitRepository.findAll();
     }
 }

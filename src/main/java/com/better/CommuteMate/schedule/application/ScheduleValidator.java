@@ -1,7 +1,7 @@
 package com.better.CommuteMate.schedule.application;
 
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
-import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleLimit;
+import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleLimitRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
@@ -60,7 +60,7 @@ public class ScheduleValidator {
 
     private int getMaxConcurrentSchedules(int scheduleYear, int scheduleMonth) {
         return monthlyScheduleLimitRepository.findByScheduleYearAndScheduleMonth(scheduleYear, scheduleMonth)
-                .map(MonthlyScheduleLimit::getMaxConcurrent)
+                .map(MonthlyScheduleConfig::getMaxConcurrent)
                 .orElse(DEFAULT_MAX_CONCURRENT_SCHEDULES); // 존재하지 않을 경우, 기본값 5로 반환
     }
 
