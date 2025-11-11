@@ -29,10 +29,10 @@ public class MonthlyScheduleConfig {
     @Column(name = "max_concurrent", nullable = false)
     private Integer maxConcurrent;
 
-    @Column(name = "apply_start_time", nullable = false)
+    @Column(name = "apply_start_time", nullable = true)
     private LocalDateTime applyStartTime;
 
-    @Column(name = "apply_end_time", nullable = false)
+    @Column(name = "apply_end_time", nullable = true)
     private LocalDateTime applyEndTime;
 
     @Column(name = "created_at", nullable = false, updatable = false)
