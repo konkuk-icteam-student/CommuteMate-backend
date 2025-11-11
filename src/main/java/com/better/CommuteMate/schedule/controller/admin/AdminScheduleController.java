@@ -1,10 +1,13 @@
 package com.better.CommuteMate.schedule.controller.admin;
 
-import com.better.CommuteMate.schedule.application.MonthlyScheduleLimitService;
+import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleLimitCommand;
+import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
 import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitsResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SetMonthlyLimitRequest;
+import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyTermResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.SetApplyTermRequest;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminScheduleController {
 
-    private final MonthlyScheduleLimitService monthlyScheduleLimitService;
+    private final MonthlyScheduleConfigService monthlyScheduleConfigService;
 
     // 월별 스케줄 제한 설정
     @PostMapping("/monthly-limit")
@@ -28,7 +31,7 @@ public class AdminScheduleController {
             @RequestHeader(value = "userId", defaultValue = "1") Integer userId) {
         // @RequestHeader userId는 추후 인증로직이 추가되면 변경될 예정
 
-        MonthlyScheduleConfig result = monthlyScheduleLimitService.setMonthlyLimit(
+        MonthlyScheduleConfig result = monthlyScheduleConfigService.setMonthlyLimit(
                 MonthlyScheduleLimitCommand.from(
                         request.scheduleYear(),
                         request.scheduleMonth(),
@@ -50,7 +53,7 @@ public class AdminScheduleController {
             @PathVariable Integer year,
             @PathVariable Integer month) {
 
-        return monthlyScheduleLimitService.getMonthlyLimit(year, month)
+        return monthlyScheduleConfigService.getMonthlyLimit(year, month)
                 .map(limit -> ResponseEntity.ok(Response.of(
                         true,
                         "월별 스케줄 제한을 조회했습니다.",
@@ -66,12 +69,36 @@ public class AdminScheduleController {
     // 모든 월별 스케줄 제한 조회
     @GetMapping("/monthly-limits")
     public ResponseEntity<Response> getAllMonthlyLimits() {
-        List<MonthlyScheduleConfig> limits = monthlyScheduleLimitService.getAllMonthlyLimits();
+        List<MonthlyScheduleConfig> limits = monthlyScheduleConfigService.getAllMonthlyLimits();
 
         return ResponseEntity.ok(Response.of(
                 true,
                 "모든 월별 스케줄 제한을 조회했습니다.",
                 MonthlyLimitsResponse.from(limits)
+        ));
+    }
+
+    // 신청 기간 설정
+    @PostMapping("/set-apply-term")
+    public ResponseEntity<Response> setApplyTerm(
+            @RequestBody SetApplyTermRequest request,
+            @RequestHeader(value = "userId", defaultValue = "1") Integer userId) {
+        // @RequestHeader userId는 추후 인증로직이 추가되면 변경될 예정
+
+        MonthlyScheduleConfig result = monthlyScheduleConfigService.setApplyTerm(
+                SetApplyTermCommand.from(
+                        request.scheduleYear(),
+                        request.scheduleMonth(),
+                        request.applyStartTime(),
+                        request.applyEndTime(),
+                        userId
+                )
+        );
+
+        return ResponseEntity.status(HttpStatus.OK).body(Response.of(
+                true,
+                "신청 기간이 설정되었습니다.",
+                ApplyTermResponse.from(result)
         ));
     }
 }

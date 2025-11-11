@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface MonthlyScheduleLimitRepository extends JpaRepository<MonthlyScheduleConfig, Integer> {
+public interface MonthlyScheduleConfigRepository extends JpaRepository<MonthlyScheduleConfig, Integer> {
 
     Optional<MonthlyScheduleConfig> findByScheduleYearAndScheduleMonth(Integer scheduleYear, Integer scheduleMonth);
 }
