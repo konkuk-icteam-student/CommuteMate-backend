@@ -1,5 +1,6 @@
 package com.better.CommuteMate.domain.faq.repository;
 
+import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.category.entity.SubCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,10 +15,10 @@ public interface FaqRepository extends JpaRepository<Faq, Long> {
     List<Faq> findByTitleContaining(String keyword);
 
     // 특정 대분류(category) 기준으로 FAQ 조회
-    List<Faq> findByCategory(String category);
+    List<Faq> findByCategory(Category category);
 
     // 특정 소분류(SubCategory) 기준으로 FAQ 조회
-    List<Faq> findBySubCategoryEntity(SubCategory subCategory);
+    List<Faq> findBySubCategory(SubCategory subCategory);
 
     // 작성자 이름 기준으로 FAQ 조회
     List<Faq> findByWriterName(String writerName);
