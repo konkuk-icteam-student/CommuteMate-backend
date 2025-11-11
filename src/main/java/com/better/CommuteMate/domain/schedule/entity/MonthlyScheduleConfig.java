@@ -6,14 +6,14 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "monthly_schedule_limit",
+@Table(name = "monthly_schedule_config",
        uniqueConstraints = @UniqueConstraint(columnNames = {"schedule_year", "schedule_month"}))
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class MonthlyScheduleLimit {
+public class MonthlyScheduleConfig {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,6 +28,12 @@ public class MonthlyScheduleLimit {
 
     @Column(name = "max_concurrent", nullable = false)
     private Integer maxConcurrent;
+
+    @Column(name = "apply_start_time", nullable = false)
+    private LocalDateTime applyStartTime;
+
+    @Column(name = "apply_end_time", nullable = false)
+    private LocalDateTime applyEndTime;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

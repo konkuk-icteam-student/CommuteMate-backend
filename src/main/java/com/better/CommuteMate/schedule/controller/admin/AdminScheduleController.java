@@ -5,7 +5,7 @@ import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleLimitComm
 import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitsResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SetMonthlyLimitRequest;
-import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleLimit;
+import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,7 +28,7 @@ public class AdminScheduleController {
             @RequestHeader(value = "userId", defaultValue = "1") Integer userId) {
         // @RequestHeader userId는 추후 인증로직이 추가되면 변경될 예정
 
-        MonthlyScheduleLimit result = monthlyScheduleLimitService.setMonthlyLimit(
+        MonthlyScheduleConfig result = monthlyScheduleLimitService.setMonthlyLimit(
                 MonthlyScheduleLimitCommand.from(
                         request.scheduleYear(),
                         request.scheduleMonth(),
@@ -66,7 +66,7 @@ public class AdminScheduleController {
     // 모든 월별 스케줄 제한 조회
     @GetMapping("/monthly-limits")
     public ResponseEntity<Response> getAllMonthlyLimits() {
-        List<MonthlyScheduleLimit> limits = monthlyScheduleLimitService.getAllMonthlyLimits();
+        List<MonthlyScheduleConfig> limits = monthlyScheduleLimitService.getAllMonthlyLimits();
 
         return ResponseEntity.ok(Response.of(
                 true,

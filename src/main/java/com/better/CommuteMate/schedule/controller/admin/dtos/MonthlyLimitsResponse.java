@@ -1,6 +1,6 @@
 package com.better.CommuteMate.schedule.controller.admin.dtos;
 
-import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleLimit;
+import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,7 +21,7 @@ public class MonthlyLimitsResponse extends ResponseDetail {
         private final Integer month;
         private final Integer maxConcurrent;
 
-        public static MonthlyLimitItem from(MonthlyScheduleLimit limit) {
+        public static MonthlyLimitItem from(MonthlyScheduleConfig limit) {
             return MonthlyLimitItem.builder()
                     .year(limit.getScheduleYear())
                     .month(limit.getScheduleMonth())
@@ -30,7 +30,7 @@ public class MonthlyLimitsResponse extends ResponseDetail {
         }
     }
 
-    public static MonthlyLimitsResponse from(List<MonthlyScheduleLimit> limits) {
+    public static MonthlyLimitsResponse from(List<MonthlyScheduleConfig> limits) {
         return MonthlyLimitsResponse.builder()
                 .limits(limits.stream().map(MonthlyLimitItem::from).toList())
                 .build();
