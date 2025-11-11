@@ -16,7 +16,7 @@ public record WorkScheduleCommand(
                 .user(user)
                 .startTime(command.start())
                 .endTime(command.end())
-                .statusCode(CodeType.WS01)
+                .statusCode(CodeType.WS02)
                 .createdBy(user.getUserId())
                 .updatedBy(user.getUserId())
                 .build();
