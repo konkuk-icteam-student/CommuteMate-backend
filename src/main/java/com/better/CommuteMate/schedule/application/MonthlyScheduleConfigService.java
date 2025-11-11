@@ -37,11 +37,13 @@ public class MonthlyScheduleConfigService {
             limit.setUpdatedBy(command.userId());
             return monthlyScheduleConfigRepository.save(limit);
         } else {
-            // 신규 생성
+            // 신규 생성 - Command에서 계산된 기본 신청 기간 사용
             MonthlyScheduleConfig newLimit = MonthlyScheduleConfig.builder()
                     .scheduleYear(command.scheduleYear())
                     .scheduleMonth(command.scheduleMonth())
                     .maxConcurrent(command.maxConcurrent())
+                    .applyStartTime(command.applyStartTime())
+                    .applyEndTime(command.applyEndTime())
                     .createdBy(command.userId())
                     .updatedBy(command.userId())
                     .build();
@@ -95,4 +97,5 @@ public class MonthlyScheduleConfigService {
             return monthlyScheduleConfigRepository.save(newConfig);
         }
     }
+
 }
