@@ -7,16 +7,16 @@ import com.better.CommuteMate.global.code.CodeType;
 import java.time.LocalDateTime;
 
 public record WorkScheduleCommand(
-        String email,
+        Integer userID,
         LocalDateTime start,
         LocalDateTime end) {
 
-    public static WorkSchedule toEntity(WorkScheduleCommand command, User user) {
+    public static WorkSchedule toEntity(WorkScheduleCommand command, User user, CodeType codeType) {
         return WorkSchedule.builder()
                 .user(user)
                 .startTime(command.start())
                 .endTime(command.end())
-                .statusCode(CodeType.WS02)
+                .statusCode(codeType)
                 .createdBy(user.getUserId())
                 .updatedBy(user.getUserId())
                 .build();
