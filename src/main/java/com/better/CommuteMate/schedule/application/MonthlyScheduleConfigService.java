@@ -1,6 +1,6 @@
 package com.better.CommuteMate.schedule.application;
 
-import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleLimitCommand;
+import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
 import com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.application.exceptions.ScheduleConfigException;
@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +27,7 @@ public class MonthlyScheduleConfigService {
     private int DEFAULT_MAX_CONCURRENT_SCHEDULES;
 
     @Transactional
-    public MonthlyScheduleConfig setMonthlyLimit(MonthlyScheduleLimitCommand command) {
+    public MonthlyScheduleConfig setMonthlyLimit(MonthlyScheduleConfigCommand command) {
         Optional<MonthlyScheduleConfig> existingLimit = monthlyScheduleConfigRepository
                 .findByScheduleYearAndScheduleMonth(command.scheduleYear(), command.scheduleMonth());
 
@@ -57,6 +58,30 @@ public class MonthlyScheduleConfigService {
 
     public List<MonthlyScheduleConfig> getAllMonthlyLimits() {
         return monthlyScheduleConfigRepository.findAll();
+    }
+
+    /**
+     * 현재 시간이 신청 기간(applyStartTime ~ applyEndTime) 내인지 확인
+     *
+     * @return <b>신청 기간 내</b>면 true, <b>Entity가 없거나 범위 밖</b>이면 false
+     */
+    public boolean isCurrentlyInApplyTerm() {
+        LocalDateTime now = LocalDateTime.now();
+        int currentYear = now.getYear();
+        int currentMonth = now.getMonthValue();
+
+        Optional<MonthlyScheduleConfig> config = getMonthlyLimit(currentYear, currentMonth);
+
+        if (config.isEmpty()) {
+            return false;
+        }
+
+        MonthlyScheduleConfig monthlyConfig = config.get();
+        LocalDateTime applyStartTime = monthlyConfig.getApplyStartTime();
+        LocalDateTime applyEndTime = monthlyConfig.getApplyEndTime();
+
+        // 현재 시간이 신청 기간 내인지 확인
+        return now.isAfter(applyStartTime) && now.isBefore(applyEndTime);
     }
 
     @Transactional
