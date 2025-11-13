@@ -19,11 +19,11 @@ public class WorkScheduleController {
     private final ScheduleService scheduleService;
 
     @PostMapping("/apply")
-    public ResponseEntity<Response> applyWorkSchedule(@RequestBody ApplyWorkSchedule request, @RequestHeader String email) {
-        // @RequestHeader String email은 추후 인증로직이 추가되면 제거할 예정
+    public ResponseEntity<Response> applyWorkSchedule(@RequestBody ApplyWorkSchedule request, @RequestHeader Integer userId) {
+        // @RequestHeader int userID는 추후 인증로직이 추가되면 제거할 예정
         ApplyScheduleResultCommand applyResult = scheduleService.applyWorkSchedules(
                 request.slots().stream().map(slot -> new WorkScheduleCommand(
-                        email, slot.start(), slot.end()
+                        userId, slot.start(), slot.end()
                 )).toList()
         );
 

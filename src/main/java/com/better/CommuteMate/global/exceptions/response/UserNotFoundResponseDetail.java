@@ -7,10 +7,10 @@ import lombok.Getter;
 @Getter
 @Builder
 public class UserNotFoundResponseDetail extends ErrorResponseDetail {
-    String userEmail;
-    public static UserNotFoundResponseDetail of(String userEmail) {
+    Integer userID;
+    public static UserNotFoundResponseDetail of(Integer userId) {
         return UserNotFoundResponseDetail.builder()
-                .userEmail(userEmail)
+                .userID(userId)
                 .build();
     }
 }
