@@ -48,17 +48,18 @@ class ScheduleServiceTest {
     void applyWorkSchedules_AllSuccess() {
         // Given
         User mockUser = User.builder()
+                .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
         WorkScheduleCommand slot1 = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 12, 0)
         );
         WorkScheduleCommand slot2 = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 13, 0),
                 LocalDateTime.of(2023, 10, 1, 17, 0)
         );
@@ -66,7 +67,7 @@ class ScheduleServiceTest {
         List<WorkScheduleCommand> slots = List.of(slot1, slot2);
 
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mockUser));
+        when(userRepository.findByUserId(1)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When
@@ -76,7 +77,7 @@ class ScheduleServiceTest {
         assertThat(result.success()).hasSize(2);
         assertThat(result.fail()).isEmpty();
         verify(workSchedulesRepository, times(2)).save(any(WorkSchedule.class));
-        verify(userRepository, times(2)).findByEmail("test@example.com");
+        verify(userRepository, times(2)).findByUserId(1);
     }
 
     @Test
@@ -84,12 +85,12 @@ class ScheduleServiceTest {
     void applyWorkSchedules_AllFailure() {
         // Given
         WorkScheduleCommand slot1 = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 12, 0)
         );
         WorkScheduleCommand slot2 = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 13, 0),
                 LocalDateTime.of(2023, 10, 1, 17, 0)
         );
@@ -103,7 +104,7 @@ class ScheduleServiceTest {
                 .isInstanceOf(ScheduleAllFailureException.class);
 
         verify(workSchedulesRepository, never()).save(any());
-        verify(userRepository, never()).findByEmail(anyString());
+        verify(userRepository, never()).findByUserId(any(Integer.class));
     }
 
     @Test
@@ -111,17 +112,18 @@ class ScheduleServiceTest {
     void applyWorkSchedules_PartialFailure() {
         // Given
         User mockUser = User.builder()
+                .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
         WorkScheduleCommand slot1 = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 12, 0)
         );
         WorkScheduleCommand slot2 = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 13, 0),
                 LocalDateTime.of(2023, 10, 1, 17, 0)
         );
@@ -130,7 +132,7 @@ class ScheduleServiceTest {
 
         when(scheduleValidator.isScheduleInsertable(slot1)).thenReturn(true);
         when(scheduleValidator.isScheduleInsertable(slot2)).thenReturn(false);
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mockUser));
+        when(userRepository.findByUserId(1)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When & Then
@@ -138,15 +140,15 @@ class ScheduleServiceTest {
                 .isInstanceOf(SchedulePartialFailureException.class);
 
         verify(workSchedulesRepository, times(1)).save(any());
-        verify(userRepository, times(1)).findByEmail("test@example.com");
+        verify(userRepository, times(1)).findByUserId(1);
     }
 
     @Test
-    @DisplayName("존재하지 않는 사용자 이메일로 일정 등록 시도 - UserNotFoundException 발생")
+    @DisplayName("존재하지 않는 사용자 ID로 일정 등록 시도 - UserNotFoundException 발생")
     void applyWorkSchedules_UserNotFound() {
         // Given
         WorkScheduleCommand slot = new WorkScheduleCommand(
-                "nonexistent@example.com",
+                999,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 12, 0)
         );
@@ -154,14 +156,14 @@ class ScheduleServiceTest {
         List<WorkScheduleCommand> slots = List.of(slot);
 
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+        when(userRepository.findByUserId(999)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
                 .isInstanceOf(UserNotFoundException.class);
 
         verify(workSchedulesRepository, never()).save(any());
-        verify(userRepository, times(1)).findByEmail("nonexistent@example.com");
+        verify(userRepository, times(1)).findByUserId(999);
     }
 
     @Test
@@ -175,7 +177,7 @@ class ScheduleServiceTest {
                 .isInstanceOf(ScheduleAllFailureException.class);
 
         verify(workSchedulesRepository, never()).save(any());
-        verify(userRepository, never()).findByEmail(anyString());
+        verify(userRepository, never()).findByUserId(any(Integer.class));
         verify(scheduleValidator, never()).isScheduleInsertable(any());
     }
 
@@ -184,24 +186,25 @@ class ScheduleServiceTest {
     void applyWorkSchedules_SameUserMultipleSlots() {
         // Given
         User mockUser = User.builder()
+                .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
         List<WorkScheduleCommand> slots = List.of(
-                new WorkScheduleCommand("test@example.com",
+                new WorkScheduleCommand(1,
                         LocalDateTime.of(2023, 10, 1, 9, 0),
                         LocalDateTime.of(2023, 10, 1, 10, 30)),
-                new WorkScheduleCommand("test@example.com",
+                new WorkScheduleCommand(1,
                         LocalDateTime.of(2023, 10, 1, 11, 0),
                         LocalDateTime.of(2023, 10, 1, 12, 30)),
-                new WorkScheduleCommand("test@example.com",
+                new WorkScheduleCommand(1,
                         LocalDateTime.of(2023, 10, 1, 14, 0),
                         LocalDateTime.of(2023, 10, 1, 16, 0))
         );
 
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mockUser));
+        when(userRepository.findByUserId(1)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When
@@ -211,7 +214,7 @@ class ScheduleServiceTest {
         assertThat(result.success()).hasSize(3);
         assertThat(result.fail()).isEmpty();
         verify(workSchedulesRepository, times(3)).save(any(WorkSchedule.class));
-        verify(userRepository, times(3)).findByEmail("test@example.com");
+        verify(userRepository, times(3)).findByUserId(1);
     }
 
     @Test
@@ -219,22 +222,24 @@ class ScheduleServiceTest {
     void applyWorkSchedules_DifferentUsers() {
         // Given
         User user1 = User.builder()
+                .userId(1)
                 .email("user1@example.com")
                 .name("User 1")
                 .build();
 
         User user2 = User.builder()
+                .userId(2)
                 .email("user2@example.com")
                 .name("User 2")
                 .build();
 
         WorkScheduleCommand slot1 = new WorkScheduleCommand(
-                "user1@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 12, 0)
         );
         WorkScheduleCommand slot2 = new WorkScheduleCommand(
-                "user2@example.com",
+                2,
                 LocalDateTime.of(2023, 10, 1, 13, 0),
                 LocalDateTime.of(2023, 10, 1, 17, 0)
         );
@@ -242,8 +247,8 @@ class ScheduleServiceTest {
         List<WorkScheduleCommand> slots = List.of(slot1, slot2);
 
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
-        when(userRepository.findByEmail("user1@example.com")).thenReturn(Optional.of(user1));
-        when(userRepository.findByEmail("user2@example.com")).thenReturn(Optional.of(user2));
+        when(userRepository.findByUserId(1)).thenReturn(Optional.of(user1));
+        when(userRepository.findByUserId(2)).thenReturn(Optional.of(user2));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When
@@ -253,8 +258,8 @@ class ScheduleServiceTest {
         assertThat(result.success()).hasSize(2);
         assertThat(result.fail()).isEmpty();
         verify(workSchedulesRepository, times(2)).save(any(WorkSchedule.class));
-        verify(userRepository, times(1)).findByEmail("user1@example.com");
-        verify(userRepository, times(1)).findByEmail("user2@example.com");
+        verify(userRepository, times(1)).findByUserId(1);
+        verify(userRepository, times(1)).findByUserId(2);
     }
 
     @Test
@@ -262,17 +267,18 @@ class ScheduleServiceTest {
     void applyWorkSchedules_MixedUserExistence() {
         // Given
         User user1 = User.builder()
+                .userId(1)
                 .email("user1@example.com")
                 .name("User 1")
                 .build();
 
         WorkScheduleCommand slot1 = new WorkScheduleCommand(
-                "user1@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 12, 0)
         );
         WorkScheduleCommand slot2 = new WorkScheduleCommand(
-                "nonexistent@example.com",
+                999,
                 LocalDateTime.of(2023, 10, 1, 13, 0),
                 LocalDateTime.of(2023, 10, 1, 17, 0)
         );
@@ -280,8 +286,8 @@ class ScheduleServiceTest {
         List<WorkScheduleCommand> slots = List.of(slot1, slot2);
 
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
-        when(userRepository.findByEmail("user1@example.com")).thenReturn(Optional.of(user1));
-        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
+        when(userRepository.findByUserId(1)).thenReturn(Optional.of(user1));
+        when(userRepository.findByUserId(999)).thenReturn(Optional.empty());
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When & Then
@@ -289,8 +295,8 @@ class ScheduleServiceTest {
                 .isInstanceOf(UserNotFoundException.class);
 
         verify(workSchedulesRepository, times(1)).save(any());
-        verify(userRepository, times(1)).findByEmail("user1@example.com");
-        verify(userRepository, times(1)).findByEmail("nonexistent@example.com");
+        verify(userRepository, times(1)).findByUserId(1);
+        verify(userRepository, times(1)).findByUserId(999);
     }
 
     @Test
@@ -298,17 +304,18 @@ class ScheduleServiceTest {
     void applyWorkSchedules_SameUserSameTimeSlot() {
         // Given
         User mockUser = User.builder()
+                .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
         WorkScheduleCommand slot1 = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 12, 0)
         );
         WorkScheduleCommand slot2 = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 12, 0)
         );
@@ -317,7 +324,7 @@ class ScheduleServiceTest {
 
         // slot1과 slot2가 동일한 값이므로 순차적으로 반환하도록 설정
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true, false);
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mockUser));
+        when(userRepository.findByUserId(1)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When & Then
@@ -325,7 +332,7 @@ class ScheduleServiceTest {
                 .isInstanceOf(SchedulePartialFailureException.class);
 
         verify(workSchedulesRepository, times(1)).save(any());
-        verify(userRepository, times(1)).findByEmail("test@example.com");
+        verify(userRepository, times(1)).findByUserId(1);
     }
 
     @Test
@@ -333,21 +340,22 @@ class ScheduleServiceTest {
     void applyWorkSchedules_ComplexFailurePattern() {
         // Given
         User mockUser = User.builder()
+                .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
         List<WorkScheduleCommand> slots = List.of(
-                new WorkScheduleCommand("test@example.com",
+                new WorkScheduleCommand(1,
                         LocalDateTime.of(2023, 10, 1, 9, 0),
                         LocalDateTime.of(2023, 10, 1, 10, 0)),
-                new WorkScheduleCommand("test@example.com",
+                new WorkScheduleCommand(1,
                         LocalDateTime.of(2023, 10, 1, 11, 0),
                         LocalDateTime.of(2023, 10, 1, 12, 0)),
-                new WorkScheduleCommand("test@example.com",
+                new WorkScheduleCommand(1,
                         LocalDateTime.of(2023, 10, 1, 13, 0),
                         LocalDateTime.of(2023, 10, 1, 14, 0)),
-                new WorkScheduleCommand("test@example.com",
+                new WorkScheduleCommand(1,
                         LocalDateTime.of(2023, 10, 1, 15, 0),
                         LocalDateTime.of(2023, 10, 1, 16, 0))
         );
@@ -356,7 +364,7 @@ class ScheduleServiceTest {
         when(scheduleValidator.isScheduleInsertable(slots.get(1))).thenReturn(false);
         when(scheduleValidator.isScheduleInsertable(slots.get(2))).thenReturn(true);
         when(scheduleValidator.isScheduleInsertable(slots.get(3))).thenReturn(false);
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mockUser));
+        when(userRepository.findByUserId(1)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When & Then

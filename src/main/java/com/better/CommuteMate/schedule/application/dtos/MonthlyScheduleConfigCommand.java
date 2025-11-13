@@ -3,7 +3,7 @@ package com.better.CommuteMate.schedule.application.dtos;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 
-public record MonthlyScheduleLimitCommand(
+public record MonthlyScheduleConfigCommand(
         Integer scheduleYear,
         Integer scheduleMonth,
         Integer maxConcurrent,
@@ -11,7 +11,7 @@ public record MonthlyScheduleLimitCommand(
         LocalDateTime applyEndTime,
         Integer userId) {
 
-    public static MonthlyScheduleLimitCommand from(
+    public static MonthlyScheduleConfigCommand from(
             Integer scheduleYear,
             Integer scheduleMonth,
             Integer maxConcurrent,
@@ -20,7 +20,7 @@ public record MonthlyScheduleLimitCommand(
         LocalDateTime applyStartTime = getDefaultApplyStartTime(scheduleYear, scheduleMonth);
         LocalDateTime applyEndTime = getDefaultApplyEndTime(scheduleYear, scheduleMonth);
 
-        return new MonthlyScheduleLimitCommand(
+        return new MonthlyScheduleConfigCommand(
                 scheduleYear,
                 scheduleMonth,
                 maxConcurrent,

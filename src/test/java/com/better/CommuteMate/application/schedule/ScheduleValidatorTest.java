@@ -50,7 +50,7 @@ class ScheduleValidatorTest {
                 .thenReturn(Optional.empty());
 
         testUser = User.builder()
-                .email("test@example.com")
+                .userId(1)
                 .name("Test User")
                 .build();
     }
@@ -60,7 +60,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_NoOverlapping_ReturnsTrue() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 11, 0)
         );
@@ -79,7 +79,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_OverlappingBelowLimit_ReturnsTrue() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 11, 0)
         );
@@ -103,7 +103,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_OverlappingExceedsLimit_ReturnsFalse() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 11, 0)
         );
@@ -128,7 +128,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_LongScheduleWithMiddleOverlap_ReturnsFalse() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 13, 0)
         );
@@ -153,7 +153,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_SameStartAndEndTime_ReturnsTrue() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 9, 0)
         );
@@ -172,7 +172,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_ThirtyMinuteCheckpoints() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 10, 0)
         );
@@ -201,7 +201,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_ExactlyAtLimit_ReturnsFalse() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 10, 0)
         );
@@ -246,7 +246,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_OneBelowLimit_ReturnsTrue() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 10, 0)
         );
@@ -271,7 +271,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_NonStandardTime_ReturnsTrue() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 7),
                 LocalDateTime.of(2023, 10, 1, 10, 23)
         );
@@ -295,7 +295,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_NonStandardTimeExceedsLimit_ReturnsFalse() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 7),
                 LocalDateTime.of(2023, 10, 1, 10, 23)
         );
@@ -322,7 +322,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_BoundaryCheckpoint() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 9, 30)
         );
@@ -347,7 +347,7 @@ class ScheduleValidatorTest {
     void isScheduleInsertable_OneCheckpointExceeds_ReturnsFalse() {
         // Given
         WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                "test@example.com",
+                1,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
                 LocalDateTime.of(2023, 10, 1, 11, 0)
         );
