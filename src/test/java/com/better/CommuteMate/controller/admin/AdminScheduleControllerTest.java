@@ -4,7 +4,7 @@ import com.better.CommuteMate.auth.application.CustomUserDetailsService;
 import com.better.CommuteMate.auth.application.TokenBlacklistService;
 import com.better.CommuteMate.global.security.jwt.JwtTokenProvider;
 import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
-import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleLimitCommand;
+import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
 import com.better.CommuteMate.schedule.controller.admin.AdminScheduleController;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SetMonthlyLimitRequest;
@@ -68,7 +68,7 @@ class AdminScheduleControllerTest {
                 .updatedBy(1)
                 .build();
 
-        when(monthlyScheduleConfigService.setMonthlyLimit(any(MonthlyScheduleLimitCommand.class)))
+        when(monthlyScheduleConfigService.setMonthlyLimit(any(MonthlyScheduleConfigCommand.class)))
                 .thenReturn(savedLimit);
 
         // When & Then
@@ -84,7 +84,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.details.maxConcurrent").value(6));
 
         verify(monthlyScheduleConfigService, times(1))
-                .setMonthlyLimit(any(MonthlyScheduleLimitCommand.class));
+                .setMonthlyLimit(any(MonthlyScheduleConfigCommand.class));
     }
 
     @Test
@@ -102,7 +102,7 @@ class AdminScheduleControllerTest {
                 .updatedBy(1)
                 .build();
 
-        when(monthlyScheduleConfigService.setMonthlyLimit(any(MonthlyScheduleLimitCommand.class)))
+        when(monthlyScheduleConfigService.setMonthlyLimit(any(MonthlyScheduleConfigCommand.class)))
                 .thenReturn(updatedLimit);
 
         // When & Then
@@ -116,7 +116,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.details.maxConcurrent").value(8));
 
         verify(monthlyScheduleConfigService, times(1))
-                .setMonthlyLimit(any(MonthlyScheduleLimitCommand.class));
+                .setMonthlyLimit(any(MonthlyScheduleConfigCommand.class));
     }
 
     @Test
