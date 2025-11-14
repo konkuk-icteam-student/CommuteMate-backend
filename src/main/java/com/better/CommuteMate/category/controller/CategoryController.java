@@ -62,4 +62,25 @@ public class CategoryController {
     ) {
         return ResponseEntity.ok(categoryService.updateCategory(categoryId, request));
     }
+
+    @Operation(
+            summary = "category 삭제",
+            description = """
+                    category를 삭제할 수 있습니다.
+                    *해당 category에 속한 subCategory가 있을 경우, 삭제 불가 메시지가 응답으로 전달됩니다.
+                    """
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "400", description = "삭제 불가 (subCategory 존재)"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 categoryId"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @DeleteMapping("/{categoryId}")
+    public ResponseEntity<Void> deleteCategory(
+            @PathVariable Long categoryId
+    ) {
+        categoryService.deleteCategory(categoryId);
+        return ResponseEntity.ok().build();
+    }
 }

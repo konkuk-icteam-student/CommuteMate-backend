@@ -41,4 +41,16 @@ public class CategoryService {
         category.setName(request.categoryName());
         return new PutCategoryUpdateResponse(category.getId(), category.getName());
     }
+    
+    @Transactional
+    public void deleteCategory(Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+
+        if (!category.getSubCategories().isEmpty()) {
+            throw new CategoryException(CategoryErrorCode.CATEGORY_HAS_SUBCATEGORY);
+        }
+
+        categoryRepository.delete(category);
+    }
 }
