@@ -1,4 +1,4 @@
-package com.better.CommuteMate.category.application.dto;
+package com.better.CommuteMate.category.application.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

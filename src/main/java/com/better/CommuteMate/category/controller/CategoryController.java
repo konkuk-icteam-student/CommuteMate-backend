@@ -1,10 +1,11 @@
 package com.better.CommuteMate.category.controller;
 
 import com.better.CommuteMate.category.application.CategoryService;
-import com.better.CommuteMate.category.application.dto.PostCategoryRegisterRequest;
-import com.better.CommuteMate.category.application.dto.PostCategoryRegisterResponse;
-import com.better.CommuteMate.category.application.dto.PutCategoryUpdateRequest;
-import com.better.CommuteMate.category.application.dto.PutCategoryUpdateResponse;
+import com.better.CommuteMate.category.application.dto.request.PostCategoryRegisterRequest;
+import com.better.CommuteMate.category.application.dto.response.PostCategoryRegisterResponse;
+import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
+import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
+import com.better.CommuteMate.global.controller.dtos.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -66,21 +67,23 @@ public class CategoryController {
     @Operation(
             summary = "category 삭제",
             description = """
-                    category를 삭제할 수 있습니다.
-                    *해당 category에 속한 subCategory가 있을 경우, 삭제 불가 메시지가 응답으로 전달됩니다.
-                    """
+                category를 삭제할 수 있습니다.
+                *해당 category에 속한 subCategory가 있을 경우, 삭제 불가 메시지가 응답으로 전달됩니다.
+                """
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "삭제 성공"),
-            @ApiResponse(responseCode = "400", description = "삭제 불가 (subCategory 존재)"),
+            @ApiResponse(responseCode = "409", description = "삭제 불가 (subCategory 존재)"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 categoryId"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @DeleteMapping("/{categoryId}")
-    public ResponseEntity<Void> deleteCategory(
+    public ResponseEntity<Response> deleteCategory(
             @PathVariable Long categoryId
     ) {
         categoryService.deleteCategory(categoryId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(
+                new Response(true, "성공적으로 삭제되었습니다.", null)
+        );
     }
 }

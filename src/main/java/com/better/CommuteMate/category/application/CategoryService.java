@@ -1,9 +1,9 @@
 package com.better.CommuteMate.category.application;
 
-import com.better.CommuteMate.category.application.dto.PostCategoryRegisterRequest;
-import com.better.CommuteMate.category.application.dto.PostCategoryRegisterResponse;
-import com.better.CommuteMate.category.application.dto.PutCategoryUpdateRequest;
-import com.better.CommuteMate.category.application.dto.PutCategoryUpdateResponse;
+import com.better.CommuteMate.category.application.dto.request.PostCategoryRegisterRequest;
+import com.better.CommuteMate.category.application.dto.response.PostCategoryRegisterResponse;
+import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
+import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
 import com.better.CommuteMate.global.exceptions.CategoryException;
