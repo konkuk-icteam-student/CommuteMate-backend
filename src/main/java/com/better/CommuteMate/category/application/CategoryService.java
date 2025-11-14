@@ -21,11 +21,17 @@ public class CategoryService {
 
     @Transactional
     public PostCategoryRegisterResponse registerCategory(PostCategoryRegisterRequest request) {
+
+        if (categoryRepository.existsByName(request.categoryName())) {
+            throw new CategoryException(CategoryErrorCode.CATEGORY_ALREADY_EXISTS);
+        }
+
         Category category = Category.builder()
                 .name(request.categoryName())
                 .build();
 
         Category saved = categoryRepository.save(category);
+
         return new PostCategoryRegisterResponse(saved.getId());
     }
 
@@ -41,7 +47,7 @@ public class CategoryService {
         category.setName(request.categoryName());
         return new PutCategoryUpdateResponse(category.getId(), category.getName());
     }
-    
+
     @Transactional
     public void deleteCategory(Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
