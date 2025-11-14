@@ -1,6 +1,7 @@
 package com.better.CommuteMate.category.application;
 
 import com.better.CommuteMate.category.application.dto.request.PostCategoryRegisterRequest;
+import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
 import com.better.CommuteMate.category.application.dto.response.PostCategoryRegisterResponse;
 import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
 import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
@@ -11,6 +12,9 @@ import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +50,18 @@ public class CategoryService {
 
         category.setName(request.categoryName());
         return new PutCategoryUpdateResponse(category.getId(), category.getName());
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetCategoryListResponse> getAllCategories() {
+        List<Category> categories = categoryRepository.findAll();
+
+        return categories.stream()
+                .map(category -> new GetCategoryListResponse(
+                        category.getId(),
+                        category.getName()
+                ))
+                .collect(Collectors.toList());
     }
 
     @Transactional

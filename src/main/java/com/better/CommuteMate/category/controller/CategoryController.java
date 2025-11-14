@@ -2,6 +2,8 @@ package com.better.CommuteMate.category.controller;
 
 import com.better.CommuteMate.category.application.CategoryService;
 import com.better.CommuteMate.category.application.dto.request.PostCategoryRegisterRequest;
+import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
+import com.better.CommuteMate.category.application.dto.response.GetCategoryListWrapper;
 import com.better.CommuteMate.category.application.dto.response.PostCategoryRegisterResponse;
 import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
 import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
@@ -15,6 +17,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -62,6 +66,23 @@ public class CategoryController {
             @RequestBody PutCategoryUpdateRequest request
     ) {
         return ResponseEntity.ok(categoryService.updateCategory(categoryId, request));
+    }
+
+    @Operation(
+            summary = "category 전체 조회",
+            description = "전체 category(대분류)를 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = GetCategoryListResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    })
+    @GetMapping
+    public ResponseEntity<Response> getAllCategories() {
+        List<GetCategoryListResponse> list = categoryService.getAllCategories();
+        return ResponseEntity.ok(
+                new Response(true, "전체 카테고리 조회 성공", new GetCategoryListWrapper(list))
+        );
     }
 
     @Operation(
