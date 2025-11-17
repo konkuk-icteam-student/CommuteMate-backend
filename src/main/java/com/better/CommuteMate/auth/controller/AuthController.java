@@ -2,6 +2,8 @@ package com.better.CommuteMate.auth.controller;
 
 import com.better.CommuteMate.auth.application.AuthErrorCode;
 import com.better.CommuteMate.auth.controller.dto.RegisterRequest;
+import com.better.CommuteMate.auth.controller.dto.SendVerificationCodeRequest;
+import com.better.CommuteMate.auth.controller.dto.VerifyCodeRequest;
 import com.better.CommuteMate.auth.controller.dto.LoginRequest;
 import com.better.CommuteMate.auth.controller.dto.LoginResponse;
 import com.better.CommuteMate.auth.application.AuthService;
@@ -24,10 +26,22 @@ public class AuthController {
         this.authService = authService;
     }
 
+    @PostMapping("/send-verification-code")
+    public ResponseEntity<String> sendVerificationCode(@Valid @RequestBody SendVerificationCodeRequest request) {
+        authService.sendVerificationCode(request.getEmail());
+        return ResponseEntity.ok("인증번호가 이메일로 발송되었습니다. (유효시간: 5분)");
+    }
+
+    @PostMapping("/verify-code")
+    public ResponseEntity<String> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
+        authService.verifyCode(request.getEmail(), request.getCode());
+        return ResponseEntity.ok("이메일 인증이 완료되었습니다. 회원가입을 진행해주세요.");
+    }
+
     @PostMapping("/register")
     public ResponseEntity<User> register(@Valid @RequestBody RegisterRequest request) {
         User user = authService.register(request);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
     @PostMapping("/login")
