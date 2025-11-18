@@ -37,6 +37,6 @@ public enum ScheduleErrorCode implements CustomErrorCode {
 
     @Override
     public HttpStatus getStatus() {
-        return null;
+        return this.status;
     }
 }
