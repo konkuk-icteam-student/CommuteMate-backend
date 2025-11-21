@@ -9,7 +9,9 @@ import com.better.CommuteMate.global.exceptions.SubCategoryException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.SubcategoryErrorCode;
 import com.better.CommuteMate.subcategory.application.dto.request.PostSubCategoryRegisterRequest;
+import com.better.CommuteMate.subcategory.application.dto.request.PostSubCategoryUpdateNameRequest;
 import com.better.CommuteMate.subcategory.application.dto.response.PostSubCategoryRegisterResponse;
+import com.better.CommuteMate.subcategory.application.dto.response.PostSubCategoryUpdateNameResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +41,23 @@ public class SubCategoryService {
         subCategoryRepository.save(subCategory);
 
         return new PostSubCategoryRegisterResponse(subCategory.getId());
+    }
+
+    public PostSubCategoryUpdateNameResponse updateSubCategoryName(Long subCategoryId, PostSubCategoryUpdateNameRequest request) {
+
+        SubCategory subCategory = subCategoryRepository.findById(subCategoryId)
+                .orElseThrow(() -> new SubCategoryException(SubcategoryErrorCode.SUBCATEGORY_NOT_FOUND));
+
+        if (subCategoryRepository.existsByCategoryIdAndName(subCategory.getCategory().getId(), request.subCategoryName())) {
+            throw new SubCategoryException(SubcategoryErrorCode.SUBCATEGORY_ALREADY_EXISTS);
+        }
+
+        subCategory.updateName(request.subCategoryName());
+
+        return new PostSubCategoryUpdateNameResponse(
+                subCategory.getId(),
+                subCategory.getName()
+        );
     }
 
 }
