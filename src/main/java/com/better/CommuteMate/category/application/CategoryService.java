@@ -23,7 +23,6 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    @Transactional
     public PostCategoryRegisterResponse registerCategory(PostCategoryRegisterRequest request) {
 
         if (categoryRepository.existsByName(request.categoryName())) {
@@ -39,7 +38,6 @@ public class CategoryService {
         return new PostCategoryRegisterResponse(saved.getId());
     }
 
-    @Transactional
     public PutCategoryUpdateResponse updateCategory(Long categoryId, PutCategoryUpdateRequest request) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
@@ -48,7 +46,7 @@ public class CategoryService {
             throw new CategoryException(CategoryErrorCode.CATEGORY_ALREADY_EXISTS);
         }
 
-        category.setName(request.categoryName());
+        category.updateName(request.categoryName());
         return new PutCategoryUpdateResponse(category.getId(), category.getName());
     }
 
@@ -64,7 +62,6 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
     public void deleteCategory(Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
