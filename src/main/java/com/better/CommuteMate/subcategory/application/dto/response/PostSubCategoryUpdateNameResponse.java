@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 @Getter
+@Schema(description = "SubCategory 이름 수정 응답 DTO")
 public class PostSubCategoryUpdateNameResponse extends ResponseDetail {
 
     @Schema(description = "변경된 소분류 ID")
