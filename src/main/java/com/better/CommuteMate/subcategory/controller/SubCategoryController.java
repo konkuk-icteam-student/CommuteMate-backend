@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -61,7 +62,7 @@ public class SubCategoryController {
             @ApiResponse(responseCode = "409", description = "같은 대분류에 이미 존재하는 이름"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
-    @PutMapping("/{subCategoryId}/name")
+    @PatchMapping("/{subCategoryId}/name")
     public ResponseEntity<PostSubCategoryUpdateNameResponse> updateSubCategoryName(
             @PathVariable Long subCategoryId,
             @RequestBody PostSubCategoryUpdateNameRequest request
