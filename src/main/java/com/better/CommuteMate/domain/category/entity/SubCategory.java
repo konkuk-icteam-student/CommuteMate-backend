@@ -9,7 +9,6 @@ import java.util.List;
 @Entity
 @Table(name = "sub_category")
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -35,4 +34,8 @@ public class SubCategory {
     // 이 subCategory를 어떤 users가 담당하는지 저장하는 리스트
     @OneToMany(mappedBy = "subCategory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ManagerSubCategory> managers = new ArrayList<>();
+
+    public void updateName(String newName) {
+        this.name = newName;
+    }
 }
