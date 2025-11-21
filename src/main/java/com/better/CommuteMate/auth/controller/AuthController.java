@@ -1,6 +1,5 @@
 package com.better.CommuteMate.auth.controller;
 
-import com.better.CommuteMate.auth.application.AuthErrorCode;
 import com.better.CommuteMate.auth.controller.dto.RegisterRequest;
 import com.better.CommuteMate.auth.controller.dto.SendVerificationCodeRequest;
 import com.better.CommuteMate.auth.controller.dto.VerifyCodeRequest;
@@ -9,6 +8,8 @@ import com.better.CommuteMate.auth.controller.dto.LoginResponse;
 import com.better.CommuteMate.auth.application.AuthService;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.auth.application.dto.AuthTokens;
+import com.better.CommuteMate.global.exceptions.AuthException;
+import com.better.CommuteMate.global.exceptions.error.AuthErrorCode;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.HttpStatus;
@@ -81,7 +82,7 @@ public class AuthController {
     public ResponseEntity<LoginResponse> refresh(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            throw new IllegalArgumentException(AuthErrorCode.AUTHORIZATION_HEADER_MISSING.getMessage());
+            throw new AuthException(AuthErrorCode.AUTHORIZATION_HEADER_MISSING);
         }
         String refreshToken = header.substring(7);
         AuthTokens tokens = authService.refresh(refreshToken);
