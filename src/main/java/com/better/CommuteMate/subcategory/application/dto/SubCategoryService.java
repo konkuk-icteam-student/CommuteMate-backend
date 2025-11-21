@@ -12,6 +12,7 @@ import com.better.CommuteMate.global.exceptions.error.SubcategoryErrorCode;
 import com.better.CommuteMate.subcategory.application.dto.request.PostSubCategoryRegisterRequest;
 import com.better.CommuteMate.subcategory.application.dto.request.PostSubCategoryUpdateNameRequest;
 import com.better.CommuteMate.subcategory.application.dto.response.DeleteSubCategoryResponse;
+import com.better.CommuteMate.subcategory.application.dto.response.PatchFavoriteSubCategoryResponse;
 import com.better.CommuteMate.subcategory.application.dto.response.PostSubCategoryRegisterResponse;
 import com.better.CommuteMate.subcategory.application.dto.response.PostSubCategoryUpdateNameResponse;
 import lombok.RequiredArgsConstructor;
@@ -72,4 +73,14 @@ public class SubCategoryService {
 
         return new DeleteSubCategoryResponse(subCategoryId);
     }
+
+    public PatchFavoriteSubCategoryResponse updateFavorite(Long subCategoryId, boolean favorite) {
+        SubCategory subCategory = subCategoryRepository.findById(subCategoryId)
+                .orElseThrow(() -> new SubCategoryException(SubcategoryErrorCode.SUBCATEGORY_NOT_FOUND));
+
+        subCategory.updateFavorite(favorite);
+
+        return new PatchFavoriteSubCategoryResponse(subCategory.getId(), subCategory.isFavorite());
+    }
+
 }

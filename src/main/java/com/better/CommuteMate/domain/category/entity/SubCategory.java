@@ -35,7 +35,11 @@ public class SubCategory {
     @OneToMany(mappedBy = "subCategory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ManagerSubCategory> managers = new ArrayList<>();
 
-    public void updateName(String newName) {
-        this.name = newName;
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updateFavorite(boolean favorite) {
+        this.favorite = favorite;
     }
 }
