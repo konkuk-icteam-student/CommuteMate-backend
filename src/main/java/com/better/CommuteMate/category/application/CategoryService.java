@@ -48,7 +48,7 @@ public class CategoryService {
             throw new CategoryException(CategoryErrorCode.CATEGORY_ALREADY_EXISTS);
         }
 
-        category.setName(request.categoryName());
+        category.updateName(request.categoryName());
         return new PutCategoryUpdateResponse(category.getId(), category.getName());
     }
 
