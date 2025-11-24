@@ -16,6 +16,23 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm
 
+  # Gmail SMTP 설정
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}  # Gmail 계정 (예: your-email@gmail.com)
+    password: ${MAIL_PASSWORD}  # Gmail 앱 비밀번호 (16자리)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
   jpa:
     database-platform: ${JPA_DATABASE_PLATFORM:org.hibernate.dialect.H2Dialect}
     hibernate:
@@ -24,13 +41,12 @@ spring:
       # update: 기존 스키마 유지하며 변경사항만 반영 (PostgreSQL용)
     show-sql: true
 app:
+  # 프론트엔드 URL (이메일 인증 링크에 사용)
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:3000}
   schedule:
     concurrent:
       max: ${SCHEDULE_CONCURRENT_MAX:5}
-      ddl-auto: ${JPA_DDL_AUTO:create-drop}
-      # create-drop: 시작 시 생성, 종료 시 삭제 (H2용)
-      # update: 기존 스키마 유지하며 변경사항만 반영 (PostgreSQL용)
-    show-sql: true
 
 jwt:
   secret: ${JWT_SECRET:your-secret-key-change-in-production}

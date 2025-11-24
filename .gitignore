@@ -6,6 +6,7 @@ out/
 # IDE
 .idea/
 *.iml
+CLAUDE.md
 
 # Logs & temp
 *.log
@@ -19,6 +20,7 @@ Thumbs.db
 # Local env & secrets
 .env
 .env.*
+!.env.example
 src/main/resources/application-local.yml
 src/main/resources/application-*.local.yml
 *.jks
