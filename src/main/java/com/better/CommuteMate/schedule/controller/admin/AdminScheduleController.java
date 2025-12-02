@@ -1,10 +1,13 @@
 package com.better.CommuteMate.schedule.controller.admin;
 
+import com.better.CommuteMate.global.code.CodeType;
+import com.better.CommuteMate.schedule.application.AdminScheduleService;
 import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
 import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitsResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessChangeRequestRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SetMonthlyLimitRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyTermResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SetApplyTermRequest;
@@ -23,6 +26,7 @@ import java.util.List;
 public class AdminScheduleController {
 
     private final MonthlyScheduleConfigService monthlyScheduleConfigService;
+    private final AdminScheduleService adminScheduleService;
 
     // 월별 스케줄 제한 설정
     @PostMapping("/monthly-limit")
@@ -99,6 +103,31 @@ public class AdminScheduleController {
                 true,
                 "신청 기간이 설정되었습니다.",
                 ApplyTermResponse.from(result)
+        ));
+    }
+
+    // 변경 요청 처리 (승인/거부)
+    @PostMapping("/process-change-request")
+    public ResponseEntity<Response> processChangeRequest(
+            @RequestBody ProcessChangeRequestRequest request,
+            @RequestHeader(value = "userId", defaultValue = "1") Integer adminId) {
+        // @RequestHeader userId는 추후 인증로직이 추가되면 변경될 예정
+
+        adminScheduleService.processChangeRequest(
+                request.requestId(),
+                request.statusCode(),
+                adminId
+        );
+
+        String message = request.statusCode()
+                .equals(CodeType.CS02)
+                ? "변경 요청이 승인되었습니다."
+                : "변경 요청이 거부되었습니다.";
+
+        return ResponseEntity.status(HttpStatus.OK).body(Response.of(
+                true,
+                message,
+                null
         ));
     }
 }
