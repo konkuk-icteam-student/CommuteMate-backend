@@ -6,6 +6,7 @@ import com.better.CommuteMate.schedule.controller.schedule.dtos.ApplyWorkSchedul
 import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.global.controller.dtos.Response;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.ModifyWorkScheduleDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +33,18 @@ public class WorkScheduleController {
                 "신청하신 일정이 모두 등록되었습니다.",
                 ApplyWorkScheduleResponseDetail.from(applyResult)
         ));
+    }
+    // 근무 수정
+    // 근무 취소는 schedule ID, 추가 근무 신청은 시간대로 받음
+    @PatchMapping("/modify")
+    public ResponseEntity<Response> modifyWorkSchedule(@RequestBody ModifyWorkScheduleDTO request, @RequestHeader Integer userId) {
+        // @RequestHeader int userID는 추후 인증로직이 추가되면 제거할 예정
+         scheduleService.modifyWorkSchedules(request, userId);
+         return ResponseEntity.status(HttpStatus.CREATED).body(Response.of(
+                true,
+                "신청하신 일정이 모두 수정(요청)되었습니다.",
+                null
+         ));
     }
 
 }
