@@ -33,6 +33,7 @@ public class WorkChangeRequest {
     @JoinColumn(name = "schedule_id", nullable = false)
     private WorkSchedule schedule;
 
+    // 요청 유형 코드 (CR01: 수정 요청, CR02: 삭제 요청 - 현재는 CR01만 사용)
     @Enumerated(EnumType.STRING)
     @Column(name = "type_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType typeCode;
@@ -40,6 +41,7 @@ public class WorkChangeRequest {
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;
 
+    // WorkChangeRequest 상태 코드(CS01: 대기, CS02: 승인, CS03: 거부)
     @Enumerated(EnumType.STRING)
     @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType statusCode;
