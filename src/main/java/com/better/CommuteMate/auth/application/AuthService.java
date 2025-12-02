@@ -9,12 +9,14 @@ import com.better.CommuteMate.global.exceptions.AuthException;
 import com.better.CommuteMate.global.exceptions.error.AuthErrorCode;
 import com.better.CommuteMate.global.security.jwt.JwtTokenProvider;
 import com.better.CommuteMate.auth.application.dto.AuthTokens;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -22,20 +24,6 @@ public class AuthService {
     private final TokenBlacklistService tokenBlacklistService;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final EmailService emailService;
-
-    public AuthService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtTokenProvider jwtTokenProvider,
-                       TokenBlacklistService tokenBlacklistService,
-                       EmailVerificationCodeRepository emailVerificationCodeRepository,
-                       EmailService emailService) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.tokenBlacklistService = tokenBlacklistService;
-        this.emailVerificationCodeRepository = emailVerificationCodeRepository;
-        this.emailService = emailService;
-    }
 
     /**
      * @param email 인증받을 이메일
