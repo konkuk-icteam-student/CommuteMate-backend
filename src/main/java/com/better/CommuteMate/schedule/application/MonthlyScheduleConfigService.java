@@ -61,16 +61,14 @@ public class MonthlyScheduleConfigService {
     }
 
     /**
-     * 현재 시간이 신청 기간(applyStartTime ~ applyEndTime) 내인지 확인
-     *
-     * @return <b>신청 기간 내</b>면 true, <b>Entity가 없거나 범위 밖</b>이면 false
+     * startTime 시간이 신청 기간(applyStartTime ~ applyEndTime) 내인지 확인
      */
-    public boolean isCurrentlyInApplyTerm() {
+    public boolean isCurrentlyInApplyTerm(LocalDateTime startTime) {
         LocalDateTime now = LocalDateTime.now();
-        int currentYear = now.getYear();
-        int currentMonth = now.getMonthValue();
+        int startTimeYear = startTime.getYear();
+        int startTimeMonth = startTime.getMonthValue();
 
-        Optional<MonthlyScheduleConfig> config = getMonthlyLimit(currentYear, currentMonth);
+        Optional<MonthlyScheduleConfig> config = getMonthlyLimit(startTimeYear, startTimeMonth);
 
         if (config.isEmpty()) {
             return false;
@@ -79,7 +77,6 @@ public class MonthlyScheduleConfigService {
         MonthlyScheduleConfig monthlyConfig = config.get();
         LocalDateTime applyStartTime = monthlyConfig.getApplyStartTime();
         LocalDateTime applyEndTime = monthlyConfig.getApplyEndTime();
-
         // 현재 시간이 신청 기간 내인지 확인
         return now.isAfter(applyStartTime) && now.isBefore(applyEndTime);
     }

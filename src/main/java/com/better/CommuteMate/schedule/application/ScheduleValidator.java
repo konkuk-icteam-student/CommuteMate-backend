@@ -39,7 +39,7 @@ public class ScheduleValidator {
         LocalTime endTime = slot.end().toLocalTime();
 
         LocalTime currentCheckPoint = startTime.plusMinutes(15);
-
+        // TODO:isDelete값이 false인 스케줄들 중에서, 15분 단위로 겹치는 스케줄이 최대 동시 스케줄 수를 초과하는지 확인
         while (currentCheckPoint.isBefore(endTime)) {
             LocalTime finalCheckPoint = currentCheckPoint;
 
