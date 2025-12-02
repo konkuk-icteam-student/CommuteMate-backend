@@ -6,9 +6,13 @@ import java.util.List;
 
 public record ApplyScheduleResultCommand(
         List<WorkScheduleDTO> success,
-        List<WorkScheduleDTO> fail
+        List<WorkScheduleDTO> fail,
+        List<Integer> failIds
 ) {
     public static ApplyScheduleResultCommand from(List<WorkScheduleDTO> success, List<WorkScheduleDTO> fail) {
-        return new ApplyScheduleResultCommand(success, fail);
+        return new ApplyScheduleResultCommand(success, fail,null);
+    }
+    public static ApplyScheduleResultCommand fromIds(List<WorkScheduleDTO> success, List<Integer> fail) {
+        return new ApplyScheduleResultCommand(success, null, fail);
     }
 }

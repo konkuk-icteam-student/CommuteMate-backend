@@ -3,6 +3,7 @@ package com.better.CommuteMate.schedule.application.dtos;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.code.CodeType;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
 
 import java.time.LocalDateTime;
 
@@ -20,6 +21,23 @@ public record WorkScheduleCommand(
                 .createdBy(user.getUserId())
                 .updatedBy(user.getUserId())
                 .build();
+    }
+    public static WorkSchedule toEntity(WorkScheduleDTO workSchedule, User user, CodeType codeType) {
+        return WorkSchedule.builder()
+                .user(user)
+                .startTime(workSchedule.start())
+                .endTime(workSchedule.end())
+                .statusCode(codeType)
+                .createdBy(user.getUserId())
+                .updatedBy(user.getUserId())
+                .build();
+    }
+    public static WorkScheduleCommand from(WorkScheduleDTO dto, Integer userID){
+        return new WorkScheduleCommand(
+                userID,
+                dto.start(),
+                dto.end()
+        );
     }
 
 }
