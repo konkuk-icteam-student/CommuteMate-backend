@@ -12,6 +12,7 @@ public enum CodeType {
     WS01("WS", "01", "REQUESTED", "신청"),
     WS02("WS", "02", "APPROVED", "승인"),
     WS03("WS", "03", "REJECTED", "반려"),
+    WS04("WS", "04", "CANCELLED", "취소"),
 
     // CR: 요청 유형 (Change Request Type)
     CR01("CR", "01", "EDIT", "수정 요청"),
