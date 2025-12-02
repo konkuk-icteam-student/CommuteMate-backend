@@ -85,7 +85,7 @@ public class AuthService {
         }
 
         // 4. 인증 성공
-        verificationCode.setVerified(true);
+        verificationCode.markAsVerified();
         emailVerificationCodeRepository.save(verificationCode);
     }
 

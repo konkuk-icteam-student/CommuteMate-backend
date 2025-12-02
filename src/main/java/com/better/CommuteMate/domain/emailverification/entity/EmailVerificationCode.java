@@ -12,7 +12,6 @@ import java.util.Random;
     @Index(name = "idx_email", columnList = "email")
 })
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -92,5 +91,12 @@ public class EmailVerificationCode {
      */
     public boolean isMaxAttemptsExceeded() {
         return this.attemptCount >= 5;
+    }
+
+    /**
+     * 인증 성공 시 verified를 true로 변경
+     */
+    public void markAsVerified() {
+        this.verified = true;
     }
 }
