@@ -49,14 +49,10 @@ public class EmailVerificationCode {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (code == null) {
-            // 6자리 랜덤 숫자 생성 (000000 ~ 999999)
-            code = String.format("%06d", new Random().nextInt(1000000));
-        }
-        if (expiresAt == null) {
-            // 5분 후 만료
-            expiresAt = LocalDateTime.now().plusMinutes(5);
-        }
+        // 6자리 랜덤 숫자 생성 (000000 ~ 999999)
+        code = String.format("%06d", new Random().nextInt(1000000));
+        // 5분 후 만료
+        expiresAt = LocalDateTime.now().plusMinutes(5);
     }
 
     // 이메일 인증 코드 생성
