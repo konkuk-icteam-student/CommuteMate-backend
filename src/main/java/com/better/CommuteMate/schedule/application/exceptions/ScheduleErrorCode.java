@@ -7,7 +7,9 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     SCHEDULE_PARTIAL_FAILURE("신청하신 일정 중 실패한 일정이 존재합니다.", "[Error] : 신청하신 일정 중 실패한 일정이 존재합니다.", HttpStatus.MULTI_STATUS),
     SCHEDULE_FAILURE("신청하신 일정이 모두 실패하였습니다.", "[Error] : 신청하신 일정이 모두 실패하였습니다.", HttpStatus.UNPROCESSABLE_ENTITY),
     INVALID_APPLY_TERM("신청 기간이 유효하지 않습니다. 시작 시간이 종료 시간보다 이전이어야 합니다.", "[Error] : 신청 기간 유효성 검증 실패", HttpStatus.BAD_REQUEST),
-    MONTHLY_SCHEDULE_CONFIG_NOT_FOUND("해당 연월의 스케줄 설정을 찾을 수 없습니다.", "[Error] : 월별 스케줄 설정 미존재", HttpStatus.NOT_FOUND);
+    MONTHLY_SCHEDULE_CONFIG_NOT_FOUND("해당 연월의 스케줄 설정을 찾을 수 없습니다.", "[Error] : 월별 스케줄 설정 미존재", HttpStatus.NOT_FOUND),
+    WORK_DURATION_MISMATCH("삭제하는 일정의 총 근무 시간과 추가하는 일정의 총 근무 시간이 일치하지 않습니다.", "[Error] : 근무 시간 불일치", HttpStatus.BAD_REQUEST),
+    INVALID_REQUEST_IDS_COUNT("변경 요청 ID 개수는 반드시 짝수여야 합니다.", "[Error] : 변경 요청 ID 개수가 홀수", HttpStatus.BAD_REQUEST);
 
 
     private final String message;
