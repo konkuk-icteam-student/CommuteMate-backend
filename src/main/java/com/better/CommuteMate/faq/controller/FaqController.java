@@ -1,6 +1,8 @@
 package com.better.CommuteMate.faq.controller;
 
+import com.better.CommuteMate.domain.faq.dto.request.FaqCreateRequest;
 import com.better.CommuteMate.domain.faq.entity.Faq;
+import com.better.CommuteMate.faq.application.FaqService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,26 +16,27 @@ import java.util.List;
 
 @Tag(name = "FAQ", description = "FAQ 관련 API")
 @RestController
-@RequestMapping("/v1/faq") // Todo 수정해야 함
+@RequestMapping("/v1/faq")
 public class FaqController {
+
+    private FaqService faqService;
 
     @Operation(
             summary = "FAQ 작성",
-            description = "새로운 FAQ를 작성하는 API입니다."
+            description = "FAQ 작성을 위한 API입니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "FAQ 작성 성공"),
-            @ApiResponse(responseCode = "400", description = "요청 데이터 오류", content = @Content),
-            @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
+            @ApiResponse(responseCode = "400", description = "요청 값 오류"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping
-    public ResponseEntity<?> saveFAQ(
-            @RequestBody
-            @Parameter(description = "작성할 FAQ 객체", required = true)
-            Faq faq
+    public ResponseEntity<Void> createFaq(
+            @RequestBody FaqCreateRequest request
     ) {
-        // TODO: FAQ 작성 로직 구현
-        return null;
+        // Todo 인증로직 추가되면 request 헤더 추가
+        faqService.createFaq(request);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(

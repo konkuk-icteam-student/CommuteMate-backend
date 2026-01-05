@@ -1,6 +1,7 @@
 package com.better.CommuteMate.domain.category.repository;
 
 import com.better.CommuteMate.domain.category.entity.SubCategory;
+import com.better.CommuteMate.domain.category.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,4 +16,7 @@ public interface SubCategoryRepository extends JpaRepository<SubCategory, Long> 
 
     // 중복 등록 방지를 위해 존재 여부 확인용
     boolean existsByName(String name);
+
+    Optional<SubCategory> findByNameAndCategory(String name, Category category);
+
 }
