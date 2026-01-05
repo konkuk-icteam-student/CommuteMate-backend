@@ -32,4 +32,11 @@ public class ManagerSubCategory {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    public static ManagerSubCategory of(User manager, SubCategory subCategory) {
+        return ManagerSubCategory.builder()
+                .manager(manager)
+                .subCategory(subCategory)
+                .build();
+    }
 }
