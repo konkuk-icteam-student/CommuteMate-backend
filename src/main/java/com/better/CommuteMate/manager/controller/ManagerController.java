@@ -62,7 +62,7 @@ public class ManagerController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 매니저 또는 서브카테고리"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
-    @PutMapping
+    @PutMapping // Todo 등록에서는 id로 받으면서 여기선 name으로 받음. 통일 필요
     public ResponseEntity<Response> updateManagerSubCategories(@RequestBody PutManagerSubCategoryRequest request) {
         managerService.updateManagerSubCategories(request);
         return ResponseEntity.ok(new Response(true, "manager-category 매핑이 성공적으로 수정되었습니다.", null));
@@ -74,7 +74,7 @@ public class ManagerController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 매니저 또는 서브카테고리"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
-    @DeleteMapping ("/subcategories/{managerId}")// TODO dto랑 서비스 레이어 코드 작성해야 함
+    @DeleteMapping ("/subcategories/{managerId}")// TODO 여러 매핑 중에 어떤 걸 선택할지를 바디로 받아야 함
     public ResponseEntity<Response> deleteManagerSubCategories(@PathVariable Integer managerId) {
         managerService.deleteManagerSubCategories(managerId);
         return ResponseEntity.ok(new Response(true, "manager-category 매핑이 정상적으로 삭제되었습니다.", null));
