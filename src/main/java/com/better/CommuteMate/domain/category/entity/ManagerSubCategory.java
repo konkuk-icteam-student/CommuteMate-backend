@@ -32,4 +32,19 @@ public class ManagerSubCategory {
 
     @Column(nullable = false)
     private boolean active = true;
+
+     //insert 직전에 자동으로 assignedAt 세팅
+    @PrePersist
+    protected void onCreate() {
+        if (this.assignedAt == null) {
+            this.assignedAt = LocalDateTime.now();
+        }
+    }
+
+    public static ManagerSubCategory of(User manager, SubCategory subCategory) {
+        return ManagerSubCategory.builder()
+                .manager(manager)
+                .subCategory(subCategory)
+                .build();
+    }
 }

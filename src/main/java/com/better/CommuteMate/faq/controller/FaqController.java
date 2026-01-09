@@ -1,6 +1,9 @@
 package com.better.CommuteMate.faq.controller;
 
+import com.better.CommuteMate.domain.faq.dto.request.FaqCreateRequest;
+import com.better.CommuteMate.domain.faq.dto.request.FaqUpdateRequest;
 import com.better.CommuteMate.domain.faq.entity.Faq;
+import com.better.CommuteMate.faq.application.FaqService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,47 +17,57 @@ import java.util.List;
 
 @Tag(name = "FAQ", description = "FAQ 관련 API")
 @RestController
-@RequestMapping("/v1/faq") // Todo 수정해야 함
+@RequestMapping("/v1/faq")
 public class FaqController {
+
+    private FaqService faqService;
 
     @Operation(
             summary = "FAQ 작성",
-            description = "새로운 FAQ를 작성하는 API입니다."
+            description = "FAQ 작성을 위한 API입니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "FAQ 작성 성공"),
-            @ApiResponse(responseCode = "400", description = "요청 데이터 오류", content = @Content),
-            @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
+            @ApiResponse(responseCode = "400", description = "요청 값 오류"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping
-    public ResponseEntity<?> saveFAQ(
-            @RequestBody
-            @Parameter(description = "작성할 FAQ 객체", required = true)
-            Faq faq
+    public ResponseEntity<Void> createFaq(
+            @RequestBody FaqCreateRequest request
     ) {
-        // TODO: FAQ 작성 로직 구현
-        return null;
+        // Todo 인증로직 추가되면 request 헤더 추가
+        faqService.createFaq(request);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(
             summary = "FAQ 수정",
-            description = "특정 FAQ를 수정하는 API입니다.\n" +
-                    "수정 시 기존 내용은 faq_history 테이블에 기록되고, faq 테이블은 최신 상태로 업데이트됩니다.\n" +
-                    "삭제된 FAQ는 수정이 불가합니다.."
+            description = """
+                    특정 FAQ를 수정하는 API입니다.
+                    수정 시 기존 내용은 faq_history 테이블에 기록되고,
+                    faq 테이블은 최신 상태로 업데이트됩니다.
+                    삭제된 FAQ(deleted_flag = true)는 수정할 수 없습니다.
+                    """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "FAQ 수정 성공"),
-            @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음", content = @Content),
-            @ApiResponse(responseCode = "400", description = "요청 데이터 오류", content = @Content)
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "삭제된 FAQ는 수정 불가")
     })
     @PutMapping("/{faqId}")
-    public ResponseEntity<?> updateFAQ(
-            @Parameter(description = "수정할 FAQ ID", required = true)
+    public ResponseEntity<Void> updateFaq(
+            @Parameter(
+                    description = "수정할 FAQ ID",
+                    required = true,
+                    example = "123"
+            )
             @PathVariable Long faqId,
-            @RequestBody Faq faq
+
+            @RequestBody FaqUpdateRequest request
     ) {
-        // TODO: FAQ 수정 로직 구현
-        return null;
+        faqService.updateFaq(faqId, request);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(
