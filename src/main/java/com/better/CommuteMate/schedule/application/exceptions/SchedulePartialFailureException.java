@@ -13,8 +13,13 @@ public class SchedulePartialFailureException extends BasicException {
     protected SchedulePartialFailureException(CustomErrorCode errorCode, ErrorResponseDetail errorResponseDetail) {
         super(errorCode, errorCode.getLogMessage(), errorResponseDetail);
     }
+
+    public static SchedulePartialFailureException of(CustomErrorCode errorCode) {
+        return new SchedulePartialFailureException(errorCode, errorCode.getLogMessage());
+    }
+
     public static SchedulePartialFailureException of(CustomErrorCode errorCode, ErrorResponseDetail errorResponseDetail) {
-        return new SchedulePartialFailureException(errorCode,errorResponseDetail);
+        return new SchedulePartialFailureException(errorCode, errorResponseDetail);
     }
 
 }
