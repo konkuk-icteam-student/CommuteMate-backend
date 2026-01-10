@@ -47,10 +47,6 @@ class ScheduleValidatorTest {
     void setUp() {
         ReflectionTestUtils.setField(scheduleValidator, "DEFAULT_MAX_CONCURRENT_SCHEDULES", 3);
 
-        // 월별 제한이 없는 경우 기본값(3) 사용하도록 모킹
-        when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
-                .thenReturn(Optional.empty());
-
         testUser = User.builder()
                 .userId(1)
                 .name("Test User")

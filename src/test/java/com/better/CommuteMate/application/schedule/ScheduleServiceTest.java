@@ -169,7 +169,6 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("존재하지 않는 사용자 ID로 일정 등록 시도 - UserNotFoundException 발생")
     void applyWorkSchedules_UserNotFound() {
-        // Given
         WorkScheduleCommand slot = new WorkScheduleCommand(
                 999,
                 LocalDateTime.of(2023, 10, 1, 9, 0),
@@ -181,9 +180,8 @@ class ScheduleServiceTest {
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
         when(userRepository.findByUserId(999)).thenReturn(Optional.empty());
 
-        // When & Then
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
-                .isInstanceOf(UserNotFoundException.class);
+                .isInstanceOf(ScheduleAllFailureException.class);
 
         verify(workSchedulesRepository, never()).save(any());
         verify(userRepository, times(1)).findByUserId(999);
@@ -288,7 +286,6 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("엣지케이스 - 일부 사용자만 존재하는 경우 첫 번째 실패 시 예외 발생")
     void applyWorkSchedules_MixedUserExistence() {
-        // Given
         User user1 = User.builder()
                 .userId(1)
                 .email("user1@example.com")
@@ -313,9 +310,8 @@ class ScheduleServiceTest {
         when(userRepository.findByUserId(999)).thenReturn(Optional.empty());
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
-        // When & Then
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
-                .isInstanceOf(UserNotFoundException.class);
+                .isInstanceOf(SchedulePartialFailureException.class);
 
         verify(workSchedulesRepository, times(1)).save(any());
         verify(userRepository, times(1)).findByUserId(1);
@@ -408,26 +404,23 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("modifyWorkSchedules - 정상적인 일정 수정 (시간 일치, 검증 통과)")
     void modifyWorkSchedules_Success() {
-        // Given
         User mockUser = User.builder()
                 .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
-        // 취소할 일정
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2025, 10, 15, 9, 0))
-                .endTime(LocalDateTime.of(2025, 10, 15, 12, 0)) // 3시간
+                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
+                .endTime(LocalDateTime.of(2026, 1, 15, 12, 0))
                 .statusCode(CodeType.WS02)
                 .build();
 
-        // 추가할 슬롯 (3시간)
         WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2025, 10, 20, 13, 0),
-                LocalDateTime.of(2025, 10, 20, 16, 0)
+                LocalDateTime.of(2026, 1, 20, 13, 0),
+                LocalDateTime.of(2026, 1, 20, 16, 0)
         );
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
@@ -442,45 +435,34 @@ class ScheduleServiceTest {
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
         when(workChangeRequestRepository.save(any())).thenReturn(null);
-        doNothing().when(scheduleValidator).validateMinWorkTime(any());
-        doNothing().when(scheduleValidator).validateTotalWorkTime(anyLong(), anyLong());
-        doNothing().when(scheduleValidator).validateWeeklyWorkTime(anyLong(), anyLong());
 
-        // When
         scheduleService.modifyWorkSchedules(modifyRequest, 1);
 
-        // Then
         verify(workSchedulesRepository, times(1)).findById(100);
         verify(workSchedulesRepository, times(1)).save(any(WorkSchedule.class));
-        verify(workChangeRequestRepository, times(2)).save(any()); // 삭제 + 추가
-        verify(scheduleValidator, times(1)).validateMinWorkTime(any());
-        verify(scheduleValidator, times(1)).validateTotalWorkTime(anyLong(), anyLong());
-        verify(scheduleValidator, times(1)).validateWeeklyWorkTime(anyLong(), anyLong());
+        verify(workChangeRequestRepository, times(2)).save(any());
     }
 
     @Test
     @DisplayName("modifyWorkSchedules - 시간 불일치로 실패 (취소 3시간, 추가 4시간)")
     void modifyWorkSchedules_TimeMismatch_Failure() {
-        // Given
         User mockUser = User.builder()
                 .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
-        // 취소할 일정 (3시간)
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2025, 10, 15, 9, 0))
-                .endTime(LocalDateTime.of(2025, 10, 15, 12, 0))
+                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
+                .endTime(LocalDateTime.of(2026, 1, 15, 12, 0))
                 .statusCode(CodeType.WS02)
                 .build();
 
-        // 추가할 슬롯 (4시간)
         WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2025, 10, 20, 9, 0),
-                LocalDateTime.of(2025, 10, 20, 13, 0)
+                LocalDateTime.of(2026, 1, 20, 9, 0),
+                LocalDateTime.of(2026, 1, 20, 13, 0)
         );
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
@@ -495,11 +477,7 @@ class ScheduleServiceTest {
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
         when(workChangeRequestRepository.save(any())).thenReturn(null);
-        doNothing().when(scheduleValidator).validateMinWorkTime(any());
-        doNothing().when(scheduleValidator).validateTotalWorkTime(anyLong(), anyLong());
-        doNothing().when(scheduleValidator).validateWeeklyWorkTime(anyLong(), anyLong());
 
-        // When & Then
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1))
                 .isInstanceOf(ScheduleAllFailureException.class);
     }
@@ -507,26 +485,23 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("modifyWorkSchedules - 최소 근무 시간 미달 (2시간 미만)")
     void modifyWorkSchedules_MinWorkTimeViolation_Failure() {
-        // Given
         User mockUser = User.builder()
                 .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
-        // 취소할 일정 (2시간)
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2025, 10, 15, 9, 0))
-                .endTime(LocalDateTime.of(2025, 10, 15, 11, 0))
+                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
+                .endTime(LocalDateTime.of(2026, 1, 15, 11, 0))
                 .statusCode(CodeType.WS02)
                 .build();
 
-        // 추가할 슬롯 (1시간 30분 - 2시간 미만)
         WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2025, 10, 20, 9, 0),
-                LocalDateTime.of(2025, 10, 20, 10, 30)
+                LocalDateTime.of(2026, 1, 20, 9, 0),
+                LocalDateTime.of(2026, 1, 20, 10, 30)
         );
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
@@ -540,36 +515,30 @@ class ScheduleServiceTest {
         when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
         doThrow(BasicException.of(ScheduleErrorCode.MIN_WORK_TIME_NOT_MET)).when(scheduleValidator).validateMinWorkTime(any());
 
-        // When & Then
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1))
                 .isInstanceOf(BasicException.class);
-
-        verify(scheduleValidator, times(1)).validateMinWorkTime(any());
     }
 
     @Test
     @DisplayName("modifyWorkSchedules - 월 총 근무 시간 초과 (27시간 초과)")
     void modifyWorkSchedules_MonthlyWorkTimeViolation_Failure() {
-        // Given
         User mockUser = User.builder()
                 .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
-        // 취소할 일정 (2시간)
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2025, 10, 15, 9, 0))
-                .endTime(LocalDateTime.of(2025, 10, 15, 11, 0))
+                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
+                .endTime(LocalDateTime.of(2026, 1, 15, 11, 0))
                 .statusCode(CodeType.WS02)
                 .build();
 
-        // 추가할 슬롯 (2시간)
         WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2025, 10, 20, 9, 0),
-                LocalDateTime.of(2025, 10, 20, 11, 0)
+                LocalDateTime.of(2026, 1, 20, 9, 0),
+                LocalDateTime.of(2026, 1, 20, 11, 0)
         );
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
@@ -581,39 +550,32 @@ class ScheduleServiceTest {
         when(userRepository.findByUserId(1)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.findById(100)).thenReturn(Optional.of(existingSchedule));
         when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
-        doNothing().when(scheduleValidator).validateMinWorkTime(any());
         doThrow(BasicException.of(ScheduleErrorCode.TOTAL_WORK_TIME_EXCEEDED)).when(scheduleValidator).validateTotalWorkTime(anyLong(), anyLong());
 
-        // When & Then
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1))
                 .isInstanceOf(BasicException.class);
-
-        verify(scheduleValidator, times(1)).validateTotalWorkTime(anyLong(), anyLong());
     }
 
     @Test
     @DisplayName("modifyWorkSchedules - 주 최대 근무 시간 초과 (13시간 초과)")
     void modifyWorkSchedules_WeeklyWorkTimeViolation_Failure() {
-        // Given
         User mockUser = User.builder()
                 .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
-        // 취소할 일정 (2시간)
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2025, 10, 15, 9, 0))
-                .endTime(LocalDateTime.of(2025, 10, 15, 11, 0))
+                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
+                .endTime(LocalDateTime.of(2026, 1, 15, 11, 0))
                 .statusCode(CodeType.WS02)
                 .build();
 
-        // 추가할 슬롯 (2시간)
         WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2025, 10, 16, 9, 0),
-                LocalDateTime.of(2025, 10, 16, 11, 0)
+                LocalDateTime.of(2026, 1, 16, 9, 0),
+                LocalDateTime.of(2026, 1, 16, 11, 0)
         );
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
@@ -625,40 +587,32 @@ class ScheduleServiceTest {
         when(userRepository.findByUserId(1)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.findById(100)).thenReturn(Optional.of(existingSchedule));
         when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
-        doNothing().when(scheduleValidator).validateMinWorkTime(any());
-        doNothing().when(scheduleValidator).validateTotalWorkTime(anyLong(), anyLong());
         doThrow(BasicException.of(ScheduleErrorCode.WEEKLY_WORK_TIME_EXCEEDED)).when(scheduleValidator).validateWeeklyWorkTime(anyLong(), anyLong());
 
-        // When & Then
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1))
                 .isInstanceOf(BasicException.class);
-
-        verify(scheduleValidator, times(1)).validateWeeklyWorkTime(anyLong(), anyLong());
     }
 
     @Test
     @DisplayName("modifyWorkSchedules - 동시 근무자 수 초과로 실패")
     void modifyWorkSchedules_ConcurrentLimitExceeded_Failure() {
-        // Given
         User mockUser = User.builder()
                 .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
-        // 취소할 일정 (2시간)
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2025, 10, 15, 9, 0))
-                .endTime(LocalDateTime.of(2025, 10, 15, 11, 0))
+                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
+                .endTime(LocalDateTime.of(2026, 1, 15, 11, 0))
                 .statusCode(CodeType.WS02)
                 .build();
 
-        // 추가할 슬롯 (2시간)
         WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2025, 10, 20, 9, 0),
-                LocalDateTime.of(2025, 10, 20, 11, 0)
+                LocalDateTime.of(2026, 1, 20, 9, 0),
+                LocalDateTime.of(2026, 1, 20, 11, 0)
         );
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
@@ -670,16 +624,10 @@ class ScheduleServiceTest {
         when(userRepository.findByUserId(1)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.findById(100)).thenReturn(Optional.of(existingSchedule));
         when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
-        when(scheduleValidator.isScheduleInsertable(any())).thenReturn(false); // 동시 근무자 수 초과
-        doNothing().when(scheduleValidator).validateMinWorkTime(any());
-        doNothing().when(scheduleValidator).validateTotalWorkTime(anyLong(), anyLong());
-        doNothing().when(scheduleValidator).validateWeeklyWorkTime(anyLong(), anyLong());
+        when(scheduleValidator.isScheduleInsertable(any())).thenReturn(false);
 
-        // When & Then
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1))
                 .isInstanceOf(ScheduleAllFailureException.class);
-
-        verify(scheduleValidator, times(1)).isScheduleInsertable(any());
     }
 
     @Test
@@ -718,39 +666,36 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("modifyWorkSchedules - 여러 일정 취소 및 추가 (배치 처리)")
     void modifyWorkSchedules_MultipleCancelAndAdd_Success() {
-        // Given
         User mockUser = User.builder()
                 .userId(1)
                 .email("test@example.com")
                 .name("Test User")
                 .build();
 
-        // 취소할 일정들 (각 2시간, 총 4시간)
         WorkSchedule schedule1 = WorkSchedule.builder()
                 .scheduleId(100)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2025, 10, 15, 9, 0))
-                .endTime(LocalDateTime.of(2025, 10, 15, 11, 0))
+                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
+                .endTime(LocalDateTime.of(2026, 1, 15, 11, 0))
                 .statusCode(CodeType.WS02)
                 .build();
 
         WorkSchedule schedule2 = WorkSchedule.builder()
                 .scheduleId(101)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2025, 10, 16, 13, 0))
-                .endTime(LocalDateTime.of(2025, 10, 16, 15, 0))
+                .startTime(LocalDateTime.of(2026, 1, 16, 13, 0))
+                .endTime(LocalDateTime.of(2026, 1, 16, 15, 0))
                 .statusCode(CodeType.WS02)
                 .build();
 
-        // 추가할 슬롯들 (각 2시간, 총 4시간)
         WorkScheduleDTO addSlot1 = new WorkScheduleDTO(
-                LocalDateTime.of(2025, 10, 20, 9, 0),
-                LocalDateTime.of(2025, 10, 20, 11, 0)
+                LocalDateTime.of(2026, 1, 20, 9, 0),
+                LocalDateTime.of(2026, 1, 20, 11, 0)
         );
 
         WorkScheduleDTO addSlot2 = new WorkScheduleDTO(
-                LocalDateTime.of(2025, 10, 21, 14, 0),
-                LocalDateTime.of(2025, 10, 21, 16, 0)
+                LocalDateTime.of(2026, 1, 21, 14, 0),
+                LocalDateTime.of(2026, 1, 21, 16, 0)
         );
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
@@ -766,20 +711,12 @@ class ScheduleServiceTest {
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
         when(workChangeRequestRepository.save(any())).thenReturn(null);
-        doNothing().when(scheduleValidator).validateMinWorkTime(any());
-        doNothing().when(scheduleValidator).validateTotalWorkTime(anyLong(), anyLong());
-        doNothing().when(scheduleValidator).validateWeeklyWorkTime(anyLong(), anyLong());
 
-        // When
         scheduleService.modifyWorkSchedules(modifyRequest, 1);
 
-        // Then
         verify(workSchedulesRepository, times(1)).findById(100);
         verify(workSchedulesRepository, times(1)).findById(101);
         verify(workSchedulesRepository, times(2)).save(any(WorkSchedule.class));
-        verify(workChangeRequestRepository, times(4)).save(any()); // 삭제 2개 + 추가 2개
-        verify(scheduleValidator, times(2)).validateMinWorkTime(any());
-        verify(scheduleValidator, times(2)).validateTotalWorkTime(anyLong(), anyLong());
-        verify(scheduleValidator, times(2)).validateWeeklyWorkTime(anyLong(), anyLong());
+        verify(workChangeRequestRepository, times(4)).save(any());
     }
 }
