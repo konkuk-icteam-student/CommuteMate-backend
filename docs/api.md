@@ -482,6 +482,63 @@ http://localhost:8080
 
 ---
 
+### 3.6 Get Apply Requests
+모든 근무 일정 변경 요청 목록을 조회합니다.
+
+**Endpoint**: `GET /api/v1/admin/schedule/apply-requests`
+
+**Success Response**:
+- **Status**: `200 OK`
+```json
+{
+  "isSuccess": true,
+  "message": "변경 요청 목록 조회 성공",
+  "details": {
+    "requests": [
+      {
+        "requestId": 1,
+        "userId": 1,
+        "scheduleId": 1,
+        "typeCode": "CR01",
+        "statusCode": "CS01",
+        "reason": "사정으로 변경 요청",
+        "createdAt": "2025-12-01T10:00:00"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 3.7 Process Apply Request
+특정 근무 일정 변경 요청을 승인 또는 거부합니다.
+
+**Endpoint**: `POST /api/v1/admin/schedule/process-apply-request`
+
+**Request Body**:
+```json
+{
+  "requestId": 1,
+  "statusCode": "CS02"
+}
+```
+
+**Note**:
+- `statusCode`: `CS02` (승인) 또는 `CS03` (거부)
+
+**Success Response**:
+- **Status**: `200 OK`
+```json
+{
+  "isSuccess": true,
+  "message": "변경 요청이 처리되었습니다.",
+  "details": null
+}
+```
+
+---
+
 ## 4. Category API
 
 ### 4.1 Register Category
@@ -705,7 +762,7 @@ http://localhost:8080
 
 ---
 
-## 6. FAQ API (TODO - 미구현)
+## 6. FAQ API
 
 ### 6.1 Create FAQ
 새로운 FAQ를 작성합니다.
@@ -720,16 +777,18 @@ http://localhost:8080
   "content": "FAQ 내용",
   "writerId": 1,
   "writerName": "작성자명",
-  "manager": "관리자명"
+  "manager": "관리자명",
+  "attachmentUrl": "https://example.com/file.pdf"
 }
 ```
 
-**Note**: 현재 구현 중 (TODO)
+**Success Response**:
+- **Status**: `200 OK`
 
 ---
 
 ### 6.2 Update FAQ
-특정 FAQ를 수정합니다.
+특정 FAQ를 수정합니다. 수정 시 기존 내용은 faq_history 테이블에 기록됩니다.
 
 **Endpoint**: `PUT /v1/faq/{faqId}`
 
@@ -744,11 +803,23 @@ http://localhost:8080
   "content": "수정된 FAQ 내용",
   "lastEditorId": 1,
   "lastEditorName": "수정자명",
-  "manager": "관리자명"
+  "manager": "관리자명",
+  "attachmentUrl": "https://example.com/new-file.pdf"
 }
 ```
 
-**Note**: 현재 구현 중 (TODO)
+**Success Response**:
+- **Status**: `200 OK`
+
+**Conflict Response**:
+- **Status**: `409 Conflict`
+```json
+{
+  "isSuccess": false,
+  "message": "삭제된 FAQ는 수정할 수 없습니다.",
+  "details": null
+}
+```
 
 ---
 
@@ -760,7 +831,7 @@ http://localhost:8080
 **Path Parameters**:
 - `faqId` (Long): FAQ ID
 
-**Note**: 현재 구현 중 (TODO)
+**Note**: 현재 미구현 (TODO)
 
 ---
 
@@ -772,7 +843,7 @@ http://localhost:8080
 **Path Parameters**:
 - `faqId` (Long): FAQ ID
 
-**Note**: 현재 구현 중 (TODO)
+**Note**: 현재 미구현 (TODO)
 
 ---
 
@@ -784,7 +855,7 @@ http://localhost:8080
 **Query Parameters**:
 - `filter` (string, optional): 정렬 또는 필터 조건 (예: "latest", "oldest")
 
-**Note**: 현재 구현 중 (TODO)
+**Note**: 현재 미구현 (TODO)
 
 ---
 
@@ -798,7 +869,7 @@ http://localhost:8080
 - `startDate` (string, optional): 검색 시작일 (yyyy-MM-dd)
 - `endDate` (string, optional): 검색 종료일 (yyyy-MM-dd)
 
-**Note**: 현재 구현 중 (TODO)
+**Note**: 현재 미구현 (TODO)
 
 ---
 
@@ -813,7 +884,142 @@ http://localhost:8080
 - `startDate` (string, optional): 검색 시작일 (yyyy-MM-dd)
 - `endDate` (string, optional): 검색 종료일 (yyyy-MM-dd)
 
-**Note**: 현재 구현 중 (TODO)
+**Note**: 현재 미구현 (TODO)
+
+---
+
+## 7. Manager API
+
+### 7.1 Register Manager
+기존 사용자의 역할을 매니저로 변경합니다.
+
+**Endpoint**: `POST /api/v1/manager/{userId}`
+
+**Path Parameters**:
+- `userId` (Integer): 매니저로 등록할 사용자 ID
+
+**Success Response**:
+- **Status**: `200 OK`
+```json
+{
+  "isSuccess": true,
+  "message": "매니저 등록 성공",
+  "details": null
+}
+```
+
+**Conflict Response**:
+- **Status**: `409 Conflict`
+```json
+{
+  "isSuccess": false,
+  "message": "이미 관리자 권한을 가진 사용자입니다.",
+  "details": null
+}
+```
+
+---
+
+### 7.2 Register Manager SubCategories
+매니저가 담당할 소분류를 등록합니다.
+
+**Endpoint**: `POST /api/v1/manager`
+
+**Request Body**:
+```json
+{
+  "managerId": 1,
+  "subCategoryIds": [1, 2, 3]
+}
+```
+
+**Success Response**:
+- **Status**: `200 OK`
+```json
+{
+  "isSuccess": true,
+  "message": "manager-subCategory 매핑 등록 성공",
+  "details": {
+    "managerId": 1,
+    "subCategoryIds": [1, 2, 3]
+  }
+}
+```
+
+**Conflict Response**:
+- **Status**: `409 Conflict`
+```json
+{
+  "isSuccess": false,
+  "message": "이미 등록된 manager-category 매핑입니다.",
+  "details": null
+}
+```
+
+---
+
+### 7.3 Update Manager SubCategories
+매니저의 담당 소분류 매핑을 수정합니다. 기존 매핑은 삭제되고 새로운 소분류 리스트로 대체됩니다.
+
+**Endpoint**: `PUT /api/v1/manager`
+
+**Request Body**:
+```json
+{
+  "managerId": 1,
+  "subCategoryNames": ["회원가입", "회원정보"]
+}
+```
+
+**Success Response**:
+- **Status**: `200 OK`
+```json
+{
+  "isSuccess": true,
+  "message": "manager-category 매핑이 성공적으로 수정되었습니다.",
+  "details": null
+}
+```
+
+---
+
+### 7.4 Delete Manager SubCategories
+매니저의 담당 소분류 매핑을 삭제합니다.
+
+**Endpoint**: `DELETE /api/v1/manager/subcategories/{managerId}`
+
+**Path Parameters**:
+- `managerId` (Integer): 매니저 ID
+
+**Success Response**:
+- **Status**: `200 OK`
+```json
+{
+  "isSuccess": true,
+  "message": "manager-category 매핑이 정상적으로 삭제되었습니다.",
+  "details": null
+}
+```
+
+---
+
+### 7.5 Revoke Manager Role
+매니저 권한을 해제합니다. roleCode에서 MANAGER 권한이 제거되며, 담당했던 소분류 매핑 또한 해제됩니다.
+
+**Endpoint**: `DELETE /api/v1/manager/{managerId}`
+
+**Path Parameters**:
+- `managerId` (Integer): 매니저 ID
+
+**Success Response**:
+- **Status**: `200 OK`
+```json
+{
+  "isSuccess": true,
+  "message": "매니저 권한이 해제되었습니다.",
+  "details": null
+}
+```
 
 ---
 

@@ -445,6 +445,68 @@ public class GlobalExceptionHandler {
 
 ---
 
+## 📊 Error Codes 목록
+
+### ScheduleErrorCode (schedule/application/exceptions/ScheduleErrorCode.java)
+| 코드 | 클라이언트 메시지 | HTTP 상태 |
+|------|-----------------|-----------|
+| SCHEDULE_PARTIAL_FAILURE | 신청하신 일정 중 실패한 일정이 존재합니다. | 207 Multi-Status |
+| SCHEDULE_FAILURE | 신청하신 일정이 모두 실패하였습니다. | 422 Unprocessable Entity |
+| INVALID_APPLY_TERM | 신청 기간이 유효하지 않습니다. 시작 시간이 종료 시간보다 이전이어야 합니다. | 400 Bad Request |
+| MONTHLY_SCHEDULE_CONFIG_NOT_FOUND | 해당 연월의 스케줄 설정을 찾을 수 없습니다. | 404 Not Found |
+| WORK_DURATION_MISMATCH | 삭제하는 일정의 총 근무 시간과 추가하는 일정의 총 근무 시간이 일치하지 않습니다. | 400 Bad Request |
+| INVALID_REQUEST_IDS_COUNT | 변경 요청 ID 개수는 반드시 짝수여야 합니다. | 400 Bad Request |
+| TOTAL_WORK_TIME_EXCEEDED | 월 최대 근무 시간(27시간)을 초과하였습니다. | 400 Bad Request |
+| WEEKLY_WORK_TIME_EXCEEDED | 주 최대 근무 시간(13시간)을 초과하였습니다. | 400 Bad Request |
+| MIN_WORK_TIME_NOT_MET | 1회 최소 근무 시간(2시간)을 충족하지 못했습니다. | 400 Bad Request |
+| PAST_MONTH_MODIFICATION_NOT_ALLOWED | 지난 달의 근무 일정은 수정할 수 없습니다. | 400 Bad Request |
+| SCHEDULE_NOT_FOUND | 해당 근무 일정을 찾을 수 없습니다. | 404 Not Found |
+| UNAUTHORIZED_ACCESS | 해당 근무 일정에 대한 권한이 없습니다. | 403 Forbidden |
+
+### AuthErrorCode (global/exceptions/error/AuthErrorCode.java)
+| 코드 | 클라이언트 메시지 | HTTP 상태 |
+|------|-----------------|-----------|
+| EMAIL_ALREADY_REGISTERED | 이미 가입된 이메일입니다. | 409 Conflict |
+| INVALID_CREDENTIALS | 이메일 또는 비밀번호가 올바르지 않습니다. | 401 Unauthorized |
+| AUTHORIZATION_HEADER_MISSING | Authorization 헤더가 누락되었거나 형식이 올바르지 않습니다. | 400 Bad Request |
+| USER_NOT_FOUND | 사용자를 찾을 수 없습니다. | 404 Not Found |
+| INVALID_REFRESH_TOKEN | 유효하지 않은 리프레시 토큰입니다. | 401 Unauthorized |
+| VERIFICATION_CODE_NOT_FOUND | 인증번호를 찾을 수 없습니다. 인증번호를 다시 요청해주세요. | 404 Not Found |
+| INVALID_VERIFICATION_CODE | 인증번호가 일치하지 않습니다. | 400 Bad Request |
+| EXPIRED_VERIFICATION_CODE | 인증번호가 만료되었습니다. 인증번호를 다시 요청해주세요. | 410 Gone |
+| EMAIL_NOT_VERIFIED | 이메일 인증이 완료되지 않았습니다. 인증번호를 먼저 확인해주세요. | 403 Forbidden |
+| MAX_VERIFICATION_ATTEMPTS_EXCEEDED | 인증번호 입력 횟수를 초과했습니다. 인증번호를 다시 요청해주세요. | 429 Too Many Requests |
+| INTERNAL_AUTH_ERROR | 인증 처리 중 오류가 발생했습니다. | 500 Internal Server Error |
+
+### CategoryErrorCode (global/exceptions/error/CategoryErrorCode.java)
+| 코드 | 클라이언트 메시지 | HTTP 상태 |
+|------|-----------------|-----------|
+| CATEGORY_NOT_FOUND | 존재하지 않는 categoryId입니다. | 404 Not Found |
+| CATEGORY_ALREADY_EXISTS | 이미 존재하는 category 이름입니다. | 409 Conflict |
+| CATEGORY_HAS_SUBCATEGORY | 해당 category에 속한 subCategory가 있어 삭제할 수 없습니다. | 409 Conflict |
+
+### SubcategoryErrorCode (global/exceptions/error/SubcategoryErrorCode.java)
+| 코드 | 클라이언트 메시지 | HTTP 상태 |
+|------|-----------------|-----------|
+| SUBCATEGORY_NOT_FOUND | 존재하지 않는 subcategoryId입니다. | 404 Not Found |
+| SUBCATEGORY_ALREADY_EXISTS | 이미 존재하는 subcategory 이름입니다. | 409 Conflict |
+| SUBCATEGORY_DELETE_NOT_ALLOWED | 해당 SubCategory에 속한 FAQ가 존재하여 삭제할 수 없습니다. | 409 Conflict |
+
+### ManagerErrorCode (global/exceptions/error/ManagerErrorCode.java)
+| 코드 | 클라이언트 메시지 | HTTP 상태 |
+|------|-----------------|-----------|
+| ALREADY_MANAGER | 이미 관리자 권한을 가진 사용자입니다. | 409 Conflict |
+| MANAGER_CATEGORY_ALREADY_EXISTS | 이미 등록된 manager-category 매핑입니다. | 409 Conflict |
+| MANAGER_ROLE_NOT_ASSIGNED | 해당 사용자는 manager 권한이 없습니다. | 400 Bad Request |
+
+### GlobalErrorCode (global/exceptions/error/GlobalErrorCode.java)
+| 코드 | 클라이언트 메시지 | HTTP 상태 |
+|------|-----------------|-----------|
+| NOT_FOUND | 찾을 수 없습니다. 다시 확인해주세요 | 207 Multi-Status |
+| USER_NOT_FOUND | 사용자를 찾을 수 없습니다. 다시 확인해주세요 | 404 Not Found |
+
+---
+
 ## 📊 HTTP 상태 코드 가이드
 아래 코드만 사용해야 한다는 뜻은 아닙니다. 도메인별로 적절한 상태 코드를 선택하여 사용하세요.
 
@@ -459,7 +521,9 @@ public class GlobalExceptionHandler {
 
 ---
 
-## 🎯 실전 예시: 일정 신청 엔드포인트
+## 🎯 실전 예시
+
+### 예시 1: 일정 신청 엔드포인트
 
 ### 성공 응답 (200)
 

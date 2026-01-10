@@ -102,18 +102,20 @@ src/main/java/com/better/CommuteMate/
 │   │   └── dto/
 │   │       ├── request/
 │   │       │   ├── PostCategoryRegisterRequest.java
-│   │       │   └── PutCategoryUpdateRequest.java
+│   │       │   ├── PutCategoryUpdateRequest.java
+│   │       │   ├── PostManagerSubCategoryRequest.java
+│   │       │   └── PutManagerSubCategoryRequest.java
 │   │       └── response/
 │   │           ├── GetCategoryListResponse.java
 │   │           ├── GetCategoryListWrapper.java
 │   │           ├── PostCategoryRegisterResponse.java
-│   │           └── PutCategoryUpdateResponse.java
+│   │           ├── PutCategoryUpdateResponse.java
+│   │           └── PostManagerSubCategoryResponse.java
 │   └── controller/
 │       └── CategoryController.java
 │
 ├── subcategory/                       # FAQ 소분류 모듈
 │   ├── application/
-│   │   ├── SubCategoryService.java
 │   │   └── dto/
 │   │       ├── request/
 │   │       │   ├── PostSubCategoryRegisterRequest.java
@@ -126,11 +128,29 @@ src/main/java/com/better/CommuteMate/
 │   └── controller/
 │       └── SubCategoryController.java
 │
+├── manager/                           # 매니저 모듈
+│   ├── application/
+│   │   └── ManagerService.java
+│   │   └── dto/
+│   │       ├── request/
+│   │       │   ├── PostManagerSubCategoryRequest.java
+│   │       │   └── PutManagerSubCategoryRequest.java
+│   │       └── response/
+│   │           └── PostManagerSubCategoryResponse.java
+│   └── controller/
+│       └── ManagerController.java
+│
 ├── faq/                               # FAQ 모듈
 │   ├── application/
 │   │   └── FaqService.java
 │   └── controller/
 │       └── FaqController.java
+│
+├── manager/                           # 매니저 관리 모듈
+│   ├── application/
+│   │   └── ManagerService.java
+│   └── controller/
+│       └── ManagerController.java
 │
 ├── domain/                            # 도메인 엔티티 및 리포지토리
 │   ├── category/
@@ -161,9 +181,13 @@ src/main/java/com/better/CommuteMate/
 │   │   ├── entity/
 │   │   │   ├── Faq.java
 │   │   │   └── FaqHistory.java
-│   │   └── repository/
-│   │       ├── FaqHistoryRepository.java
-│   │       └── FaqRepository.java
+│   │   ├── repository/
+│   │   │   ├── FaqHistoryRepository.java
+│   │   │   └── FaqRepository.java
+│   │   └── dto/
+│   │       └── request/
+│   │           ├── FaqCreateRequest.java
+│   │           └── FaqUpdateRequest.java
 │   ├── organization/
 │   │   ├── entity/
 │   │   │   └── Organization.java
@@ -388,6 +412,8 @@ public enum CodeType {
 - 월별 최대 동시 근무 인원수 제한
 - 근무 신청 기간 설정
 - 근무 일정 변경 요청 승인/거부
+- 근무 신청 조회 (사용자)
+- 근무 일정 수정 요청
 
 **Special Handling**:
 - HTTP 207 (Multi-Status): 일부 성공, 일부 실패
@@ -430,11 +456,14 @@ public enum CodeType {
 **Purpose**: FAQ 게시글 관리
 
 **Key Components**:
-- `FaqController`: FAQ API 엔드포인트 (미구현)
+- `FaqController`: FAQ API 엔드포인트
+- `FaqService`: FAQ 비즈니스 로직
 
-**Planned Features** (TODO):
+**Implemented Features**:
 - FAQ 작성
 - FAQ 수정 (수정 이력 자동 저장)
+
+**Planned Features** (TODO):
 - FAQ 삭제 (소프트 삭제)
 - FAQ 상세 조회
 - FAQ 목록 조회 (필터 옵션)
@@ -443,7 +472,22 @@ public enum CodeType {
 
 ---
 
-### 6. Domain Layer (`domain/`)
+### 6. Manager Module (`manager/`)
+
+**Purpose**: 매니저 및 매니저-소분류 매핑 관리
+
+**Key Components**:
+- `ManagerController`: 매니저 API 엔드포인트
+- `ManagerService`: 매니저 비즈니스 로직
+
+**Key Features**:
+- 매니저 권한 등록 (사용자 역할 변경)
+- 매니저-소분류 매핑 등록/수정/삭제
+- 매니저 권한 해제
+
+---
+
+### 7. Domain Layer (`domain/`)
 
 **Purpose**: 엔티티 및 리포지토리 정의
 
@@ -709,6 +753,11 @@ Gradle 빌드 설정:
 ### Finding Error Codes
 - **Global**: `global/exceptions/error/GlobalErrorCode.java`
 - **Domain-specific**: `global/exceptions/error/*ErrorCode.java`
+  - `AuthErrorCode`: 인증 관련 에러 코드
+  - `CategoryErrorCode`: 카테고리 관련 에러 코드
+  - `SubcategoryErrorCode`: 소분류 관련 에러 코드
+  - `ScheduleErrorCode`: 스케줄 관련 에러 코드 (`schedule/application/exceptions/`)
+  - `ManagerErrorCode`: 매니저 관련 에러 코드
 
 ### Finding Code Types
 - **CodeType Enum**: `global/code/CodeType.java`
