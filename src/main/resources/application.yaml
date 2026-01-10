@@ -12,7 +12,7 @@ spring:
     console:
       enabled: true
       path: /h2-console
-      # H2 웹 콘솔 활성화 (http://localhost:8080/h2-console)
+      # H2 웹 콘솔 활성화 (http://localhost:8080/h2-console) - JDBC URL: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE
   jackson:
     date-format: yyyy-MM-dd HH:mm
 
