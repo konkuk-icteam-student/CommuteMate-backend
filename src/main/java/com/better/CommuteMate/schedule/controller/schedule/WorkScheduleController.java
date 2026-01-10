@@ -6,6 +6,7 @@ import com.better.CommuteMate.schedule.controller.schedule.dtos.ApplyWorkSchedul
 import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.global.controller.dtos.Response;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleListResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ModifyWorkScheduleDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -53,6 +54,53 @@ public class WorkScheduleController {
                 "신청하신 일정이 모두 수정(요청)되었습니다.",
                 null
          ));
+    }
+
+    /**
+     * 나의 근무 일정 조회 API (월별)
+     */
+    @Operation(summary = "나의 근무 일정 조회", description = "특정 연/월의 나의 근무 일정을 조회합니다.")
+    @GetMapping
+    public ResponseEntity<Response> getWorkSchedules(
+            @RequestParam Integer year,
+            @RequestParam Integer month,
+            @RequestHeader Integer userId) {
+        return ResponseEntity.ok(Response.of(
+                true,
+                "근무 일정 조회 성공",
+                WorkScheduleListResponse.of(scheduleService.getWorkSchedules(userId, year, month))
+        ));
+    }
+
+    /**
+     * 특정 근무 일정 상세 조회 API
+     */
+    @Operation(summary = "특정 근무 일정 조회", description = "ID로 특정 근무 일정을 조회합니다.")
+    @GetMapping("/{scheduleId}")
+    public ResponseEntity<Response> getWorkSchedule(
+            @PathVariable Integer scheduleId,
+            @RequestHeader Integer userId) {
+        return ResponseEntity.ok(Response.of(
+                true,
+                "근무 일정 상세 조회 성공",
+                scheduleService.getWorkSchedule(userId, scheduleId)
+        ));
+    }
+
+    /**
+     * 근무 일정 취소/삭제 API
+     */
+    @Operation(summary = "근무 일정 취소/삭제", description = "특정 근무 일정을 취소하거나 삭제 요청을 보냅니다.")
+    @DeleteMapping("/{scheduleId}")
+    public ResponseEntity<Response> deleteWorkSchedule(
+            @PathVariable Integer scheduleId,
+            @RequestHeader Integer userId) {
+        scheduleService.deleteWorkSchedule(userId, scheduleId);
+        return ResponseEntity.ok(Response.of(
+                true,
+                "근무 일정 취소(요청) 성공",
+                null
+        ));
     }
 
 }
