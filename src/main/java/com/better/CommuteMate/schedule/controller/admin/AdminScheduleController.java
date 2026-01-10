@@ -25,6 +25,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestListResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessApplyRequestRequest;
+
 @Tag(name = "관리자 근무 일정 관리", description = "관리자 전용 근무 일정 설정 및 변경 요청 처리 API")
 @RestController
 @RequestMapping("api/v1/admin/schedule")
@@ -139,6 +143,40 @@ public class AdminScheduleController {
                 : "변경 요청이 거부되었습니다.";
 
         return ResponseEntity.status(HttpStatus.OK).body(Response.of(
+                true,
+                message,
+                null
+        ));
+    }
+
+    @Operation(summary = "근무 신청 요청 목록 조회", description = "승인 대기 중인(WS01) 근무 신청 목록을 조회합니다.")
+    @GetMapping("/apply-requests")
+    public ResponseEntity<Response> getApplyRequests() {
+        return ResponseEntity.ok(Response.of(
+                true,
+                "근무 신청 요청 목록을 조회했습니다.",
+                ApplyRequestListResponse.of(adminScheduleService.getApplyRequests())
+        ));
+    }
+
+    @Operation(summary = "근무 신청 승인/거부 처리", description = "근무 신청(WS01)을 승인(WS02)하거나 거부(WS03)합니다.")
+    @PostMapping("/process-apply-request")
+    public ResponseEntity<Response> processApplyRequest(
+            @RequestBody ProcessApplyRequestRequest request,
+            @RequestHeader(value = "userId", defaultValue = "1") Integer adminId) {
+
+        adminScheduleService.processApplyRequest(
+                request.scheduleIds(),
+                request.statusCode(),
+                adminId
+        );
+
+        String message = request.statusCode()
+                .equals(CodeType.WS02)
+                ? "근무 신청이 승인되었습니다."
+                : "근무 신청이 거부되었습니다.";
+
+        return ResponseEntity.ok(Response.of(
                 true,
                 message,
                 null
