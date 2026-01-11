@@ -26,6 +26,15 @@ public class MonthlyScheduleConfigService {
     @Value("${app.schedule.concurrent.max}")
     private int DEFAULT_MAX_CONCURRENT_SCHEDULES;
 
+    /**
+     * 월별 최대 동시 근무 인원수를 설정합니다.
+     * <p>
+     * 기존 설정이 있으면 업데이트하고, 없으면 새로 생성합니다.
+     * </p>
+     *
+     * @param command 설정 정보 (연도, 월, 최대 인원수, 요청자 ID)
+     * @return 저장된 월별 설정 엔티티 {@link MonthlyScheduleConfig}
+     */
     @Transactional
     public MonthlyScheduleConfig setMonthlyLimit(MonthlyScheduleConfigCommand command) {
         Optional<MonthlyScheduleConfig> existingLimit = monthlyScheduleConfigRepository
@@ -52,10 +61,22 @@ public class MonthlyScheduleConfigService {
         }
     }
 
+    /**
+     * 특정 연도/월의 설정 정보를 조회합니다.
+     *
+     * @param scheduleYear 조회할 연도
+     * @param scheduleMonth 조회할 월
+     * @return 설정 정보 Optional 객체
+     */
     public Optional<MonthlyScheduleConfig> getMonthlyLimit(Integer scheduleYear, Integer scheduleMonth) {
         return monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(scheduleYear, scheduleMonth);
     }
 
+    /**
+     * 저장된 모든 월별 설정 정보를 조회합니다.
+     *
+     * @return 모든 월별 설정 리스트
+     */
     public List<MonthlyScheduleConfig> getAllMonthlyLimits() {
         return monthlyScheduleConfigRepository.findAll();
     }
@@ -81,6 +102,17 @@ public class MonthlyScheduleConfigService {
         return now.isAfter(applyStartTime) && now.isBefore(applyEndTime);
     }
 
+    /**
+     * 근무 신청 기간을 설정합니다.
+     * <p>
+     * 시작 시간이 종료 시간보다 늦지 않은지 검증 후 저장합니다.
+     * 기존 설정이 없으면 새로 생성하며, maxConcurrent는 기본값을 사용합니다.
+     * </p>
+     *
+     * @param command 설정할 기간 정보 (연도, 월, 시작/종료 시간)
+     * @return 저장된 월별 설정 엔티티
+     * @throws ScheduleConfigException 기간이 유효하지 않을 경우
+     */
     @Transactional
     public MonthlyScheduleConfig setApplyTerm(SetApplyTermCommand command) {
         // 신청 기간 유효성 검증 (시작 시간 < 종료 시간)

@@ -72,6 +72,12 @@ public class WorkSchedule {
         }
     }
 
+    // 상태 변경 (관리자용)
+    public void updateStatus(CodeType statusCode, Integer adminId) {
+        this.statusCode = statusCode;
+        this.updatedBy = adminId;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

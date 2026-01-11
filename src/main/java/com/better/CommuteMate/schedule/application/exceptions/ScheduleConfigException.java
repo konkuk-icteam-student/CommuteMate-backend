@@ -10,8 +10,8 @@ public class ScheduleConfigException extends BasicException {
         super(errorCode, logMessage);
     }
 
-    protected ScheduleConfigException(CustomErrorCode errorCode, String logMessage, ErrorResponseDetail errorResponseDetail) {
-        super(errorCode, logMessage, errorResponseDetail);
+    protected ScheduleConfigException(CustomErrorCode errorCode, ErrorResponseDetail errorResponseDetail) {
+        super(errorCode, errorCode.getLogMessage(), errorResponseDetail);
     }
 
     public static ScheduleConfigException of(CustomErrorCode errorCode) {
@@ -19,6 +19,6 @@ public class ScheduleConfigException extends BasicException {
     }
 
     public static ScheduleConfigException of(CustomErrorCode errorCode, ErrorResponseDetail errorResponseDetail) {
-        return new ScheduleConfigException(errorCode, errorCode.getLogMessage(), errorResponseDetail);
+        return new ScheduleConfigException(errorCode, errorResponseDetail);
     }
 }

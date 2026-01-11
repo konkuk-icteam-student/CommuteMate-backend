@@ -7,6 +7,7 @@ import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleConfigRe
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.code.CodeType;
+import com.better.CommuteMate.global.exceptions.BasicException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
@@ -44,10 +46,6 @@ class ScheduleValidatorTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(scheduleValidator, "DEFAULT_MAX_CONCURRENT_SCHEDULES", 3);
-
-        // 월별 제한이 없는 경우 기본값(3) 사용하도록 모킹
-        when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
-                .thenReturn(Optional.empty());
 
         testUser = User.builder()
                 .userId(1)
@@ -366,5 +364,157 @@ class ScheduleValidatorTest {
 
         // Then
         assertThat(result).isFalse();
+    }
+
+    // ========== 시간 검증 메서드 테스트 ==========
+
+    @Test
+    @DisplayName("최소 근무 시간 검증 - 2시간 이상일 때 통과")
+    void validateMinWorkTime_Success() {
+        // Given
+        WorkScheduleCommand schedule = new WorkScheduleCommand(
+                1,
+                LocalDateTime.of(2023, 10, 1, 9, 0),
+                LocalDateTime.of(2023, 10, 1, 11, 0)  // 2시간 정확히
+        );
+
+        // When & Then - 예외가 발생하지 않아야 함
+        scheduleValidator.validateMinWorkTime(schedule);
+    }
+
+    @Test
+    @DisplayName("최소 근무 시간 검증 - 2시간 미만일 때 실패")
+    void validateMinWorkTime_Failure() {
+        // Given
+        WorkScheduleCommand schedule = new WorkScheduleCommand(
+                1,
+                LocalDateTime.of(2023, 10, 1, 9, 0),
+                LocalDateTime.of(2023, 10, 1, 10, 30)  // 1.5시간
+        );
+
+        // When & Then
+        assertThatThrownBy(() -> scheduleValidator.validateMinWorkTime(schedule))
+                .isInstanceOf(BasicException.class);
+    }
+
+    @Test
+    @DisplayName("최소 근무 시간 검증 - 경계값 테스트 (정확히 2시간)")
+    void validateMinWorkTime_ExactlyTwoHours() {
+        // Given
+        WorkScheduleCommand schedule = new WorkScheduleCommand(
+                1,
+                LocalDateTime.of(2023, 10, 1, 14, 0),
+                LocalDateTime.of(2023, 10, 1, 16, 0)  // 정확히 2시간
+        );
+
+        // When & Then - 예외가 발생하지 않아야 함
+        scheduleValidator.validateMinWorkTime(schedule);
+    }
+
+    @Test
+    @DisplayName("최소 근무 시간 검증 - 경계값 테스트 (2시간 - 1분)")
+    void validateMinWorkTime_OneLessThanTwoHours() {
+        // Given
+        WorkScheduleCommand schedule = new WorkScheduleCommand(
+                1,
+                LocalDateTime.of(2023, 10, 1, 14, 0),
+                LocalDateTime.of(2023, 10, 1, 15, 59)  // 1시간 59분
+        );
+
+        // When & Then
+        assertThatThrownBy(() -> scheduleValidator.validateMinWorkTime(schedule))
+                .isInstanceOf(BasicException.class);
+    }
+
+    @Test
+    @DisplayName("월 총 근무 시간 검증 - 27시간 이내일 때 통과")
+    void validateTotalWorkTime_Success() {
+        // Given
+        long currentMonthlyMinutes = 24 * 60;  // 24시간 이미 근무
+        long newSlotMinutes = 3 * 60;  // 3시간 추가 (총 27시간)
+
+        // When & Then - 예외가 발생하지 않아야 함
+        scheduleValidator.validateTotalWorkTime(currentMonthlyMinutes, newSlotMinutes);
+    }
+
+    @Test
+    @DisplayName("월 총 근무 시간 검증 - 27시간 초과일 때 실패")
+    void validateTotalWorkTime_Failure() {
+        // Given
+        long currentMonthlyMinutes = 25 * 60;  // 25시간 이미 근무
+        long newSlotMinutes = 3 * 60;  // 3시간 추가 (총 28시간)
+
+        // When & Then
+        assertThatThrownBy(() -> scheduleValidator.validateTotalWorkTime(currentMonthlyMinutes, newSlotMinutes))
+                .isInstanceOf(BasicException.class);
+    }
+
+    @Test
+    @DisplayName("월 총 근무 시간 검증 - 경계값 테스트 (정확히 27시간)")
+    void validateTotalWorkTime_ExactlyTwentySevenHours() {
+        // Given
+        long currentMonthlyMinutes = 20 * 60;  // 20시간 이미 근무
+        long newSlotMinutes = 7 * 60;  // 7시간 추가 (정확히 27시간)
+
+        // When & Then - 예외가 발생하지 않아야 함
+        scheduleValidator.validateTotalWorkTime(currentMonthlyMinutes, newSlotMinutes);
+    }
+
+    @Test
+    @DisplayName("월 총 근무 시간 검증 - 경계값 테스트 (27시간 + 1분)")
+    void validateTotalWorkTime_OneMinuteOverTwentySevenHours() {
+        // Given
+        long currentMonthlyMinutes = 27 * 60;  // 27시간 이미 근무
+        long newSlotMinutes = 1;  // 1분 추가
+
+        // When & Then
+        assertThatThrownBy(() -> scheduleValidator.validateTotalWorkTime(currentMonthlyMinutes, newSlotMinutes))
+                .isInstanceOf(BasicException.class);
+    }
+
+    @Test
+    @DisplayName("주 최대 근무 시간 검증 - 13시간 이내일 때 통과")
+    void validateWeeklyWorkTime_Success() {
+        // Given
+        long currentWeeklyMinutes = 10 * 60;  // 10시간 이미 근무
+        long newSlotMinutes = 3 * 60;  // 3시간 추가 (총 13시간)
+
+        // When & Then - 예외가 발생하지 않아야 함
+        scheduleValidator.validateWeeklyWorkTime(currentWeeklyMinutes, newSlotMinutes);
+    }
+
+    @Test
+    @DisplayName("주 최대 근무 시간 검증 - 13시간 초과일 때 실패")
+    void validateWeeklyWorkTime_Failure() {
+        // Given
+        long currentWeeklyMinutes = 11 * 60;  // 11시간 이미 근무
+        long newSlotMinutes = 3 * 60;  // 3시간 추가 (총 14시간)
+
+        // When & Then
+        assertThatThrownBy(() -> scheduleValidator.validateWeeklyWorkTime(currentWeeklyMinutes, newSlotMinutes))
+                .isInstanceOf(BasicException.class);
+    }
+
+    @Test
+    @DisplayName("주 최대 근무 시간 검증 - 경계값 테스트 (정확히 13시간)")
+    void validateWeeklyWorkTime_ExactlyThirteenHours() {
+        // Given
+        long currentWeeklyMinutes = 8 * 60;  // 8시간 이미 근무
+        long newSlotMinutes = 5 * 60;  // 5시간 추가 (정확히 13시간)
+
+        // When & Then - 예외가 발생하지 않아야 함
+        scheduleValidator.validateWeeklyWorkTime(currentWeeklyMinutes, newSlotMinutes);
+    }
+
+    @Test
+    @DisplayName("주 최대 근무 시간 검증 - 경계값 테스트 (13시간 + 1분)")
+    void validateWeeklyWorkTime_OneMinuteOverThirteenHours() {
+        // Given
+        long currentWeeklyMinutes = 13 * 60;  // 13시간 이미 근무
+        long newSlotMinutes = 1;  // 1분 추가
+
+        // When & Then
+        assertThatThrownBy(() -> scheduleValidator.validateWeeklyWorkTime(currentWeeklyMinutes, newSlotMinutes))
+                .isInstanceOf(BasicException.class);
     }
 }
