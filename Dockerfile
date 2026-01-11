@@ -2,7 +2,8 @@
 FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
 COPY . .
-RUN gradle build -x test --no-daemon
+RUN gradle build -x test --no-daemon && \
+    rm -f build/libs/*-plain.jar
 
 # Run stage
 FROM eclipse-temurin:17-jre
