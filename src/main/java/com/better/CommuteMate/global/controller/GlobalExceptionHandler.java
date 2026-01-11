@@ -7,6 +7,7 @@ import com.better.CommuteMate.global.exceptions.BasicException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -43,5 +44,15 @@ public class GlobalExceptionHandler {
         log.warn("Validation failed: {}", errorMessage);
         Response response = new Response(false, errorMessage, null);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * 권한 없음 예외 처리 (403 Forbidden)
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    protected ResponseEntity<Response> handleAccessDeniedException(final AccessDeniedException e) {
+        log.warn("Access denied: {}", e.getMessage());
+        Response response = new Response(false, "해당 작업을 수행할 권한이 없습니다.", null);
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
 }
