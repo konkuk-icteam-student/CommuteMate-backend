@@ -90,7 +90,11 @@ public class WorkAttendanceService {
      * 사용자용: 퇴근 체크
      */
     @Transactional
-    public void checkOut(Integer userId) {
+    public void checkOut(Integer userId, String qrToken) {
+        if (!qrTokenManager.validateToken(qrToken)) {
+            throw new AttendanceException(AttendanceErrorCode.INVALID_QR_TOKEN);
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
 

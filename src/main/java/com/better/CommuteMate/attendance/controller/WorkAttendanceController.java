@@ -44,12 +44,12 @@ public class WorkAttendanceController {
         return ResponseEntity.ok(Response.of(true, "출근 처리가 완료되었습니다.", null));
     }
 
-    @Operation(summary = "사용자: 퇴근 체크", description = "퇴근을 인증합니다. (QR 불필요)")
+    @Operation(summary = "사용자: 퇴근 체크", description = "QR 토큰을 사용하여 퇴근을 인증합니다.")
     @PostMapping("/check-out")
     public ResponseEntity<Response> checkOut(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody(required = false) CheckOutRequest request) {
-        workAttendanceService.checkOut(userDetails.getUser().getUserId());
+            @Valid @RequestBody CheckOutRequest request) {
+        workAttendanceService.checkOut(userDetails.getUser().getUserId(), request.getQrToken());
         return ResponseEntity.ok(Response.of(true, "퇴근 처리가 완료되었습니다.", null));
     }
 
