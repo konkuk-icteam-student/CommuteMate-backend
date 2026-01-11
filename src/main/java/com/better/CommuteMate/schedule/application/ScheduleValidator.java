@@ -29,6 +29,17 @@ public class ScheduleValidator {
     private static final long MAX_WEEKLY_MINUTES = 13 * 60;  // 주 최대 13시간
     private static final long MIN_SESSION_MINUTES = 2 * 60;  // 1회 최소 2시간
 
+    /**
+     * 해당 스케줄이 동시 근무 제한을 초과하지 않고 삽입 가능한지 검증합니다.
+     * <p>
+     * - 해당 날짜의 기존 스케줄들을 조회합니다.
+     * - 15분 단위 체크포인트마다 겹치는 스케줄 수를 계산합니다.
+     * - 설정된 최대 동시 근무 인원을 초과하면 false를 반환합니다.
+     * </p>
+     *
+     * @param slot 검증할 스케줄 정보 (시작/종료 시간)
+     * @return 삽입 가능 여부 (true: 가능, false: 불가능)
+     */
     // 입력 일정의 분 단위가 00분, 30분 만 존재한다고 가정
     public boolean isScheduleInsertable(WorkScheduleCommand slot) {
         LocalDate date = slot.start().toLocalDate();  // 찾고 싶은 날짜

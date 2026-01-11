@@ -27,6 +27,16 @@ public class WorkScheduleController {
 
     private final ScheduleService scheduleService;
 
+    /**
+     * 여러 근무 시간대를 일괄 신청합니다.
+     * <p>
+     * 신청 기간 내라면 자동 승인되며, 기간 외라면 승인 대기 상태로 등록됩니다.
+     * </p>
+     *
+     * @param request 신청할 시간대 목록 {@link ApplyWorkSchedule}
+     * @param userId 신청하는 사용자 ID
+     * @return 신청 결과 상세 (성공/실패 건수 포함) {@link ApplyWorkScheduleResponseDetail}
+     */
     @Operation(summary = "근무 일정 신청", description = "여러 근무 시간대를 일괄 신청합니다.")
     @PostMapping("/apply")
     public ResponseEntity<Response> applyWorkSchedule(
@@ -45,6 +55,16 @@ public class WorkScheduleController {
                 ApplyWorkScheduleResponseDetail.from(applyResult)
         ));
     }
+    /**
+     * 기존 근무 일정을 수정합니다.
+     * <p>
+     * 기존 일정을 취소 요청하고, 새로운 일정을 추가 신청하는 방식으로 동작합니다.
+     * </p>
+     *
+     * @param request 수정할 내용 (취소할 ID 목록, 추가할 시간대 목록) {@link ModifyWorkScheduleDTO}
+     * @param userId 요청하는 사용자 ID
+     * @return 수정 요청 성공 메시지
+     */
     @Operation(summary = "근무 일정 수정", description = "기존 근무 일정을 취소하면서 새로운 일정을 추가 신청합니다. 취소는 schedule ID로, 추가는 시간대로 요청합니다.")
     @PatchMapping("/modify")
     public ResponseEntity<Response> modifyWorkSchedule(

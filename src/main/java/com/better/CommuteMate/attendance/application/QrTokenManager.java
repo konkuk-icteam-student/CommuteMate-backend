@@ -27,6 +27,7 @@ public class QrTokenManager {
      */
     public String generateToken() {
         String token = UUID.randomUUID().toString();
+        tokenStore.clear();
         tokenStore.put(token, LocalDateTime.now().plusSeconds(TOKEN_VALIDITY_SECONDS));
         return token;
     }

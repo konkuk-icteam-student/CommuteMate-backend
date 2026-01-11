@@ -22,6 +22,12 @@ public class HomeController {
 
     private final HomeService homeService;
 
+    /**
+     * 오늘의 근무 시간 및 스케줄 요약 정보를 조회합니다.
+     *
+     * @param userDetails 인증된 사용자 정보
+     * @return {@link HomeWorkTimeResponse}를 포함한 API 응답
+     */
     @Operation(summary = "오늘의 근무 시간 조회", description = "오늘 누적된 근무 시간과 예정된 스케줄 개수를 조회합니다.")
     @GetMapping("/work-time")
     public ResponseEntity<Response> getTodayWorkTime(
@@ -30,6 +36,12 @@ public class HomeController {
         return ResponseEntity.ok(Response.of(true, "오늘의 근무 시간 조회 성공", response));
     }
 
+    /**
+     * 현재 사용자의 출퇴근 버튼 상태를 조회합니다.
+     *
+     * @param userDetails 인증된 사용자 정보
+     * @return {@link HomeAttendanceStatusResponse}를 포함한 API 응답
+     */
     @Operation(summary = "출퇴근 상태 조회", description = "현재 시간에 따른 출퇴근 버튼 상태를 조회합니다.")
     @GetMapping("/attendance-status")
     public ResponseEntity<Response> getAttendanceStatus(

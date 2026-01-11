@@ -92,39 +92,6 @@ public class AdminScheduleService {
     }
 
     /**
-     * 근무 신청 요청 처리 (승인/거부)
-     *
-     * @param scheduleIds 근무 일정 ID List
-     * @param statusCode  처리 상태 코드 (WS02: 승인, WS03: 거부)
-     * @param adminId     처리하는 관리자 ID
-     */
-    @Transactional
-    public void processApplyRequest(List<Integer> scheduleIds, CodeType statusCode, Integer adminId) {
-        // WS02 또는 WS03만 허용
-        if (statusCode != CodeType.WS02 && statusCode != CodeType.WS03) {
-            throw ScheduleAllFailureException.of(ScheduleErrorCode.SCHEDULE_FAILURE, null);
-        }
-
-        for (Integer id : scheduleIds) {
-            WorkSchedule schedule = workSchedulesRepository.findById(id)
-                    .orElseThrow(() -> ScheduleAllFailureException.of(ScheduleErrorCode.SCHEDULE_NOT_FOUND, null));
-
-            // WS01(신청) 상태인지 확인
-            if (schedule.getStatusCode() != CodeType.WS01) {
-                throw ScheduleAllFailureException.of(ScheduleErrorCode.SCHEDULE_FAILURE, null);
-            }
-
-            schedule.updateStatus(statusCode, adminId);
-
-            // 거부(WS03)인 경우, 혹은 승인(WS02)인 경우 알림 전송
-            String messageType = statusCode == CodeType.WS02 ? "SCHEDULE_APPROVED" : "SCHEDULE_REJECTED";
-            String messageContent = statusCode == CodeType.WS02 ? "근무 신청이 승인되었습니다." : "근무 신청이 거부되었습니다.";
-            
-            sendNotification(schedule.getUser().getUserId(), messageType, messageContent);
-        }
-    }
-
-    /**
      * 특정 사용자의 근무 시간 조회
      */
     @Transactional(readOnly = true)

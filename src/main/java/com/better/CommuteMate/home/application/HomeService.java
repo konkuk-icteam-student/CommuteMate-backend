@@ -29,6 +29,17 @@ public class HomeService {
     private final WorkAttendanceRepository workAttendanceRepository;
     private final UserRepository userRepository;
 
+    /**
+     * 오늘의 총 근무 시간(분 단위)과 예정된 스케줄 개수를 조회합니다.
+     * <p>
+     * - 현재 사용자의 오늘(00:00 ~ 23:59) 유효한 근무 일정을 조회합니다.
+     * - 각 스케줄에 연결된 출퇴근 기록(WorkAttendance)을 기반으로 실제 근무 시간을 계산합니다.
+     * </p>
+     *
+     * @param userId 조회를 요청한 사용자의 ID
+     * @return {@link HomeWorkTimeResponse} (총 근무 분, 스케줄 개수)
+     * @throws BasicException 사용자를 찾을 수 없는 경우
+     */
     @Transactional(readOnly = true)
     public HomeWorkTimeResponse getTodayWorkTime(Integer userId) {
         userRepository.findById(userId)
@@ -54,6 +65,20 @@ public class HomeService {
                 .build();
     }
 
+    /**
+     * 현재 시각 기준 사용자의 출퇴근 상태를 판별합니다.
+     * <p>
+     * - 오늘 예정된 근무가 없으면 {@code NO_SCHEDULE}을 반환합니다.
+     * - 현재 시각과 가장 연관성 있는 스케줄을 찾아 상태를 결정합니다.
+     *   - 근무 시작 10분 전: {@code CAN_CHECK_IN}
+     *   - 근무 종료 5분 전 ~ 1시간 후: {@code CAN_CHECK_OUT}
+     *   - 지각 여부 등도 판별합니다.
+     * </p>
+     *
+     * @param userId 상태를 조회할 사용자의 ID
+     * @return {@link HomeAttendanceStatusResponse} (상태 코드, 메시지, 스케줄 정보)
+     * @throws BasicException 사용자를 찾을 수 없는 경우
+     */
     @Transactional(readOnly = true)
     public HomeAttendanceStatusResponse getAttendanceStatus(Integer userId) {
         userRepository.findById(userId)
