@@ -11,6 +11,9 @@ import com.better.CommuteMate.schedule.controller.admin.dtos.SetMonthlyLimitRequ
 import com.better.CommuteMate.schedule.controller.admin.dtos.SetApplyTermRequest;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.auth.application.CustomUserDetails;
+import com.better.CommuteMate.global.code.CodeType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,13 +29,14 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
 class AdminScheduleControllerTest {
 
     @Autowired
@@ -52,6 +56,17 @@ class AdminScheduleControllerTest {
 
     @MockBean
     private TokenBlacklistService tokenBlacklistService;
+
+    private CustomUserDetails createMockUserDetails(int userId) {
+        User user = new User();
+        user.setUserId(userId);
+        user.setEmail("admin" + userId + "@test.com");
+        user.setPassword("password");
+        user.setRoleCode(CodeType.RL02);
+        user.setName("Admin User");
+        user.setOrganizationId(1);
+        return new CustomUserDetails(user);
+    }
 
     @Test
     @DisplayName("POST /api/v1/admin/schedule/monthly-limit - 신규 월별 제한 설정 성공")
@@ -73,7 +88,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/admin/schedule/monthly-limit")
-                        .header("userId", "1")
+                        .with(user(createMockUserDetails(1)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -107,7 +122,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/admin/schedule/monthly-limit")
-                        .header("userId", "1")
+                        .with(user(createMockUserDetails(1)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -139,7 +154,8 @@ class AdminScheduleControllerTest {
                 .thenReturn(Optional.of(limit));
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limit/{year}/{month}", year, month))
+        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limit/{year}/{month}", year, month)
+                        .with(user(createMockUserDetails(1))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("월별 스케줄 제한을 조회했습니다."))
@@ -161,7 +177,8 @@ class AdminScheduleControllerTest {
                 .thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limit/{year}/{month}", year, month))
+        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limit/{year}/{month}", year, month)
+                        .with(user(createMockUserDetails(1))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.isSuccess").value(false))
                 .andExpect(jsonPath("$.message").value("해당 월의 스케줄 제한 설정을 찾을 수 없습니다."))
@@ -196,7 +213,8 @@ class AdminScheduleControllerTest {
         when(monthlyScheduleConfigService.getAllMonthlyLimits()).thenReturn(limits);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limits"))
+        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limits")
+                        .with(user(createMockUserDetails(1))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("모든 월별 스케줄 제한을 조회했습니다."))
@@ -219,7 +237,8 @@ class AdminScheduleControllerTest {
         when(monthlyScheduleConfigService.getAllMonthlyLimits()).thenReturn(List.of());
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limits"))
+        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limits")
+                        .with(user(createMockUserDetails(1))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("모든 월별 스케줄 제한을 조회했습니다."))
@@ -253,7 +272,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/admin/schedule/set-apply-term")
-                        .header("userId", "1")
+                        .with(user(createMockUserDetails(1)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -292,7 +311,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/admin/schedule/set-apply-term")
-                        .header("userId", "1")
+                        .with(user(createMockUserDetails(1)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
