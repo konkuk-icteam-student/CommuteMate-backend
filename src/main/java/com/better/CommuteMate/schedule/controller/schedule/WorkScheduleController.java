@@ -34,15 +34,15 @@ public class WorkScheduleController {
      * </p>
      *
      * @param request 신청할 시간대 목록 {@link ApplyWorkSchedule}
-     * @param userId 신청하는 사용자 ID
+     * @param userDetails 인증된 사용자 정보
      * @return 신청 결과 상세 (성공/실패 건수 포함) {@link ApplyWorkScheduleResponseDetail}
      */
     @Operation(summary = "근무 일정 신청", description = "여러 근무 시간대를 일괄 신청합니다.")
     @PostMapping("/apply")
     public ResponseEntity<Response> applyWorkSchedule(
             @RequestBody ApplyWorkSchedule request,
-            @RequestHeader Integer userId) {
-        // @RequestHeader int userID는 추후 인증로직이 추가되면 제거할 예정
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Integer userId = userDetails.getUser().getUserId();
         ApplyScheduleResultCommand applyResult = scheduleService.applyWorkSchedules(
                 request.slots().stream().map(slot -> new WorkScheduleCommand(
                         userId, slot.start(), slot.end()
@@ -62,15 +62,15 @@ public class WorkScheduleController {
      * </p>
      *
      * @param request 수정할 내용 (취소할 ID 목록, 추가할 시간대 목록) {@link ModifyWorkScheduleDTO}
-     * @param userId 요청하는 사용자 ID
+     * @param userDetails 인증된 사용자 정보
      * @return 수정 요청 성공 메시지
      */
     @Operation(summary = "근무 일정 수정", description = "기존 근무 일정을 취소하면서 새로운 일정을 추가 신청합니다. 취소는 schedule ID로, 추가는 시간대로 요청합니다.")
     @PatchMapping("/modify")
     public ResponseEntity<Response> modifyWorkSchedule(
             @RequestBody ModifyWorkScheduleDTO request,
-            @RequestHeader Integer userId) {
-        // @RequestHeader int userID는 추후 인증로직이 추가되면 제거할 예정
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+         Integer userId = userDetails.getUser().getUserId();
          scheduleService.modifyWorkSchedules(request, userId);
          return ResponseEntity.status(HttpStatus.CREATED).body(Response.of(
                 true,
@@ -87,7 +87,8 @@ public class WorkScheduleController {
     public ResponseEntity<Response> getWorkSchedules(
             @RequestParam Integer year,
             @RequestParam Integer month,
-            @RequestHeader Integer userId) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Integer userId = userDetails.getUser().getUserId();
         return ResponseEntity.ok(Response.of(
                 true,
                 "근무 일정 조회 성공",
@@ -116,7 +117,8 @@ public class WorkScheduleController {
     @GetMapping("/{scheduleId}")
     public ResponseEntity<Response> getWorkSchedule(
             @PathVariable Integer scheduleId,
-            @RequestHeader Integer userId) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Integer userId = userDetails.getUser().getUserId();
         return ResponseEntity.ok(Response.of(
                 true,
                 "근무 일정 상세 조회 성공",
@@ -131,7 +133,8 @@ public class WorkScheduleController {
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<Response> deleteWorkSchedule(
             @PathVariable Integer scheduleId,
-            @RequestHeader Integer userId) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Integer userId = userDetails.getUser().getUserId();
         scheduleService.deleteWorkSchedule(userId, scheduleId);
         return ResponseEntity.ok(Response.of(
                 true,

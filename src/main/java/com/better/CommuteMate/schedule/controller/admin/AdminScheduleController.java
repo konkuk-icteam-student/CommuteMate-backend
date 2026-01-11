@@ -27,6 +27,8 @@ import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkTimeSummar
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryListResponse;
 import com.better.CommuteMate.user.controller.dto.UserWorkTimeResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminUserWorkTimeResponse;
+import com.better.CommuteMate.auth.application.CustomUserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.util.List;
 
 import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestResponse;
@@ -49,15 +51,15 @@ public class AdminScheduleController {
      * </p>
      *
      * @param request 설정할 연도, 월, 최대 인원수 정보
-     * @param userId 설정을 요청한 관리자의 ID
+     * @param userDetails 설정을 요청한 관리자 정보
      * @return 설정된 결과 {@link MonthlyLimitResponse}
      */
     @Operation(summary = "월별 스케줄 제한 설정", description = "특정 연도/월의 최대 동시 근무 인원수를 설정합니다. 이미 존재하는 경우 업데이트합니다.")
     @PostMapping("/monthly-limit")
     public ResponseEntity<Response> setMonthlyLimit(
             @RequestBody SetMonthlyLimitRequest request,
-            @RequestHeader(value = "userId", defaultValue = "1") Integer userId) {
-        // @RequestHeader userId는 추후 인증로직이 추가되면 변경될 예정
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Integer userId = userDetails.getUser().getUserId();
 
         MonthlyScheduleConfig result = monthlyScheduleConfigService.setMonthlyLimit(
                 MonthlyScheduleConfigCommand.from(
@@ -199,15 +201,15 @@ public class AdminScheduleController {
      * </p>
      *
      * @param request 설정할 연도, 월, 시작/종료 일시
-     * @param userId 설정을 요청한 관리자 ID
+     * @param userDetails 설정을 요청한 관리자 정보
      * @return 설정된 신청 기간 정보 {@link ApplyTermResponse}
      */
     @Operation(summary = "신청 기간 설정", description = "특정 연도/월의 근무신청 가능 기간을 설정합니다. 미존재 시 자동 생성됩니다.")
     @PostMapping("/set-apply-term")
     public ResponseEntity<Response> setApplyTerm(
             @RequestBody SetApplyTermRequest request,
-            @RequestHeader(value = "userId", defaultValue = "1") Integer userId) {
-        // @RequestHeader userId는 추후 인증로직이 추가되면 변경될 예정
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Integer userId = userDetails.getUser().getUserId();
 
         MonthlyScheduleConfig result = monthlyScheduleConfigService.setApplyTerm(
                 SetApplyTermCommand.from(
@@ -233,15 +235,15 @@ public class AdminScheduleController {
      * </p>
      *
      * @param request 처리할 요청 ID 목록 및 상태 코드(승인/거부)
-     * @param adminId 처리를 수행하는 관리자 ID
+     * @param userDetails 처리를 수행하는 관리자 정보
      * @return 처리 결과 메시지
      */
     @Operation(summary = "변경 요청 처리", description = "근무 일정 변경 요청을 승인 또는 거부합니다. 여러 요청을 일괄 처리할 수 있습니다. (requestIds 개수는 반드시 짝수)")
     @PostMapping("/process-change-request")
     public ResponseEntity<Response> processChangeRequest(
             @RequestBody ProcessChangeRequestRequest request,
-            @RequestHeader(value = "userId", defaultValue = "1") Integer adminId) {
-        // @RequestHeader userId는 추후 인증로직이 추가되면 변경될 예정
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Integer adminId = userDetails.getUser().getUserId();
 
         // requestIds 개수가 짝수인지 검증
         if (request.requestIds().size() % 2 != 0) {
