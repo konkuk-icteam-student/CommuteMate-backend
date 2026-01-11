@@ -30,6 +30,13 @@ public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Int
                                                             @Param("startOfDay") LocalDateTime startOfDay,
                                                             @Param("endOfDay") LocalDateTime endOfDay);
 
+    @Query("SELECT w FROM WorkSchedule w WHERE w.user.userId = :userId " +
+            "AND w.startTime >= :startOfDay AND w.startTime < :endOfDay " +
+            "AND w.isDeleted = false")
+    List<WorkSchedule> findAllSchedulesByUserAndDateRange(@Param("userId") Integer userId,
+                                                          @Param("startOfDay") LocalDateTime startOfDay,
+                                                          @Param("endOfDay") LocalDateTime endOfDay);
+
     // UserId와 시작 시간을 기준으로 근무 일정을 조회
     Optional<WorkSchedule> findByUserAndStartTime(User user, LocalDateTime startTimes);
 

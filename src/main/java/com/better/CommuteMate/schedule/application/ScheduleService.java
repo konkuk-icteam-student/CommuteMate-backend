@@ -9,6 +9,9 @@ import com.better.CommuteMate.schedule.application.exceptions.ScheduleAllFailure
 import com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.application.exceptions.SchedulePartialFailureException;
 import com.better.CommuteMate.schedule.application.exceptions.response.ScheduleResponseDetail;
+import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
+import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ModifyWorkScheduleDTO;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
@@ -41,6 +44,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 public class ScheduleService {
 
     private final WorkSchedulesRepository workSchedulesRepository;
+    private final WorkAttendanceRepository workAttendanceRepository;
     private final UserRepository userRepository;
     private final ScheduleValidator scheduleValidator;
     private final MonthlyScheduleConfigService monthlyScheduleConfigService;
@@ -339,6 +343,48 @@ public class ScheduleService {
         LocalDateTime end = start.plusMonths(1);
         return workSchedulesRepository.findValidSchedulesByUserAndDateRange(userId, start, end)
                 .stream().map(WorkScheduleResponse::from).toList();
+    }
+
+    /**
+     * 특정 사용자의 연/월별 근무 이력 조회 (실제 근무 포함)
+     */
+    @Transactional(readOnly = true)
+    public List<WorkScheduleHistoryResponse> getWorkScheduleHistory(Integer userId, Integer year, Integer month) {
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
+        LocalDateTime end = start.plusMonths(1);
+
+        List<WorkSchedule> schedules = workSchedulesRepository.findAllSchedulesByUserAndDateRange(userId, start, end);
+        List<WorkScheduleHistoryResponse> historyList = new ArrayList<>();
+
+        for (WorkSchedule schedule : schedules) {
+            List<WorkAttendance> attendances = workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+            
+            Optional<WorkAttendance> checkIn = attendances.stream()
+                    .filter(a -> a.getCheckTypeCode() == CodeType.CT01).findFirst();
+            Optional<WorkAttendance> checkOut = attendances.stream()
+                    .filter(a -> a.getCheckTypeCode() == CodeType.CT02).findFirst();
+
+            LocalDateTime actualStart = checkIn.map(WorkAttendance::getCheckTime).orElse(null);
+            LocalDateTime actualEnd = checkOut.map(WorkAttendance::getCheckTime).orElse(null);
+            Long duration = null;
+            if (actualStart != null && actualEnd != null) {
+                duration = Duration.between(actualStart, actualEnd).toMinutes();
+            }
+
+            historyList.add(WorkScheduleHistoryResponse.builder()
+                    .id(schedule.getScheduleId())
+                    .start(schedule.getStartTime())
+                    .end(schedule.getEndTime())
+                    .status(schedule.getStatusCode())
+                    .actualStart(actualStart)
+                    .actualEnd(actualEnd)
+                    .workDurationMinutes(duration)
+                    .build());
+        }
+        
+        historyList.sort(Comparator.comparing(WorkScheduleHistoryResponse::getStart));
+        
+        return historyList;
     }
 
     /**

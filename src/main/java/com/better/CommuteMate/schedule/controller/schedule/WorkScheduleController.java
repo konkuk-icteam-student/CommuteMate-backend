@@ -1,11 +1,13 @@
 package com.better.CommuteMate.schedule.controller.schedule;
 
+import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.schedule.application.ScheduleService;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ApplyWorkSchedule;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ApplyWorkScheduleResponseDetail;
 import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.global.controller.dtos.Response;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryListResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleListResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ModifyWorkScheduleDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "사용자 근무 일정", description = "사용자 근무 일정 신청 및 수정 API")
@@ -69,6 +72,20 @@ public class WorkScheduleController {
                 true,
                 "근무 일정 조회 성공",
                 WorkScheduleListResponse.of(scheduleService.getWorkSchedules(userId, year, month))
+        ));
+    }
+
+    @Operation(summary = "근무 이력 조회", description = "특정 연/월의 근무 이력(실제 근무 포함)을 조회합니다.")
+    @GetMapping("/history")
+    public ResponseEntity<Response> getWorkScheduleHistory(
+            @RequestParam Integer year,
+            @RequestParam Integer month,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(Response.of(
+                true,
+                "근무 이력 조회 성공",
+                WorkScheduleHistoryListResponse.of(
+                        scheduleService.getWorkScheduleHistory(userDetails.getUser().getUserId(), year, month))
         ));
     }
 

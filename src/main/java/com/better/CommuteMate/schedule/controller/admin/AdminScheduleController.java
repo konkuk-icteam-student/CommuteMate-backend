@@ -23,6 +23,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkTimeSummaryResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryListResponse;
+import com.better.CommuteMate.user.controller.dto.UserWorkTimeResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.AdminUserWorkTimeResponse;
 import java.util.List;
 
 import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestResponse;
@@ -89,6 +93,50 @@ public class AdminScheduleController {
                 true,
                 "모든 월별 스케줄 제한을 조회했습니다.",
                 MonthlyLimitsResponse.from(limits)
+        ));
+    }
+
+    @Operation(summary = "사용자별 근무 시간 조회", description = "특정 사용자의 월별 근무 시간을 조회합니다.")
+    @GetMapping("/work-time")
+    public ResponseEntity<Response> getUserWorkTime(
+            @RequestParam Integer userId,
+            @RequestParam Integer year,
+            @RequestParam Integer month) {
+        UserWorkTimeResponse response = adminScheduleService.getUserWorkTime(userId, year, month);
+        return ResponseEntity.ok(Response.of(true, "사용자 근무 시간 조회 성공", response));
+    }
+
+    @Operation(summary = "전체 근무 시간 통계", description = "특정 월의 전체 사용자 근무 시간을 조회합니다.")
+    @GetMapping("/work-time/summary")
+    public ResponseEntity<Response> getWorkTimeSummary(
+            @RequestParam Integer year,
+            @RequestParam Integer month) {
+        List<AdminUserWorkTimeResponse> response = adminScheduleService.getWorkTimeSummary(year, month);
+        return ResponseEntity.ok(Response.of(true, "전체 근무 시간 통계 조회 성공", AdminWorkTimeSummaryResponse.of(response)));
+    }
+
+    @Operation(summary = "사용자별 근무 이력 조회", description = "특정 사용자의 월별 근무 이력을 조회합니다.")
+    @GetMapping("/history")
+    public ResponseEntity<Response> getUserWorkHistory(
+            @RequestParam Integer userId,
+            @RequestParam Integer year,
+            @RequestParam Integer month) {
+        return ResponseEntity.ok(Response.of(
+                true,
+                "사용자 근무 이력 조회 성공",
+                WorkScheduleHistoryListResponse.of(adminScheduleService.getUserWorkHistory(userId, year, month))
+        ));
+    }
+
+    @Operation(summary = "전체 근무 이력 조회", description = "특정 월의 전체 근무 이력을 조회합니다.")
+    @GetMapping("/history/all")
+    public ResponseEntity<Response> getAllWorkHistory(
+            @RequestParam Integer year,
+            @RequestParam Integer month) {
+        return ResponseEntity.ok(Response.of(
+                true,
+                "전체 근무 이력 조회 성공",
+                WorkScheduleHistoryListResponse.of(adminScheduleService.getAllWorkHistory(year, month))
         ));
     }
 

@@ -17,7 +17,22 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import com.better.CommuteMate.schedule.controller.dtos.ScheduleUpdateMessage;
-import java.time.LocalDate;
+import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
+import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
+import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.domain.user.repository.UserRepository;
+import com.better.CommuteMate.schedule.controller.admin.dtos.AdminUserWorkTimeResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryResponse;
+import com.better.CommuteMate.user.controller.dto.UserInfoResponse;
+import com.better.CommuteMate.user.controller.dto.UserWorkTimeResponse;
+import com.better.CommuteMate.global.exceptions.UserNotFoundException;
+import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
+import com.better.CommuteMate.global.exceptions.response.UserNotFoundResponseDetail;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +40,8 @@ public class AdminScheduleService {
 
     private final WorkChangeRequestRepository workChangeRequestRepository;
     private final WorkSchedulesRepository workSchedulesRepository;
+    private final WorkAttendanceRepository workAttendanceRepository;
+    private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     /**
@@ -105,6 +122,145 @@ public class AdminScheduleService {
             
             sendNotification(schedule.getUser().getUserId(), messageType, messageContent);
         }
+    }
+
+    /**
+     * 특정 사용자의 근무 시간 조회
+     */
+    @Transactional(readOnly = true)
+    public UserWorkTimeResponse getUserWorkTime(Integer userId, Integer year, Integer month) {
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
+        LocalDateTime end = start.plusMonths(1);
+
+        long totalMinutes = calculateTotalWorkTime(userId, start, end);
+        return new UserWorkTimeResponse(totalMinutes, "MONTHLY");
+    }
+
+    /**
+     * 전체 사용자의 근무 시간 통계 조회
+     */
+    @Transactional(readOnly = true)
+    public List<AdminUserWorkTimeResponse> getWorkTimeSummary(Integer year, Integer month) {
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
+        LocalDateTime end = start.plusMonths(1);
+
+        List<User> users = userRepository.findAll();
+        List<AdminUserWorkTimeResponse> summaryList = new ArrayList<>();
+
+        for (User user : users) {
+            long totalMinutes = calculateTotalWorkTime(user.getUserId(), start, end);
+            summaryList.add(AdminUserWorkTimeResponse.builder()
+                    .userInfo(new UserInfoResponse(user))
+                    .totalMinutes(totalMinutes)
+                    .build());
+        }
+        return summaryList;
+    }
+
+    /**
+     * 특정 사용자의 근무 이력 조회
+     */
+    @Transactional(readOnly = true)
+    public List<WorkScheduleHistoryResponse> getUserWorkHistory(Integer userId, Integer year, Integer month) {
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
+        LocalDateTime end = start.plusMonths(1);
+
+        return getHistoryList(userId, start, end);
+    }
+
+    /**
+     * 전체 사용자의 근무 이력 조회 (사용자별로 그룹화하지 않고 평탄화)
+     */
+    @Transactional(readOnly = true)
+    public List<WorkScheduleHistoryResponse> getAllWorkHistory(Integer year, Integer month) {
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
+        LocalDateTime end = start.plusMonths(1);
+
+        List<WorkSchedule> schedules = workSchedulesRepository.findByDate(start, end);
+        
+        List<WorkScheduleHistoryResponse> historyList = new ArrayList<>();
+        for (WorkSchedule schedule : schedules) {
+            historyList.add(convertToHistoryResponse(schedule));
+        }
+        historyList.sort(Comparator.comparing(WorkScheduleHistoryResponse::getStart));
+        return historyList;
+    }
+
+    private long calculateTotalWorkTime(Integer userId, LocalDateTime start, LocalDateTime end) {
+        List<WorkSchedule> schedules = workSchedulesRepository.findAllSchedulesByUserAndDateRange(
+                userId, start, end);
+        
+        long totalMinutes = 0;
+        for (WorkSchedule schedule : schedules) {
+            if (schedule.getStatusCode() != CodeType.WS02) {
+                continue;
+            }
+            List<WorkAttendance> attendances = workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+            totalMinutes += calculateDuration(schedule, attendances);
+        }
+        return totalMinutes;
+    }
+
+    private long calculateDuration(WorkSchedule schedule, List<WorkAttendance> attendances) {
+        Optional<LocalDateTime> checkIn = attendances.stream()
+                .filter(a -> a.getCheckTypeCode() == CodeType.CT01)
+                .map(WorkAttendance::getCheckTime)
+                .findFirst();
+
+        Optional<LocalDateTime> checkOut = attendances.stream()
+                .filter(a -> a.getCheckTypeCode() == CodeType.CT02)
+                .map(WorkAttendance::getCheckTime)
+                .findFirst();
+
+        if (checkIn.isEmpty()) return 0;
+
+        LocalDateTime start = checkIn.get();
+        LocalDateTime end = checkOut.orElse(LocalDateTime.now());
+
+        if (start.isBefore(schedule.getStartTime())) start = schedule.getStartTime();
+        if (end.isAfter(schedule.getEndTime())) end = schedule.getEndTime();
+
+        if (start.isAfter(end)) return 0;
+
+        return Duration.between(start, end).toMinutes();
+    }
+
+    private List<WorkScheduleHistoryResponse> getHistoryList(Integer userId, LocalDateTime start, LocalDateTime end) {
+        List<WorkSchedule> schedules = workSchedulesRepository.findAllSchedulesByUserAndDateRange(userId, start, end);
+        List<WorkScheduleHistoryResponse> historyList = new ArrayList<>();
+
+        for (WorkSchedule schedule : schedules) {
+            historyList.add(convertToHistoryResponse(schedule));
+        }
+        
+        historyList.sort(Comparator.comparing(WorkScheduleHistoryResponse::getStart));
+        return historyList;
+    }
+
+    private WorkScheduleHistoryResponse convertToHistoryResponse(WorkSchedule schedule) {
+        List<WorkAttendance> attendances = workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+        
+        Optional<WorkAttendance> checkIn = attendances.stream()
+                .filter(a -> a.getCheckTypeCode() == CodeType.CT01).findFirst();
+        Optional<WorkAttendance> checkOut = attendances.stream()
+                .filter(a -> a.getCheckTypeCode() == CodeType.CT02).findFirst();
+
+        LocalDateTime actualStart = checkIn.map(WorkAttendance::getCheckTime).orElse(null);
+        LocalDateTime actualEnd = checkOut.map(WorkAttendance::getCheckTime).orElse(null);
+        Long duration = null;
+        if (actualStart != null && actualEnd != null) {
+            duration = Duration.between(actualStart, actualEnd).toMinutes();
+        }
+
+        return WorkScheduleHistoryResponse.builder()
+                .id(schedule.getScheduleId())
+                .start(schedule.getStartTime())
+                .end(schedule.getEndTime())
+                .status(schedule.getStatusCode())
+                .actualStart(actualStart)
+                .actualEnd(actualEnd)
+                .workDurationMinutes(duration)
+                .build();
     }
 
     /**
