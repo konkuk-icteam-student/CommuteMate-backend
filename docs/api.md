@@ -2,6 +2,7 @@
 
 ## Overview
 CommuteMate 백엔드 시스템의 REST API 엔드포인트 문서입니다.
+모든 날짜 및 시간 형식은 ISO-8601 (`yyyy-MM-dd'T'HH:mm:ss`)을 따릅니다.
 
 ## Base URL
 ```
@@ -9,44 +10,40 @@ http://localhost:8080
 ```
 
 ## Authentication
-대부분의 API는 JWT 인증이 필요합니다. 토큰은 다음과 같이 전달됩니다:
-- **AccessToken**: HttpOnly 쿠키로 전달 (자동)
-- **RefreshToken**: Authorization 헤더로 전달 (`Bearer <token>`)
+대부분의 API는 JWT 인증이 필요합니다.
+- **AccessToken**: `HttpOnly Cookie`로 전달됩니다. (브라우저 자동 처리)
+- **RefreshToken**: `Authorization` 헤더로 전달해야 합니다.
+  - Format: `Bearer <token>`
 
 ---
 
-## 1. Authentication API
+## 1. Authentication API (`/api/v1/auth`)
 
 ### 1.1 Send Verification Code
 이메일 인증 번호를 발송합니다.
+- **POST** `/api/v1/auth/send-verification-code`
 
-**Endpoint**: `POST /api/v1/auth/send-verification-code`
-
-**Request Body**:
+**Request Body**
 ```json
 {
   "email": "user@example.com"
 }
 ```
 
-**Success Response**:
-- **Status**: `200 OK`
+**Response (200 OK)**
 ```json
 {
   "isSuccess": true,
-  "message": "인증번호가 이메일로 발송되었습니다. (유효시간: 5분)",
+  "message": "인증번호가 발송되었습니다.",
   "details": null
 }
 ```
 
----
-
 ### 1.2 Verify Code
 이메일 인증 번호를 검증합니다.
+- **POST** `/api/v1/auth/verify-code`
 
-**Endpoint**: `POST /api/v1/auth/verify-code`
-
-**Request Body**:
+**Request Body**
 ```json
 {
   "email": "user@example.com",
@@ -54,56 +51,39 @@ http://localhost:8080
 }
 ```
 
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "이메일 인증이 완료되었습니다. 회원가입을 진행해주세요.",
-  "details": null
-}
-```
-
----
-
 ### 1.3 Register
 회원가입을 진행합니다.
+- **POST** `/api/v1/auth/register`
 
-**Endpoint**: `POST /api/v1/auth/register`
-
-**Request Body**:
+**Request Body**
 ```json
 {
-  "email": "user@example.com",
-  "password": "password123",
+  "email": "newuser@example.com",
+  "password": "securePass123",
   "name": "홍길동",
-  "organizationId": 1,
-  "roleCode": "RL01"
+  "roleCode": "RL01", 
+  "organizationId": 1
 }
 ```
+> `roleCode`: `RL01`(학생/사원), `RL02`(관리자)
 
-**Success Response**:
-- **Status**: `201 Created`
+**Response (201 Created)**
 ```json
 {
   "isSuccess": true,
   "message": "회원가입이 완료되었습니다.",
   "details": {
     "userId": 1,
-    "email": "user@example.com",
-    "name": "홍길동"
+    "email": "newuser@example.com"
   }
 }
 ```
 
----
-
 ### 1.4 Login
-로그인하여 액세스 토큰과 리프레시 토큰을 발급받습니다.
+로그인하여 액세스 토큰(쿠키)과 리프레시 토큰을 발급받습니다.
+- **POST** `/api/v1/auth/login`
 
-**Endpoint**: `POST /api/v1/auth/login`
-
-**Request Body**:
+**Request Body**
 ```json
 {
   "email": "user@example.com",
@@ -111,398 +91,205 @@ http://localhost:8080
 }
 ```
 
-**Success Response**:
-- **Status**: `200 OK`
-- **Cookies**: `accessToken` (HttpOnly)
+**Response (200 OK)**
 ```json
 {
   "isSuccess": true,
   "message": "로그인 성공",
   "details": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "accessToken": "eyJhbGciOiJIUzI1Ni...",
+    "refreshToken": "eyJhbGciOiJIUzI1Ni...",
     "tokenType": "Bearer",
-    "expiresAt": 1736485888000
+    "expiresAt": 1736560000
   }
 }
 ```
-
----
 
 ### 1.5 Logout
-로그아웃합니다. 토큰을 블랙리스트에 등록합니다.
-
-**Endpoint**: `POST /api/v1/auth/logout`
-
-**Headers**: `Authorization: Bearer <accessToken>`
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "로그아웃되었습니다.",
-  "details": null
-}
-```
-
----
+로그아웃합니다 (토큰 블랙리스트 등록).
+- **POST** `/api/v1/auth/logout`
 
 ### 1.6 Refresh Token
-리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급받습니다.
-
-**Endpoint**: `POST /api/v1/auth/refresh`
-
-**Headers**: `Authorization: Bearer <refreshToken>`
-
-**Success Response**:
-- **Status**: `200 OK`
-- **Cookies**: `accessToken` (HttpOnly)
-```json
-{
-  "isSuccess": true,
-  "message": "토큰 갱신 성공",
-  "details": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "tokenType": "Bearer",
-    "expiresAt": 1736485888000
-  }
-}
-```
+리프레시 토큰으로 액세스 토큰을 갱신합니다.
+- **POST** `/api/v1/auth/refresh`
+- **Header**: `Authorization: Bearer <refreshToken>`
 
 ---
 
-## 2. Work Schedule API (User)
+## 2. Work Schedule API (`/api/v1/work-schedules`)
 
 ### 2.1 Apply Work Schedule
 근무 일정을 일괄 신청합니다.
+- **POST** `/api/v1/work-schedules/apply`
 
-**Endpoint**: `POST /api/v1/work-schedules/apply`
-
-**Headers**: `userId: <userId>`
-
-**Request Body**:
+**Request Body**
 ```json
 {
   "slots": [
     {
-      "start": "2025-12-01T09:00:00",
-      "end": "2025-12-01T18:00:00"
+      "start": "2026-01-11T09:00:00",
+      "end": "2026-01-11T12:00:00"
     },
     {
-      "start": "2025-12-02T09:00:00",
-      "end": "2025-12-02T18:00:00"
+      "start": "2026-01-11T13:00:00",
+      "end": "2026-01-11T18:00:00"
     }
   ]
 }
 ```
 
-**Success Response**:
-- **Status**: `201 Created`
+**Response (201 Created)** - 전체 성공
 ```json
 {
   "isSuccess": true,
-  "message": "신청하신 일정이 모두 등록되었습니다.",
+  "message": "일정 신청 성공",
   "details": {
     "success": [
-      {
-        "scheduleId": 1,
-        "startTime": "2025-12-01T09:00:00",
-        "endTime": "2025-12-01T18:00:00"
-      },
-      {
-        "scheduleId": 2,
-        "startTime": "2025-12-02T09:00:00",
-        "endTime": "2025-12-02T18:00:00"
-      }
+      { "start": "2026-01-11T09:00:00", "end": "2026-01-11T12:00:00" },
+      { "start": "2026-01-11T13:00:00", "end": "2026-01-11T18:00:00" }
     ],
-    "failure": []
+    "fail": []
   }
 }
 ```
 
-**Partial Failure Response**:
-- **Status**: `207 Multi-Status`
+**Response (207 Multi-Status)** - 부분 성공
 ```json
 {
   "isSuccess": true,
-  "message": "일부 일정 신청이 실패했습니다.",
+  "message": "일부 일정 신청 실패",
   "details": {
-    "success": [
-      {
-        "scheduleId": 1,
-        "startTime": "2025-12-01T09:00:00",
-        "endTime": "2025-12-01T18:00:00"
-      }
-    ],
-    "failure": [
-      {
-        "reason": "이미 존재하는 일정입니다",
-        "startTime": "2025-12-02T09:00:00",
-        "endTime": "2025-12-02T18:00:00"
-      }
+    "success": [ ... ],
+    "fail": [
+      { "start": "2026-01-11T13:00:00", "end": "2026-01-11T18:00:00" }
     ]
   }
 }
 ```
-
-**All Failure Response**:
-- **Status**: `422 Unprocessable Entity`
-```json
-{
-  "isSuccess": false,
-  "message": "모든 일정 신청이 실패했습니다.",
-  "details": {
-    "errorReason": "월별 제한을 초과했습니다",
-    "failures": [
-      {
-        "reason": "월별 제한 초과",
-        "startTime": "2025-12-01T09:00:00",
-        "endTime": "2025-12-01T18:00:00"
-      }
-    ]
-  }
-}
-```
-
----
 
 ### 2.2 Modify Work Schedule
-기존 근무 일정을 취소하면서 새로운 일정을 추가 신청합니다.
+기존 일정을 취소하고 새로운 일정을 추가합니다.
+- **PATCH** `/api/v1/work-schedules/modify`
 
-**Endpoint**: `PATCH /api/v1/work-schedules/modify`
-
-**Headers**: `userId: <userId>`
-
-**Request Body**:
+**Request Body**
 ```json
 {
-  "cancelScheduleIds": [1, 2],
+  "cancelScheduleIds": [101, 102],
   "newSlots": [
     {
-      "start": "2025-12-03T09:00:00",
-      "end": "2025-12-03T18:00:00"
+      "start": "2026-01-12T09:00:00",
+      "end": "2026-01-12T18:00:00"
     }
   ]
 }
 ```
 
-**Success Response**:
-- **Status**: `201 Created`
-```json
-{
-  "isSuccess": true,
-  "message": "신청하신 일정이 모두 수정(요청)되었습니다.",
-  "details": null
-}
-```
+### 2.3 Get My Schedules
+나의 근무 일정을 월별로 조회합니다.
+- **GET** `/api/v1/work-schedules?year=2026&month=1`
+
+### 2.4 Get My History
+나의 지난 근무 이력을 조회합니다.
+- **GET** `/api/v1/work-schedules/history?year=2026&month=1`
 
 ---
 
-## 3. Admin Schedule API
+## 3. Admin Schedule API (`/api/v1/admin/schedule`)
 
 ### 3.1 Set Monthly Limit
-특정 연도/월의 최대 동시 근무 인원수를 설정합니다.
+월별 최대 동시 근무 인원을 설정합니다.
+- **POST** `/api/v1/admin/schedule/monthly-limit`
 
-**Endpoint**: `POST /api/v1/admin/schedule/monthly-limit`
-
-**Headers**: `userId: <userId>` (관리자 ID)
-
-**Request Body**:
+**Request Body**
 ```json
 {
-  "scheduleYear": 2025,
-  "scheduleMonth": 12,
-  "maxConcurrent": 10
+  "scheduleYear": 2026,
+  "scheduleMonth": 1,
+  "maxConcurrent": 15
 }
 ```
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "월별 스케줄 제한이 설정되었습니다.",
-  "details": {
-    "limitId": 1,
-    "scheduleYear": 2025,
-    "scheduleMonth": 12,
-    "maxConcurrent": 10
-  }
-}
-```
-
----
 
 ### 3.2 Get Monthly Limit
-특정 연도/월의 스케줄 제한 설정을 조회합니다.
+- **GET** `/api/v1/admin/schedule/monthly-limit/{year}/{month}`
 
-**Endpoint**: `GET /api/v1/admin/schedule/monthly-limit/{year}/{month}`
+### 3.3 Set Apply Term
+근무 신청 기간을 설정합니다.
+- **POST** `/api/v1/admin/schedule/set-apply-term`
 
-**Path Parameters**:
-- `year` (integer): 연도 (예: 2025)
-- `month` (integer): 월 (1-12)
-
-**Success Response**:
-- **Status**: `200 OK`
+**Request Body**
 ```json
 {
-  "isSuccess": true,
-  "message": "월별 스케줄 제한을 조회했습니다.",
-  "details": {
-    "limitId": 1,
-    "scheduleYear": 2025,
-    "scheduleMonth": 12,
-    "maxConcurrent": 10
-  }
+  "scheduleYear": 2026,
+  "scheduleMonth": 1,
+  "applyStartTime": "2025-12-23T00:00:00",
+  "applyEndTime": "2025-12-27T00:00:00"
 }
 ```
 
-**Not Found Response**:
-- **Status**: `404 Not Found`
+### 3.4 Process Change Request
+근무 일정 변경 요청을 승인/거부합니다.
+- **POST** `/api/v1/admin/schedule/process-change-request`
+
+**Request Body**
 ```json
 {
-  "isSuccess": false,
-  "message": "해당 월의 스케줄 제한 설정을 찾을 수 없습니다.",
-  "details": null
-}
-```
-
----
-
-### 3.3 Get All Monthly Limits
-저장된 모든 월별 스케줄 제한 설정을 조회합니다.
-
-**Endpoint**: `GET /api/v1/admin/schedule/monthly-limits`
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "모든 월별 스케줄 제한을 조회했습니다.",
-  "details": {
-    "limits": [
-      {
-        "limitId": 1,
-        "scheduleYear": 2025,
-        "scheduleMonth": 12,
-        "maxConcurrent": 10
-      },
-      {
-        "limitId": 2,
-        "scheduleYear": 2025,
-        "scheduleMonth": 11,
-        "maxConcurrent": 8
-      }
-    ]
-  }
-}
-```
-
----
-
-### 3.4 Set Apply Term
-특정 연도/월의 근무신청 가능 기간을 설정합니다.
-
-**Endpoint**: `POST /api/v1/admin/schedule/set-apply-term`
-
-**Headers**: `userId: <userId>` (관리자 ID)
-
-**Request Body**:
-```json
-{
-  "scheduleYear": 2025,
-  "scheduleMonth": 12,
-  "applyStartTime": "2025-11-23T00:00:00",
-  "applyEndTime": "2025-11-27T23:59:59"
-}
-```
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "신청 기간이 설정되었습니다.",
-  "details": {
-    "limitId": 1,
-    "scheduleYear": 2025,
-    "scheduleMonth": 12,
-    "applyStartTime": "2025-11-23T00:00:00",
-    "applyEndTime": "2025-11-27T23:59:59"
-  }
-}
-```
-
-**Invalid Request Response**:
-- **Status**: `422 Unprocessable Entity`
-```json
-{
-  "isSuccess": false,
-  "message": "신청 기간이 유효하지 않습니다. 시작 시간이 종료 시간보다 이전이어야 합니다.",
-  "details": {
-    "errorReason": "신청 시작 시간이 종료 시간보다 늦거나 같습니다.",
-    "receivedApplyStartTime": "2025-11-27T23:59:59",
-    "receivedApplyEndTime": "2025-11-23T00:00:00"
-  }
-}
-```
-
----
-
-### 3.5 Process Change Request
-근무 일정 변경 요청을 승인 또는 거부합니다.
-
-**Endpoint**: `POST /api/v1/admin/schedule/process-change-request`
-
-**Headers**: `userId: <userId>` (관리자 ID)
-
-**Request Body**:
-```json
-{
-  "requestIds": [1, 2],
+  "requestIds": [101, 102],
   "statusCode": "CS02"
 }
 ```
-
-**Note**: `requestIds` 개수는 반드시 짝수여야 합니다. (쌍으로 처리하기 위함)
-- `statusCode`: `CS02` (승인) 또는 `CS03` (거부)
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "변경 요청이 승인되었습니다.",
-  "details": null
-}
-```
+> `statusCode`: `CS02`(승인), `CS03`(거절)
 
 ---
 
-### 3.6 Get Apply Requests
-모든 근무 일정 변경 요청 목록을 조회합니다.
+## 4. Attendance API (`/api/v1/attendance`)
 
-**Endpoint**: `GET /api/v1/admin/schedule/apply-requests`
+### 4.1 Get QR Token
+관리자 태블릿용 QR 생성 토큰을 발급합니다.
+- **GET** `/api/v1/attendance/qr-token`
 
-**Success Response**:
-- **Status**: `200 OK`
+**Response (200 OK)**
 ```json
 {
   "isSuccess": true,
-  "message": "변경 요청 목록 조회 성공",
+  "message": "QR 토큰 발급 성공",
   "details": {
-    "requests": [
+    "token": "random_secure_token_string",
+    "expiresAt": "2026-01-11T12:01:00",
+    "validSeconds": 60
+  }
+}
+```
+
+### 4.2 Check In / Out
+QR 코드를 통해 출근/퇴근 체크를 합니다.
+- **POST** `/api/v1/attendance/check-in`
+- **POST** `/api/v1/attendance/check-out`
+
+**Request Body**
+```json
+{
+  "qrToken": "random_secure_token_string"
+}
+```
+
+### 4.3 Get History
+특정 날짜의 출석 기록을 조회합니다.
+- **GET** `/api/v1/attendance/history?date=2026-01-11`
+
+**Response (200 OK)**
+```json
+{
+  "isSuccess": true,
+  "message": "조회 성공",
+  "details": {
+    "histories": [
       {
-        "requestId": 1,
-        "userId": 1,
-        "scheduleId": 1,
-        "typeCode": "CR01",
-        "statusCode": "CS01",
-        "reason": "사정으로 변경 요청",
-        "createdAt": "2025-12-01T10:00:00"
+        "attendanceId": 501,
+        "checkTime": "2026-01-11T08:55:00",
+        "checkType": "CT01",
+        "scheduleId": 101,
+        "scheduleStartTime": "2026-01-11T09:00:00",
+        "scheduleEndTime": "2026-01-11T18:00:00"
       }
     ]
   }
@@ -511,546 +298,117 @@ http://localhost:8080
 
 ---
 
-### 3.7 Process Apply Request
-특정 근무 일정 변경 요청을 승인 또는 거부합니다.
+## 5. User API (`/api/v1/users`)
 
-**Endpoint**: `POST /api/v1/admin/schedule/process-apply-request`
+### 5.1 Get My Info
+- **GET** `/api/v1/users/me`
 
-**Request Body**:
-```json
-{
-  "requestId": 1,
-  "statusCode": "CS02"
-}
-```
+### 5.2 Get Work Time Stats
+- **GET** `/api/v1/users/me/work-time/weekly`
+- **GET** `/api/v1/users/me/work-time/monthly`
 
-**Note**:
-- `statusCode`: `CS02` (승인) 또는 `CS03` (거부)
-
-**Success Response**:
-- **Status**: `200 OK`
+**Response (200 OK)**
 ```json
 {
   "isSuccess": true,
-  "message": "변경 요청이 처리되었습니다.",
-  "details": null
-}
-```
-
----
-
-## 4. Category API
-
-### 4.1 Register Category
-새로운 대분류(Category)를 등록합니다.
-
-**Endpoint**: `POST /api/v1/categories`
-
-**Request Body**:
-```json
-{
-  "name": "서비스이용"
-}
-```
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "categoryId": 1,
-  "name": "서비스이용"
-}
-```
-
-**Conflict Response**:
-- **Status**: `409 Conflict`
-```json
-{
-  "isSuccess": false,
-  "message": "이미 존재하는 대분류명입니다.",
-  "details": null
-}
-```
-
----
-
-### 4.2 Update Category
-대분류 이름을 수정합니다.
-
-**Endpoint**: `PUT /api/v1/categories/{categoryId}`
-
-**Path Parameters**:
-- `categoryId` (Long): 카테고리 ID
-
-**Request Body**:
-```json
-{
-  "name": "서비스 이용안내"
-}
-```
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "categoryId": 1,
-  "name": "서비스 이용안내"
-}
-```
-
----
-
-### 4.3 Get All Categories
-전체 대분류를 조회합니다.
-
-**Endpoint**: `GET /api/v1/categories`
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "전체 카테고리 조회 성공",
+  "message": "조회 성공",
   "details": {
-    "categories": [
-      {
-        "categoryId": 1,
-        "name": "서비스이용"
-      },
-      {
-        "categoryId": 2,
-        "name": "회원정보"
-      }
-    ]
+    "totalMinutes": 2400,
+    "periodType": "MONTHLY"
   }
 }
 ```
 
 ---
 
-### 4.4 Delete Category
-대분류를 삭제합니다.
+## 6. Home API (`/api/v1/home`)
 
-**Endpoint**: `DELETE /api/v1/categories/{categoryId}`
+### 6.1 Get Home Work Time
+오늘의 근무 시간 요약.
+- **GET** `/api/v1/home/work-time`
 
-**Path Parameters**:
-- `categoryId` (Long): 카테고리 ID
-
-**Success Response**:
-- **Status**: `200 OK`
+**Response**
 ```json
 {
-  "isSuccess": true,
-  "message": "성공적으로 삭제되었습니다.",
-  "details": null
-}
-```
-
-**Conflict Response**:
-- **Status**: `409 Conflict`
-```json
-{
-  "isSuccess": false,
-  "message": "해당 카테고리에 속한 소분류가 있어 삭제할 수 없습니다.",
-  "details": null
+  "details": {
+    "totalMinutes": 480,
+    "scheduleCount": 1
+  }
 }
 ```
 
 ---
 
-## 5. SubCategory API
+## 7. FAQ & Category API
 
-### 5.1 Register SubCategory
-새로운 소분류(SubCategory)를 등록합니다.
+### 7.1 Register Category
+대분류 등록.
+- **POST** `/api/v1/categories`
 
-**Endpoint**: `POST /api/v1/subcategories`
-
-**Request Body**:
+**Request Body**
 ```json
 {
-  "name": "회원가입",
+  "categoryName": "인사관리"
+}
+```
+
+### 7.2 Register SubCategory
+소분류 등록.
+- **POST** `/api/v1/subcategories`
+
+**Request Body**
+```json
+{
+  "subCategoryName": "휴가",
   "categoryId": 1
 }
 ```
 
-**Success Response**:
-- **Status**: `200 OK`
+### 7.3 Create FAQ
+FAQ 게시글 생성.
+- **POST** `/v1/faq`
+
+**Request Body**
 ```json
 {
-  "subCategoryId": 1,
-  "name": "회원가입",
-  "categoryId": 1
+  "userId": 1,
+  "category": "인사관리",
+  "subCategory": "휴가",
+  "title": "연차 신청 방법",
+  "content": "시스템에서 신청하시면 됩니다.",
+  "attachmentUrl": "http://...",
+  "etc": "참고 사항"
 }
 ```
 
 ---
 
-### 5.2 Update SubCategory Name
-소분류 이름을 수정합니다.
+## 8. Manager API (`/api/v1/manager`)
 
-**Endpoint**: `PATCH /api/v1/subcategories/{subCategoryId}/name`
+### 8.1 Register Manager Mappings
+매니저와 소분류 매핑.
+- **POST** `/api/v1/manager`
 
-**Path Parameters**:
-- `subCategoryId` (Long): 소분류 ID
-
-**Request Body**:
+**Request Body**
 ```json
 {
-  "name": "회원가입 안내"
-}
-```
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "subCategoryId": 1,
-  "name": "회원가입 안내"
+  "managerId": 3,
+  "subCategoryIds": [1, 2, 5]
 }
 ```
 
 ---
 
-### 5.3 Delete SubCategory
-소분류를 삭제합니다.
+## Error Response Format
+모든 에러 응답은 아래 형식을 따릅니다.
 
-**Endpoint**: `DELETE /api/v1/subcategories/{subCategoryId}`
-
-**Path Parameters**:
-- `subCategoryId` (Long): 소분류 ID
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "subCategoryId": 1,
-  "deleted": true
-}
-```
-
-**Conflict Response**:
-- **Status**: `409 Conflict`
 ```json
 {
   "isSuccess": false,
-  "message": "해당 소분류에 속한 FAQ가 있어 삭제할 수 없습니다.",
-  "details": null
-}
-```
-
----
-
-### 5.4 Update SubCategory Favorite
-소분류 즐겨찾기를 등록/해제합니다.
-
-**Endpoint**: `PATCH /api/v1/subcategories/{subCategoryId}`
-
-**Path Parameters**:
-- `subCategoryId` (Long): 소분류 ID
-
-**Query Parameters**:
-- `favorite` (boolean): true (등록) / false (해제)
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "subCategoryId": 1,
-  "favorite": true
-}
-```
-
----
-
-## 6. FAQ API
-
-### 6.1 Create FAQ
-새로운 FAQ를 작성합니다.
-
-**Endpoint**: `POST /v1/faq`
-
-**Request Body**:
-```json
-{
-  "subCategoryId": 1,
-  "title": "FAQ 제목",
-  "content": "FAQ 내용",
-  "writerId": 1,
-  "writerName": "작성자명",
-  "manager": "관리자명",
-  "attachmentUrl": "https://example.com/file.pdf"
-}
-```
-
-**Success Response**:
-- **Status**: `200 OK`
-
----
-
-### 6.2 Update FAQ
-특정 FAQ를 수정합니다. 수정 시 기존 내용은 faq_history 테이블에 기록됩니다.
-
-**Endpoint**: `PUT /v1/faq/{faqId}`
-
-**Path Parameters**:
-- `faqId` (Long): FAQ ID
-
-**Request Body**:
-```json
-{
-  "subCategoryId": 1,
-  "title": "수정된 FAQ 제목",
-  "content": "수정된 FAQ 내용",
-  "lastEditorId": 1,
-  "lastEditorName": "수정자명",
-  "manager": "관리자명",
-  "attachmentUrl": "https://example.com/new-file.pdf"
-}
-```
-
-**Success Response**:
-- **Status**: `200 OK`
-
-**Conflict Response**:
-- **Status**: `409 Conflict`
-```json
-{
-  "isSuccess": false,
-  "message": "삭제된 FAQ는 수정할 수 없습니다.",
-  "details": null
-}
-```
-
----
-
-### 6.3 Delete FAQ
-특정 FAQ를 삭제 처리합니다 (소프트 삭제).
-
-**Endpoint**: `DELETE /v1/faq/{faqId}`
-
-**Path Parameters**:
-- `faqId` (Long): FAQ ID
-
-**Note**: 현재 미구현 (TODO)
-
----
-
-### 6.4 Get FAQ
-특정 FAQ의 상세 내용을 조회합니다.
-
-**Endpoint**: `GET /v1/faq/{faqId}`
-
-**Path Parameters**:
-- `faqId` (Long): FAQ ID
-
-**Note**: 현재 미구현 (TODO)
-
----
-
-### 6.5 Get FAQ List
-필터 조건에 따라 FAQ 목록을 조회합니다.
-
-**Endpoint**: `GET /v1/faq/list`
-
-**Query Parameters**:
-- `filter` (string, optional): 정렬 또는 필터 조건 (예: "latest", "oldest")
-
-**Note**: 현재 미구현 (TODO)
-
----
-
-### 6.6 Search FAQ by Keyword
-검색어와 날짜 범위를 이용하여 FAQ를 검색합니다.
-
-**Endpoint**: `GET /v1/faq`
-
-**Query Parameters**:
-- `searchkey` (string, optional): 검색 키워드
-- `startDate` (string, optional): 검색 시작일 (yyyy-MM-dd)
-- `endDate` (string, optional): 검색 종료일 (yyyy-MM-dd)
-
-**Note**: 현재 미구현 (TODO)
-
----
-
-### 6.7 Search FAQ by Filter
-카테고리, 소분류, 날짜 범위를 조건으로 FAQ를 검색합니다.
-
-**Endpoint**: `GET /v1/faq/filter`
-
-**Query Parameters**:
-- `category` (string, optional): 대분류명
-- `subcategory` (string, optional): 소분류명
-- `startDate` (string, optional): 검색 시작일 (yyyy-MM-dd)
-- `endDate` (string, optional): 검색 종료일 (yyyy-MM-dd)
-
-**Note**: 현재 미구현 (TODO)
-
----
-
-## 7. Manager API
-
-### 7.1 Register Manager
-기존 사용자의 역할을 매니저로 변경합니다.
-
-**Endpoint**: `POST /api/v1/manager/{userId}`
-
-**Path Parameters**:
-- `userId` (Integer): 매니저로 등록할 사용자 ID
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "매니저 등록 성공",
-  "details": null
-}
-```
-
-**Conflict Response**:
-- **Status**: `409 Conflict`
-```json
-{
-  "isSuccess": false,
-  "message": "이미 관리자 권한을 가진 사용자입니다.",
-  "details": null
-}
-```
-
----
-
-### 7.2 Register Manager SubCategories
-매니저가 담당할 소분류를 등록합니다.
-
-**Endpoint**: `POST /api/v1/manager`
-
-**Request Body**:
-```json
-{
-  "managerId": 1,
-  "subCategoryIds": [1, 2, 3]
-}
-```
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "manager-subCategory 매핑 등록 성공",
+  "message": "인증번호를 찾을 수 없습니다.",
   "details": {
-    "managerId": 1,
-    "subCategoryIds": [1, 2, 3]
+    "errorCode": "VERIFICATION_CODE_NOT_FOUND",
+    "timestamp": "2026-01-11T12:00:00"
   }
 }
 ```
-
-**Conflict Response**:
-- **Status**: `409 Conflict`
-```json
-{
-  "isSuccess": false,
-  "message": "이미 등록된 manager-category 매핑입니다.",
-  "details": null
-}
-```
-
----
-
-### 7.3 Update Manager SubCategories
-매니저의 담당 소분류 매핑을 수정합니다. 기존 매핑은 삭제되고 새로운 소분류 리스트로 대체됩니다.
-
-**Endpoint**: `PUT /api/v1/manager`
-
-**Request Body**:
-```json
-{
-  "managerId": 1,
-  "subCategoryNames": ["회원가입", "회원정보"]
-}
-```
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "manager-category 매핑이 성공적으로 수정되었습니다.",
-  "details": null
-}
-```
-
----
-
-### 7.4 Delete Manager SubCategories
-매니저의 담당 소분류 매핑을 삭제합니다.
-
-**Endpoint**: `DELETE /api/v1/manager/subcategories/{managerId}`
-
-**Path Parameters**:
-- `managerId` (Integer): 매니저 ID
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "manager-category 매핑이 정상적으로 삭제되었습니다.",
-  "details": null
-}
-```
-
----
-
-### 7.5 Revoke Manager Role
-매니저 권한을 해제합니다. roleCode에서 MANAGER 권한이 제거되며, 담당했던 소분류 매핑 또한 해제됩니다.
-
-**Endpoint**: `DELETE /api/v1/manager/{managerId}`
-
-**Path Parameters**:
-- `managerId` (Integer): 매니저 ID
-
-**Success Response**:
-- **Status**: `200 OK`
-```json
-{
-  "isSuccess": true,
-  "message": "매니저 권한이 해제되었습니다.",
-  "details": null
-}
-```
-
----
-
-## Common Error Response Format
-
-모든 API는 다음과 같은 공통 에러 응답 형식을 사용합니다:
-
-```json
-{
-  "isSuccess": false,
-  "message": "에러 메시지",
-  "details": {
-    "errorCode": "ERROR_CODE",
-    "errorReason": "상세 에러 원인"
-  }
-}
-```
-
----
-
-## HTTP Status Codes
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | OK - 요청 성공 |
-| 201 | Created - 리소스 생성 성공 |
-| 207 | Multi-Status - 일부 성공, 일부 실패 |
-| 400 | Bad Request - 잘못된 요청 |
-| 401 | Unauthorized - 인증 필요 |
-| 403 | Forbidden - 권한 부족 |
-| 404 | Not Found - 리소스 없음 |
-| 409 | Conflict - 리소스 충돌 |
-| 422 | Unprocessable Entity - 모든 작업 실패 |
-| 500 | Internal Server Error - 서버 에러 |
