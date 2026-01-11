@@ -399,6 +399,30 @@ FAQ 게시글 생성.
 
 ---
 
+## 9. WebSocket API (`/ws`)
+
+실시간 상태 변경 알림을 위한 웹소켓 API입니다.
+
+### 9.1 Connection
+- **Endpoint**: `/ws` (SockJS 사용)
+- **Protocol**: STOMP
+
+### 9.2 Subscriptions
+클라이언트는 아래 토픽을 구독하여 실시간 알림을 수신합니다.
+
+- **Topic**: `/topic/schedule-updates`
+  - **설명**: 근무 일정의 승인(WS02), 취소(WS04) 등 상태 변경 시 발생하는 브로드캐스트 메시지.
+  - **메시지 예시**:
+    ```json
+    {
+      "type": "SCHEDULE_UPDATED",
+      "targetDate": "2026-01-11",
+      "message": "근무 신청이 승인되었습니다."
+    }
+    ```
+
+---
+
 ## Error Response Format
 모든 에러 응답은 아래 형식을 따릅니다.
 
