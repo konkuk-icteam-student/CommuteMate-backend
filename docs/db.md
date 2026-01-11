@@ -85,6 +85,28 @@ CommuteMate 백엔드 시스템의 데이터베이스 스키마 문서입니다.
 
 ---
 
+## 5. Task System
+
+### 5.1 `task`
+- 일일 업무 테이블입니다.
+- `task_date`, `task_time`: 업무 수행 일시
+- `task_type`: 업무 유형 (TT01:일반, TT02:기타 등)
+- `is_completed`: 완료 여부
+
+### 5.2 `task_template`
+- 정기 업무 템플릿입니다.
+- `template_name`, `description`: 템플릿 정보
+- `is_active`: 사용 여부
+
+### 5.3 `task_template_item`
+- 템플릿 상세 항목입니다.
+- `title`: 업무 제목
+- `task_time`: 예정 시간
+- `default_assignee_id`: 기본 담당자
+- `display_order`: 정렬 순서
+
+---
+
 ## Entity Relationships Summary
 
 ```mermaid
@@ -94,6 +116,7 @@ erDiagram
     user ||--o{ work_change_request : requests
     user ||--o{ manager_subcategory : manages
     user ||--o{ faq : writes
+    user ||--o{ task : assigned_to
 
     organization ||--o{ user : contains
 
@@ -105,4 +128,7 @@ erDiagram
     sub_category ||--o{ manager_subcategory : assigned_to
 
     faq ||--o{ faq_history : has_history
+
+    task_template ||--o{ task_template_item : contains
+    task_template_item }o--|| user : default_assigned_to
 ```

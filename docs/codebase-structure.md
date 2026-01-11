@@ -76,6 +76,10 @@ src/main/java/com/better/CommuteMate/
 │   ├── application/                   # FaqService
 │   └── controller/                    # FaqController
 │
+├── task/                              # 업무 관리 모듈
+│   ├── application/                   # TaskService, TaskTemplateService
+│   └── controller/                    # TaskController, TaskTemplateController
+│
 ├── domain/                            # 도메인 엔티티 및 리포지토리 (Persistence Layer)
 │   ├── user/
 │   ├── organization/
@@ -85,7 +89,8 @@ src/main/java/com/better/CommuteMate/
 │   ├── faq/
 │   ├── category/
 │   ├── code/
-│   └── emailverification/
+│   ├── emailverification/
+│   └── task/
 │
 └── global/                            # 전역 설정 및 공통 코드
     ├── code/                          # CodeType Enum
