@@ -8,6 +8,8 @@ import com.better.CommuteMate.schedule.controller.schedule.dtos.ApplyWorkSchedul
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ModifyWorkScheduleDTO;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleResponse;
 import com.better.CommuteMate.global.code.CodeType;
+import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -38,6 +41,17 @@ class WorkScheduleControllerTest {
 
     @MockBean
     private ScheduleService scheduleService;
+
+    private CustomUserDetails createMockUserDetails(int userId) {
+        User user = new User();
+        user.setUserId(userId);
+        user.setEmail("test" + userId + "@test.com");
+        user.setPassword("password");
+        user.setRoleCode(CodeType.RL01);
+        user.setName("Test User");
+        user.setOrganizationId(1);
+        return new CustomUserDetails(user);
+    }
 
     // ========== POST /api/v1/work-schedules/apply 테스트 ==========
 
@@ -71,7 +85,7 @@ class WorkScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/work-schedules/apply")
-                        .header("userId", 1)
+                        .with(user(createMockUserDetails(1)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -95,7 +109,7 @@ class WorkScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/work-schedules/apply")
-                        .header("userId", 1)
+                        .with(user(createMockUserDetails(1)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -125,7 +139,7 @@ class WorkScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(patch("/api/v1/work-schedules/modify")
-                        .header("userId", 1)
+                        .with(user(createMockUserDetails(1)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -149,7 +163,7 @@ class WorkScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(patch("/api/v1/work-schedules/modify")
-                        .header("userId", 1)
+                        .with(user(createMockUserDetails(1)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -177,7 +191,7 @@ class WorkScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(patch("/api/v1/work-schedules/modify")
-                        .header("userId", 1)
+                        .with(user(createMockUserDetails(1)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -205,7 +219,7 @@ class WorkScheduleControllerTest {
         mockMvc.perform(get("/api/v1/work-schedules")
                         .param("year", "2025")
                         .param("month", "11")
-                        .header("userId", 1))
+                        .with(user(createMockUserDetails(1))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("근무 일정 조회 성공"))
@@ -225,7 +239,7 @@ class WorkScheduleControllerTest {
         mockMvc.perform(get("/api/v1/work-schedules")
                         .param("year", "2025")
                         .param("month", "12")
-                        .header("userId", 1))
+                        .with(user(createMockUserDetails(1))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.details.schedules").isArray())
@@ -249,7 +263,7 @@ class WorkScheduleControllerTest {
         when(scheduleService.getWorkSchedule(1, 1)).thenReturn(schedule);
 
         String result = mockMvc.perform(get("/api/v1/work-schedules/1")
-                        .header("userId", 1))
+                        .with(user(createMockUserDetails(1))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("근무 일정 상세 조회 성공"))
@@ -270,7 +284,7 @@ class WorkScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(delete("/api/v1/work-schedules/1")
-                        .header("userId", 1))
+                        .with(user(createMockUserDetails(1))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("근무 일정 취소(요청) 성공"));
@@ -286,7 +300,7 @@ class WorkScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(delete("/api/v1/work-schedules/1")
-                        .header("userId", 2))
+                        .with(user(createMockUserDetails(2))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true));
 
