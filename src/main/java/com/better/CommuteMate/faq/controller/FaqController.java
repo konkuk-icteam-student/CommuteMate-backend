@@ -1,15 +1,17 @@
 package com.better.CommuteMate.faq.controller;
 
-import com.better.CommuteMate.domain.faq.dto.request.FaqCreateRequest;
-import com.better.CommuteMate.domain.faq.dto.request.FaqUpdateRequest;
+import com.better.CommuteMate.faq.dto.request.PostFaqCreateRequest;
+import com.better.CommuteMate.faq.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.faq.application.FaqService;
+import com.better.CommuteMate.global.controller.dtos.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,10 +19,11 @@ import java.util.List;
 
 @Tag(name = "FAQ", description = "FAQ 관련 API")
 @RestController
-@RequestMapping("/v1/faq")
+@RequestMapping("/api/v1/faq")
+@RequiredArgsConstructor
 public class FaqController {
 
-    private FaqService faqService;
+    private final FaqService faqService;
 
     @Operation(
             summary = "FAQ 작성",
@@ -32,12 +35,11 @@ public class FaqController {
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping
-    public ResponseEntity<Void> createFaq(
-            @RequestBody FaqCreateRequest request
+    public ResponseEntity<Response> createFaq(
+            @RequestBody PostFaqCreateRequest request
     ) {
         // Todo 인증로직 추가되면 request 헤더 추가
-        faqService.createFaq(request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(new Response(true, "FAQ 작성 성공", faqService.createFaq(request)));
     }
 
     @Operation(
@@ -56,7 +58,7 @@ public class FaqController {
             @ApiResponse(responseCode = "409", description = "삭제된 FAQ는 수정 불가")
     })
     @PutMapping("/{faqId}")
-    public ResponseEntity<Void> updateFaq(
+    public ResponseEntity<Response> updateFaq(
             @Parameter(
                     description = "수정할 FAQ ID",
                     required = true,
@@ -64,10 +66,11 @@ public class FaqController {
             )
             @PathVariable Long faqId,
 
-            @RequestBody FaqUpdateRequest request
+            @RequestBody PutFaqUpdateRequest request
     ) {
-        faqService.updateFaq(faqId, request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(
+                new Response(true, "FAQ 수정 성공", faqService.updateFaq(faqId, request))
+        );
     }
 
     @Operation(
@@ -144,11 +147,11 @@ public class FaqController {
         return null;
     }
 
-    // Todo 이거 대분류만 들어왔을 경우, 대분류+날짜만 들어왔을 경우, 소분류만 선택했을 경우도 추가해야 할 듯.
+    // Todo 이거 분류만 들어왔을 경우, 분류+날짜만 들어왔을 경우도 추가해야 할 듯.
     //  파라미터만 다르게 해서 오버로딩 쓰면 되지 않을까 라는 생각
     @Operation(
             summary = "FAQ 검색 (필터 기반)",
-            description = "대분류(category), 소분류(subcategory), 날짜 범위를 조건으로 FAQ를 검색합니다."
+            description = "분류(category),날짜 범위를 조건으로 FAQ를 검색합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "FAQ 필터 검색 성공"),
@@ -156,10 +159,8 @@ public class FaqController {
     })
     @GetMapping("/filter")
     public ResponseEntity<?> searchFaqByFilter(
-            @Parameter(description = "대분류명", example = "서비스이용")
+            @Parameter(description = "분류명", example = "서비스이용")
             @RequestParam(required = false) String category,
-            @Parameter(description = "소분류명", example = "회원정보")
-            @RequestParam(required = false) String subcategory,
             @Parameter(description = "검색 시작일 (yyyy-MM-dd)", example = "2025-01-01")
             @RequestParam(required = false) String startDate,
             @Parameter(description = "검색 종료일 (yyyy-MM-dd)", example = "2025-12-31")

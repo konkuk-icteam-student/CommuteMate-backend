@@ -7,13 +7,13 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "manager_subcategory")
+@Table(name = "manager_category")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class ManagerSubCategory {
+public class ManagerCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,13 +24,14 @@ public class ManagerSubCategory {
     private User manager; // User 중 manager role을 가진 사람만 가능 (검증 로직 있어야 함)
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subcategory_id", nullable = false)
-    private SubCategory subCategory;
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
-    @Column(nullable = false)
+    @JoinColumn(name = "assigned_at", nullable = false)
     private LocalDateTime assignedAt;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 
      //insert 직전에 자동으로 assignedAt 세팅
@@ -41,10 +42,10 @@ public class ManagerSubCategory {
         }
     }
 
-    public static ManagerSubCategory of(User manager, SubCategory subCategory) {
-        return ManagerSubCategory.builder()
+    public static ManagerCategory of(User manager, Category category) {
+        return ManagerCategory.builder()
                 .manager(manager)
-                .subCategory(subCategory)
+                .category(category)
                 .build();
     }
 }

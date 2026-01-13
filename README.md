@@ -67,7 +67,7 @@ schedule/
 - `workchangerequest/` - 근무 변경 요청
 - `workattendance/` - 출근 기록
 - `faq/` - **FAQ 시스템 (신규)** ✨
-  - Category, SubCategory, Faq, FaqHistory
+  - Category, Faq, FaqHistory
 
 #### `global/` - 전역 설정 및 공통 코드
 ```
@@ -110,14 +110,12 @@ global/
 자주 묻는 질문을 관리하는 FAQ 시스템이 추가되었습니다.
 
 ### 주요 기능
-- **카테고리 분류**: 대분류(Category) → 소분류(SubCategory)로 계층적 분류
 - **작성자/수정자 추적**: Writer, LastEditor로 변경 이력 추적
 - **수정 이력 관리**: FaqHistory로 모든 수정 사항 기록
 - **소프트 삭제**: deletedFlag를 사용한 논리적 삭제
 
 ### 엔티티 구조
-- `Category` - 대분류
-- `SubCategory` - 소분류
+- `Category` - 분류
 - `Faq` - FAQ 게시글
 - `FaqHistory` - 수정 이력
 
@@ -137,6 +135,5 @@ https://dbdiagram.io/d/ku_ict-68db5736d2b621e422822757
 | workchangerequest | WorkChangeRequest | work_change_request | 근무 변경 요청 |
 | workattendance | WorkAttendance | work_attendance | 출근 기록 |
 | **faq** | **Category** | **category** | **FAQ 대분류** |
-| **faq** | **SubCategory** | **sub_category** | **FAQ 소분류** |
 | **faq** | **Faq** | **faq** | **FAQ 게시글** |
 | **faq** | **FaqHistory** | **faq_history** | **FAQ 수정 이력** |

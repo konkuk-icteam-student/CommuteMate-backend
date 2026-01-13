@@ -2,14 +2,16 @@ package com.better.CommuteMate.category.application.dto.response;
 
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
 
+@Getter
 @Schema(description = "Category 리스트 응답 DTO")
 public class GetCategoryListResponse extends ResponseDetail {
 
-    @Schema(description = "대분류 ID", example = "1")
+    @Schema(description = "분류 ID", example = "1")
     private final Long categoryId;
 
-    @Schema(description = "대분류 이름", example = "시스템")
+    @Schema(description = "분류 이름", example = "시스템")
     private final String categoryName;
 
     public GetCategoryListResponse(Long categoryId, String categoryName) {
@@ -18,11 +20,4 @@ public class GetCategoryListResponse extends ResponseDetail {
         this.categoryName = categoryName;
     }
 
-    public Long getCategoryId() {
-        return categoryId;
-    }
-
-    public String getCategoryName() {
-        return categoryName;
-    }
 }

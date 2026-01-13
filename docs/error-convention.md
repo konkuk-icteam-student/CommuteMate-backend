@@ -53,8 +53,6 @@ CommuteMate 백엔드는 `GlobalExceptionHandler`를 통해 모든 예외를 일
 
 ### 5. FAQ & Category
 - `CategoryErrorCode`: 카테고리 중복, 삭제 불가 등
-- `SubcategoryErrorCode`: 소분류 중복 등
-
 ---
 
 ## Exception Handling Strategy

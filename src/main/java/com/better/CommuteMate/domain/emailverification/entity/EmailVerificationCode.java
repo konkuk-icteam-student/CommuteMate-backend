@@ -39,10 +39,12 @@ public class EmailVerificationCode {
 
     // 인증 완료 여부
     @Column(name = "verified", nullable = false)
+    @Builder.Default
     private boolean verified = false;
 
     // 인증 실패 횟수
     @Column(name = "attempt_count", nullable = false)
+    @Builder.Default
     private int attemptCount = 0;
 
     @PrePersist

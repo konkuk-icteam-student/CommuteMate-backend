@@ -5,13 +5,13 @@ import com.better.CommuteMate.global.exceptions.error.CustomErrorCode;
 import lombok.Getter;
 
 @Getter
-public class SubCategoryException extends BasicException {
+public class FaqException extends BasicException {
 
-  public SubCategoryException(CustomErrorCode errorCode) {
+  public FaqException(CustomErrorCode errorCode) {
     super(errorCode, errorCode.getLogMessage());
   }
 
-  public SubCategoryException(CustomErrorCode errorCode, ErrorResponseDetail detail) {
+  public FaqException(CustomErrorCode errorCode, ErrorResponseDetail detail) {
     super(errorCode, errorCode.getLogMessage(), detail);
   }
 }
