@@ -1,9 +1,10 @@
 package com.better.CommuteMate.faq.controller;
 
-import com.better.CommuteMate.domain.faq.dto.request.FaqCreateRequest;
-import com.better.CommuteMate.domain.faq.dto.request.FaqUpdateRequest;
+import com.better.CommuteMate.faq.dto.request.PostFaqCreateRequest;
+import com.better.CommuteMate.faq.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.faq.application.FaqService;
+import com.better.CommuteMate.global.controller.dtos.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,12 +35,11 @@ public class FaqController {
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping
-    public ResponseEntity<Void> createFaq(
-            @RequestBody FaqCreateRequest request
+    public ResponseEntity<Response> createFaq(
+            @RequestBody PostFaqCreateRequest request
     ) {
         // Todo 인증로직 추가되면 request 헤더 추가
-        faqService.createFaq(request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(new Response(true, "FAQ 작성 성공", faqService.createFaq(request)));
     }
 
     @Operation(
@@ -58,7 +58,7 @@ public class FaqController {
             @ApiResponse(responseCode = "409", description = "삭제된 FAQ는 수정 불가")
     })
     @PutMapping("/{faqId}")
-    public ResponseEntity<Void> updateFaq(
+    public ResponseEntity<Response> updateFaq(
             @Parameter(
                     description = "수정할 FAQ ID",
                     required = true,
@@ -66,10 +66,11 @@ public class FaqController {
             )
             @PathVariable Long faqId,
 
-            @RequestBody FaqUpdateRequest request
+            @RequestBody PutFaqUpdateRequest request
     ) {
-        faqService.updateFaq(faqId, request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(
+                new Response(true, "FAQ 수정 성공", faqService.updateFaq(faqId, request))
+        );
     }
 
     @Operation(

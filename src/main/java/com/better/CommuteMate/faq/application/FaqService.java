@@ -2,14 +2,16 @@ package com.better.CommuteMate.faq.application;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
-import com.better.CommuteMate.domain.faq.dto.request.FaqCreateRequest;
-import com.better.CommuteMate.domain.faq.dto.request.FaqUpdateRequest;
+import com.better.CommuteMate.faq.dto.request.PostFaqCreateRequest;
+import com.better.CommuteMate.faq.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.faq.entity.FaqHistory;
 import com.better.CommuteMate.domain.faq.repository.FaqHistoryRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
+import com.better.CommuteMate.faq.dto.response.PostFaqCreateResponse;
+import com.better.CommuteMate.faq.dto.response.PutFaqUpdateResponse;
 import com.better.CommuteMate.global.exceptions.BasicException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
@@ -30,7 +32,7 @@ public class FaqService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
 
-    public void createFaq(FaqCreateRequest request) {
+    public PostFaqCreateResponse createFaq(PostFaqCreateRequest request) {
 
         // Todo 임시 인증 로직
         User writer = userRepository.findById(request.userId())
@@ -59,9 +61,10 @@ public class FaqService {
                 .build();
 
         faqRepository.save(faq);
+        return new PostFaqCreateResponse(faq.getId());
     }
 
-    public void updateFaq(Long faqId, FaqUpdateRequest request) {
+    public PutFaqUpdateResponse updateFaq(Long faqId, PutFaqUpdateRequest request) {
         Faq faq = faqRepository.findById(faqId)
                 .orElseThrow(() -> BasicException.of(FaqErrorCode.FAQ_NOT_FOUND));
 
@@ -98,7 +101,8 @@ public class FaqService {
         faq.setManager(request.manager());
 
         faq.setLastEditor(editor);
-        faq.setLastEditorName(request.editorName());
+        faq.setLastEditorName(editor.getName());
         faq.setLastEditedAt(LocalDateTime.now());
+        return new PutFaqUpdateResponse(faq.getId());
     }
 }
