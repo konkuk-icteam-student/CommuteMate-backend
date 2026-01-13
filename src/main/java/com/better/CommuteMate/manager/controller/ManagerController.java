@@ -1,8 +1,8 @@
 package com.better.CommuteMate.manager.controller;
 
-import com.better.CommuteMate.category.application.dto.request.PostManagerSubCategoryRequest;
-import com.better.CommuteMate.category.application.dto.response.PostManagerSubCategoryResponse;
-import com.better.CommuteMate.category.application.dto.request.PutManagerSubCategoryRequest;
+import com.better.CommuteMate.category.application.dto.request.PostManagerCategoryRequest;
+import com.better.CommuteMate.category.application.dto.response.PostManagerCategoryResponse;
+import com.better.CommuteMate.category.application.dto.request.PutManagerCategoryRequest;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.manager.application.ManagerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,53 +36,53 @@ public class ManagerController {
     }
 
     @Operation(
-            summary = "manager-subCategory 매핑 등록",
-            description = "manager가 담당할 subCategory를 등록합니다. 이미 매핑되어 있는 subCategory는 중복 등록할 수 없습니다."
+            summary = "manager-category 매핑 등록",
+            description = "manager가 담당할 category를 등록합니다. 이미 매핑되어 있는 category는 중복 등록할 수 없습니다."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "매핑 등록 성공",
-                    content = @Content(schema = @Schema(implementation = PostManagerSubCategoryResponse.class))),
-            @ApiResponse(responseCode = "404", description = "존재하지 않는 관리자 또는 subCategory"),
+                    content = @Content(schema = @Schema(implementation = PostManagerCategoryResponse.class))),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 관리자 또는 category"),
             @ApiResponse(responseCode = "409", description = "이미 등록된 매핑"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping
-    public ResponseEntity<Response> registerManagerSubCategories(
-            @RequestBody PostManagerSubCategoryRequest request
+    public ResponseEntity<Response> registerManagerCategories(
+            @RequestBody PostManagerCategoryRequest request
     ) {
-        PostManagerSubCategoryResponse response = managerService.registerMappings(request);
+        PostManagerCategoryResponse response = managerService.registerMappings(request);
         return ResponseEntity.ok(
-                new Response(true, "manager-subCategory 매핑 등록 성공", response)
+                new Response(true, "manager-category 매핑 등록 성공", response)
         );
     }
 
-    @Operation(summary = "manager-category 매핑 수정", description = "매니저의 담당 subCategory 매핑을 수정합니다. 기존 매핑은 삭제되고, 새로운 subCategory 리스트로 대체됩니다.")
+    @Operation(summary = "manager-category 매핑 수정", description = "매니저의 담당 category 매핑을 수정합니다. 기존 매핑은 삭제되고, 새로운 category 리스트로 대체됩니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "매핑 수정 성공"),
-            @ApiResponse(responseCode = "404", description = "존재하지 않는 매니저 또는 서브카테고리"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 매니저 또는 카테고리"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PutMapping // Todo 등록에서는 id로 받으면서 여기선 name으로 받음. 통일 필요
-    public ResponseEntity<Response> updateManagerSubCategories(@RequestBody PutManagerSubCategoryRequest request) {
-        managerService.updateManagerSubCategories(request);
+    public ResponseEntity<Response> updateManagerCategories(@RequestBody PutManagerCategoryRequest request) {
+        managerService.updateManagerCategories(request);
         return ResponseEntity.ok(new Response(true, "manager-category 매핑이 성공적으로 수정되었습니다.", null));
     }
 
-    @Operation(summary = "manager-category 매핑 삭제", description = "매니저의 담당 subCategory 매핑을 삭제합니다.")
+    @Operation(summary = "manager-category 매핑 삭제", description = "매니저의 담당 category 매핑을 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "매핑 삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "존재하지 않는 매니저 또는 서브카테고리"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 매니저 또는 카테고리"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
-    @DeleteMapping ("/subcategories/{managerId}")// TODO 여러 매핑 중에 어떤 걸 선택할지를 바디로 받아야 함
-    public ResponseEntity<Response> deleteManagerSubCategories(@PathVariable Integer managerId) {
-        managerService.deleteManagerSubCategories(managerId);
+    @DeleteMapping ("/categories/{managerId}")// TODO 여러 매핑 중에 어떤 걸 선택할지를 바디로 받아야 함
+    public ResponseEntity<Response> deleteManagerCategories(@PathVariable Integer managerId) {
+        managerService.deleteManagerCategories(managerId);
         return ResponseEntity.ok(new Response(true, "manager-category 매핑이 정상적으로 삭제되었습니다.", null));
     }
 
     @Operation(
             summary = "manager 권한 해제",
-            description = "manager 권한을 해제합니다. (roleCode에서 MANAGER 권한이 제거되며, 담당했던 소분류 매핑 또한 해제됩니다.)"
+            description = "manager 권한을 해제합니다. (roleCode에서 MANAGER 권한이 제거되며, 담당했던 분류 매핑 또한 해제됩니다.)"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "권한 해제 성공"),

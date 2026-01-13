@@ -22,10 +22,7 @@ public class FaqHistory {
     private String title;  // 제목
 
     @Column(length = 100, nullable = false)
-    private String category;  // 대분류명
-
-    @Column(name = "sub_category", length = 100, nullable = false)
-    private String subCategory;  // 소분류명
+    private String category;  // 분류명
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;  // 내용

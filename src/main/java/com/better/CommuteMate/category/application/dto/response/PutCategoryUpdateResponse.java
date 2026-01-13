@@ -2,7 +2,9 @@ package com.better.CommuteMate.category.application.dto.response;
 
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
 
+@Getter
 @Schema(description = "카테고리 수정 응답 DTO")
 public class PutCategoryUpdateResponse extends ResponseDetail {
 
@@ -18,11 +20,4 @@ public class PutCategoryUpdateResponse extends ResponseDetail {
         this.updatedName = updatedName;
     }
 
-    public Long getCategoryId() {
-        return categoryId;
-    }
-
-    public String getUpdatedName() {
-        return updatedName;
-    }
 }

@@ -60,13 +60,9 @@ src/main/java/com/better/CommuteMate/
 │   ├── application/                   # HomeService
 │   └── controller/                    # HomeController
 │
-├── category/                          # FAQ 대분류 모듈
+├── category/                          # FAQ 분류 모듈
 │   ├── application/                   # CategoryService
 │   └── controller/                    # CategoryController
-│
-├── subcategory/                       # FAQ 소분류 모듈
-│   ├── application/                   # SubCategoryService
-│   └── controller/                    # SubCategoryController
 │
 ├── manager/                           # 매니저 관리 모듈
 │   ├── application/                   # ManagerService
@@ -190,13 +186,13 @@ QR 코드를 이용한 출근/퇴근 체크 및 출석 기록 조회를 담당�
 - 오늘의 근무 시간 요약
 - 현재 출근 상태 확인
 
-### 6. FAQ & Category System (`faq/`, `category/`, `subcategory/`)
-계층형 FAQ 게시판을 관리합니다.
-- 대분류 > 소분류 > 게시글 구조
-- 즐겨찾기 기능 지원
+### 6. FAQ & Category System (`faq/`, `category/`)
+FAQ 게시판과 분류를 관리합니다.
+- FAQ는 하나의 분류에 속합니다. 
+- 분류 단위 즐겨찾기 기능 지원
 
 ### 7. Manager Module (`manager/`)
-매니저 권한 부여 및 매니저별 담당 소분류 매핑을 관리합니다.
+매니저 권한 부여 및 매니저별 담당 분류 매핑을 관리합니다.
 
 ---
 

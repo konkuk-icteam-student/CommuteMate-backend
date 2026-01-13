@@ -1,7 +1,6 @@
 package com.better.CommuteMate.domain.faq.repository;
 
 import com.better.CommuteMate.domain.faq.entity.Faq;
-import com.better.CommuteMate.domain.category.entity.SubCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,7 +9,7 @@ import java.util.List;
 @Repository
 public interface FaqRepository extends JpaRepository<Faq, Long> {
 
-    boolean existsBySubCategoryId(Long subCategoryId);
+    boolean existsByCategoryId(Long categoryId);
 
     // 제목에 특정 키워드가 포함된 FAQ 검색 (부분 일치)
     List<Faq> findByTitleContaining(String keyword);

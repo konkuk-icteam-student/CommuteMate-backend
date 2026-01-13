@@ -32,8 +32,8 @@ CommuteMate 백엔드 시스템의 데이터베이스 스키마 문서입니다.
 - `role_code`: 사용자 역할 (CodeType: RL01-학생, RL02-관리자, RL03-매니저 등)
 - `organization_id`: 소속 조직
 
-### 2.3 `manager_subcategory`
-- 매니저(`user`)와 담당 소분류(`sub_category`) 간의 매핑 테이블입니다.
+### 2.3 `manager_category`
+- 매니저(`user`)와 담당 분류(`category`) 간의 매핑 테이블입니다.
 
 ### 2.4 `email_verification_code`
 - 회원가입 시 이메일 인증을 위한 임시 코드를 저장합니다.
@@ -70,10 +70,7 @@ CommuteMate 백엔드 시스템의 데이터베이스 스키마 문서입니다.
 ## 4. FAQ System
 
 ### 4.1 `category`
-- FAQ 대분류입니다.
-
-### 4.2 `sub_category`
-- FAQ 소분류입니다.
+- FAQ 분류입니다.
 - `favorite`: 즐겨찾기 여부
 
 ### 4.3 `faq`
@@ -114,7 +111,7 @@ erDiagram
     user ||--o{ work_schedule : has
     user ||--o{ work_attendance : checks
     user ||--o{ work_change_request : requests
-    user ||--o{ manager_subcategory : manages
+    user ||--o{ manager_category : manages
     user ||--o{ faq : writes
     user ||--o{ task : assigned_to
 
@@ -123,9 +120,8 @@ erDiagram
     work_schedule ||--o{ work_attendance : has
     work_schedule ||--o{ work_change_request : has
 
-    category ||--o{ sub_category : contains
-    sub_category ||--o{ faq : contains
-    sub_category ||--o{ manager_subcategory : assigned_to
+    category ||--o{ faq : contains
+    category ||--o{ manager_category : managed_by
 
     faq ||--o{ faq_history : has_history
 

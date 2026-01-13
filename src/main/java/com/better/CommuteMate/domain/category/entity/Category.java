@@ -18,14 +18,22 @@ public class Category {
     private Long id;
 
     @Column(length = 100, nullable = false)
-    private String name;  // 대분류명
+    private String name;  // 분류명
 
-    // sub_category 와 1:N 관계
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    // 즐겨찾기 여부 (기본값 false)
+    @Column(name = "favorite", nullable = false)
     @Builder.Default
-    private List<SubCategory> subCategories = new ArrayList<>();
+    private boolean favorite = false;
+
+    // 이 Category를 어떤 users가 담당하는지 저장하는 리스트
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ManagerCategory> managers = new ArrayList<>();
 
     public void updateName(String newName) {
         this.name = newName;
+    }
+
+    public void updateFavorite(boolean favorite) {
+        this.favorite = favorite;
     }
 }

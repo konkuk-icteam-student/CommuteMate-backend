@@ -1,11 +1,11 @@
 package com.better.CommuteMate.manager.application;
 
-import com.better.CommuteMate.category.application.dto.request.PutManagerSubCategoryRequest;
-import com.better.CommuteMate.domain.category.entity.ManagerSubCategory;
-import com.better.CommuteMate.domain.category.repository.ManagerSubCategoryRepository;
-import com.better.CommuteMate.domain.category.repository.SubCategoryRepository;
-import com.better.CommuteMate.category.application.dto.request.PostManagerSubCategoryRequest;
-import com.better.CommuteMate.category.application.dto.response.PostManagerSubCategoryResponse;
+import com.better.CommuteMate.category.application.dto.request.PutManagerCategoryRequest;
+import com.better.CommuteMate.domain.category.entity.ManagerCategory;
+import com.better.CommuteMate.domain.category.repository.CategoryRepository;
+import com.better.CommuteMate.domain.category.repository.ManagerCategoryRepository;
+import com.better.CommuteMate.category.application.dto.request.PostManagerCategoryRequest;
+import com.better.CommuteMate.category.application.dto.response.PostManagerCategoryResponse;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.code.CodeType;
@@ -22,11 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class ManagerService {
 
     private final UserRepository userRepository;
-    private final SubCategoryRepository subCategoryRepository;
-    private final ManagerSubCategoryRepository managerSubCategoryRepository;
+    private final CategoryRepository categoryRepository;
+    private final ManagerCategoryRepository managerCategoryRepository;
 
-
-    @Transactional
     public void registerManager(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
@@ -38,55 +36,52 @@ public class ManagerService {
         user.setRoleCode(CodeType.RL02); // RL02 = ADMIN
     }
 
-    // 관리자-소분류 매핑 등록
-    @Transactional
-    public PostManagerSubCategoryResponse registerMappings(PostManagerSubCategoryRequest request) {
+    // 관리자-분류 매핑 등록
+    public PostManagerCategoryResponse registerMappings(PostManagerCategoryRequest request) {
         User manager = userRepository.findById(request.managerId())
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         int count = 0;
-        for (Integer subCategoryId : request.subCategoryIds()) {
-            if (managerSubCategoryRepository.existsByManager_UserIdAndSubCategory_Id(manager.getUserId(), subCategoryId)) {
+        for (Integer categoryId : request.categoryIds()) {
+            if (managerCategoryRepository.existsByManager_UserIdAndCategory_Id(manager.getUserId(), categoryId)) {
                 throw BasicException.of(ManagerErrorCode.MANAGER_CATEGORY_ALREADY_EXISTS);
             }
-            var subCategory = subCategoryRepository.findById(Long.valueOf(subCategoryId))
+            var category = categoryRepository.findById(Long.valueOf(categoryId))
                     .orElseThrow(() -> BasicException.of(GlobalErrorCode.NOT_FOUND));
-            ManagerSubCategory mapping = ManagerSubCategory.of(manager, subCategory);
-            managerSubCategoryRepository.save(mapping);
+            ManagerCategory mapping = ManagerCategory.of(manager, category);
+            managerCategoryRepository.save(mapping);
             count++;
         }
 
-        return new PostManagerSubCategoryResponse(count);
+        return new PostManagerCategoryResponse(count);
     }
 
-    @Transactional
-    public void updateManagerSubCategories(PutManagerSubCategoryRequest request) {
+    public void updateManagerCategories(PutManagerCategoryRequest request) {
         User manager = userRepository.findById(request.managerId())
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         // 기존 매핑 전체 삭제
-        managerSubCategoryRepository.deleteAllByManager(manager);
+        managerCategoryRepository.deleteAllByManager(manager);
 
         // 새로 등록
-        for (String subCategoryName : request.subCategoryNames()) {
-            var subCategory = subCategoryRepository.findByName(subCategoryName)
+        for (String categoryName : request.categoryNames()) {
+            var category = categoryRepository.findByName(categoryName)
                     .orElseThrow(() -> BasicException.of(GlobalErrorCode.NOT_FOUND));
 
-            ManagerSubCategory mapping = ManagerSubCategory.of(manager, subCategory);
-            managerSubCategoryRepository.save(mapping);
+            ManagerCategory mapping = ManagerCategory.of(manager, category);
+            managerCategoryRepository.save(mapping);
         }
     }
 
-    @Transactional // Todo dto 맞추어 수정하기
-    public void deleteManagerSubCategories(Integer managerId) {
+    // Todo dto 맞추어 수정하기
+    public void deleteManagerCategories(Integer managerId) {
         User manager = userRepository.findById(managerId)
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         // 기존 매핑 전체 삭제
-        managerSubCategoryRepository.deleteAllByManager(manager);
+        managerCategoryRepository.deleteAllByManager(manager);
     }
 
-    @Transactional
     public void revokeManagerRole(Integer managerId) {
         User manager = userRepository.findById(managerId)
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
@@ -96,8 +91,8 @@ public class ManagerService {
             throw BasicException.of(ManagerErrorCode.MANAGER_ROLE_NOT_ASSIGNED);
         }
 
-        // 해당되는 매니저의 SubCategory 매핑 모두 삭제
-        managerSubCategoryRepository.deleteAllByManager(manager);
+        // 해당되는 매니저의 Category 매핑 모두 삭제
+        managerCategoryRepository.deleteAllByManager(manager);
 
         // 역할을 일반 사용자로 변경 (RL01: STUDENT)
         manager.setRoleCode(CodeType.RL01);

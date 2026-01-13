@@ -1,6 +1,6 @@
 package com.better.CommuteMate.domain.user.entity;
 
-import com.better.CommuteMate.domain.category.entity.ManagerSubCategory;
+import com.better.CommuteMate.domain.category.entity.ManagerCategory;
 import com.better.CommuteMate.global.code.CodeType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -55,9 +55,9 @@ public class User {
     @Column(name = "refresh_token", length = 512)
     private String refreshToken;
 
-    // 이 user가 어떤 subCategories를 담당하고 있는지 저장하는 리스트, manager role을 갖고 있는 경우만 가능
+    // 이 user가 어떤 Categories를 담당하고 있는지 저장하는 리스트, manager role을 갖고 있는 경우만 가능
     @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ManagerSubCategory> managerSubCategories = new ArrayList<>();
+    private List<ManagerCategory> managerCategories = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

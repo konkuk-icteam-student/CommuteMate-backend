@@ -2,11 +2,13 @@ package com.better.CommuteMate.category.application;
 
 import com.better.CommuteMate.category.application.dto.request.PostCategoryRegisterRequest;
 import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
+import com.better.CommuteMate.category.application.dto.response.PatchFavoriteCategoryResponse;
 import com.better.CommuteMate.category.application.dto.response.PostCategoryRegisterResponse;
 import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
 import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
+import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.global.exceptions.CategoryException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final FaqRepository faqRepository;
 
     public PostCategoryRegisterResponse registerCategory(PostCategoryRegisterRequest request) {
 
@@ -66,10 +69,19 @@ public class CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
 
-        if (!category.getSubCategories().isEmpty()) {
-            throw new CategoryException(CategoryErrorCode.CATEGORY_HAS_SUBCATEGORY);
+        if (faqRepository.existsByCategoryId(categoryId)) {
+            throw new CategoryException(CategoryErrorCode.CATEGORY_DELETE_NOT_ALLOWED);
         }
 
         categoryRepository.delete(category);
+    }
+
+    public PatchFavoriteCategoryResponse updateFavorite(Long categoryId, boolean favorite) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+
+        category.updateFavorite(favorite);
+
+        return new PatchFavoriteCategoryResponse(category.getId(), category.isFavorite());
     }
 }
