@@ -20,7 +20,6 @@ Thumbs.db
 # Local env & secrets
 .env
 .env.*
-!.env.example
 src/main/resources/application-local.yml
 src/main/resources/application-*.local.yml
 *.jks
@@ -34,3 +33,15 @@ src/main/resources/application-*.local.yml
 # DB dump
 *.sql
 dump/
+
+# Documentation & Guides
+GlobalExceptionHandler_Guide.md
+PROJECT_STRUCTURE.md
+docs/
+pull_request_template.md
+
+# Postman
+postman/
+
+# Override .env.example (remove from tracking)
+.env.example
