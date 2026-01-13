@@ -57,6 +57,7 @@ public class User {
 
     // 이 user가 어떤 Categories를 담당하고 있는지 저장하는 리스트, manager role을 갖고 있는 경우만 가능
     @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ManagerCategory> managerCategories = new ArrayList<>();
 
     @PrePersist
