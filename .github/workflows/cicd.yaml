@@ -102,16 +102,14 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          # 같은 이미지를 3가지 방식으로 참조할 수 있게 하는 tag들
-            # - 브랜치명 태그 (예: main)
-            # - 브랜치-커밋SHA 태그 (예: main-a1b2c3d)
-            # - 풀커밋 SHA 태그 (예: a1b2c3d4e5f6...) → values.yaml에 동일 태그 사용
-            # - latest 태그 (main 브랜치에만)
           tags: |
-            type=ref,event=branch                             # 브랜치명 태그 (main)
-            type=sha,prefix={{branch}}-                       # 브랜치-커밋SHA 태그 (main-a1b2c3d)
-            type=sha,format=long,prefix=                      # 풀커밋 SHA 태그 (values.yaml의 springApp.image와 일치)
-            type=raw,value=latest,enable={{is_default_branch}} # latest 태그 (main 브랜치만)
+            type=ref,event=branch                               # 브랜치명 (main, dev 등)
+            # 아래 라인에 enable 조건을 추가합니다 (push 이벤트일 때만 작동)
+            type=sha,prefix={{branch}}-,enable=${{ github.event_name == 'push' }} 
+            type=sha,format=long,prefix=                        # 전체 SHA (항상 작동)
+            type=raw,value=latest,enable={{is_default_branch}}   # 메인 브랜치만
+            # PR일 때 전용 태그를 만들고 싶다면 아래 줄을 추가하세요
+            type=ref,event=pr,prefix=pr-                        # pr-123 형태
           
 
       # 5. OCI 표준 컨테이너 이미지 빌드 및 푸시
