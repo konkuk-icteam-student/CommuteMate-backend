@@ -27,7 +27,7 @@ public class ManagerCategory {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @Column(nullable = false)
+    @JoinColumn(name = "assigned_at", nullable = false)
     private LocalDateTime assignedAt;
 
     @Column(nullable = false)
