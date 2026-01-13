@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:18
+    container_name: commutemate-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+      PGTZ: Asia/Seoul
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - commutemate-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Spring Boot 애플리케이션
+  app:
+    image: ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
+    container_name: commutemate-backend
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      # Database Configuration
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DRIVER: org.postgresql.Driver
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+
+      # JPA Configuration
+      JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRATION_MS: ${JWT_ACCESS_EXPIRATION_MS:-3600000}
+      JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS:-604800000}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HmacSHA256}
+
+      # Mail Configuration
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+
+      # Schedule Configuration
+      SCHEDULE_CONCURRENT_MAX: ${SCHEDULE_CONCURRENT_MAX:-5}
+
+      # Spring Application Name
+      SPRING_APPLICATION_NAME: ${SPRING_APPLICATION_NAME:-CommuteMate}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - commutemate-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  commutemate-network:
+    driver: bridge
