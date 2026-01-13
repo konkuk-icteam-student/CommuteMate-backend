@@ -418,6 +418,144 @@ Base Path: `/api/v1/admin/schedule`
 }
 ```
 
+#### 2.2.5 Get All Monthly Limits
+저장된 모든 월별 스케줄 제한 설정을 조회합니다.
+- **GET** `/api/v1/admin/schedule/monthly-limits`
+
+**Response (200 OK)**
+```json
+{
+  "isSuccess": true,
+  "message": "모든 월별 스케줄 제한을 조회했습니다.",
+  "details": {
+    "limits": [
+      {
+        "scheduleYear": 2026,
+        "scheduleMonth": 1,
+        "maxConcurrent": 15
+      }
+    ]
+  }
+}
+```
+
+#### 2.2.6 Get User Work Time
+특정 사용자의 월별 근무 시간을 조회합니다.
+- **GET** `/api/v1/admin/schedule/work-time?userId=1&year=2026&month=1`
+
+**Response (200 OK)**
+```json
+{
+  "isSuccess": true,
+  "message": "사용자 근무 시간 조회 성공",
+  "details": {
+    "totalMinutes": 9600,
+    "periodType": "MONTHLY"
+  }
+}
+```
+
+#### 2.2.7 Get Work Time Summary
+특정 월의 전체 사용자 근무 시간 통계를 조회합니다.
+- **GET** `/api/v1/admin/schedule/work-time/summary?year=2026&month=1`
+
+**Response (200 OK)**
+```json
+{
+  "isSuccess": true,
+  "message": "전체 근무 시간 통계 조회 성공",
+  "details": {
+    "summaries": [
+      {
+        "userInfo": {
+          "userId": 1,
+          "name": "홍길동",
+          "email": "user@example.com",
+          "roleCode": "RL01",
+          "organizationName": "개발팀"
+        },
+        "totalMinutes": 9600
+      }
+    ]
+  }
+}
+```
+
+#### 2.2.8 Get User Work History
+특정 사용자의 월별 근무 이력을 조회합니다.
+- **GET** `/api/v1/admin/schedule/history?userId=1&year=2026&month=1`
+
+**Response (200 OK)**
+```json
+{
+  "isSuccess": true,
+  "message": "사용자 근무 이력 조회 성공",
+  "details": {
+    "histories": [
+      {
+        "scheduleId": 101,
+        "start": "2026-01-11T09:00:00",
+        "end": "2026-01-11T18:00:00",
+        "status": "WS02",
+        "actualStart": "2026-01-11T08:55:00",
+        "actualEnd": "2026-01-11T18:05:00",
+        "workDurationMinutes": 550
+      }
+    ]
+  }
+}
+```
+
+#### 2.2.9 Get All Work History
+특정 월의 전체 사용자 근무 이력을 조회합니다.
+- **GET** `/api/v1/admin/schedule/history/all?year=2026&month=1`
+
+**Response (200 OK)**
+```json
+{
+  "isSuccess": true,
+  "message": "전체 근무 이력 조회 성공",
+  "details": {
+    "histories": [
+      {
+        "scheduleId": 101,
+        "start": "2026-01-11T09:00:00",
+        "end": "2026-01-11T18:00:00",
+        "status": "WS02",
+        "actualStart": "2026-01-11T08:55:00",
+        "actualEnd": "2026-01-11T18:05:00",
+        "workDurationMinutes": 550
+      }
+    ]
+  }
+}
+```
+
+#### 2.2.10 Get Apply Requests
+승인 대기 중인(WS01) 모든 근무 신청 목록을 조회합니다.
+- **GET** `/api/v1/admin/schedule/apply-requests`
+
+**Response (200 OK)**
+```json
+{
+  "isSuccess": true,
+  "message": "근무 신청 요청 목록을 조회했습니다.",
+  "details": {
+    "requests": [
+      {
+        "scheduleId": 105,
+        "userId": 2,
+        "userName": "김철수",
+        "scheduleDate": "2026-01-15",
+        "startTime": "09:00:00",
+        "endTime": "18:00:00",
+        "statusCode": "WS01"
+      }
+    ]
+  }
+}
+```
+
 ---
 
 ## 3. Attendance API (`attendance/`)
@@ -957,8 +1095,20 @@ Base Path: `/api/v1/task-templates`
 ```json
 {
   "type": "SCHEDULE_UPDATED",
-  "targetDate": "2026-01-11",
-  "message": "근무 신청이 승인되었습니다."
+  "updates": [
+    {
+      "isAdd": true,
+      "slotStartTime": "2026-01-11T09:00:00"
+    },
+    {
+      "isAdd": true,
+      "slotStartTime": "2026-01-11T09:30:00"
+    },
+    {
+      "isAdd": false,
+      "slotStartTime": "2026-01-11T14:00:00"
+    }
+  ]
 }
 ```
 
