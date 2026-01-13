@@ -23,6 +23,8 @@ import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.exceptions.UserNotFoundException;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.global.exceptions.response.UserNotFoundResponseDetail;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +54,7 @@ public class ScheduleService {
     private final SimpMessagingTemplate messagingTemplate;
 
     /*
-     일정 추가 메서드
+     근무 추가 메서드
      - 일부만 신청 성공 가능, SchedulePartialFailureException 반환
      - 전부 실패시 ScheduleAllFailureException 반환
      */
@@ -60,6 +62,7 @@ public class ScheduleService {
     public ApplyScheduleResultCommand applyWorkSchedules(List<WorkScheduleCommand> slots) {
         List<WorkScheduleDTO> success = new ArrayList<>();
         List<WorkScheduleDTO> failure = new ArrayList<>();
+        List<ScheduleChange> changes = new ArrayList<>();
         //TODO: 근무 신청일이 안정해져있다면? 사실 무조건 있는게 맞지만, 없을때(현재)는 WS01(신청)으로 처리하는 중. 추후 로직 수정해야 할 수도 있음.
         //TODO: 컨트롤러에서 유저 정보를 감싸면서 for문 순회하며 WorkScheduleCommand에 유저정보를 넣어주는 것보단
         // 유저 정보를 개별 파라미터로 받아서 for문 돌면서 userID만 꺼내쓰는게 더 나을 것 같음.
@@ -129,8 +132,9 @@ public class ScheduleService {
 
                     // [추가] 스케줄 변경 사항 브로드캐스트 (WS02: 승인일 때만)
                     if (codeType.equals(CodeType.WS02)) {
-                        broadcastScheduleUpdate(slot.start().toLocalDate(), "근무 신청이 승인되었습니다.");
+                        changes.add(new ScheduleChange(true, slot.start(), slot.end()));
                     }
+
                 } else {
                     failure.add(WorkScheduleDTO.from(slot));
                 }
@@ -148,6 +152,7 @@ public class ScheduleService {
             throw SchedulePartialFailureException.of(
                     ScheduleErrorCode.SCHEDULE_PARTIAL_FAILURE, ScheduleResponseDetail.of(result));
         }
+        broadcastScheduleUpdate(changes);
         return result;
 
     }
@@ -157,6 +162,7 @@ public class ScheduleService {
      */
     @Transactional
     public void modifyWorkSchedules(ModifyWorkScheduleDTO modifyWorkScheduleDTO, Integer userId) {
+        List<ScheduleChange> changes = new ArrayList<>();
         // 근무 신청일 내 일정 신청하는 경우 CodeType.WS02(승인), 그외는 WS01(신청)
         // csCodeType: admin이 확인하는 Request 엔티티들의 상태. WS02 -> CS02(승인), WS01 -> CS01(대기)
         // deleteCodeType: 삭제시 적용할 코드 타입. WS02 -> WS04(취소), WS01 -> CR01(수정 요청)
@@ -214,7 +220,7 @@ public class ScheduleService {
 
                 // [추가] 변경 사항 브로드캐스트 (WS02: 승인일 때만 = 즉시 취소)
                 if (codeType.equals(CodeType.WS02)) {
-                    broadcastScheduleUpdate(workschedule.getStartTime().toLocalDate(), "근무가 취소되었습니다.");
+                    changes.add(new ScheduleChange(false, workschedule.getStartTime(), workschedule.getEndTime()));
                 }
             }else{
                 throw ScheduleAllFailureException.of(
@@ -316,7 +322,7 @@ public class ScheduleService {
 
             // [추가] 변경 사항 브로드캐스트 (WS02: 승인일 때만 = 즉시 승인)
             if (codeType.equals(CodeType.WS02)) {
-                broadcastScheduleUpdate(slot.start().toLocalDate(), "근무 변경(추가)이 승인되었습니다.");
+                changes.add(new ScheduleChange(true, slot.start(), slot.end()));
             }
 
             // 배치 내 추가된 슬롯 수집
@@ -330,6 +336,7 @@ public class ScheduleService {
                     ScheduleResponseDetail.of(ApplyScheduleResultCommand
                             .from(List.of(), modifyWorkScheduleDTO.applySlots())));
         }
+        broadcastScheduleUpdate(changes);
 
 
     }
@@ -407,6 +414,7 @@ public class ScheduleService {
      */
     @Transactional
     public void deleteWorkSchedule(Integer userId, Integer scheduleId) {
+        List<ScheduleChange> changes = new ArrayList<>();
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> UserNotFoundException.of(
                         GlobalErrorCode.USER_NOT_FOUND, UserNotFoundResponseDetail.of(userId)));
@@ -441,20 +449,49 @@ public class ScheduleService {
 
         // [추가] 변경 사항 브로드캐스트 (WS02: 승인일 때만 = 즉시 취소)
         if (codeType.equals(CodeType.WS02)) {
-            broadcastScheduleUpdate(schedule.getStartTime().toLocalDate(), "근무가 취소되었습니다.");
+            changes.add(new ScheduleChange(false, schedule.getStartTime(), schedule.getEndTime()));
         }
+        broadcastScheduleUpdate(changes);
     }
 
     /**
      * 모든 접속자에게 스케줄 변경 알림을 전송합니다.
      * 클라이언트는 /topic/schedule-updates 를 구독하여 이 메시지를 수신합니다.
+     * Splits changed schedules into 30-minute slots for transmission.
      */
-    private void broadcastScheduleUpdate(LocalDate targetDate, String message) {
-        ScheduleUpdateMessage updateMessage = ScheduleUpdateMessage.builder()
+    private void broadcastScheduleUpdate(List<ScheduleChange> changes) {
+
+        // 전송 시 스케줄 시간을 30분 단위로 분할하여 전송합니다.
+        if (changes.isEmpty()) return;
+
+
+        List<ScheduleUpdateMessage.SlotUpdateInfo> updates = new ArrayList<>();
+
+        for (ScheduleChange change : changes) {
+            LocalDateTime current = change.getStart();
+            LocalDateTime end = change.getEnd();
+
+            while (current.isBefore(end)) {
+                updates.add(ScheduleUpdateMessage.SlotUpdateInfo.builder()
+                        .isAdd(change.isAdd())
+                        .slotStartTime(current)
+                        .build());
+                current = current.plusMinutes(30);
+            }
+        }
+
+        ScheduleUpdateMessage message = ScheduleUpdateMessage.builder()
                 .type("SCHEDULE_UPDATED")
-                .targetDate(targetDate)
-                .message(message)
+                .updates(updates)
                 .build();
-        messagingTemplate.convertAndSend("/topic/schedule-updates", updateMessage);
+        messagingTemplate.convertAndSend("/topic/schedule-updates", message);
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static class ScheduleChange {
+        private boolean isAdd;
+        private LocalDateTime start;
+        private LocalDateTime end;
     }
 }

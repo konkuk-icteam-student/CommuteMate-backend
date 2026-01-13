@@ -73,10 +73,6 @@ public class AdminScheduleService {
                 WorkSchedule schedule = request.getSchedule();
                 schedule.approveChangeRequest(adminId, request.getTypeCode());
             }
-
-            // WebSocket 알림 전송
-            sendNotification(request.getUser().getUserId(), "CHANGE_REQUEST_PROCESSED",
-                    "근무 일정 변경 요청이 " + (statusCode == CodeType.CS02 ? "승인" : "거부") + "되었습니다.");
         }
     }
 
@@ -228,26 +224,5 @@ public class AdminScheduleService {
                 .actualEnd(actualEnd)
                 .workDurationMinutes(duration)
                 .build();
-    }
-
-    /**
-     * WebSocket을 통해 특정 사용자에게 실시간 알림을 전송합니다.
-     *
-     * @param userId  알림을 받을 사용자 ID
-     * @param type    알림 유형 (예: SCHEDULE_APPROVED)
-     * @param message 알림 메시지 내용
-     */
-    private void sendNotification(Integer userId, String type, String message) {
-        NotificationMessage notification = NotificationMessage.builder()
-                .type(type)
-                .message(message)
-                .build();
-        // /queue/notifications 사용자별 경로로 메시지 전송
-        // 클라이언트는 /user/queue/notifications 를 구독해야 함
-        messagingTemplate.convertAndSendToUser(
-                String.valueOf(userId),
-                "/queue/notifications",
-                notification
-        );
     }
 }
