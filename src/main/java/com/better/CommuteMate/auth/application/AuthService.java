@@ -38,6 +38,7 @@ public class AuthService {
         // 기존 인증 코드가 있으면 삭제(재발송 일 경우)
         if (emailVerificationCodeRepository.existsByEmail(email)) {
             emailVerificationCodeRepository.deleteByEmail(email);
+            emailVerificationCodeRepository.flush(); // delete를 DB에 즉시 반영하여 unique 제약조건 충돌 방지
         }
 
         // 6자리 인증번호 생성 및 저장
