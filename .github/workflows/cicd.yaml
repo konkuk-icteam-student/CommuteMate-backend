@@ -167,10 +167,30 @@ jobs:
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ${{ secrets.DEPLOY_PATH }}
 
-            # .env 파일에 필요한 모든 변수를 덮어씁니다 (기존 파일 내용 유지 필요시 로직 변경 필요)  
-            echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" > .env
-            echo "DOCKER_IMAGE_NAME=${{ env.IMAGE_NAME }}" >> .env
-            echo "IMAGE_TAG=sha-${{ github.sha }}" >> .env
+            # .env 파일이 없으면 생성
+            touch .env
+
+            # 기존 내용을 유지하면서 필요한 변수만 업데이트
+            # 1. DOCKER_REGISTRY 업데이트
+            if grep -q "^DOCKER_REGISTRY=" .env; then
+              sed -i "s|^DOCKER_REGISTRY=.*|DOCKER_REGISTRY=${{ env.REGISTRY }}|" .env
+            else
+              echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> .env
+            fi
+
+            # 2. DOCKER_IMAGE_NAME 업데이트
+            if grep -q "^DOCKER_IMAGE_NAME=" .env; then
+              sed -i "s|^DOCKER_IMAGE_NAME=.*|DOCKER_IMAGE_NAME=${{ env.IMAGE_NAME }}|" .env
+            else
+              echo "DOCKER_IMAGE_NAME=${{ env.IMAGE_NAME }}" >> .env
+            fi
+
+            # 3. IMAGE_TAG 업데이트
+            if grep -q "^IMAGE_TAG=" .env; then
+              sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=sha-${{ github.sha }}|" .env
+            else
+              echo "IMAGE_TAG=sha-${{ github.sha }}" >> .env
+            fi
           
             # DB 정보 등 민감한 정보는 서버에 이미 있다고 가정하고 건드리지 않거나,
             # 필요한 경우 Github Secrets에서 가져와서 여기서 >> .env 로 추가해야 합니다.
