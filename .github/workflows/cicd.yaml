@@ -135,7 +135,7 @@ jobs:
 
   # ===================================================================
   # Job 3: SSH를 통한 Docker Compose 배포
-  # test와 build-and-push 둘 다 성공해야 실행
+  # test와 build-and-push 둘 다 성공해야 실행함
   # ===================================================================
   deploy-to-server:
     name: 서버에 Docker Compose 배포
