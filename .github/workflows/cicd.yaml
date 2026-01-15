@@ -93,8 +93,8 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}           # GitHub 사용자명
           password: ${{ secrets.GITHUB_TOKEN }}
-            # github action에서 워크플로우 실행마다 제공하는 일회성 토큰,
-            # jobs.build-and-push.permissions.packages에서 권한을 지정해서 사용함.
+          # github action에서 워크플로우 실행마다 제공하는 일회성 토큰,
+          # jobs.build-and-push.permissions.packages에서 권한을 지정해서 사용함.
 
       # 4. OCI 이미지 메타데이터 추출 (태그, 레이블)
       - name: 컨테이너 이미지 메타데이터 추출
@@ -103,29 +103,26 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch                               # 브랜치명 (main, dev 등)
-            # 아래 라인에 enable 조건을 추가합니다 (push 이벤트일 때만 작동)
-            type=sha,prefix={{branch}}-,enable=${{ github.event_name == 'push' }} 
-            type=sha,format=long,prefix=                        # 전체 SHA (항상 작동)
-            type=raw,value=latest,enable={{is_default_branch}}   # 메인 브랜치만
-            # PR일 때 전용 태그를 만들고 싶다면 아래 줄을 추가하세요
-            type=ref,event=pr,prefix=pr-                        # pr-123 형태
-          
+            # 1. 브랜치 이름 태그 (예: main)
+            type=ref,event=branch
+            # 2. 커밋 해시 태그 (예: sha-cf5126e...)
+            type=sha,format=long,prefix=sha-
+            # 3. Latest 태그 (메인 브랜치일 때만)
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      # 5. OCI 표준 컨테이너 이미지 빌드 및 푸시
-      # BuildKit을 사용하여 OCI 표준 준수 이미지 생성
+      # 5. 컨테이너 이미지 빌드 및 푸시
       - name: 컨테이너 이미지 빌드 및 푸시
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
-          context: .                                    # 빌드 컨텍스트 (현재 디렉토리)
-          push: true                                    # GHCR에 푸시
-          tags: ${{ steps.meta.outputs.tags }}          # 생성된 태그
-          labels: ${{ steps.meta.outputs.labels }}      # 생성된 레이블
-          cache-from: type=gha                          # GitHub Actions 캐시에서 읽기
-          cache-to: type=gha,mode=max                   # GitHub Actions 캐시에 쓰기 (최대 모드)
-          platforms: linux/amd64                        # 빌드 플랫폼
-          outputs: type=image,oci-mediatypes=true       # OCI 미디어 타입 사용
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          outputs: type=image,oci-mediatypes=true
 
       # 6. 이미지 출처 증명 생성 (보안 강화)
       - name: 이미지 출처 증명 생성
@@ -163,24 +160,27 @@ jobs:
           sshpass -e scp -o StrictHostKeyChecking=no docker-compose.yaml ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
       # 4. 서버에서 .env 파일의 IMAGE_TAG 업데이트
-      - name: .env 파일 IMAGE_TAG 업데이트
+      - name: .env 파일 생성 및 업데이트
         env:
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ${{ secrets.DEPLOY_PATH }}
 
-            # IMAGE_TAG를 현재 커밋 SHA로 업데이트
-            if [ -f .env ]; then
-              sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=sha-${{ github.sha }}/" .env
-              echo "✅ IMAGE_TAG가 sha-${{ github.sha }}로 업데이트되었습니다."
-            else
-              echo "❌ .env 파일이 존재하지 않습니다. 서버 초기 세팅이 필요합니다."
-              exit 1
-            fi
+            # .env 파일에 필요한 모든 변수를 덮어씁니다 (기존 파일 내용 유지 필요시 로직 변경 필요)  
+            echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" > .env
+            echo "DOCKER_IMAGE_NAME=${{ env.IMAGE_NAME }}" >> .env
+            echo "IMAGE_TAG=sha-${{ github.sha }}" >> .env
+          
+            # DB 정보 등 민감한 정보는 서버에 이미 있다고 가정하고 건드리지 않거나,
+            # 필요한 경우 Github Secrets에서 가져와서 여기서 >> .env 로 추가해야 합니다.
+            # (예: echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env)
+          
+            echo "✅ .env 파일이 업데이트되었습니다."
+            cat .env
           EOF
 
-      # 5. GHCR 로그인 (서버에서)
+      # 서버 로그인 (이미지가 Public이면 생략 가능)
       - name: 서버에서 GHCR 로그인
         env:
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
@@ -189,24 +189,17 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           EOF
 
-      # 6. Docker Compose로 배포
       - name: Docker Compose 배포
         env:
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ${{ secrets.DEPLOY_PATH }}
-
-            echo "🔄 최신 이미지 Pull 중..."
+          
+            # 최신 상태 반영을 위해 down 후 up (또는 pull 후 up -d)
             docker-compose pull app
-
-            echo "🚀 서비스 재시작 중..."
-            docker-compose up -d
-
-            echo "🧹 사용하지 않는 이미지 정리..."
+            docker-compose up -d --remove-orphans
             docker image prune -f
-
-            echo "✅ 배포 완료!"
           EOF
 
       # 7. 배포 상태 확인
