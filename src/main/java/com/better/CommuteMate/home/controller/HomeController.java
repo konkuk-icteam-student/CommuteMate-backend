@@ -5,6 +5,7 @@ import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.home.application.HomeService;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeWorkTimeResponse;
+import com.better.CommuteMate.home.controller.dto.WeeklyWorkSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -48,5 +49,24 @@ public class HomeController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         HomeAttendanceStatusResponse response = homeService.getAttendanceStatus(userDetails.getUser().getUserId());
         return ResponseEntity.ok(Response.of(true, "출퇴근 상태 조회 성공", response));
+    }
+
+    /**
+     * 이번 주 및 이번 달 근무 시간 요약을 조회합니다.
+     *
+     * @param userDetails 인증된 사용자 정보
+     * @return {@link WeeklyWorkSummaryResponse}를 포함한 API 응답
+     */
+    @Operation(
+        summary = "주간/월간 근무 시간 요약 조회",
+        description = "이번 주 전체 근무 시간, 이번 주 완료 근무 시간, 이번 달 완료 근무 시간을 조회합니다. " +
+                      "완료 여부는 퇴근 체크 기록이 있는지로 판단합니다. " +
+                      "시간은 0.5 단위(30분)로 표시됩니다."
+    )
+    @GetMapping("/work-summary")
+    public ResponseEntity<Response> getWorkSummary(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        WeeklyWorkSummaryResponse response = homeService.getWorkSummary(userDetails.getUser().getUserId());
+        return ResponseEntity.ok(Response.of(true, "근무 시간 요약 조회 성공", response));
     }
 }
