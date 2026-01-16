@@ -11,12 +11,15 @@ import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse.AttendanceStatus;
 import com.better.CommuteMate.home.controller.dto.HomeWorkTimeResponse;
+import com.better.CommuteMate.home.controller.dto.WeeklyWorkSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -205,5 +208,89 @@ public class HomeService {
                 .scheduleStartTime(schedule.getStartTime())
                 .scheduleEndTime(schedule.getEndTime())
                 .build();
+    }
+
+    /**
+     * 이번 주 및 이번 달 근무 시간 요약 정보를 조회합니다.
+     * <p>
+     * - 이번 주: 월요일 00:00 ~ 일요일 23:59
+     * - 이번 달: 1일 00:00 ~ 말일 23:59
+     * - 완료 여부: 퇴근 체크(CT02) 기록이 있는 스케줄만 완료로 간주
+     * - 시간 단위: 0.5 = 30분 (예: 3.0, 3.5, 4.0)
+     * </p>
+     *
+     * @param userId 조회를 요청한 사용자의 ID
+     * @return {@link WeeklyWorkSummaryResponse} (주간 전체/완료, 월간 완료 시간)
+     * @throws BasicException 사용자를 찾을 수 없는 경우
+     */
+    @Transactional(readOnly = true)
+    public WeeklyWorkSummaryResponse getWorkSummary(Integer userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 이번 주 기간 계산 (월요일 00:00 ~ 일요일 23:59)
+        LocalDateTime weekStart = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toLocalDate().atStartOfDay();
+        LocalDateTime weekEnd = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).toLocalDate().atTime(23, 59, 59);
+
+        // 이번 달 기간 계산 (1일 00:00 ~ 말일 23:59)
+        LocalDateTime monthStart = now.with(TemporalAdjusters.firstDayOfMonth()).toLocalDate().atStartOfDay();
+        LocalDateTime monthEnd = now.with(TemporalAdjusters.lastDayOfMonth()).toLocalDate().atTime(23, 59, 59);
+
+        // 이번 주 전체 스케줄 조회 (승인된 것만)
+        List<WorkSchedule> weeklySchedules = workSchedulesRepository.findValidSchedulesByUserAndDateRange(
+                userId, weekStart, weekEnd.plusSeconds(1));
+
+        // 이번 달 전체 스케줄 조회 (승인된 것만)
+        List<WorkSchedule> monthlySchedules = workSchedulesRepository.findValidSchedulesByUserAndDateRange(
+                userId, monthStart, monthEnd.plusSeconds(1));
+
+        // 이번 주 전체 근무 시간 계산
+        double totalWeeklyHours = calculateTotalHours(weeklySchedules);
+
+        // 이번 주 완료된 근무 시간 계산 (퇴근 체크된 것만)
+        double completedWeeklyHours = calculateCompletedHours(weeklySchedules);
+
+        // 이번 달 완료된 근무 시간 계산 (퇴근 체크된 것만)
+        double completedMonthlyHours = calculateCompletedHours(monthlySchedules);
+
+        return WeeklyWorkSummaryResponse.builder()
+                .totalWeeklyHours(totalWeeklyHours)
+                .completedWeeklyHours(completedWeeklyHours)
+                .completedMonthlyHours(completedMonthlyHours)
+                .build();
+    }
+
+    /**
+     * 스케줄 리스트의 전체 근무 시간을 계산합니다 (시간 단위).
+     */
+    private double calculateTotalHours(List<WorkSchedule> schedules) {
+        long totalMinutes = schedules.stream()
+                .mapToLong(schedule -> Duration.between(schedule.getStartTime(), schedule.getEndTime()).toMinutes())
+                .sum();
+
+        return totalMinutes / 60.0;
+    }
+
+    /**
+     * 스케줄 리스트 중 퇴근 체크가 완료된 것만의 근무 시간을 계산합니다 (시간 단위).
+     */
+    private double calculateCompletedHours(List<WorkSchedule> schedules) {
+        long totalMinutes = schedules.stream()
+                .filter(this::hasCheckOut)
+                .mapToLong(schedule -> Duration.between(schedule.getStartTime(), schedule.getEndTime()).toMinutes())
+                .sum();
+
+        return totalMinutes / 60.0;
+    }
+
+    /**
+     * 해당 스케줄에 퇴근 체크 기록이 있는지 확인합니다.
+     */
+    private boolean hasCheckOut(WorkSchedule schedule) {
+        List<WorkAttendance> attendances = workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+        return attendances.stream()
+                .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT02);
     }
 }

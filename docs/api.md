@@ -744,6 +744,39 @@ Base Path: `/api/v1/home`
 }
 ```
 
+### 5.3 Get Work Summary
+이번 주 및 이번 달 근무 시간 요약 조회.
+- **GET** `/api/v1/home/work-summary`
+
+**설명**
+- 이번 주 전체 근무 시간 (승인된 스케줄 기준)
+- 이번 주 완료된 근무 시간 (퇴근 체크된 스케줄만)
+- 이번 달 완료된 근무 시간 (퇴근 체크된 스케줄만)
+- 시간 단위: 0.5 = 30분 (예: 3.0, 3.5, 4.0)
+- 이번 주: 월요일 00:00 ~ 일요일 23:59
+- 이번 달: 1일 00:00 ~ 말일 23:59
+- 완료 여부: WorkAttendance 테이블에 퇴근 체크(CT02) 기록이 있는 스케줄만 완료로 간주
+
+**Response (200 OK)**
+```json
+{
+  "isSuccess": true,
+  "message": "근무 시간 요약 조회 성공",
+  "details": {
+    "totalWeeklyHours": 12.0,
+    "completedWeeklyHours": 7.5,
+    "completedMonthlyHours": 24.0
+  }
+}
+```
+
+**Response Fields**
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| totalWeeklyHours | Double | 이번 주 전체 근무 시간 (승인된 스케줄 기준) |
+| completedWeeklyHours | Double | 이번 주 완료된 근무 시간 (퇴근 체크된 것만) |
+| completedMonthlyHours | Double | 이번 달 완료된 근무 시간 (퇴근 체크된 것만) |
+
 ---
 
 ## 6. Task API (`task/`)

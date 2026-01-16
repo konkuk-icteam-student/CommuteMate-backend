@@ -1,8 +1,7 @@
-version: '3.8'
-
 services:
-  # PostgreSQL 데이터베이스
+  # PostgreSQL 데이터베이스, Port:5432
   postgres:
+    network_mode: "host"
     image: postgres:18
     container_name: commutemate-postgres
     restart: unless-stopped
@@ -12,12 +11,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Seoul
       PGTZ: Asia/Seoul
-    ports:
-      - "${DB_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - commutemate-network
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
       interval: 10s
@@ -25,16 +20,15 @@ services:
       retries: 5
       start_period: 30s
 
-  # Spring Boot 애플리케이션
+  # Spring Boot 애플리케이션, Port:8080
   app:
+    network_mode: "host"
     image: ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
     container_name: commutemate-backend
     restart: unless-stopped
-    ports:
-      - "${APP_PORT:-8080}:8080"
     environment:
       # Database Configuration
-      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_URL: jdbc:postgresql://localhost:5432/${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DRIVER: org.postgresql.Driver
@@ -65,8 +59,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - commutemate-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -77,7 +69,3 @@ services:
 volumes:
   postgres_data:
     driver: local
-
-networks:
-  commutemate-network:
-    driver: bridge
