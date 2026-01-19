@@ -54,14 +54,13 @@ public class TaskController {
         return ResponseEntity.ok(new Response(true, "업무를 조회했습니다.", response));
     }
 
-    @Operation(summary = "업무 생성", description = "새로운 업무를 생성합니다. (관리자 전용)")
+    @Operation(summary = "업무 생성", description = "새로운 업무를 생성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "생성 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "404", description = "담당자를 찾을 수 없음")
     })
-    @PreAuthorize("hasRole('RL02')")
     @PostMapping
     public ResponseEntity<Response> createTask(
             @Valid @RequestBody CreateTaskRequest request,
@@ -72,13 +71,12 @@ public class TaskController {
                 .body(new Response(true, "업무가 생성되었습니다.", response));
     }
 
-    @Operation(summary = "업무 수정", description = "기존 업무의 정보를 수정합니다. (관리자 전용)")
+    @Operation(summary = "업무 수정", description = "기존 업무의 정보를 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "수정 성공"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "404", description = "업무 또는 담당자를 찾을 수 없음")
     })
-    @PreAuthorize("hasRole('RL02')")
     @PatchMapping("/{taskId}")
     public ResponseEntity<Response> updateTask(
             @PathVariable Long taskId,
@@ -89,13 +87,12 @@ public class TaskController {
         return ResponseEntity.ok(new Response(true, "업무가 수정되었습니다.", response));
     }
 
-    @Operation(summary = "업무 완료 상태 토글", description = "업무의 완료 상태를 토글합니다. (관리자 전용)")
+    @Operation(summary = "업무 완료 상태 토글", description = "업무의 완료 상태를 토글합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "토글 성공"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "404", description = "업무를 찾을 수 없음")
     })
-    @PreAuthorize("hasRole('RL02')")
     @PatchMapping("/{taskId}/toggle-complete")
     public ResponseEntity<Response> toggleComplete(
             @PathVariable Long taskId,
@@ -106,13 +103,12 @@ public class TaskController {
         return ResponseEntity.ok(new Response(true, message, response));
     }
 
-    @Operation(summary = "업무 완료 상태 설정", description = "업무의 완료 상태를 특정 값으로 설정합니다. (관리자 전용)")
+    @Operation(summary = "업무 완료 상태 설정", description = "업무의 완료 상태를 특정 값으로 설정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "설정 성공"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "404", description = "업무를 찾을 수 없음")
     })
-    @PreAuthorize("hasRole('RL02')")
     @PatchMapping("/{taskId}/complete")
     public ResponseEntity<Response> setComplete(
             @PathVariable Long taskId,
