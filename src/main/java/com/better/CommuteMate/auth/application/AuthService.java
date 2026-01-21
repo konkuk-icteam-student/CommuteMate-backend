@@ -145,7 +145,8 @@ public class AuthService {
         user.setRefreshToken(refreshToken);
         userRepository.save(user);
         long expiresAt = jwtTokenProvider.getExpiration(accessToken);
-        return new AuthTokens(accessToken, refreshToken, expiresAt);
+        return new AuthTokens(accessToken, refreshToken, expiresAt,
+                user.getUserId(), user.getName(), user.getEmail(), user.getRoleCode());
     }
 
     public void logout(String token) {
@@ -178,6 +179,7 @@ public class AuthService {
         user.setRefreshToken(newRefreshToken);
         userRepository.save(user);
         long expiresAt = jwtTokenProvider.getExpiration(newAccessToken);
-        return new AuthTokens(newAccessToken, newRefreshToken, expiresAt);
+        return new AuthTokens(newAccessToken, newRefreshToken, expiresAt,
+                user.getUserId(), user.getName(), user.getEmail(), user.getRoleCode());
     }
 }

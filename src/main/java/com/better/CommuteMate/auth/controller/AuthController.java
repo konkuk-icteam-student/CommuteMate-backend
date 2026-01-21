@@ -70,6 +70,10 @@ public class AuthController {
                 .refreshToken(tokens.getRefreshToken())
                 .tokenType("Bearer")
                 .expiresAt(tokens.getExpiresAt())
+                .userId(tokens.getUserId())
+                .userName(tokens.getUserName())
+                .email(tokens.getEmail())
+                .roleCode(tokens.getRoleCode().getFullCode())
                 .build();
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -109,6 +113,10 @@ public class AuthController {
                 .refreshToken(tokens.getRefreshToken())
                 .tokenType("Bearer")
                 .expiresAt(tokens.getExpiresAt())
+                .userId(tokens.getUserId())
+                .userName(tokens.getUserName())
+                .email(tokens.getEmail())
+                .roleCode(tokens.getRoleCode().getFullCode())
                 .build();
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
