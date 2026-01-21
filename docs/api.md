@@ -109,12 +109,16 @@ Base Path: `/api/v1/auth`
   "isSuccess": true,
   "message": "로그인 성공",
   "details": {
-    "accessToken": "eyJhbGciOiJIUzI1Ni...",
-    "refreshToken": "eyJhbGciOiJIUzI1Ni...",
+    "accessToken": "JWT 토큰",
+    "refreshToken": "리프레시 토큰",
     "tokenType": "Bearer",
-    "expiresAt": 1736560000
+    "expiresAt": 1234567890000,
+    "userId": 1,
+    "userName": "홍길동",
+    "email": "user@example.com",
+    "roleCode": "RL01"
   }
-}
+} 
 ```
 
 ### 1.5 Logout
@@ -145,7 +149,11 @@ Base Path: `/api/v1/auth`
     "accessToken": "eyJhbGciOiJIUzI1Ni...",
     "refreshToken": "eyJhbGciOiJIUzI1Ni...",
     "tokenType": "Bearer",
-    "expiresAt": 1736560000
+    "expiresAt": 1736560000,
+    "userId": 1,
+    "userName": "홍길동",
+    "email": "user@example.com",
+    "roleCode": "RL01"
   }
 }
 ```
