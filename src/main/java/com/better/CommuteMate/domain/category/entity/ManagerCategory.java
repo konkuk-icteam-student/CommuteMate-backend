@@ -27,9 +27,6 @@ public class ManagerCategory {
     @Column(name = "assigned_at", nullable = false)
     private LocalDateTime assignedAt;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
      //insert 직전에 자동으로 assignedAt 세팅
     @PrePersist
     protected void onCreate() {
@@ -40,7 +37,6 @@ public class ManagerCategory {
         ManagerCategory mc = new ManagerCategory();
         mc.manager = manager;
         mc.category = category;
-        mc.active = true;
         return mc;
     }
 }
