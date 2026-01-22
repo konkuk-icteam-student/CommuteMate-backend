@@ -6,8 +6,8 @@ import java.util.List;
 @Schema(description = "manager-Category 매핑 등록 요청 DTO")
 public record PostManagerCategoryRequest(
         @Schema(description = "매핑할 관리자 ID", example = "3")
-        Integer managerId,
+        Long managerId,
 
         @Schema(description = "연결할 category ID 리스트", example = "[1, 2, 3]")
-        List<Integer> categoryIds
+        List<Long> categoryIds
 ) {}

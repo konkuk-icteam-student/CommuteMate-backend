@@ -83,7 +83,7 @@ public class TaskService {
      * 업무 생성
      */
     @Transactional
-    public TaskResponse createTask(CreateTaskRequest request, Integer currentUserId) {
+    public TaskResponse createTask(CreateTaskRequest request, Long currentUserId) {
         User assignee = findUserById(request.getAssigneeId());
         CodeType taskType = validateAndGetTaskType(request.getTaskType());
 
@@ -103,7 +103,7 @@ public class TaskService {
      * 업무 수정
      */
     @Transactional
-    public TaskResponse updateTask(Long taskId, UpdateTaskRequest request, Integer currentUserId) {
+    public TaskResponse updateTask(Long taskId, UpdateTaskRequest request, Long currentUserId) {
         Task task = findTaskById(taskId);
 
         User assignee = null;
@@ -119,7 +119,7 @@ public class TaskService {
      * 업무 완료 상태 토글
      */
     @Transactional
-    public TaskResponse toggleComplete(Long taskId, Integer currentUserId) {
+    public TaskResponse toggleComplete(Long taskId, Long currentUserId) {
         Task task = findTaskById(taskId);
         task.toggleComplete(currentUserId);
         return TaskResponse.from(task);
@@ -129,7 +129,7 @@ public class TaskService {
      * 업무 완료 상태 설정
      */
     @Transactional
-    public TaskResponse setComplete(Long taskId, Boolean isCompleted, Integer currentUserId) {
+    public TaskResponse setComplete(Long taskId, Boolean isCompleted, Long currentUserId) {
         Task task = findTaskById(taskId);
         task.setCompleted(isCompleted, currentUserId);
         return TaskResponse.from(task);
@@ -148,7 +148,7 @@ public class TaskService {
      * 업무 일괄 저장 (생성 + 수정)
      */
     @Transactional
-    public BatchUpdateTasksResponse batchUpdateTasks(BatchUpdateTasksRequest request, Integer currentUserId) {
+    public BatchUpdateTasksResponse batchUpdateTasks(BatchUpdateTasksRequest request, Long currentUserId) {
         List<TaskResponse> createdTasks = new ArrayList<>();
         List<TaskResponse> updatedTasks = new ArrayList<>();
         List<BatchTaskError> errors = new ArrayList<>();
@@ -205,7 +205,7 @@ public class TaskService {
                 .orElseThrow(() -> new TaskException(TaskErrorCode.TASK_NOT_FOUND));
     }
 
-    private User findUserById(Integer userId) {
+    private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new TaskException(TaskErrorCode.ASSIGNEE_NOT_FOUND));
     }

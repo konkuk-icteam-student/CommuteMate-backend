@@ -5,7 +5,7 @@ import com.better.CommuteMate.global.code.CodeType;
 import java.util.List;
 
 public record ProcessChangeRequestRequest(
-        List<Integer> requestIds,
+        List<Long> requestIds,
         CodeType statusCode
 ) {
 }

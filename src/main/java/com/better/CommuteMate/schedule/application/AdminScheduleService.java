@@ -52,9 +52,9 @@ public class AdminScheduleService {
      * @param adminId    처리하는 관리자 ID
      */
     @Transactional
-    public void processChangeRequest(List<Integer> requestIds, CodeType statusCode, Integer adminId) {
+    public void processChangeRequest(List<Long> requestIds, CodeType statusCode, Long adminId) {
         // 변경 요청 조회
-        for (Integer id : requestIds) {
+        for (Long id : requestIds) {
             WorkChangeRequest request = workChangeRequestRepository.findById(id)
                     .orElseThrow(() -> ScheduleAllFailureException.of(
                             ScheduleErrorCode.SCHEDULE_FAILURE,
@@ -91,7 +91,7 @@ public class AdminScheduleService {
      * 특정 사용자의 근무 시간 조회
      */
     @Transactional(readOnly = true)
-    public UserWorkTimeResponse getUserWorkTime(Integer userId, Integer year, Integer month) {
+    public UserWorkTimeResponse getUserWorkTime(Long userId, Integer year, Integer month) {
         LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime end = start.plusMonths(1);
 
@@ -124,7 +124,7 @@ public class AdminScheduleService {
      * 특정 사용자의 근무 이력 조회
      */
     @Transactional(readOnly = true)
-    public List<WorkScheduleHistoryResponse> getUserWorkHistory(Integer userId, Integer year, Integer month) {
+    public List<WorkScheduleHistoryResponse> getUserWorkHistory(Long userId, Integer year, Integer month) {
         LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime end = start.plusMonths(1);
 
@@ -149,7 +149,7 @@ public class AdminScheduleService {
         return historyList;
     }
 
-    private long calculateTotalWorkTime(Integer userId, LocalDateTime start, LocalDateTime end) {
+    private long calculateTotalWorkTime(Long userId, LocalDateTime start, LocalDateTime end) {
         List<WorkSchedule> schedules = workSchedulesRepository.findAllSchedulesByUserAndDateRange(
                 userId, start, end);
         
@@ -188,7 +188,7 @@ public class AdminScheduleService {
         return Duration.between(start, end).toMinutes();
     }
 
-    private List<WorkScheduleHistoryResponse> getHistoryList(Integer userId, LocalDateTime start, LocalDateTime end) {
+    private List<WorkScheduleHistoryResponse> getHistoryList(Long userId, LocalDateTime start, LocalDateTime end) {
         List<WorkSchedule> schedules = workSchedulesRepository.findAllSchedulesByUserAndDateRange(userId, start, end);
         List<WorkScheduleHistoryResponse> historyList = new ArrayList<>();
 

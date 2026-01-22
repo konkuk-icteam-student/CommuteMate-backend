@@ -57,7 +57,7 @@ public class TaskTemplateService {
      * 템플릿 생성
      */
     @Transactional
-    public TemplateDetailResponse createTemplate(CreateTemplateRequest request, Integer currentUserId) {
+    public TemplateDetailResponse createTemplate(CreateTemplateRequest request, Long currentUserId) {
         // 이름 중복 확인
         if (templateRepository.existsByTemplateName(request.getTemplateName())) {
             throw new TaskException(TaskErrorCode.TEMPLATE_NAME_ALREADY_EXISTS);
@@ -96,7 +96,7 @@ public class TaskTemplateService {
      */
     @Transactional
     public TemplateDetailResponse updateTemplate(Long templateId, UpdateTemplateRequest request,
-            Integer currentUserId) {
+                                                 Long currentUserId) {
         TaskTemplate template = findTemplateById(templateId);
 
         // 이름 중복 확인 (자기 자신 제외)
@@ -144,7 +144,7 @@ public class TaskTemplateService {
      * 템플릿 활성화/비활성화
      */
     @Transactional
-    public TemplateListResponse setTemplateActive(Long templateId, boolean isActive, Integer currentUserId) {
+    public TemplateListResponse setTemplateActive(Long templateId, boolean isActive, Long currentUserId) {
         TaskTemplate template = findTemplateById(templateId);
         template.setActive(isActive, currentUserId);
         return TemplateListResponse.from(template);
@@ -154,7 +154,7 @@ public class TaskTemplateService {
      * 템플릿 적용 (특정 날짜에 업무 일괄 생성)
      */
     @Transactional
-    public ApplyTemplateResponse applyTemplate(Long templateId, ApplyTemplateRequest request, Integer currentUserId) {
+    public ApplyTemplateResponse applyTemplate(Long templateId, ApplyTemplateRequest request, Long currentUserId) {
         TaskTemplate template = findTemplateById(templateId);
         List<TaskTemplateItem> items = itemRepository.findByTemplateIdWithAssignee(templateId);
 
@@ -163,7 +163,7 @@ public class TaskTemplateService {
         }
 
         // 담당자 오버라이드 맵 생성
-        Map<Long, Integer> assigneeOverrides = request.getAssigneeOverrides() != null
+        Map<Long, Long> assigneeOverrides = request.getAssigneeOverrides() != null
                 ? request.getAssigneeOverrides().stream()
                         .collect(Collectors.toMap(
                                 AssigneeOverride::getItemId,
@@ -174,7 +174,7 @@ public class TaskTemplateService {
 
         for (TaskTemplateItem item : items) {
             // 담당자 결정: 오버라이드 > 기본 담당자
-            Integer assigneeId = assigneeOverrides.getOrDefault(item.getItemId(),
+            Long assigneeId = assigneeOverrides.getOrDefault(item.getItemId(),
                     item.getDefaultAssignee() != null ? item.getDefaultAssignee().getUserId() : null);
 
             if (assigneeId == null) {
@@ -216,7 +216,7 @@ public class TaskTemplateService {
                 .orElseThrow(() -> new TaskException(TaskErrorCode.TEMPLATE_NOT_FOUND));
     }
 
-    private User findUserById(Integer userId) {
+    private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new TaskException(TaskErrorCode.ASSIGNEE_NOT_FOUND));
     }

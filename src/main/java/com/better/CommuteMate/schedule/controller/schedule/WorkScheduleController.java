@@ -42,7 +42,7 @@ public class WorkScheduleController {
     public ResponseEntity<Response> applyWorkSchedule(
             @RequestBody ApplyWorkSchedule request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer userId = userDetails.getUser().getUserId();
+        Long userId = userDetails.getUser().getUserId();
         ApplyScheduleResultCommand applyResult = scheduleService.applyWorkSchedules(
                 request.slots().stream().map(slot -> new WorkScheduleCommand(
                         userId, slot.start(), slot.end()
@@ -70,7 +70,7 @@ public class WorkScheduleController {
     public ResponseEntity<Response> modifyWorkSchedule(
             @RequestBody ModifyWorkScheduleDTO request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-         Integer userId = userDetails.getUser().getUserId();
+        Long userId = userDetails.getUser().getUserId();
          scheduleService.modifyWorkSchedules(request, userId);
          return ResponseEntity.status(HttpStatus.CREATED).body(Response.of(
                 true,
@@ -88,7 +88,7 @@ public class WorkScheduleController {
             @RequestParam Integer year,
             @RequestParam Integer month,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer userId = userDetails.getUser().getUserId();
+        Long userId = userDetails.getUser().getUserId();
         return ResponseEntity.ok(Response.of(
                 true,
                 "근무 일정 조회 성공",
@@ -116,9 +116,9 @@ public class WorkScheduleController {
     @Operation(summary = "특정 근무 일정 조회", description = "ID로 특정 근무 일정을 조회합니다.")
     @GetMapping("/{scheduleId}")
     public ResponseEntity<Response> getWorkSchedule(
-            @PathVariable Integer scheduleId,
+            @PathVariable Long scheduleId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer userId = userDetails.getUser().getUserId();
+        Long userId = userDetails.getUser().getUserId();
         return ResponseEntity.ok(Response.of(
                 true,
                 "근무 일정 상세 조회 성공",
@@ -132,9 +132,9 @@ public class WorkScheduleController {
     @Operation(summary = "근무 일정 취소/삭제", description = "특정 근무 일정을 취소하거나 삭제 요청을 보냅니다.")
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<Response> deleteWorkSchedule(
-            @PathVariable Integer scheduleId,
+            @PathVariable Long scheduleId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer userId = userDetails.getUser().getUserId();
+        Long userId = userDetails.getUser().getUserId();
         scheduleService.deleteWorkSchedule(userId, scheduleId);
         return ResponseEntity.ok(Response.of(
                 true,

@@ -50,13 +50,13 @@ public class Task {
     private LocalDateTime createdAt;
 
     @Column(name = "created_by")
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private Integer updatedBy;
+    private Long updatedBy;
 
     @PrePersist
     protected void onCreate() {
@@ -70,7 +70,7 @@ public class Task {
     }
 
     // 업무 정보 수정
-    public void update(String title, User assignee, LocalTime taskTime, Integer updatedBy) {
+    public void update(String title, User assignee, LocalTime taskTime, Long updatedBy) {
         if (title != null) {
             this.title = title;
         }
@@ -84,20 +84,20 @@ public class Task {
     }
 
     // 완료 상태 토글
-    public void toggleComplete(Integer updatedBy) {
+    public void toggleComplete(Long updatedBy) {
         this.isCompleted = !this.isCompleted;
         this.updatedBy = updatedBy;
     }
 
     // 완료 상태 설정
-    public void setCompleted(Boolean isCompleted, Integer updatedBy) {
+    public void setCompleted(Boolean isCompleted, Long updatedBy) {
         this.isCompleted = isCompleted;
         this.updatedBy = updatedBy;
     }
 
     // 팩토리 메서드
     public static Task create(String title, User assignee, LocalDate taskDate,
-            LocalTime taskTime, CodeType taskType, Integer createdBy) {
+            LocalTime taskTime, CodeType taskType, Long createdBy) {
         return Task.builder()
                 .title(title)
                 .assignee(assignee)

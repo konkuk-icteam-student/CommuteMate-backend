@@ -124,7 +124,7 @@ public class ScheduleService {
                     CodeType codeType = monthlyScheduleConfigService.
                             isCurrentlyInApplyTerm(slot.start()) ? CodeType.WS02 : CodeType.WS01;
 
-                    User user = userRepository.findByUserId(slot.userID())
+                    User user = userRepository.findById(slot.userID())
                             .orElseThrow(() -> UserNotFoundException.of(
                                     GlobalErrorCode.USER_NOT_FOUND, UserNotFoundResponseDetail.of(slot.userID())));
                     workSchedulesRepository.save(WorkScheduleCommand.toEntity(slot, user, codeType));
@@ -161,7 +161,7 @@ public class ScheduleService {
      - 근무를 빼는 요청과 더하는 요청 시간 맞아야 함.
      */
     @Transactional
-    public void modifyWorkSchedules(ModifyWorkScheduleDTO modifyWorkScheduleDTO, Integer userId) {
+    public void modifyWorkSchedules(ModifyWorkScheduleDTO modifyWorkScheduleDTO, Long userId) {
         List<ScheduleChange> changes = new ArrayList<>();
         // 근무 신청일 내 일정 신청하는 경우 CodeType.WS02(승인), 그외는 WS01(신청)
         // csCodeType: admin이 확인하는 Request 엔티티들의 상태. WS02 -> CS02(승인), WS01 -> CS01(대기)
@@ -178,10 +178,10 @@ public class ScheduleService {
         Duration applyTotalDuration = Duration.ZERO;
 
         // 삭제된 스케줄 ID 수집 (월/주 시간 계산 시 제외용)
-        Set<Integer> canceledScheduleIds = new HashSet<>();
+        Set<Long> canceledScheduleIds = new HashSet<>();
 
         // 일정 삭제하면서 근무 시간 계산
-        for (Integer id : modifyWorkScheduleDTO.cancelScheduleIds()) {
+        for (Long id : modifyWorkScheduleDTO.cancelScheduleIds()) {
 
             Optional<WorkSchedule> workSchedule = workSchedulesRepository.findById(id);
 
@@ -345,7 +345,7 @@ public class ScheduleService {
      * 특정 사용자의 연/월별 근무 일정 조회
      */
     @Transactional(readOnly = true)
-    public List<WorkScheduleResponse> getWorkSchedules(Integer userId, Integer year, Integer month) {
+    public List<WorkScheduleResponse> getWorkSchedules(Long userId, Integer year, Integer month) {
         LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime end = start.plusMonths(1);
         return workSchedulesRepository.findValidSchedulesByUserAndDateRange(userId, start, end)
@@ -356,7 +356,7 @@ public class ScheduleService {
      * 특정 사용자의 연/월별 근무 이력 조회 (실제 근무 포함)
      */
     @Transactional(readOnly = true)
-    public List<WorkScheduleHistoryResponse> getWorkScheduleHistory(Integer userId, Integer year, Integer month) {
+    public List<WorkScheduleHistoryResponse> getWorkScheduleHistory(Long userId, Integer year, Integer month) {
         LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime end = start.plusMonths(1);
 
@@ -398,7 +398,7 @@ public class ScheduleService {
      * 특정 근무 일정 상세 조회
      */
     @Transactional(readOnly = true)
-    public WorkScheduleResponse getWorkSchedule(Integer userId, Integer scheduleId) {
+    public WorkScheduleResponse getWorkSchedule(Long userId, Long scheduleId) {
         WorkSchedule schedule = workSchedulesRepository.findById(scheduleId)
                 .orElseThrow(() -> BasicException.of(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
@@ -413,7 +413,7 @@ public class ScheduleService {
      * 근무 일정 삭제/취소 요청
      */
     @Transactional
-    public void deleteWorkSchedule(Integer userId, Integer scheduleId) {
+    public void deleteWorkSchedule(Long userId, Long scheduleId) {
         List<ScheduleChange> changes = new ArrayList<>();
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> UserNotFoundException.of(

@@ -8,12 +8,12 @@ import java.time.LocalDateTime;
 
 @Getter
 public class WorkScheduleResponse extends ResponseDetail {
-    private final Integer id;
+    private final Long id;
     private final LocalDateTime start;
     private final LocalDateTime end;
     private final CodeType status;
 
-    public WorkScheduleResponse(Integer id, LocalDateTime start, LocalDateTime end, CodeType status) {
+    public WorkScheduleResponse(Long id, LocalDateTime start, LocalDateTime end, CodeType status) {
         this.id = id;
         this.start = start;
         this.end = end;

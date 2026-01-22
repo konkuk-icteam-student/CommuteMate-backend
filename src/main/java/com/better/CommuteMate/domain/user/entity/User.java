@@ -19,10 +19,10 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false)
-    private Integer userId;
+    private Long userId;
 
     @Column(name = "organization_id", nullable = false)
-    private Integer organizationId;
+    private Long organizationId;
 
     @Column(nullable = false, unique = true, length = 100)
     private String email;
@@ -41,13 +41,13 @@ public class User {
     private LocalDateTime createdAt;
 
     @Column(name = "created_by")
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private Integer updatedBy;
+    private Long updatedBy;
 
     @Column(name = "refresh_token", length = 512)
     private String refreshToken;
@@ -63,7 +63,7 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
-    public static User create(String email, String rawPassword, String name, Integer organizationId, CodeType roleCode) {
+    public static User create(String email, String rawPassword, String name, Long organizationId, CodeType roleCode) {
         return User.builder()
                 .organizationId(organizationId)
                 .email(email)

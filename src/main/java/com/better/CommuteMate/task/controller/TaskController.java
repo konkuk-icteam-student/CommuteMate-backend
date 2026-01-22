@@ -65,7 +65,7 @@ public class TaskController {
     public ResponseEntity<Response> createTask(
             @Valid @RequestBody CreateTaskRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer currentUserId = userDetails.getUser().getUserId();
+        Long currentUserId = userDetails.getUserId();
         TaskResponse response = taskService.createTask(request, currentUserId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new Response(true, "업무가 생성되었습니다.", response));
@@ -82,7 +82,7 @@ public class TaskController {
             @PathVariable Long taskId,
             @Valid @RequestBody UpdateTaskRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer currentUserId = userDetails.getUser().getUserId();
+        Long currentUserId = userDetails.getUser().getUserId();
         TaskResponse response = taskService.updateTask(taskId, request, currentUserId);
         return ResponseEntity.ok(new Response(true, "업무가 수정되었습니다.", response));
     }
@@ -97,7 +97,7 @@ public class TaskController {
     public ResponseEntity<Response> toggleComplete(
             @PathVariable Long taskId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer currentUserId = userDetails.getUser().getUserId();
+        Long currentUserId = userDetails.getUserId();
         TaskResponse response = taskService.toggleComplete(taskId, currentUserId);
         String message = response.getIsCompleted() ? "업무를 완료 처리했습니다." : "업무를 미완료 처리했습니다.";
         return ResponseEntity.ok(new Response(true, message, response));
@@ -114,7 +114,7 @@ public class TaskController {
             @PathVariable Long taskId,
             @Valid @RequestBody CompleteTaskRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer currentUserId = userDetails.getUser().getUserId();
+        Long currentUserId = userDetails.getUserId();
         TaskResponse response = taskService.setComplete(taskId, request.getIsCompleted(), currentUserId);
         String message = response.getIsCompleted() ? "업무를 완료 처리했습니다." : "업무를 미완료 처리했습니다.";
         return ResponseEntity.ok(new Response(true, message, response));
@@ -145,7 +145,7 @@ public class TaskController {
     public ResponseEntity<Response> batchUpdateTasks(
             @Valid @RequestBody BatchUpdateTasksRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer currentUserId = userDetails.getUser().getUserId();
+        Long currentUserId = userDetails.getUserId();
         BatchUpdateTasksResponse response = taskService.batchUpdateTasks(request, currentUserId);
 
         String message;

@@ -18,7 +18,7 @@ public class MonthlyScheduleConfig {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "limit_id", nullable = false)
-    private Integer limitId;
+    private Long limitId;
 
     @Column(name = "schedule_year", nullable = false)
     private Integer scheduleYear;
@@ -39,13 +39,13 @@ public class MonthlyScheduleConfig {
     private LocalDateTime createdAt;
 
     @Column(name = "created_by", nullable = false, updatable = false)
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private Integer updatedBy;
+    private Long updatedBy;
 
     @PrePersist
     protected void onCreate() {

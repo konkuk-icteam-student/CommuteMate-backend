@@ -18,7 +18,7 @@ public class TaskResponse extends ResponseDetail {
 
     private Long taskId;
     private String title;
-    private Integer assigneeId;
+    private Long assigneeId;
     private String assigneeName;
     private LocalDate taskDate;
     private LocalTime taskTime;

@@ -48,7 +48,7 @@ public class WorkAttendanceService {
      * 사용자용: 출근 체크
      */
     @Transactional
-    public void checkIn(Integer userId, String qrToken) {
+    public void checkIn(Long userId, String qrToken) {
         if (!qrTokenManager.validateToken(qrToken)) {
             throw new AttendanceException(AttendanceErrorCode.INVALID_QR_TOKEN);
         }
@@ -90,7 +90,7 @@ public class WorkAttendanceService {
      * 사용자용: 퇴근 체크
      */
     @Transactional
-    public void checkOut(Integer userId, String qrToken) {
+    public void checkOut(Long userId, String qrToken) {
         if (!qrTokenManager.validateToken(qrToken)) {
             throw new AttendanceException(AttendanceErrorCode.INVALID_QR_TOKEN);
         }
@@ -136,7 +136,7 @@ public class WorkAttendanceService {
      * 특정 날짜의 출퇴근 이력 조회
      */
     @Transactional(readOnly = true)
-    public List<AttendanceHistoryResponse> getAttendanceHistory(Integer userId, LocalDate date) {
+    public List<AttendanceHistoryResponse> getAttendanceHistory(Long userId, LocalDate date) {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = start.plusDays(1);
 

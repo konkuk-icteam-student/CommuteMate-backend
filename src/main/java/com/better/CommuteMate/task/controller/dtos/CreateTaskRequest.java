@@ -22,7 +22,7 @@ public class CreateTaskRequest {
     private String title;
 
     @NotNull(message = "담당자 ID는 필수입니다.")
-    private Integer assigneeId;
+    private Long assigneeId;
 
     @NotNull(message = "업무 날짜는 필수입니다.")
     private LocalDate taskDate;

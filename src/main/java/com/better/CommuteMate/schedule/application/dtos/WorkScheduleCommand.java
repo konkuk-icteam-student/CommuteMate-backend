@@ -8,7 +8,7 @@ import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
 import java.time.LocalDateTime;
 
 public record WorkScheduleCommand(
-        Integer userID,
+        Long userID,
         LocalDateTime start,
         LocalDateTime end) {
 
@@ -32,7 +32,7 @@ public record WorkScheduleCommand(
                 .updatedBy(user.getUserId())
                 .build();
     }
-    public static WorkScheduleCommand from(WorkScheduleDTO dto, Integer userID){
+    public static WorkScheduleCommand from(WorkScheduleDTO dto, Long userID){
         return new WorkScheduleCommand(
                 userID,
                 dto.start(),

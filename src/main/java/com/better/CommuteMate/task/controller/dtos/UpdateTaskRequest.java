@@ -17,7 +17,7 @@ public class UpdateTaskRequest {
     @Size(max = 200, message = "업무명은 200자 이내로 입력해주세요.")
     private String title;
 
-    private Integer assigneeId;
+    private Long assigneeId;
 
     private LocalTime taskTime;
 }

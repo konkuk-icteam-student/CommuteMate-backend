@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Integer>{
+public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Long>{
     // 날짜를 기준으로 근무 일정을 조회
     @Query("SELECT w FROM WorkSchedule w WHERE w.startTime >= :startOfDay AND w.startTime < :endOfDay")
     List<WorkSchedule> findByDate(@Param("startOfDay") LocalDateTime startOfDay,
@@ -26,14 +26,14 @@ public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Int
             "AND w.startTime >= :startOfDay AND w.startTime < :endOfDay " +
             "AND w.isDeleted = false " +
             "AND w.statusCode IN (com.better.CommuteMate.global.code.CodeType.WS01, com.better.CommuteMate.global.code.CodeType.WS02)")
-    List<WorkSchedule> findValidSchedulesByUserAndDateRange(@Param("userId") Integer userId,
+    List<WorkSchedule> findValidSchedulesByUserAndDateRange(@Param("userId") Long userId,
                                                             @Param("startOfDay") LocalDateTime startOfDay,
                                                             @Param("endOfDay") LocalDateTime endOfDay);
 
     @Query("SELECT w FROM WorkSchedule w WHERE w.user.userId = :userId " +
             "AND w.startTime >= :startOfDay AND w.startTime < :endOfDay " +
             "AND w.isDeleted = false")
-    List<WorkSchedule> findAllSchedulesByUserAndDateRange(@Param("userId") Integer userId,
+    List<WorkSchedule> findAllSchedulesByUserAndDateRange(@Param("userId") Long userId,
                                                           @Param("startOfDay") LocalDateTime startOfDay,
                                                           @Param("endOfDay") LocalDateTime endOfDay);
 

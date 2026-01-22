@@ -23,7 +23,7 @@ public class WorkChangeRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "request_id", nullable = false)
-    private Integer requestId;
+    private Long requestId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -50,13 +50,13 @@ public class WorkChangeRequest {
     private LocalDateTime createdAt;
 
     @Column(name = "created_by", nullable = false, updatable = false)
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private Integer updatedBy;
+    private Long updatedBy;
 
     @PrePersist
     protected void onCreate() {
