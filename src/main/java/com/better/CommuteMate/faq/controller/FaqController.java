@@ -1,6 +1,7 @@
 package com.better.CommuteMate.faq.controller;
 
-import com.better.CommuteMate.faq.dto.request.PostFaqCreateRequest;
+import com.better.CommuteMate.auth.application.CustomUserDetails;
+import com.better.CommuteMate.faq.dto.request.PostFaqRequest;
 import com.better.CommuteMate.faq.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.faq.application.FaqService;
@@ -11,8 +12,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,10 +39,10 @@ public class FaqController {
     })
     @PostMapping
     public ResponseEntity<Response> createFaq(
-            @RequestBody PostFaqCreateRequest request
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid PostFaqRequest request
     ) {
-        // Todo 인증로직 추가되면 request 헤더 추가
-        return ResponseEntity.ok(new Response(true, "FAQ 작성 성공", faqService.createFaq(request)));
+        return ResponseEntity.ok(new Response(true, "FAQ 작성 성공", faqService.createFaq(userDetails.getUserId(), request)));
     }
 
     @Operation(
