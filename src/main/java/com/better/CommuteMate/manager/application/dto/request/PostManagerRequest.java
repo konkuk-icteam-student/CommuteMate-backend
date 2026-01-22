@@ -13,6 +13,6 @@ public record PostManagerRequest(
         @Schema(description = "카테고리 id", example = "1")
         Long categoryId,
 
-        @Schema(description = "번호", example = "1")
+        @Schema(description = "번호", example = "01012345678")
         String phonenum
 ) {}
