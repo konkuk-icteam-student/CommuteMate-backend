@@ -7,6 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory, Long> {
-    boolean existsByManager_UserIdAndCategory_Id(Integer userId, Integer CategoryId);
-    void deleteAllByManager(User manager);
+    boolean existsByManagerIdAndCategoryIdAndActiveTrue(Long managerId, Long categoryId);
 }
