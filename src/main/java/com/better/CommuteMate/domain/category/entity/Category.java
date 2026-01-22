@@ -25,7 +25,7 @@ public class Category {
     @Builder.Default
     private boolean favorite = false;
 
-    // 이 Category를 어떤 users가 담당하는지 저장하는 리스트
+    // 카테고리 담당자 리스트
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ManagerCategory> managers = new ArrayList<>();
