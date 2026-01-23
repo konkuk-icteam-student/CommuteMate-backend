@@ -13,7 +13,7 @@
 
 ## 📖 개요
 
-CommuteMate 백엔드 시스템은 **MySQL** 데이터베이스를 사용합니다.
+CommuteMate 백엔드 시스템은 다양한 데이터베이스를 지원합니다 (개발: H2, 배포: PostgreSQL).
 계층형 아키텍처의 **Domain Layer**에서 JPA 엔티티로 매핑되며, Spring Data JPA를 통해 관리됩니다.
 
 **데이터베이스 특징**:
@@ -35,26 +35,27 @@ CommuteMate 백엔드 시스템은 **MySQL** 데이터베이스를 사용합니�
 
 ## 📊 테이블 목록
 
-전체 테이블 개수: **15개**
+전체 테이블 개수: **17개**
 
 | # | 테이블 명 | 도메인 | 설명 | 상세 문서 |
 |---|----------|--------|------|----------|
 | 1 | `user` | User | 사용자 계정 정보 | [user.md](./schema/user.md#user-테이블) |
 | 2 | `organization` | Organization | 조직/그룹 정의 | [user.md](./schema/user.md#organization-테이블) |
 | 3 | `work_schedule` | Schedule | 근무 일정 슬롯 | [schedule.md](./schema/schedule.md#work_schedule-테이블) |
-| 4 | `monthly_schedule_limit` | Schedule | 월별 최대 동시 근무 인원 | [schedule.md](./schema/schedule.md#monthly_schedule_limit-테이블) |
+| 4 | `monthly_schedule_config` | Schedule | 월별 최대 동시 근무 인원 및 신청 기간 | [schedule.md](./schema/schedule.md#monthly_schedule_config-테이블) |
 | 5 | `work_attendance` | Attendance | 출퇴근 기록 (QR 체크) | [attendance.md](./schema/attendance.md#work_attendance-테이블) |
 | 6 | `work_change_request` | ChangeRequest | 일정 변경/삭제 요청 | [schedule.md](./schema/schedule.md#work_change_request-테이블) |
 | 7 | `task` | Task | 일일 업무 관리 | [task.md](./schema/task.md#task-테이블) |
 | 8 | `task_template` | Task | 업무 템플릿 | [task.md](./schema/task.md#task_template-테이블) |
 | 9 | `task_template_item` | Task | 템플릿 항목 | [task.md](./schema/task.md#task_template_item-테이블) |
-| 10 | `faq` | FAQ | FAQ 게시글 | [faq.md](./schema/faq.md#faq-테이블) |
-| 11 | `category` | FAQ | FAQ 대분류 | [faq.md](./schema/faq.md#category-테이블) |
-| 12 | `sub_category` | FAQ | FAQ 소분류 | [faq.md](./schema/faq.md#sub_category-테이블) |
-| 13 | `faq_history` | FAQ | FAQ 수정 이력 | [faq.md](./schema/faq.md#faq_history-테이블) |
-| 14 | `code` | Code | 코드 마스터 | [code-system.md](./schema/code-system.md#code-테이블) |
-| 15 | `code_major` | Code | 코드 대분류 | [code-system.md](./schema/code-system.md#code_major-테이블) |
-| 16 | `code_sub` | Code | 코드 소분류 | [code-system.md](./schema/code-system.md#code_sub-테이블) |
+| 10 | `category` | FAQ | FAQ 카테고리 | [faq.md](./schema/faq.md#category) |
+| 11 | `manager_category` | FAQ | 매니저-카테고리 매핑 | [faq.md](./schema/faq.md#manager_category) |
+| 12 | `faq` | FAQ | FAQ 게시글 | [faq.md](./schema/faq.md#faq) |
+| 13 | `faq_history` | FAQ | FAQ 수정 이력 | [faq.md](./schema/faq.md#faq_history) |
+| 14 | `email_verification_code` | Auth | 이메일 인증 코드 | - |
+| 15 | `code` | Code | 코드 마스터 | [code-system.md](./schema/code-system.md#code-테이블) |
+| 16 | `code_major` | Code | 코드 대분류 | [code-system.md](./schema/code-system.md#code_major-테이블) |
+| 17 | `code_sub` | Code | 코드 소분류 | [code-system.md](./schema/code-system.md#code_sub-테이블) |
 
 ---
 
@@ -66,7 +67,7 @@ CommuteMate 백엔드 시스템은 **MySQL** 데이터베이스를 사용합니�
 
 ### 📅 근무 일정 ([schedule.md](./schema/schedule.md))
 - **work_schedule**: 사용자별 근무 일정 슬롯
-- **monthly_schedule_limit**: 월별 최대 동시 근무 인원 설정
+- **monthly_schedule_config**: 월별 최대 동시 근무 인원 및 신청 기간 설정
 - **work_change_request**: 일정 변경/삭제 요청 로그
 
 ### ⏰ 출퇴근 ([attendance.md](./schema/attendance.md))
@@ -79,8 +80,8 @@ CommuteMate 백엔드 시스템은 **MySQL** 데이터베이스를 사용합니�
 
 ### 💬 FAQ 시스템 ([faq.md](./schema/faq.md))
 - **faq**: FAQ 게시글
-- **category**: 대분류
-- **sub_category**: 소분류
+- **category**: FAQ 카테고리
+- **manager_category**: 매니저-카테고리 매핑
 - **faq_history**: 수정 이력
 
 ### 🔢 코드 시스템 ([code-system.md](./schema/code-system.md))
@@ -105,11 +106,11 @@ CommuteMate 백엔드 시스템은 **MySQL** 데이터베이스를 사용합니�
 ---
 
 ### [근무 일정 스키마](./schema/schedule.md)
-`work_schedule`, `monthly_schedule_limit`, `work_change_request` 테이블 구조
+`work_schedule`, `monthly_schedule_config`, `work_change_request` 테이블 구조
 
 **주요 내용**:
 - 근무 일정 신청 및 상태 관리
-- 월별 최대 동시 근무 인원 제한
+- 월별 최대 동시 근무 인원 제한 및 신청 기간 설정
 - 일정 변경/삭제 요청 처리
 - statusCode를 통한 일정 상태 추적
 
@@ -150,17 +151,17 @@ CommuteMate 백엔드 시스템은 **MySQL** 데이터베이스를 사용합니�
 - CodeType Enum을 통한 타입 안전한 코드 관리
 - 코드 분류: WS, CR, CS, CT, TT, RL
 - 코드 값 및 의미
-- JPA 컨버터 자동 변환
+- JPA `@Enumerated(EnumType.STRING)` 매핑
 
 **바로가기**: [code-system.md →](./schema/code-system.md)
 
 ---
 
 ### [FAQ 시스템](./schema/faq.md)
-`faq`, `category`, `sub_category`, `faq_history` 테이블 구조
+`faq`, `category`, `faq_history` 테이블 구조
 
 **주요 내용**:
-- 계층적 FAQ 분류 (대분류 → 소분류)
+- FAQ 카테고리 분류
 - 작성자/수정자 추적
 - 수정 이력 관리 (감사 로그)
 - 소프트 삭제
@@ -196,11 +197,11 @@ CommuteMate 백엔드 시스템은 **MySQL** 데이터베이스를 사용합니�
 ### 자주 사용하는 JOIN 패턴
 
 ```sql
--- 사용자의 근무 일정 조회
-SELECT u.name, ws.schedule_date, ws.start_time, ws.end_time
+-- 사용자의 근무 일정 조회 (승인된 일정만)
+SELECT u.name, ws.start_time, ws.end_time
 FROM user u
 INNER JOIN work_schedule ws ON u.user_id = ws.user_id
-WHERE ws.status_code = 'WS02';
+WHERE ws.status_code = 'WS02' AND ws.is_deleted = FALSE;
 
 -- 사용자의 출퇴근 기록 조회
 SELECT u.name, wa.check_time, wa.check_type_code

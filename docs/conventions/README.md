@@ -128,7 +128,7 @@ CommuteMate 프로젝트의 모든 개발 규약과 컨벤션을 정의하는 �
 **예시**: 새로운 일정 조회 API 개발
 ```
 1. api-conventions.md: 리소스 URL 구조 확인
-   → GET /api/v1/schedules/{id} ✅ (동사 사용 금지)
+   → GET /api/v1/work-schedules/{id} ✅ (동사 사용 금지)
 2. Request/Response DTO 섹션: 응답 구조 설계
 3. 에러 처리: error-handling.md 참고
 ```
@@ -193,7 +193,7 @@ CommuteMate 프로젝트의 모든 개발 규약과 컨벤션을 정의하는 �
 ```
 feat: 사용자 근무일정 조회 API 추가
 
-- WorkScheduleController에 GET /api/v1/schedules 엔드포인트 추가
+- WorkScheduleController에 GET /api/v1/work-schedules 엔드포인트 추가
 - ScheduleService에 사용자별 일정 조회 로직 구현
 - 에러 처리: 사용자 미존재 시 404 반환
 ```
