@@ -2,9 +2,6 @@ package com.better.CommuteMate.faq.application;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
-import com.better.CommuteMate.domain.category.repository.ManagerCategoryRepository;
-import com.better.CommuteMate.domain.manager.entity.Manager;
-import com.better.CommuteMate.domain.manager.repository.ManagerRepository;
 import com.better.CommuteMate.faq.dto.request.PostFaqRequest;
 import com.better.CommuteMate.faq.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.domain.faq.entity.Faq;
@@ -17,10 +14,10 @@ import com.better.CommuteMate.faq.dto.response.PostFaqResponse;
 import com.better.CommuteMate.faq.dto.response.PutFaqUpdateResponse;
 import com.better.CommuteMate.global.exceptions.BasicException;
 import com.better.CommuteMate.global.exceptions.CategoryException;
-import com.better.CommuteMate.global.exceptions.ManagerException;
+import com.better.CommuteMate.global.exceptions.FaqException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
+import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
-import com.better.CommuteMate.global.exceptions.error.ManagerErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,13 +52,43 @@ public class FaqService {
 
         faqRepository.save(faq);
 
-        FaqHistory faqhistory = FaqHistory.create(faq, writer.getName());
+        FaqHistory faqhistory = FaqHistory.create(faq);
         faqHistoryRepository.save(faqhistory);
 
         return new PostFaqResponse(faq.getId());
     }
 
-    public PutFaqUpdateResponse updateFaq(Long faqId, PutFaqUpdateRequest request) {
+    public PutFaqUpdateResponse updateFaq(Long userId, Long faqId, PutFaqUpdateRequest request) {
+        User modifier = userRepository.findById(userId)
+                .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
+
+        Faq faq = faqRepository.findById(faqId)
+                .orElseThrow(() -> FaqException.of(FaqErrorCode.FAQ_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(faq.getDeletedFlag())) {
+            throw FaqException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
+        }
+
+        Category category = faq.getCategory();
+        if (request.categoryId() != null) {
+            category = categoryRepository.findById(request.categoryId())
+                    .orElseThrow(() -> CategoryException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
+        }
+
+        faq.update(
+                request.title(),
+                request.complainantName(),
+                request.content(),
+                request.answer(),
+                request.etc(),
+                category,
+                modifier
+        );
+
+        faqRepository.save(faq);
+
+        FaqHistory faqhistory = FaqHistory.create(faq);
+        faqHistoryRepository.save(faqhistory);
 
         return new PutFaqUpdateResponse(faqId);
     }

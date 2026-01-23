@@ -1,7 +1,6 @@
 package com.better.CommuteMate.domain.faq.entity;
 
 import com.better.CommuteMate.domain.category.entity.Category;
-import com.better.CommuteMate.domain.manager.entity.Manager;
 import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -104,4 +103,21 @@ public class Faq {
                 .build();
     }
 
+    public void update(
+            String title,
+            String complainantName,
+            String content,
+            String answer,
+            String etc,
+            Category category,
+            User writer
+    ) {
+        this.title = title;
+        this.complainantName = complainantName;
+        this.content = content;
+        this.answer = answer;
+        this.etc = etc;
+        this.category = category;
+        this.writer = writer;
+    }
 }

@@ -31,7 +31,7 @@ public class FaqHistory {
     @Column(columnDefinition = "TEXT")
     private String etc;  // 비고
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
             name = "faq_history_managers",
             joinColumns = @JoinColumn(name = "faq_history_id")
@@ -82,7 +82,7 @@ public class FaqHistory {
         this.editedAt = LocalDateTime.now();
     }
 
-    public static FaqHistory create(Faq faq, String writerName) {
+    public static FaqHistory create(Faq faq) {
         return FaqHistory.builder()
                 .faq(faq)
                 .title(faq.getTitle())
@@ -90,7 +90,7 @@ public class FaqHistory {
                 .content(faq.getContent())
                 .answer(faq.getAnswer())
                 .etc(faq.getEtc())
-                .writerName(writerName)
+                .writerName(faq.getWriter().getName())
                 .managerNames(faq.getCategory().getManagers()
                         .stream()
                         .map(mc -> mc.getManager().getName())

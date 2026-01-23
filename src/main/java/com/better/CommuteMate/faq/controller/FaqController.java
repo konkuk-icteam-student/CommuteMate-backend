@@ -62,17 +62,12 @@ public class FaqController {
     })
     @PutMapping("/{faqId}")
     public ResponseEntity<Response> updateFaq(
-            @Parameter(
-                    description = "수정할 FAQ ID",
-                    required = true,
-                    example = "123"
-            )
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long faqId,
-
             @RequestBody PutFaqUpdateRequest request
     ) {
         return ResponseEntity.ok(
-                new Response(true, "FAQ 수정 성공", faqService.updateFaq(faqId, request))
+                new Response(true, "FAQ 수정 성공", faqService.updateFaq(userDetails.getUserId(), faqId, request))
         );
     }
 
