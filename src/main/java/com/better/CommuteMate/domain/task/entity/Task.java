@@ -102,7 +102,7 @@ public class Task {
     }
 
     // 업무 완료 기록 (실제 수행자, 수행 시간)
-    public void completeRecord(String completedByName, LocalTime completedTime, Integer updatedBy) {
+    public void completeRecord(String completedByName, LocalTime completedTime, Long updatedBy) {
         this.completedByName = completedByName;
         this.completedTime = completedTime;
         this.isCompleted = true;
@@ -125,7 +125,7 @@ public class Task {
 
     // 팩토리 메서드 (담당자 미지정)
     public static Task create(String title, LocalDate taskDate,
-            LocalTime taskTime, CodeType taskType, Integer createdBy) {
+            LocalTime taskTime, CodeType taskType, Long createdBy) {
         return Task.builder()
                 .title(title)
                 .taskDate(taskDate)

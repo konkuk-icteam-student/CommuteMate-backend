@@ -131,7 +131,7 @@ public class TaskController {
             @PathVariable Long taskId,
             @Valid @RequestBody CompleteRecordRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer currentUserId = userDetails.getUser().getUserId();
+        Long currentUserId = userDetails.getUserId();
         TaskResponse response = taskService.completeRecord(taskId, request, currentUserId);
         return ResponseEntity.ok(new Response(true, "업무 완료가 기록되었습니다.", response));
     }

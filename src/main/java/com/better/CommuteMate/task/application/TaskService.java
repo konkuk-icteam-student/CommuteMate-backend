@@ -138,7 +138,7 @@ public class TaskService {
      * 업무 완료 기록 (실제 수행자, 수행 시간)
      */
     @Transactional
-    public TaskResponse completeRecord(Long taskId, CompleteRecordRequest request, Integer currentUserId) {
+    public TaskResponse completeRecord(Long taskId, CompleteRecordRequest request, Long currentUserId) {
         Task task = findTaskById(taskId);
         task.completeRecord(request.getCompletedByName(), request.getCompletedTime(), currentUserId);
         return TaskResponse.from(task);
