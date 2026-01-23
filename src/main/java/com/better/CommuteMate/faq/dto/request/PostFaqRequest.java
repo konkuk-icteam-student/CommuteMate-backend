@@ -24,10 +24,6 @@ public record PostFaqRequest(
         @Schema(description = "분류 id", example = "1")
         Long categoryId,
 
-        @NotNull
-        @Schema(description = "담당자 id", example = "1")
-        Long managerId,
-
         @Schema(description = "내용", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
         String content
 

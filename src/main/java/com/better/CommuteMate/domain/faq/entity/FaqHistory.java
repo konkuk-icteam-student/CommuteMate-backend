@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "faq_history")
@@ -30,14 +31,16 @@ public class FaqHistory {
     @Column(columnDefinition = "TEXT")
     private String etc;  // 비고
 
+    @ElementCollection
+    @CollectionTable(
+            name = "faq_history_managers",
+            joinColumns = @JoinColumn(name = "faq_history_id")
+    )
     @Column(name = "manager_name", length = 30, nullable = false)
-    private String managerName;  // 업무 담당자
+    private List<String> managerNames;
 
     @Column(name = "writer_name", length = 30, nullable = false)
     private String writerName;  // 작성자 이름
-
-    @Column(name = "editor_name", length = 30, nullable = false)
-    private String editorName;  // 수정자 이름
 
     @Column(name = "edited_at", nullable = false)
     private LocalDateTime editedAt;  // 수정된 날짜
@@ -64,8 +67,7 @@ public class FaqHistory {
             String answer,
             String etc,
             String writerName,
-            String editorName,
-            String managerName,
+            List<String> managerNames,
             String categoryName
     ) {
         this.faq = faq;
@@ -75,13 +77,12 @@ public class FaqHistory {
         this.answer = answer;
         this.etc = etc;
         this.writerName = writerName;
-        this.editorName = editorName;
-        this.managerName = managerName;
+        this.managerNames = managerNames;
         this.categoryName = categoryName;
         this.editedAt = LocalDateTime.now();
     }
 
-    public static FaqHistory create(Faq faq, String editorName) {
+    public static FaqHistory create(Faq faq, String writerName) {
         return FaqHistory.builder()
                 .faq(faq)
                 .title(faq.getTitle())
@@ -89,9 +90,11 @@ public class FaqHistory {
                 .content(faq.getContent())
                 .answer(faq.getAnswer())
                 .etc(faq.getEtc())
-                .writerName(faq.getWriter().getName())
-                .editorName(editorName)
-                .managerName(faq.getManager().getName())
+                .writerName(writerName)
+                .managerNames(faq.getCategory().getManagers()
+                        .stream()
+                        .map(mc -> mc.getManager().getName())
+                        .toList())
                 .categoryName(faq.getCategory().getName())
                 .build();
     }

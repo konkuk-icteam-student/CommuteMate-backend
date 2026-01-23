@@ -44,10 +44,6 @@ public class Faq {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "manager_id", nullable = false)
-    private Manager manager;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -56,10 +52,6 @@ public class Faq {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "last_editor_id", nullable = false)
-    private User lastEditor;
 
     @PrePersist
     protected void onCreate() {
@@ -81,8 +73,7 @@ public class Faq {
             String answer,
             String etc,
             User writer,
-            Category category,
-            Manager manager
+            Category category
     ) {
         this.title = title;
         this.complainantName = complainantName;
@@ -90,9 +81,7 @@ public class Faq {
         this.answer = answer;
         this.etc = etc;
         this.writer = writer;
-        this.lastEditor = writer;
         this.category = category;
-        this.manager = manager;
     }
 
     public static Faq create(
@@ -102,8 +91,7 @@ public class Faq {
             String answer,
             String etc,
             User writer,
-            Category category,
-            Manager manager
+            Category category
     ) {
         return Faq.builder()
                 .title(title)
@@ -113,7 +101,6 @@ public class Faq {
                 .etc(etc)
                 .writer(writer)
                 .category(category)
-                .manager(manager)
                 .build();
     }
 

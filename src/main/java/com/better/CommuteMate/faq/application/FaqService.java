@@ -34,8 +34,6 @@ public class FaqService {
     private final FaqHistoryRepository faqHistoryRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
-    private final ManagerRepository managerRepository;
-    private final ManagerCategoryRepository managerCategoryRepository;
 
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
 
@@ -45,14 +43,6 @@ public class FaqService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> CategoryException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
 
-        Manager manager = managerRepository.findById(request.managerId())
-                .orElseThrow(() -> ManagerException.of(ManagerErrorCode.MANAGER_NOT_FOUND));
-
-        if (!managerCategoryRepository
-                .existsByManagerIdAndCategoryId(manager.getId(), category.getId())) {
-            throw ManagerException.of(ManagerErrorCode.MANAGER_CATEGORY_MISMATCH);
-        }
-
         Faq faq = Faq.create(
                 request.title(),
                 request.complainantName(),
@@ -60,8 +50,7 @@ public class FaqService {
                 request.answer(),
                 request.etc(),
                 writer,
-                category,
-                manager
+                category
         );
 
         faqRepository.save(faq);
