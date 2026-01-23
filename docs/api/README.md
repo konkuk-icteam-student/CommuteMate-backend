@@ -53,9 +53,24 @@ Authorization: Bearer <token>
 자세한 내용은 [인증 API 문서](./auth.md)를 참고하세요.
 
 ### 인증 적용 범위 (SecurityConfig 기준)
-- **인증 필요**: `/api/v1/tasks/**`, `/api/v1/task-templates/**`
-- **그 외 경로**: `permitAll`  
-※ 일부 API는 `@AuthenticationPrincipal`을 사용하므로, 인증 없이 호출 시 오류가 발생할 수 있습니다.
+
+**Spring Security 강제 인증**:
+- `/api/v1/tasks/**`: Task API 모든 엔드포인트
+- `/api/v1/task-templates/**`: TaskTemplate API 모든 엔드포인트
+
+**선택적 인증** (`@AuthenticationPrincipal` 사용):
+다음 API들은 Spring Security에서는 인증을 강제하지 않지만, 컨트롤러에서 `@AuthenticationPrincipal CustomUserDetails userDetails` 파라미터를 요구합니다.
+따라서 **실제 호출 시에는 반드시 AccessToken을 포함**해야 합니다.
+- `/api/v1/work-schedules/*`: 근무 일정 API (사용자 본인 데이터만 조회/수정 가능)
+- `/api/v1/attendance/*`: 출퇴근 API (출근/퇴근 체크, 이력 조회)
+
+**인증 미필요**:
+- `/api/v1/auth/*`: 회원가입, 로그인, 토큰 갱신 등
+- `/api/v1/attendance/qr-token`: QR 토큰 발급 (관리자용)
+- 그 외 모든 경로: `permitAll`
+
+※ **중요**: 선택적 인증 API의 경우, SecurityConfig에서 인증을 강제하지 않으므로 `curl`이나 테스트 도구에서는 헤더 없이 호출 가능하지만,
+실제 프로덕션 환경이나 클라이언트 애플리케이션에서는 AccessToken을 반드시 포함해야 합니다.
 
 ---
 
@@ -240,18 +255,15 @@ FAQ 관리 API (일부 엔드포인트는 구현 진행 중)
 
 ---
 
-### 👤 [매니저 API](./manager.md) (`/api/v1/manager`)
-매니저 권한 및 담당 카테고리 매핑 관리 API
+### 👤 [담당자 API](./manager.md) (`/api/v1/manager`)
+담당자 등록 및 목록 관리 API
 
 | 엔드포인트 | 메서드 | 설명 |
 |----------|--------|------|
-| `/{userId}` | POST | 매니저 권한 등록 |
-| `/` | POST | 매니저-카테고리 매핑 등록 |
-| `/` | PUT | 매니저-카테고리 매핑 수정 |
-| `/categories/{managerId}` | DELETE | 매니저-카테고리 매핑 삭제 |
-| `/{managerId}` | DELETE | 매니저 권한 해제 |
+| `/` | POST | 담당자 등록 (카테고리별 담당자 지정) |
+| `/` | GET | 담당자 목록 조회 (필터링: 카테고리, 팀, 즐겨찾기) |
 
-**바로가기**: [매니저 API 상세 →](./manager.md)
+**바로가기**: [담당자 API 상세 →](./manager.md)
 
 ---
 

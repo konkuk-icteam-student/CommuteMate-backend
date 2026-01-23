@@ -147,7 +147,7 @@ POST /api/v1/auth/register
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | email | String | ✅ | 이메일 주소 (인증 완료된 이메일) |
-| password | String | ✅ | 비밀번호 (8자 이상) |
+| password | String | ✅ | 비밀번호 (4자 이상 16자 이하, 영문/숫자만) |
 | name | String | ✅ | 사용자 이름 |
 | roleCode | String | ✅ | 역할 코드 (`RL01`: 학생/사원, `RL02`: 관리자) |
 | organizationId | Long | ✅ | 소속 조직 ID |
@@ -215,7 +215,11 @@ POST /api/v1/auth/login
     "accessToken": "eyJhbGciOiJIUzI1Ni...",
     "refreshToken": "eyJhbGciOiJIUzI1Ni...",
     "tokenType": "Bearer",
-    "expiresAt": 1736560000000
+    "expiresAt": 1736560000000,
+    "userId": 1,
+    "userName": "홍길동",
+    "email": "user@example.com",
+    "roleCode": "RL01"
   }
 }
 ```
@@ -227,6 +231,10 @@ POST /api/v1/auth/login
 | refreshToken | String | 토큰 갱신용 리프레시 토큰 (DB 저장 + 클라이언트 저장 필요) |
 | tokenType | String | 토큰 타입 (항상 `Bearer`) |
 | expiresAt | Long | AccessToken 만료 시간 (Unix Timestamp, **ms 단위**) |
+| userId | Long | 사용자 ID |
+| userName | String | 사용자 이름 |
+| email | String | 사용자 이메일 |
+| roleCode | String | 역할 코드 (예: "RL01") |
 
 **에러 응답**
 - `400 Bad Request`: 필수 필드 누락
@@ -302,12 +310,16 @@ Authorization: Bearer <refreshToken>
     "accessToken": "eyJhbGciOiJIUzI1Ni...",
     "refreshToken": "eyJhbGciOiJIUzI1Ni...",
     "tokenType": "Bearer",
-    "expiresAt": 1736560000000
+    "expiresAt": 1736560000000,
+    "userId": 1,
+    "userName": "홍길동",
+    "email": "user@example.com",
+    "roleCode": "RL01"
   }
 }
 ```
 
-**Response Fields**: [로그인 응답](#14-login)과 동일
+**Response Fields**: [로그인 응답](#14-login)과 동일 (userId, userName, email, roleCode 포함)
 
 **에러 응답**
 ```json
@@ -348,6 +360,71 @@ Authorization: Bearer <refreshToken>
 | **429** | `MAX_VERIFICATION_ATTEMPTS_EXCEEDED` | 인증번호 시도 초과 | 인증번호 재요청 |
 
 자세한 내용은 [에러 처리 규약](../conventions/error-handling.md)을 참고하세요.
+
+---
+
+## 🏗️ 아키텍처 및 서비스 컴포넌트
+
+### 핵심 서비스
+
+#### AuthService
+- **역할**: 회원가입, 로그인, 토큰 관리의 핵심 비즈니스 로직
+- **위치**: `auth/application/AuthService.java`
+- **주요 기능**:
+  - 회원가입 처리 및 이메일 인증 검증
+  - 로그인 인증 및 JWT 토큰 발급
+  - 리프레시 토큰 갱신
+  - 비밀번호 암호화 (BCrypt)
+
+#### EmailService
+- **역할**: 이메일 인증번호 발송 및 HTML 템플릿 관리
+- **위치**: `auth/application/EmailService.java`
+- **구현**: JavaMailSender 사용, SMTP 설정 필요
+- **주요 기능**:
+  - 6자리 랜덤 인증번호 생성
+  - HTML 기반 이메일 템플릿 제공
+  - 인증번호 유효 시간 관리 (5분)
+  - EmailVerificationCode 엔티티 저장
+
+#### EmailVerificationCleanupService
+- **역할**: 만료된 이메일 인증 코드 자동 정리
+- **위치**: `auth/application/EmailVerificationCleanupService.java`
+- **실행 주기**: 매일 자정 실행 (`@Scheduled`)
+- **동작**: 만료 시간이 지난 인증 코드를 DB에서 삭제
+
+#### TokenBlacklistService
+- **역할**: 로그아웃된 토큰을 블랙리스트로 관리
+- **위치**: `auth/application/TokenBlacklistService.java`
+- **주요 기능**:
+  - 로그아웃 시 AccessToken을 블랙리스트에 추가
+  - 인증 필터에서 블랙리스트 토큰 검증
+  - 만료된 블랙리스트 항목 자동 정리
+
+#### CustomUserDetailsService
+- **역할**: Spring Security 통합을 위한 UserDetailsService 구현
+- **위치**: `auth/application/CustomUserDetailsService.java`
+- **기능**:
+  - 이메일로 사용자 정보 로드
+  - User 엔티티 → UserDetails 변환
+  - Spring Security 인증 프로세스와 통합
+
+#### CustomUserDetails
+- **역할**: Spring Security UserDetails 인터페이스 구현
+- **위치**: `auth/application/CustomUserDetails.java`
+- **기능**:
+  - User 엔티티의 정보를 Security Context에 제공
+  - 권한(authorities) 정보 제공
+  - 계정 상태 (활성화, 잠금 등) 관리
+
+### 관련 엔티티
+- **User**: 사용자 정보 저장 ([User 스키마](../database/schema/user.md))
+- **EmailVerificationCode**: 이메일 인증번호 저장 ([EmailVerification 스키마](../database/schema/emailverification.md))
+- **Organization**: 조직 정보 ([User 스키마](../database/schema/user.md#organization-테이블))
+
+### 보안 구성
+- **JwtTokenProvider**: JWT 토큰 생성 및 검증 (`global/security/jwt/`)
+- **JwtAuthenticationFilter**: JWT 기반 인증 필터
+- **SecurityConfig**: Spring Security 설정 (`global/security/SecurityConfig.java`)
 
 ---
 
