@@ -90,7 +90,7 @@ class ScheduleServiceTest {
         List<WorkScheduleCommand> slots = List.of(slot1, slot2);
 
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
-        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When
@@ -100,7 +100,7 @@ class ScheduleServiceTest {
         assertThat(result.success()).hasSize(2);
         assertThat(result.fail()).isEmpty();
         verify(workSchedulesRepository, times(2)).save(any(WorkSchedule.class));
-        verify(userRepository, times(2)).findByUserId(1L);
+        verify(userRepository, times(2)).findById(1L);
     }
 
     @Test
@@ -127,7 +127,7 @@ class ScheduleServiceTest {
                 .isInstanceOf(ScheduleAllFailureException.class);
 
         verify(workSchedulesRepository, never()).save(any());
-        verify(userRepository, never()).findByUserId(anyLong());
+        verify(userRepository, never()).findById(anyLong());
     }
 
     @Test
@@ -155,7 +155,7 @@ class ScheduleServiceTest {
 
         when(scheduleValidator.isScheduleInsertable(slot1)).thenReturn(true);
         when(scheduleValidator.isScheduleInsertable(slot2)).thenReturn(false);
-        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When & Then
@@ -163,7 +163,7 @@ class ScheduleServiceTest {
                 .isInstanceOf(SchedulePartialFailureException.class);
 
         verify(workSchedulesRepository, times(1)).save(any());
-        verify(userRepository, times(1)).findByUserId(1L);
+        verify(userRepository, times(1)).findById(1L);
     }
 
     @Test
@@ -178,13 +178,13 @@ class ScheduleServiceTest {
         List<WorkScheduleCommand> slots = List.of(slot);
 
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
-        when(userRepository.findByUserId(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
                 .isInstanceOf(ScheduleAllFailureException.class);
 
         verify(workSchedulesRepository, never()).save(any());
-        verify(userRepository, times(1)).findByUserId(999L);
+        verify(userRepository, times(1)).findById(999L);
     }
 
     @Test
@@ -198,7 +198,7 @@ class ScheduleServiceTest {
                 .isInstanceOf(ScheduleAllFailureException.class);
 
         verify(workSchedulesRepository, never()).save(any());
-        verify(userRepository, never()).findByUserId(anyLong());
+        verify(userRepository, never()).findById(anyLong());
         verify(scheduleValidator, never()).isScheduleInsertable(any());
     }
 
@@ -225,7 +225,7 @@ class ScheduleServiceTest {
         );
 
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
-        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When
@@ -235,7 +235,7 @@ class ScheduleServiceTest {
         assertThat(result.success()).hasSize(3);
         assertThat(result.fail()).isEmpty();
         verify(workSchedulesRepository, times(3)).save(any(WorkSchedule.class));
-        verify(userRepository, times(3)).findByUserId(1L);
+        verify(userRepository, times(3)).findById(1L);
     }
 
     @Test
@@ -268,8 +268,8 @@ class ScheduleServiceTest {
         List<WorkScheduleCommand> slots = List.of(slot1, slot2);
 
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
-        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user1));
-        when(userRepository.findByUserId(2L)).thenReturn(Optional.of(user2));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When
@@ -279,8 +279,8 @@ class ScheduleServiceTest {
         assertThat(result.success()).hasSize(2);
         assertThat(result.fail()).isEmpty();
         verify(workSchedulesRepository, times(2)).save(any(WorkSchedule.class));
-        verify(userRepository, times(1)).findByUserId(1L);
-        verify(userRepository, times(1)).findByUserId(2L);
+        verify(userRepository, times(1)).findById(1L);
+        verify(userRepository, times(1)).findById(2L);
     }
 
     @Test
@@ -306,16 +306,16 @@ class ScheduleServiceTest {
         List<WorkScheduleCommand> slots = List.of(slot1, slot2);
 
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
-        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user1));
-        when(userRepository.findByUserId(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
                 .isInstanceOf(SchedulePartialFailureException.class);
 
         verify(workSchedulesRepository, times(1)).save(any());
-        verify(userRepository, times(1)).findByUserId(1L);
-        verify(userRepository, times(1)).findByUserId(999L);
+        verify(userRepository, times(1)).findById(1L);
+        verify(userRepository, times(1)).findById(999L);
     }
 
     @Test
@@ -343,7 +343,7 @@ class ScheduleServiceTest {
 
         // slot1과 slot2가 동일한 값이므로 순차적으로 반환하도록 설정
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true, false);
-        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When & Then
@@ -351,7 +351,7 @@ class ScheduleServiceTest {
                 .isInstanceOf(SchedulePartialFailureException.class);
 
         verify(workSchedulesRepository, times(1)).save(any());
-        verify(userRepository, times(1)).findByUserId(1L);
+        verify(userRepository, times(1)).findById(1L);
     }
 
     @Test
@@ -383,7 +383,7 @@ class ScheduleServiceTest {
         when(scheduleValidator.isScheduleInsertable(slots.get(1))).thenReturn(false);
         when(scheduleValidator.isScheduleInsertable(slots.get(2))).thenReturn(true);
         when(scheduleValidator.isScheduleInsertable(slots.get(3))).thenReturn(false);
-        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         // When & Then

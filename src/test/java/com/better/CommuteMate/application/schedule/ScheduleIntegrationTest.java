@@ -125,7 +125,7 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 8), 9, 0, 23, 0)   // 14시간 = 총 26시간
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(existingMonthlySchedules);
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
@@ -152,7 +152,7 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 8), 9, 0, 22, 0)   // 13시간 (11/8 주) = 총 25시간
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             // 월별/주별 조회에 따라 다른 결과 반환
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenAnswer(invocation -> {
@@ -206,7 +206,7 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 4), 9, 0, 15, 0)   // 화요일 6시간 = 12시간
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             // 월별 조회 시에도 같은 스케줄 반환 (같은 월)
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(existingWeeklySchedules);
@@ -233,7 +233,7 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 4), 9, 0, 14, 0)   // 5시간 = 11시간
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(existingWeeklySchedules);
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
@@ -280,7 +280,7 @@ class ScheduleIntegrationTest {
             // 이번 주 (11/17 포함 주)에는 아직 없음
             List<WorkSchedule> weeklySchedules = List.of();
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenAnswer(invocation -> {
                         LocalDateTime start = invocation.getArgument(1);
@@ -315,7 +315,7 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 4), 9, 0, 15, 0)   // 화요일 6시간 = 12시간
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             // 월별/주별 모두 같은 스케줄 반환 (해당 주가 11월 초)
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(weeklySchedules);
@@ -342,7 +342,7 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 10), 9, 0, 23, 0)  // 14시간 = 월 26시간
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(schedules);
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
@@ -386,7 +386,7 @@ class ScheduleIntegrationTest {
                     createWorkScheduleWithDifferentUser(4L, LocalDate.of(2025, 11, 2), 9, 0, 11, 0)
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
@@ -437,7 +437,7 @@ class ScheduleIntegrationTest {
                     createWorkScheduleWithDifferentUser(4L, LocalDate.of(2025, 11, 1), 8, 0, 14, 0)
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
@@ -465,7 +465,7 @@ class ScheduleIntegrationTest {
                     LocalDateTime.of(2025, 11, 2, 11, 0)
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
@@ -506,7 +506,7 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 4), 9, 0, 14, 0)   // 5시간 = 11시간
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(existingWeekly);
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
@@ -546,7 +546,7 @@ class ScheduleIntegrationTest {
                     createWorkScheduleWithDifferentUser(4L, LocalDate.of(2025, 11, 1), 9, 0, 10, 30)
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(overlappingSchedules);
@@ -574,7 +574,7 @@ class ScheduleIntegrationTest {
                     createWorkScheduleWithDifferentUser(3L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0)
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(overlappingSchedules);
@@ -616,7 +616,7 @@ class ScheduleIntegrationTest {
                     .maxConcurrent(5)
                     .build();
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(overlappingSchedules);
@@ -651,7 +651,7 @@ class ScheduleIntegrationTest {
                     LocalDateTime.of(2025, 11, 1, 10, 30)  // 1시간 30분
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             // When & Then
@@ -669,7 +669,7 @@ class ScheduleIntegrationTest {
                     LocalDateTime.of(2025, 11, 1, 11, 0)  // 정확히 2시간
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
@@ -703,7 +703,7 @@ class ScheduleIntegrationTest {
                     LocalDateTime.of(2025, 11, 1, 11, 0)
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
@@ -742,7 +742,7 @@ class ScheduleIntegrationTest {
                     LocalDateTime.of(2025, 11, 10, 21, 0)  // 12시간
             );
 
-            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
@@ -791,6 +791,7 @@ class ScheduleIntegrationTest {
             );
 
             when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findById(1L)).thenReturn(Optional.of(existingSchedule));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of(existingSchedule));
@@ -831,6 +832,7 @@ class ScheduleIntegrationTest {
             );
 
             when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findById(1L)).thenReturn(Optional.of(existingSchedule));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of(existingSchedule));
