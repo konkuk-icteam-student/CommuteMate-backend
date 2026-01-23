@@ -819,29 +819,33 @@ Base Path: `/api/v1/tasks`
   "details": {
     "taskId": 50,
     "title": "서버 점검",
-    "assigneeId": 101,
+    "assigneeId": null,
+    "assigneeName": null,
     "taskDate": "2025-10-24",
     "taskTime": "14:00:00",
     "taskType": "TT01",
-    "isCompleted": false
+    "taskTypeName": "정기 업무",
+    "isCompleted": false,
+    "completedByName": null,
+    "completedTime": null
   }
 }
 ```
 
-### 6.3 Create Task (Admin)
-업무 생성 (관리자 전용).
+### 6.3 Create Task
+업무를 생성합니다.
 - **POST** `/api/v1/tasks`
 
 **Request Body**
 ```json
 {
   "title": "서버 점검",
-  "assigneeId": 101,
   "taskDate": "2025-10-24",
   "taskTime": "14:00:00",
   "taskType": "TT01"
 }
 ```
+> `taskType`: `TT01`(정기 업무), `TT02`(비정기 업무). 미입력 시 `TT01` 기본값.
 
 **Response (201 Created)**
 ```json
@@ -851,11 +855,15 @@ Base Path: `/api/v1/tasks`
   "details": {
     "taskId": 51,
     "title": "서버 점검",
-    "assigneeId": 101,
+    "assigneeId": null,
+    "assigneeName": null,
     "taskDate": "2025-10-24",
     "taskTime": "14:00:00",
     "taskType": "TT01",
-    "isCompleted": false
+    "taskTypeName": "정기 업무",
+    "isCompleted": false,
+    "completedByName": null,
+    "completedTime": null
   }
 }
 ```
@@ -898,8 +906,8 @@ Base Path: `/api/v1/tasks`
 }
 ```
 
-### 6.6 Set Complete (Admin)
-업무 완료 상태 설정 (관리자 전용).
+### 6.6 Set Complete
+업무 완료 상태를 설정합니다.
 - **PATCH** `/api/v1/tasks/{taskId}/complete`
 
 **Request Body**
@@ -921,7 +929,40 @@ Base Path: `/api/v1/tasks`
 }
 ```
 
-### 6.7 Delete Task (Admin)
+### 6.7 Complete Record
+업무의 실제 수행자와 수행 시간을 기록합니다. 기록 시 자동으로 완료 처리됩니다.
+- **PATCH** `/api/v1/tasks/{taskId}/complete-record`
+
+**Request Body**
+```json
+{
+  "completedByName": "홍길동",
+  "completedTime": "09:30:00"
+}
+```
+
+**Response (200 OK)**
+```json
+{
+  "isSuccess": true,
+  "message": "업무 완료가 기록되었습니다.",
+  "details": {
+    "taskId": 50,
+    "title": "서버 점검",
+    "assigneeId": null,
+    "assigneeName": null,
+    "taskDate": "2025-10-24",
+    "taskTime": "14:00:00",
+    "taskType": "TT01",
+    "taskTypeName": "정기 업무",
+    "isCompleted": true,
+    "completedByName": "홍길동",
+    "completedTime": "09:30:00"
+  }
+}
+```
+
+### 6.8 Delete Task (Admin)
 업무 삭제 (관리자 전용).
 - **DELETE** `/api/v1/tasks/{taskId}`
 
@@ -934,7 +975,7 @@ Base Path: `/api/v1/tasks`
 }
 ```
 
-### 6.8 Batch Update Tasks (Admin)
+### 6.9 Batch Update Tasks (Admin)
 업무 일괄 생성/수정 (관리자 전용).
 - **PUT** `/api/v1/tasks/batch`
 
@@ -977,10 +1018,10 @@ Base Path: `/api/v1/tasks`
 }
 ```
 
-### 6.9 Task Template API (`task/task-templates`)
+### 6.10 Task Template API (`task/task-templates`)
 Base Path: `/api/v1/task-templates`
 
-#### 6.9.1 Get Templates
+#### 6.10.1 Get Templates
 템플릿 목록 조회.
 - **GET** `/api/v1/task-templates?activeOnly=false`
 
@@ -1002,7 +1043,7 @@ Base Path: `/api/v1/task-templates`
 }
 ```
 
-#### 6.9.2 Get Template Detail
+#### 6.10.2 Get Template Detail
 템플릿 상세 조회.
 - **GET** `/api/v1/task-templates/{templateId}`
 
@@ -1024,7 +1065,7 @@ Base Path: `/api/v1/task-templates`
 }
 ```
 
-#### 6.9.3 Create Template (Admin)
+#### 6.10.3 Create Template (Admin)
 템플릿 생성 (관리자 전용).
 - **POST** `/api/v1/task-templates`
 
@@ -1054,7 +1095,7 @@ Base Path: `/api/v1/task-templates`
 }
 ```
 
-#### 6.9.4 Update Template (Admin)
+#### 6.10.4 Update Template (Admin)
 템플릿 수정 (관리자 전용).
 - **PUT** `/api/v1/task-templates/{templateId}`
 
@@ -1067,7 +1108,7 @@ Base Path: `/api/v1/task-templates`
 }
 ```
 
-#### 6.9.5 Delete Template (Admin)
+#### 6.10.5 Delete Template (Admin)
 템플릿 삭제 (관리자 전용).
 - **DELETE** `/api/v1/task-templates/{templateId}`
 
@@ -1080,7 +1121,7 @@ Base Path: `/api/v1/task-templates`
 }
 ```
 
-#### 6.9.6 Set Template Active (Admin)
+#### 6.10.6 Set Template Active (Admin)
 템플릿 활성화/비활성화 (관리자 전용).
 - **PATCH** `/api/v1/task-templates/{templateId}/active?isActive=true`
 
@@ -1093,7 +1134,7 @@ Base Path: `/api/v1/task-templates`
 }
 ```
 
-#### 6.9.7 Apply Template (Admin)
+#### 6.10.7 Apply Template (Admin)
 템플릿 적용하여 업무 생성 (관리자 전용).
 - **POST** `/api/v1/task-templates/{templateId}/apply`
 
