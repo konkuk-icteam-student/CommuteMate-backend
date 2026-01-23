@@ -42,14 +42,14 @@ class WorkScheduleControllerTest {
     @MockBean
     private ScheduleService scheduleService;
 
-    private CustomUserDetails createMockUserDetails(int userId) {
+    private CustomUserDetails createMockUserDetails(Long userId) {
         User user = new User();
         user.setUserId(userId);
         user.setEmail("test" + userId + "@test.com");
         user.setPassword("password");
         user.setRoleCode(CodeType.RL01);
         user.setName("Test User");
-        user.setOrganizationId(1);
+        user.setOrganizationId(1L);
         return new CustomUserDetails(user);
     }
 
@@ -85,7 +85,7 @@ class WorkScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/work-schedules/apply")
-                        .with(user(createMockUserDetails(1)))
+                        .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -109,7 +109,7 @@ class WorkScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/work-schedules/apply")
-                        .with(user(createMockUserDetails(1)))
+                        .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -131,22 +131,22 @@ class WorkScheduleControllerTest {
 
         ModifyWorkScheduleDTO request = new ModifyWorkScheduleDTO(
                 List.of(addSlot),  // 추가할 일정들
-                List.of(1, 2),  // 취소할 일정 ID들
+                List.of(1L, 2L),  // 취소할 일정 ID들
                 "일정 변경"  // 변경 사유
         );
 
-        doNothing().when(scheduleService).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyInt());
+        doNothing().when(scheduleService).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyLong());
 
         // When & Then
         mockMvc.perform(patch("/api/v1/work-schedules/modify")
-                        .with(user(createMockUserDetails(1)))
+                        .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("신청하신 일정이 모두 수정(요청)되었습니다."));
 
-        verify(scheduleService, times(1)).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyInt());
+        verify(scheduleService, times(1)).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyLong());
     }
 
     @Test
@@ -155,21 +155,21 @@ class WorkScheduleControllerTest {
         // Given
         ModifyWorkScheduleDTO request = new ModifyWorkScheduleDTO(
                 List.of(),  // 추가 없이 취소만
-                List.of(1, 2),
+                List.of(1L, 2L),
                 "일정 취소"  // 변경 사유
         );
 
-        doNothing().when(scheduleService).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyInt());
+        doNothing().when(scheduleService).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyLong());
 
         // When & Then
         mockMvc.perform(patch("/api/v1/work-schedules/modify")
-                        .with(user(createMockUserDetails(1)))
+                        .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.isSuccess").value(true));
 
-        verify(scheduleService, times(1)).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyInt());
+        verify(scheduleService, times(1)).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyLong());
     }
 
     @Test
@@ -187,17 +187,17 @@ class WorkScheduleControllerTest {
                 "일정 추가"  // 변경 사유
         );
 
-        doNothing().when(scheduleService).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyInt());
+        doNothing().when(scheduleService).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyLong());
 
         // When & Then
         mockMvc.perform(patch("/api/v1/work-schedules/modify")
-                        .with(user(createMockUserDetails(1)))
+                        .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.isSuccess").value(true));
 
-        verify(scheduleService, times(1)).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyInt());
+        verify(scheduleService, times(1)).modifyWorkSchedules(any(ModifyWorkScheduleDTO.class), anyLong());
     }
 
     // ========== GET /api/v1/work-schedules 테스트 ==========
@@ -207,45 +207,45 @@ class WorkScheduleControllerTest {
     void getWorkSchedules_Success() throws Exception {
         // Given
         List<WorkScheduleResponse> schedules = List.of(
-                new WorkScheduleResponse(1, LocalDateTime.of(2025, 11, 1, 9, 0),
+                new WorkScheduleResponse(1L, LocalDateTime.of(2025, 11, 1, 9, 0),
                         LocalDateTime.of(2025, 11, 1, 11, 0), CodeType.WS02),
-                new WorkScheduleResponse(2, LocalDateTime.of(2025, 11, 2, 14, 0),
+                new WorkScheduleResponse(2L, LocalDateTime.of(2025, 11, 2, 14, 0),
                         LocalDateTime.of(2025, 11, 2, 16, 0), CodeType.WS02)
         );
 
-        when(scheduleService.getWorkSchedules(1, 2025, 11)).thenReturn(schedules);
+        when(scheduleService.getWorkSchedules(1L, 2025, 11)).thenReturn(schedules);
 
         // When & Then
         mockMvc.perform(get("/api/v1/work-schedules")
                         .param("year", "2025")
                         .param("month", "11")
-                        .with(user(createMockUserDetails(1))))
+                        .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("근무 일정 조회 성공"))
                 .andExpect(jsonPath("$.details.schedules").isArray())
                 .andExpect(jsonPath("$.details.schedules.length()").value(2));
 
-        verify(scheduleService, times(1)).getWorkSchedules(1, 2025, 11);
+        verify(scheduleService, times(1)).getWorkSchedules(1L, 2025, 11);
     }
 
     @Test
     @DisplayName("나의 근무 일정 조회 - 빈 결과")
     void getWorkSchedules_EmptyResult() throws Exception {
         // Given
-        when(scheduleService.getWorkSchedules(1, 2025, 12)).thenReturn(List.of());
+        when(scheduleService.getWorkSchedules(1L, 2025, 12)).thenReturn(List.of());
 
         // When & Then
         mockMvc.perform(get("/api/v1/work-schedules")
                         .param("year", "2025")
                         .param("month", "12")
-                        .with(user(createMockUserDetails(1))))
+                        .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.details.schedules").isArray())
                 .andExpect(jsonPath("$.details.schedules.length()").value(0));
 
-        verify(scheduleService, times(1)).getWorkSchedules(1, 2025, 12);
+        verify(scheduleService, times(1)).getWorkSchedules(1L, 2025, 12);
     }
 
     // ========== GET /api/v1/work-schedules/{scheduleId} 테스트 ==========
@@ -254,16 +254,16 @@ class WorkScheduleControllerTest {
     @DisplayName("특정 근무 일정 조회 - 성공")
     void getWorkSchedule_Success() throws Exception {
         WorkScheduleResponse schedule = new WorkScheduleResponse(
-                1,
+                1L,
                 LocalDateTime.of(2025, 11, 1, 9, 0),
                 LocalDateTime.of(2025, 11, 1, 11, 0),
                 CodeType.WS02
         );
 
-        when(scheduleService.getWorkSchedule(1, 1)).thenReturn(schedule);
+        when(scheduleService.getWorkSchedule(1L, 1L)).thenReturn(schedule);
 
         String result = mockMvc.perform(get("/api/v1/work-schedules/1")
-                        .with(user(createMockUserDetails(1))))
+                        .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("근무 일정 상세 조회 성공"))
@@ -271,7 +271,7 @@ class WorkScheduleControllerTest {
 
         System.out.println("Actual response: " + result);
 
-        verify(scheduleService, times(1)).getWorkSchedule(1, 1);
+        verify(scheduleService, times(1)).getWorkSchedule(1L, 1L);
     }
 
     // ========== DELETE /api/v1/work-schedules/{scheduleId} 테스트 ==========
@@ -280,30 +280,30 @@ class WorkScheduleControllerTest {
     @DisplayName("근무 일정 취소 - 성공")
     void deleteWorkSchedule_Success() throws Exception {
         // Given
-        doNothing().when(scheduleService).deleteWorkSchedule(1, 1);
+        doNothing().when(scheduleService).deleteWorkSchedule(1L, 1L);
 
         // When & Then
         mockMvc.perform(delete("/api/v1/work-schedules/1")
-                        .with(user(createMockUserDetails(1))))
+                        .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("근무 일정 취소(요청) 성공"));
 
-        verify(scheduleService, times(1)).deleteWorkSchedule(1, 1);
+        verify(scheduleService, times(1)).deleteWorkSchedule(1L, 1L);
     }
 
     @Test
     @DisplayName("근무 일정 취소 - 다른 사용자 ID")
     void deleteWorkSchedule_DifferentUser() throws Exception {
         // Given
-        doNothing().when(scheduleService).deleteWorkSchedule(2, 1);
+        doNothing().when(scheduleService).deleteWorkSchedule(2L, 1L);
 
         // When & Then
         mockMvc.perform(delete("/api/v1/work-schedules/1")
-                        .with(user(createMockUserDetails(2))))
+                        .with(user(createMockUserDetails(2L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true));
 
-        verify(scheduleService, times(1)).deleteWorkSchedule(2, 1);
+        verify(scheduleService, times(1)).deleteWorkSchedule(2L, 1L);
     }
 }

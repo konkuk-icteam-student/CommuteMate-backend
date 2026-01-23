@@ -27,7 +27,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,9 +48,9 @@ class HomeServiceTest {
     @Test
     @DisplayName("오늘의 근무 시간 조회 - 사용자가 없는 경우 예외 발생")
     void getTodayWorkTime_UserNotFound() {
-        when(userRepository.findById(anyInt())).thenReturn(Optional.empty());
+        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> homeService.getTodayWorkTime(1))
+        assertThatThrownBy(() -> homeService.getTodayWorkTime(1L))
                 .isInstanceOf(BasicException.class);
     }
 
@@ -58,13 +58,13 @@ class HomeServiceTest {
     @DisplayName("오늘의 근무 시간 조회 - 스케줄이 있고 출퇴근 기록이 있는 경우 계산 확인")
     void getTodayWorkTime_Success() {
         // Given
-        User user = User.builder().userId(1).build();
+        User user = User.builder().userId(1L).build();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startTime = now.minusHours(4);
         LocalDateTime endTime = now.plusHours(4);
 
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId(1)
+                .scheduleId(1L)
                 .startTime(startTime)
                 .endTime(endTime)
                 .build();
@@ -79,14 +79,14 @@ class HomeServiceTest {
                 .checkTime(startTime.plusHours(3))
                 .build();
 
-        when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyInt(), any(), any()))
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyLong(), any(), any()))
                 .thenReturn(new java.util.ArrayList<>(List.of(schedule)));
-        when(workAttendanceRepository.findBySchedule_ScheduleId(1))
+        when(workAttendanceRepository.findBySchedule_ScheduleId(1L))
                 .thenReturn(List.of(checkIn, checkOut));
 
         // When
-        HomeWorkTimeResponse response = homeService.getTodayWorkTime(1);
+        HomeWorkTimeResponse response = homeService.getTodayWorkTime(1L);
 
         // Then
         assertThat(response.getScheduleCount()).isEqualTo(1);
@@ -96,12 +96,12 @@ class HomeServiceTest {
     @Test
     @DisplayName("출퇴근 상태 조회 - 스케줄 없음")
     void getAttendanceStatus_NoSchedule() {
-        User user = User.builder().userId(1).build();
-        when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyInt(), any(), any()))
+        User user = User.builder().userId(1L).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyLong(), any(), any()))
                 .thenReturn(new java.util.ArrayList<>(Collections.emptyList()));
 
-        HomeAttendanceStatusResponse response = homeService.getAttendanceStatus(1);
+        HomeAttendanceStatusResponse response = homeService.getAttendanceStatus(1L);
 
         assertThat(response.getStatus()).isEqualTo(AttendanceStatus.NO_SCHEDULE);
     }
@@ -109,22 +109,22 @@ class HomeServiceTest {
     @Test
     @DisplayName("출퇴근 상태 조회 - 출근 전 (10분 이상 남음)")
     void getAttendanceStatus_BeforeWork() {
-        User user = User.builder().userId(1).build();
+        User user = User.builder().userId(1L).build();
         LocalDateTime now = LocalDateTime.now();
         // Starts in 1 hour
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId(1)
+                .scheduleId(1L)
                 .startTime(now.plusHours(1))
                 .endTime(now.plusHours(4))
                 .build();
 
-        when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyInt(), any(), any()))
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyLong(), any(), any()))
                 .thenReturn(new java.util.ArrayList<>(List.of(schedule)));
-        when(workAttendanceRepository.findBySchedule_ScheduleId(1))
+        when(workAttendanceRepository.findBySchedule_ScheduleId(1L))
                 .thenReturn(Collections.emptyList());
 
-        HomeAttendanceStatusResponse response = homeService.getAttendanceStatus(1);
+        HomeAttendanceStatusResponse response = homeService.getAttendanceStatus(1L);
 
         assertThat(response.getStatus()).isEqualTo(AttendanceStatus.BEFORE_WORK);
     }

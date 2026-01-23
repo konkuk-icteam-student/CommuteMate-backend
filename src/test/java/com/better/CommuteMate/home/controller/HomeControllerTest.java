@@ -4,22 +4,18 @@ import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.home.application.HomeService;
-import com.better.CommuteMate.home.controller.HomeController;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeWorkTimeResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -53,10 +49,10 @@ class HomeControllerTest {
                 .scheduleCount(2)
                 .build();
 
-        given(homeService.getTodayWorkTime(anyInt())).willReturn(response);
+        given(homeService.getTodayWorkTime(anyLong())).willReturn(response);
 
         // Custom UserDetails mock setup
-        User user = User.builder().userId(1).email("test@test.com").roleCode(CodeType.RL01).build();
+        User user = User.builder().userId(1L).email("test@test.com").roleCode(CodeType.RL01).build();
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
         // When & Then
@@ -80,9 +76,9 @@ class HomeControllerTest {
                 .message("출근 전입니다.")
                 .build();
 
-        given(homeService.getAttendanceStatus(anyInt())).willReturn(response);
+        given(homeService.getAttendanceStatus(anyLong())).willReturn(response);
 
-        User user = User.builder().userId(1).email("test@test.com").roleCode(CodeType.RL01).build();
+        User user = User.builder().userId(1L).email("test@test.com").roleCode(CodeType.RL01).build();
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
         // When & Then

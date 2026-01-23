@@ -91,7 +91,7 @@ class ScheduleIntegrationTest {
     @BeforeEach
     void setUp() {
         testUser = User.builder()
-                .userId(1)
+                .userId(1L)
                 .name("Test User")
                 .build();
 
@@ -114,7 +114,7 @@ class ScheduleIntegrationTest {
         void monthlyLimit_ExceedsMaxHours_ShouldFail() {
             // Given: 이미 26시간 근무 중, 2시간 추가 시도 = 28시간 (27시간 초과)
             WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 15, 9, 0),
                     LocalDateTime.of(2025, 11, 15, 11, 0) // 2시간
             );
@@ -125,8 +125,8 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 8), 9, 0, 23, 0)   // 14시간 = 총 26시간
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(existingMonthlySchedules);
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
@@ -141,7 +141,7 @@ class ScheduleIntegrationTest {
             // Given: 이미 25시간 근무 중, 2시간 추가 시도 = 27시간 (허용)
             // 11/15가 포함된 주(11/10~11/16)에는 기존 스케줄 없음
             WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 15, 9, 0),
                     LocalDateTime.of(2025, 11, 15, 11, 0) // 2시간
             );
@@ -152,9 +152,9 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 8), 9, 0, 22, 0)   // 13시간 (11/8 주) = 총 25시간
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
             // 월별/주별 조회에 따라 다른 결과 반환
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenAnswer(invocation -> {
                         LocalDateTime start = invocation.getArgument(1);
                         LocalDateTime end = invocation.getArgument(2);
@@ -171,7 +171,7 @@ class ScheduleIntegrationTest {
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule savedSchedule = createWorkScheduleWithId(1, LocalDate.of(2025, 11, 15), 9, 0, 11, 0);
+            WorkSchedule savedSchedule = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 15), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(savedSchedule);
 
             // When
@@ -195,7 +195,7 @@ class ScheduleIntegrationTest {
             // Given: 이미 12시간 근무 중, 2시간 추가 시도 = 14시간 (13시간 초과)
             // 2025년 11월 3일 = 월요일 (11월 1주차: 11/3 ~ 11/9)
             WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 5, 9, 0),  // 수요일
                     LocalDateTime.of(2025, 11, 5, 11, 0)  // 2시간
             );
@@ -206,9 +206,9 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 4), 9, 0, 15, 0)   // 화요일 6시간 = 12시간
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
             // 월별 조회 시에도 같은 스케줄 반환 (같은 월)
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(existingWeeklySchedules);
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
@@ -222,7 +222,7 @@ class ScheduleIntegrationTest {
         void weeklyLimit_WithinMaxHours_ShouldSucceed() {
             // Given: 이미 11시간 근무 중, 2시간 추가 시도 = 13시간 (허용)
             WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 5, 9, 0),
                     LocalDateTime.of(2025, 11, 5, 11, 0) // 2시간
             );
@@ -233,15 +233,15 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 4), 9, 0, 14, 0)   // 5시간 = 11시간
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(existingWeeklySchedules);
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule savedSchedule = createWorkScheduleWithId(1, LocalDate.of(2025, 11, 5), 9, 0, 11, 0);
+            WorkSchedule savedSchedule = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 5), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(savedSchedule);
 
             // When
@@ -265,7 +265,7 @@ class ScheduleIntegrationTest {
             // Given: 월 26시간 (1, 8, 15일에 분산), 주 6시간
             // 2시간 추가 시: 월 28시간 (초과), 주 8시간 (OK)
             WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 17, 9, 0),  // 월요일 (11/17 ~ 11/23 주)
                     LocalDateTime.of(2025, 11, 17, 11, 0)  // 2시간
             );
@@ -280,8 +280,8 @@ class ScheduleIntegrationTest {
             // 이번 주 (11/17 포함 주)에는 아직 없음
             List<WorkSchedule> weeklySchedules = List.of();
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenAnswer(invocation -> {
                         LocalDateTime start = invocation.getArgument(1);
                         // 월 시작일로 조회하면 월별 스케줄 반환
@@ -304,7 +304,7 @@ class ScheduleIntegrationTest {
             // Given: 월 10시간, 주 12시간
             // 2시간 추가 시: 월 12시간 (OK), 주 14시간 (초과)
             WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 5, 9, 0),  // 수요일
                     LocalDateTime.of(2025, 11, 5, 11, 0)  // 2시간
             );
@@ -315,9 +315,9 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 4), 9, 0, 15, 0)   // 화요일 6시간 = 12시간
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
             // 월별/주별 모두 같은 스케줄 반환 (해당 주가 11월 초)
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(weeklySchedules);
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
@@ -331,7 +331,7 @@ class ScheduleIntegrationTest {
         void bothExceeded_ShouldFail() {
             // Given: 월 26시간, 주 12시간 - 둘 다 초과
             WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 5, 9, 0),
                     LocalDateTime.of(2025, 11, 5, 11, 0) // 2시간
             );
@@ -342,8 +342,8 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 10), 9, 0, 23, 0)  // 14시간 = 월 26시간
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(schedules);
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
@@ -364,30 +364,30 @@ class ScheduleIntegrationTest {
         void batchProcessing_PartialSuccess() {
             // Given: 3개 신청 중 2번째만 동시 인원 초과로 실패
             WorkScheduleCommand schedule1 = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 1, 9, 0),
                     LocalDateTime.of(2025, 11, 1, 11, 0)
             );
             WorkScheduleCommand schedule2 = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 2, 9, 0),
                     LocalDateTime.of(2025, 11, 2, 11, 0)
             );
             WorkScheduleCommand schedule3 = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 3, 9, 0),
                     LocalDateTime.of(2025, 11, 3, 11, 0)
             );
 
             // 11/2에만 동시 인원 3명 꽉 참
             List<WorkSchedule> overlappingSchedules = List.of(
-                    createWorkScheduleWithDifferentUser(2, LocalDate.of(2025, 11, 2), 8, 0, 12, 0),
-                    createWorkScheduleWithDifferentUser(3, LocalDate.of(2025, 11, 2), 8, 30, 11, 30),
-                    createWorkScheduleWithDifferentUser(4, LocalDate.of(2025, 11, 2), 9, 0, 11, 0)
+                    createWorkScheduleWithDifferentUser(2L, LocalDate.of(2025, 11, 2), 8, 0, 12, 0),
+                    createWorkScheduleWithDifferentUser(3L, LocalDate.of(2025, 11, 2), 8, 30, 11, 30),
+                    createWorkScheduleWithDifferentUser(4L, LocalDate.of(2025, 11, 2), 9, 0, 11, 0)
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
@@ -402,8 +402,8 @@ class ScheduleIntegrationTest {
                 return List.of();
             });
 
-            WorkSchedule saved1 = createWorkScheduleWithId(1, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
-            WorkSchedule saved3 = createWorkScheduleWithId(3, LocalDate.of(2025, 11, 3), 9, 0, 11, 0);
+            WorkSchedule saved1 = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
+            WorkSchedule saved3 = createWorkScheduleWithId(3L, LocalDate.of(2025, 11, 3), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(saved1, saved3);
 
             // When & Then
@@ -420,25 +420,25 @@ class ScheduleIntegrationTest {
         void batchProcessing_AllFail() {
             // Given: 모든 일정이 동시 인원 초과
             WorkScheduleCommand schedule1 = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 1, 9, 0),
                     LocalDateTime.of(2025, 11, 1, 11, 0)
             );
             WorkScheduleCommand schedule2 = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 1, 10, 0),
                     LocalDateTime.of(2025, 11, 1, 12, 0)
             );
 
             // 모든 시간대에 동시 인원 초과
             List<WorkSchedule> overlappingSchedules = List.of(
-                    createWorkScheduleWithDifferentUser(2, LocalDate.of(2025, 11, 1), 8, 0, 14, 0),
-                    createWorkScheduleWithDifferentUser(3, LocalDate.of(2025, 11, 1), 8, 0, 14, 0),
-                    createWorkScheduleWithDifferentUser(4, LocalDate.of(2025, 11, 1), 8, 0, 14, 0)
+                    createWorkScheduleWithDifferentUser(2L, LocalDate.of(2025, 11, 1), 8, 0, 14, 0),
+                    createWorkScheduleWithDifferentUser(3L, LocalDate.of(2025, 11, 1), 8, 0, 14, 0),
+                    createWorkScheduleWithDifferentUser(4L, LocalDate.of(2025, 11, 1), 8, 0, 14, 0)
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
@@ -455,26 +455,26 @@ class ScheduleIntegrationTest {
         void batchProcessing_AllSuccess() {
             // Given
             WorkScheduleCommand schedule1 = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 1, 9, 0),
                     LocalDateTime.of(2025, 11, 1, 11, 0)
             );
             WorkScheduleCommand schedule2 = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 2, 9, 0),
                     LocalDateTime.of(2025, 11, 2, 11, 0)
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule saved1 = createWorkScheduleWithId(1, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
-            WorkSchedule saved2 = createWorkScheduleWithId(2, LocalDate.of(2025, 11, 2), 9, 0, 11, 0);
+            WorkSchedule saved1 = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
+            WorkSchedule saved2 = createWorkScheduleWithId(2L, LocalDate.of(2025, 11, 2), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(saved1, saved2);
 
             // When
@@ -490,12 +490,12 @@ class ScheduleIntegrationTest {
         void batchProcessing_CumulativeWeeklyTime() {
             // Given: 주 11시간 있는 상태, 배치로 2시간 + 2시간 신청 = 15시간 (13시간 초과)
             WorkScheduleCommand schedule1 = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 5, 9, 0),  // 수요일
                     LocalDateTime.of(2025, 11, 5, 11, 0)  // 2시간
             );
             WorkScheduleCommand schedule2 = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 6, 9, 0),  // 목요일
                     LocalDateTime.of(2025, 11, 6, 11, 0)  // 2시간
             );
@@ -506,15 +506,15 @@ class ScheduleIntegrationTest {
                     createWorkSchedule(LocalDate.of(2025, 11, 4), 9, 0, 14, 0)   // 5시간 = 11시간
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(existingWeekly);
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule saved1 = createWorkScheduleWithId(1, LocalDate.of(2025, 11, 5), 9, 0, 11, 0);
+            WorkSchedule saved1 = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 5), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(saved1);
 
             // When & Then: 첫 번째는 성공 (11+2=13), 두 번째는 실패 (13+2=15>13)
@@ -534,20 +534,20 @@ class ScheduleIntegrationTest {
         void concurrency_ExceedsMaxConcurrent_ShouldFail() {
             // Given: 최대 3명 동시 근무, 이미 3명 있는 시간대에 신청
             WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 1, 9, 0),
                     LocalDateTime.of(2025, 11, 1, 11, 0)
             );
 
             // 9:00~11:00 시간대에 이미 3명
             List<WorkSchedule> overlappingSchedules = List.of(
-                    createWorkScheduleWithDifferentUser(2, LocalDate.of(2025, 11, 1), 8, 0, 12, 0),
-                    createWorkScheduleWithDifferentUser(3, LocalDate.of(2025, 11, 1), 8, 30, 11, 30),
-                    createWorkScheduleWithDifferentUser(4, LocalDate.of(2025, 11, 1), 9, 0, 10, 30)
+                    createWorkScheduleWithDifferentUser(2L, LocalDate.of(2025, 11, 1), 8, 0, 12, 0),
+                    createWorkScheduleWithDifferentUser(3L, LocalDate.of(2025, 11, 1), 8, 30, 11, 30),
+                    createWorkScheduleWithDifferentUser(4L, LocalDate.of(2025, 11, 1), 9, 0, 10, 30)
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(overlappingSchedules);
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
@@ -564,25 +564,25 @@ class ScheduleIntegrationTest {
         void concurrency_WithinLimit_ShouldSucceed() {
             // Given: 최대 3명 동시 근무, 2명 있는 시간대에 신청
             WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 1, 9, 0),
                     LocalDateTime.of(2025, 11, 1, 11, 0)
             );
 
             List<WorkSchedule> overlappingSchedules = List.of(
-                    createWorkScheduleWithDifferentUser(2, LocalDate.of(2025, 11, 1), 8, 0, 12, 0),
-                    createWorkScheduleWithDifferentUser(3, LocalDate.of(2025, 11, 1), 9, 0, 11, 0)
+                    createWorkScheduleWithDifferentUser(2L, LocalDate.of(2025, 11, 1), 8, 0, 12, 0),
+                    createWorkScheduleWithDifferentUser(3L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0)
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(overlappingSchedules);
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule savedSchedule = createWorkScheduleWithId(1, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
+            WorkSchedule savedSchedule = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(savedSchedule);
 
             // When
@@ -597,17 +597,17 @@ class ScheduleIntegrationTest {
         void concurrency_CustomMaxConcurrent() {
             // Given: 11월 최대 동시 인원 5명으로 설정
             WorkScheduleCommand newSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 1, 9, 0),
                     LocalDateTime.of(2025, 11, 1, 11, 0)
             );
 
             // 4명 있는 상태 (기본 3명 초과지만, 설정된 5명 미만)
             List<WorkSchedule> overlappingSchedules = List.of(
-                    createWorkScheduleWithDifferentUser(2, LocalDate.of(2025, 11, 1), 8, 0, 12, 0),
-                    createWorkScheduleWithDifferentUser(3, LocalDate.of(2025, 11, 1), 9, 0, 11, 0),
-                    createWorkScheduleWithDifferentUser(4, LocalDate.of(2025, 11, 1), 9, 0, 11, 0),
-                    createWorkScheduleWithDifferentUser(5, LocalDate.of(2025, 11, 1), 9, 0, 11, 0)
+                    createWorkScheduleWithDifferentUser(2L, LocalDate.of(2025, 11, 1), 8, 0, 12, 0),
+                    createWorkScheduleWithDifferentUser(3L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0),
+                    createWorkScheduleWithDifferentUser(4L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0),
+                    createWorkScheduleWithDifferentUser(5L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0)
             );
 
             MonthlyScheduleConfig config = MonthlyScheduleConfig.builder()
@@ -616,15 +616,15 @@ class ScheduleIntegrationTest {
                     .maxConcurrent(5)
                     .build();
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(overlappingSchedules);
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(2025, 11))
                     .thenReturn(Optional.of(config));
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule savedSchedule = createWorkScheduleWithId(1, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
+            WorkSchedule savedSchedule = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(savedSchedule);
 
             // When
@@ -646,12 +646,12 @@ class ScheduleIntegrationTest {
         void minWorkTime_LessThanTwoHours_ShouldFail() {
             // Given: 1시간 30분 근무 신청 (2시간 미만)
             WorkScheduleCommand shortSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 1, 9, 0),
                     LocalDateTime.of(2025, 11, 1, 10, 30)  // 1시간 30분
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             // When & Then
@@ -664,20 +664,20 @@ class ScheduleIntegrationTest {
         void minWorkTime_ExactlyTwoHours_ShouldSucceed() {
             // Given: 정확히 2시간 근무 신청
             WorkScheduleCommand exactlyTwoHours = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 1, 9, 0),
                     LocalDateTime.of(2025, 11, 1, 11, 0)  // 정확히 2시간
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule saved = createWorkScheduleWithId(1, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
+            WorkSchedule saved = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(saved);
 
             // When
@@ -693,18 +693,18 @@ class ScheduleIntegrationTest {
         void monthBoundary_DifferentMonthsCountedSeparately() {
             // Given: 10월 마지막 날 + 11월 첫 날 신청
             WorkScheduleCommand octoberSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 10, 31, 9, 0),
                     LocalDateTime.of(2025, 10, 31, 11, 0)
             );
             WorkScheduleCommand novemberSchedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 1, 9, 0),
                     LocalDateTime.of(2025, 11, 1, 11, 0)
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
@@ -712,8 +712,8 @@ class ScheduleIntegrationTest {
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             when(workSchedulesRepository.save(any())).thenReturn(
-                    createWorkScheduleWithId(1, LocalDate.of(2025, 10, 31), 9, 0, 11, 0),
-                    createWorkScheduleWithId(2, LocalDate.of(2025, 11, 1), 9, 0, 11, 0)
+                    createWorkScheduleWithId(1L, LocalDate.of(2025, 10, 31), 9, 0, 11, 0),
+                    createWorkScheduleWithId(2L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0)
             );
 
             // When
@@ -732,18 +732,18 @@ class ScheduleIntegrationTest {
             // Given: 1주차 마지막 날(일요일) + 2주차 첫 날(월요일)
             // 2025년 11월 9일 = 일요일 (1주차 끝), 11월 10일 = 월요일 (2주차 시작)
             WorkScheduleCommand week1Schedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 9, 9, 0),   // 일요일
                     LocalDateTime.of(2025, 11, 9, 21, 0)   // 12시간
             );
             WorkScheduleCommand week2Schedule = new WorkScheduleCommand(
-                    1,
+                    1L,
                     LocalDateTime.of(2025, 11, 10, 9, 0),  // 월요일
                     LocalDateTime.of(2025, 11, 10, 21, 0)  // 12시간
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of());
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
@@ -751,8 +751,8 @@ class ScheduleIntegrationTest {
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             when(workSchedulesRepository.save(any())).thenReturn(
-                    createWorkScheduleWithId(1, LocalDate.of(2025, 11, 9), 9, 0, 21, 0),
-                    createWorkScheduleWithId(2, LocalDate.of(2025, 11, 10), 9, 0, 21, 0)
+                    createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 9), 9, 0, 21, 0),
+                    createWorkScheduleWithId(2L, LocalDate.of(2025, 11, 10), 9, 0, 21, 0)
             );
 
             // When
@@ -776,7 +776,7 @@ class ScheduleIntegrationTest {
         @DisplayName("수정 시 취소/추가 시간이 일치해야 성공")
         void modify_MatchingDuration_ShouldSucceed() {
             // Given: 4시간 취소, 4시간 추가
-            WorkSchedule existingSchedule = createWorkScheduleWithId(1, LocalDate.of(2026, 1, 2), 9, 0, 13, 0);
+            WorkSchedule existingSchedule = createWorkScheduleWithId(1L, LocalDate.of(2026, 1, 2), 9, 0, 13, 0);
             ReflectionTestUtils.setField(existingSchedule, "user", testUser);
 
             WorkScheduleDTO addSlot = new WorkScheduleDTO(
@@ -786,25 +786,25 @@ class ScheduleIntegrationTest {
 
             ModifyWorkScheduleDTO request = new ModifyWorkScheduleDTO(
                     List.of(addSlot),
-                    List.of(1),
+                    List.of(1L),
                     "일정 변경"
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findById(1)).thenReturn(Optional.of(existingSchedule));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findById(1L)).thenReturn(Optional.of(existingSchedule));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of(existingSchedule));
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule newSchedule = createWorkScheduleWithId(2, LocalDate.of(2026, 1, 3), 9, 0, 13, 0);
+            WorkSchedule newSchedule = createWorkScheduleWithId(2L, LocalDate.of(2026, 1, 3), 9, 0, 13, 0);
             when(workSchedulesRepository.save(any())).thenReturn(newSchedule);
             when(workChangeRequestRepository.save(any())).thenReturn(mock(WorkChangeRequest.class));
 
             // When & Then: 예외 없이 정상 수행
-            scheduleService.modifyWorkSchedules(request, 1);
+            scheduleService.modifyWorkSchedules(request, 1L);
 
             // 삭제는 엔티티 상태 변경만 (save 호출 X), 추가만 save 호출
             verify(workSchedulesRepository, times(1)).save(any());
@@ -816,7 +816,7 @@ class ScheduleIntegrationTest {
         @DisplayName("수정 시 취소/추가 시간 불일치 시 실패")
         void modify_MismatchedDuration_ShouldFail() {
             // Given: 4시간 취소, 2시간 추가 (불일치)
-            WorkSchedule existingSchedule = createWorkScheduleWithId(1, LocalDate.of(2026, 1, 2), 9, 0, 13, 0);
+            WorkSchedule existingSchedule = createWorkScheduleWithId(1L, LocalDate.of(2026, 1, 2), 9, 0, 13, 0);
             ReflectionTestUtils.setField(existingSchedule, "user", testUser);
 
             WorkScheduleDTO addSlot = new WorkScheduleDTO(
@@ -826,25 +826,25 @@ class ScheduleIntegrationTest {
 
             ModifyWorkScheduleDTO request = new ModifyWorkScheduleDTO(
                     List.of(addSlot),
-                    List.of(1),
+                    List.of(1L),
                     "일정 변경"
             );
 
-            when(userRepository.findByUserId(1)).thenReturn(Optional.of(testUser));
-            when(workSchedulesRepository.findById(1)).thenReturn(Optional.of(existingSchedule));
-            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1), any(), any()))
+            when(userRepository.findByUserId(1L)).thenReturn(Optional.of(testUser));
+            when(workSchedulesRepository.findById(1L)).thenReturn(Optional.of(existingSchedule));
+            when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(List.of(existingSchedule));
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule newSchedule = createWorkScheduleWithId(2, LocalDate.of(2026, 1, 3), 9, 0, 11, 0);
+            WorkSchedule newSchedule = createWorkScheduleWithId(2L, LocalDate.of(2026, 1, 3), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(newSchedule);
             when(workChangeRequestRepository.save(any())).thenReturn(mock(WorkChangeRequest.class));
 
             // When & Then
-            assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(request, 1))
+            assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(request, 1L))
                     .isInstanceOf(ScheduleAllFailureException.class);
         }
     }
@@ -862,13 +862,13 @@ class ScheduleIntegrationTest {
         return schedule;
     }
 
-    private WorkSchedule createWorkScheduleWithId(Integer id, LocalDate date, int startHour, int startMinute, int endHour, int endMinute) {
+    private WorkSchedule createWorkScheduleWithId(Long id, LocalDate date, int startHour, int startMinute, int endHour, int endMinute) {
         WorkSchedule schedule = createWorkSchedule(date, startHour, startMinute, endHour, endMinute);
         ReflectionTestUtils.setField(schedule, "scheduleId", id);
         return schedule;
     }
 
-    private WorkSchedule createWorkScheduleWithDifferentUser(int userId, LocalDate date, int startHour, int startMinute, int endHour, int endMinute) {
+    private WorkSchedule createWorkScheduleWithDifferentUser(Long userId, LocalDate date, int startHour, int startMinute, int endHour, int endMinute) {
         User otherUser = User.builder().userId(userId).name("User " + userId).build();
         WorkSchedule schedule = WorkSchedule.builder()
                 .user(otherUser)

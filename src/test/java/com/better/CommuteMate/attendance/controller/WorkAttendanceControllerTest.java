@@ -1,9 +1,7 @@
 package com.better.CommuteMate.attendance.controller;
 
 import com.better.CommuteMate.attendance.application.WorkAttendanceService;
-import com.better.CommuteMate.attendance.controller.WorkAttendanceController;
 import com.better.CommuteMate.attendance.controller.dto.CheckInRequest;
-import com.better.CommuteMate.attendance.controller.dto.CheckOutRequest;
 import com.better.CommuteMate.attendance.controller.dto.QrTokenResponse;
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.domain.user.entity.User;
@@ -12,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -21,7 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -78,9 +75,9 @@ class WorkAttendanceControllerTest {
         CheckInRequest request = new CheckInRequest();
         String json = "{\"qrToken\":\"valid-token\"}";
 
-        doNothing().when(workAttendanceService).checkIn(anyInt(), anyString());
+        doNothing().when(workAttendanceService).checkIn(anyLong(), anyString());
 
-        User user = User.builder().userId(1).email("test@test.com").roleCode(CodeType.RL01).build();
+        User user = User.builder().userId(1L).email("test@test.com").roleCode(CodeType.RL01).build();
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
         mockMvc.perform(post("/api/v1/attendance/check-in")
@@ -98,9 +95,9 @@ class WorkAttendanceControllerTest {
     void checkOut_Success() throws Exception {
         String json = "{\"qrToken\":\"valid-token\"}";
 
-        doNothing().when(workAttendanceService).checkOut(anyInt(), anyString());
+        doNothing().when(workAttendanceService).checkOut(anyLong(), anyString());
 
-        User user = User.builder().userId(1).email("test@test.com").roleCode(CodeType.RL01).build();
+        User user = User.builder().userId(1L).email("test@test.com").roleCode(CodeType.RL01).build();
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
         mockMvc.perform(post("/api/v1/attendance/check-out")
