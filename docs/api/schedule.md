@@ -29,8 +29,17 @@
 
 ## 🔐 인증
 
-모든 엔드포인트는 인증 사용자 정보를 사용하므로 **JWT AccessToken**이 필요합니다.
-본인의 일정만 관리할 수 있으며, 타인의 일정은 관리자 API를 통해서만 조회 가능합니다.
+**인증 방식**: `Authorization: Bearer <AccessToken>` 헤더로 JWT AccessToken 전달
+
+**인증 처리**:
+- Spring Security에서 강제 인증하지 않음 (SecurityConfig에서 `permitAll`)
+- 컨트롤러에서 `@AuthenticationPrincipal CustomUserDetails userDetails` 파라미터로 인증 정보 요청
+- **실제 호출 시에는 반드시 AccessToken을 포함**해야 함
+
+**범위 제한**:
+- 본인의 일정만 조회/수정 가능
+- 타인의 일정은 접근 불가능 (컨트롤러에서 userId 검증)
+- 관리자 API(`/api/v1/admin/*`)를 통해서만 전체 일정 조회/관리 가능
 
 ---
 
@@ -447,6 +456,261 @@ Authorization: Bearer <JWT_TOKEN>
 | `WS02` | 승인됨 | 근무 가능 |
 | `WS03` | 거부됨 | 관리자가 거부 |
 | `WS04` | 취소됨 | 사용자 또는 관리자가 취소 |
+
+---
+
+## 🔧 실전 워크플로우 및 예제
+
+### 시나리오 1: 신청 기간 내 일정 신청 (즉시 승인)
+
+**상황**: 1월 23일 (신청 기간 내)에 사용자가 3개 일정 신청 → 2개 성공, 1개 동시인원 초과로 실패
+
+**1️⃣ 신청 기간 확인**
+```bash
+curl -X GET "http://localhost:8080/api/v1/admin/schedule/monthly-limit/2026/01" \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
+  -H "Content-Type: application/json"
+
+# 응답: applyStartTime: "2025-12-23", applyEndTime: "2025-12-27"
+# 현재: 2026-01-23 → 신청 기간 외! (기간이 지났음)
+```
+
+**2️⃣ 일정 신청**
+```bash
+curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
+  -H "Authorization: Bearer <USER_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "applySlots": [
+      {
+        "start": "2026-01-25T09:00:00",
+        "end": "2026-01-25T11:00:00"
+      },
+      {
+        "start": "2026-01-25T14:00:00",
+        "end": "2026-01-25T17:00:00"
+      },
+      {
+        "start": "2026-01-25T19:00:00",
+        "end": "2026-01-25T20:00:00"
+      }
+    ]
+  }'
+```
+
+**3️⃣ 응답 (207 Multi-Status - 부분 성공)**
+```json
+{
+  "isSuccess": false,
+  "message": "신청하신 일정 중 실패한 일정이 존재합니다.",
+  "details": {
+    "success": [
+      {"start": "2026-01-25T09:00:00", "end": "2026-01-25T11:00:00"},
+      {"start": "2026-01-25T14:00:00", "end": "2026-01-25T17:00:00"}
+    ],
+    "fail": [
+      {
+        "start": "2026-01-25T19:00:00",
+        "end": "2026-01-25T20:00:00",
+        "reason": "동시 근무 인원 초과"
+      }
+    ]
+  }
+}
+```
+
+**4️⃣ 프론트엔드 처리**
+```typescript
+// TypeScript 예제
+interface ApplyResponse {
+  isSuccess: boolean;
+  message: string;
+  details: {
+    success: Array<{start: string; end: string}>;
+    fail: Array<{start: string; end: string; reason: string}>;
+  };
+}
+
+async function applyWorkSchedule(slots: Slot[]) {
+  const response = await fetch('/api/v1/work-schedules/apply', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ applySlots: slots })
+  });
+
+  const data: ApplyResponse = await response.json();
+
+  // 부분 성공 처리 (207)
+  if (response.status === 207) {
+    showAlert(`${data.details.success.length}개 승인, ${data.details.fail.length}개 실패`);
+    data.details.fail.forEach(f => {
+      console.log(`${f.start} ~ ${f.end}: ${f.reason}`);
+    });
+  }
+
+  // 전체 실패 처리 (422)
+  if (response.status === 422) {
+    showError('모든 일정이 실패했습니다. 다시 시도하세요.');
+  }
+
+  return data;
+}
+```
+
+---
+
+### 시나리오 2: 검증 실패 시나리오
+
+**❌ 에러 1: 최소 근무 시간 미충족 (2시간 미만)**
+```bash
+curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
+  -H "Authorization: Bearer <USER_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "applySlots": [
+      {
+        "start": "2026-01-25T09:00:00",
+        "end": "2026-01-25T10:30:00"  # 1시간 30분만!
+      }
+    ]
+  }'
+
+# 응답 422
+{
+  "isSuccess": false,
+  "message": "신청하신 일정이 모두 실패하였습니다.",
+  "details": {
+    "success": [],
+    "fail": [
+      {
+        "start": "2026-01-25T09:00:00",
+        "end": "2026-01-25T10:30:00",
+        "reason": "최소 근무 시간(2시간) 미충족"
+      }
+    ]
+  }
+}
+```
+
+**❌ 에러 2: 월간 최대 시간 초과 (27시간)**
+```bash
+# 사용자가 이미 25시간 신청한 상태에서 4시간 추가 시도
+curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
+  -H "Authorization: Bearer <USER_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "applySlots": [
+      {
+        "start": "2026-01-28T09:00:00",
+        "end": "2026-01-28T13:00:00"  # 4시간 (총 29시간 = 초과!)
+      }
+    ]
+  }'
+
+# 응답 422
+{
+  "isSuccess": false,
+  "message": "신청하신 일정이 모두 실패하였습니다.",
+  "details": {
+    "fail": [
+      {
+        "reason": "월간 최대 시간(27시간) 초과: 현재 25시간 + 신청 4시간 = 29시간"
+      }
+    ]
+  }
+}
+```
+
+**❌ 에러 3: 권한 없음 (타인의 일정 취소 시도)**
+```bash
+curl -X DELETE "http://localhost:8080/api/v1/work-schedules/123" \
+  -H "Authorization: Bearer <USER_A_TOKEN>"
+
+# 응답 403 (123번 일정이 USER_B의 일정)
+{
+  "isSuccess": false,
+  "message": "해당 근무 일정에 대한 권한이 없습니다.",
+  "details": null
+}
+```
+
+---
+
+### 시나리오 3: 일정 수정 (시간 보존)
+
+**상황**: 기존 2시간 일정을 삭제하고, 다른 시간에 2시간 추가
+
+```bash
+curl -X PATCH "http://localhost:8080/api/v1/work-schedules/modify" \
+  -H "Authorization: Bearer <USER_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cancelScheduleIds": [123],  # 2시간 일정
+    "applySlots": [
+      {
+        "start": "2026-01-26T10:00:00",
+        "end": "2026-01-26T12:00:00"  # 2시간 (시간 보존!)
+      }
+    ],
+    "reason": "시간 변경 요청"
+  }'
+
+# 응답 200
+{
+  "isSuccess": true,
+  "message": "근무 일정 수정 완료",
+  "details": {
+    "cancelledSchedules": [123],
+    "newSchedules": [
+      {
+        "id": 999,
+        "start": "2026-01-26T10:00:00",
+        "end": "2026-01-26T12:00:00",
+        "status": "WS02"  # 신청 기간 내면 즉시 승인
+      }
+    ]
+  }
+}
+```
+
+**❌ 에러: 시간 불일치**
+```bash
+# 2시간 취소 but 3시간 추가 시도
+{
+  "cancelScheduleIds": [123],     # 2시간
+  "applySlots": [
+    {"start": "2026-01-26T10:00:00", "end": "2026-01-26T13:00:00"}  # 3시간
+  ]
+}
+
+# 응답 400
+{
+  "isSuccess": false,
+  "message": "취소 시간과 신청 시간이 일치하지 않습니다.",
+  "details": {
+    "cancelledTime": "120분",
+    "appliedTime": "180분",
+    "difference": "60분"
+  }
+}
+```
+
+---
+
+## ⚠️ 자주 하는 실수 및 해결책
+
+| 실수 | 원인 | 해결책 | 참고 |
+|------|------|--------|------|
+| **일정이 자동 승인 안 됨** | 신청 기간 외에 신청함 | 신청 기간 확인: `GET /admin/schedule/monthly-limit/{year}/{month}` | 기간 내만 즉시 승인 |
+| **동시인원 초과 에러** | 동일 시간대에 인원 초과 | 다른 시간대로 변경 또는 기존 일정 삭제 후 재신청 | 15분 단위로 체크 |
+| **최소 시간 미충족** | 2시간 미만 신청 | 최소 2시간 이상으로 신청 | 1회 최소 2시간 |
+| **월간 제한 초과** | 월 27시간 초과 신청 | 다음 달로 연기 또는 기존 일정 취소 | 월 최대 27시간 |
+| **수정 시 시간 불일치** | 취소/추가 시간 다름 | 취소와 추가 시간을 정확히 맞춤 | "시간 보존의 법칙" |
+| **타인 일정 취소 불가** | 다른 사용자 일정 취소 시도 | 본인 일정만 취소 가능 | 관리자 API 사용 |
+| **토큰 만료** | 오래된 AccessToken 사용 | `/auth/refresh`로 새 토큰 발급 | 1시간 유효 |
 
 ---
 

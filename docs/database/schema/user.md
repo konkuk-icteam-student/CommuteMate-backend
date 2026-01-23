@@ -126,10 +126,38 @@ private List<ManagerCategory> managerCategories = new ArrayList<>();
 - **제약**: roleCode가 RL02(관리자)인 경우만 가능
 - **참조 필드**: `ManagerCategory.manager`
 
-#### 3. 역정규화 필드 (organization_id)
-- **organization_id**: 단순 정수 컬럼으로 저장되어 있으며, 명시적인 @ManyToOne 관계가 없습니다.
-- **이유**: 성능 최적화를 위한 역정규화 설계
-- **사용**: 필요시 organizationId 값으로 직접 접근
+#### 3. Organization 관계 (역정규화)
+
+**설계 결정**: User 엔티티에서 Organization을 `organizationId (Long)` 컬럼으로만 저장
+
+**이유**:
+- **JPA 관계 설정 없음**: `@ManyToOne` 어노테이션을 사용하지 않음
+- **N+1 쿼리 문제 방지**: Lazy Loading으로 인한 성능 저하 방지
+- **조직 정보 조회 빈도가 낮음**: 대부분의 API에서 조직 정보가 불필요
+- **성능 최적화**: 의도적인 역정규화 설계로 쿼리 최적화
+
+**영향**:
+- **조직 정보 조회 시 별도 쿼리 필요**: organizationId로 Organization을 수동 조회
+- **참조 무결성**: 조직 삭제 시 애플리케이션 레벨에서 제약 조건 관리
+- **유연한 쿼리**: 필요한 경우에만 조직 정보를 가져올 수 있음
+
+**코드**:
+```java
+@Column(name = "organization_id", nullable = false)
+private Long organizationId;  // 단순 컬럼, JPA 관계 없음
+```
+
+**코드 위치**: `src/main/java/com/better/CommuteMate/domain/user/entity/User.java:24-25`
+
+**사용 예시**:
+```java
+// User에서 organizationId로 Organization 조회
+User user = userRepository.findById(userId).orElseThrow();
+Long orgId = user.getOrganizationId();
+
+// 별도 쿼리로 Organization 조회
+Organization org = organizationRepository.findById(orgId).orElseThrow();
+```
 
 ---
 

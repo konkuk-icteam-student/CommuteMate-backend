@@ -52,6 +52,8 @@ CREATE TABLE task (
     task_time TIME NOT NULL COMMENT '업무 시간',
     task_type CHAR(4) NOT NULL COMMENT 'TT01: 정기, TT02: 비정기',
     is_completed TINYINT(1) NOT NULL DEFAULT FALSE COMMENT '완료 여부',
+    completed_by_name VARCHAR(50) COMMENT '실제 수행자 이름',
+    completed_time TIME COMMENT '실제 수행 시간',
     created_at DATETIME NOT NULL,
     created_by INT,
     updated_at DATETIME NOT NULL,
@@ -119,6 +121,8 @@ CREATE TABLE task_template_item (
 | **task_time** | TIME | NO | - | 업무 시간 (HH:MM:SS) |
 | **task_type** | CHAR(4) | NO | - | 업무 유형 코드 (TT01: 정기, TT02: 비정기) |
 | **is_completed** | TINYINT(1) | NO | FALSE | 완료 여부 (FALSE: 미완료, TRUE: 완료) |
+| **completed_by_name** | VARCHAR(50) | YES | NULL | 실제 수행자 이름 (완료 기록용) |
+| **completed_time** | TIME | YES | NULL | 실제 수행 시간 (완료 기록용) |
 | **created_at** | DATETIME | NO | - | 생성 시간 (@PrePersist에서 자동 설정) |
 | **created_by** | INT | YES | NULL | 생성자 ID |
 | **updated_at** | DATETIME | NO | - | 수정 시간 (@PreUpdate에서 자동 설정) |
@@ -314,7 +318,7 @@ List<Task> incompleteTasks = taskRepository
 ### 5. 업무 완료 처리
 
 ```java
-// 업무 완료
+// 방법 1: 단순 완료 토글
 Task task = taskRepository.findById(taskId).orElse(null);
 
 if (task != null) {
@@ -322,9 +326,18 @@ if (task != null) {
     taskRepository.save(task);
 }
 
-// 또는 명시적으로 완료 설정
+// 방법 2: 명시적으로 완료 설정
 task.setCompleted(true, userId);
 taskRepository.save(task);
+
+// 방법 3: 완료 기록 (실제 수행자, 수행 시간 포함)
+task.completeRecord(
+    "홍길동",  // 실제 수행자 이름
+    LocalTime.of(15, 30),  // 실제 수행 시간
+    userId  // 수정자 ID
+);
+taskRepository.save(task);
+// → is_completed=true, completed_by_name="홍길동", completed_time="15:30:00"
 ```
 
 ### 6. 업무 수정
@@ -406,14 +419,28 @@ Task task = Task.create(
 ### 3. 완료 상태 처리
 - `is_completed` 기본값: **FALSE**
 - 토글 메서드 또는 명시적 설정 메서드 사용
+- **완료 기록** (`completeRecord`): 실제 수행자와 수행 시간을 함께 기록
 
 ```java
-// 토글 사용
+// 방법 1: 토글 사용
 task.toggleComplete(userId);  // FALSE → TRUE, TRUE → FALSE
 
-// 명시적 설정
+// 방법 2: 명시적 설정
 task.setCompleted(true, userId);  // 명확히 TRUE로 설정
+
+// 방법 3: 완료 기록 (권장)
+task.completeRecord(
+    "실제 수행자 이름",
+    LocalTime.of(15, 30),  // 실제 수행 시간
+    userId
+);
+// → is_completed, completed_by_name, completed_time 모두 설정
 ```
+
+**완료 기록의 활용**:
+- `assignee`(할당된 담당자)와 실제 수행자가 다를 경우 추적
+- 업무 수행 시간 기록으로 통계 분석 가능
+- 예: 담당자는 A이지만 실제 수행자는 B인 경우
 
 ### 4. 템플릿 활성화 상태
 - `is_active` 기본값: **TRUE**

@@ -35,7 +35,7 @@ CommuteMate 백엔드 시스템은 다양한 데이터베이스를 지원합니�
 
 ## 📊 테이블 목록
 
-전체 테이블 개수: **17개**
+전체 테이블 개수: **18개**
 
 | # | 테이블 명 | 도메인 | 설명 | 상세 문서 |
 |---|----------|--------|------|----------|
@@ -52,10 +52,11 @@ CommuteMate 백엔드 시스템은 다양한 데이터베이스를 지원합니�
 | 11 | `manager_category` | FAQ | 매니저-카테고리 매핑 | [faq.md](./schema/faq.md#manager_category) |
 | 12 | `faq` | FAQ | FAQ 게시글 | [faq.md](./schema/faq.md#faq) |
 | 13 | `faq_history` | FAQ | FAQ 수정 이력 | [faq.md](./schema/faq.md#faq_history) |
-| 14 | `email_verification_code` | Auth | 이메일 인증 코드 | - |
-| 15 | `code` | Code | 코드 마스터 | [code-system.md](./schema/code-system.md#code-테이블) |
-| 16 | `code_major` | Code | 코드 대분류 | [code-system.md](./schema/code-system.md#code_major-테이블) |
-| 17 | `code_sub` | Code | 코드 소분류 | [code-system.md](./schema/code-system.md#code_sub-테이블) |
+| 14 | `manager` | Manager | 매니저 정보 | [manager.md](./schema/manager.md#manager-테이블) |
+| 15 | `email_verification_code` | Auth | 이메일 인증 코드 | [emailverification.md](./schema/emailverification.md#email_verification_code-테이블) |
+| 16 | `code` | Code | 코드 마스터 | [code-system.md](./schema/code-system.md#code-테이블) |
+| 17 | `code_major` | Code | 코드 대분류 | [code-system.md](./schema/code-system.md#code_major-테이블) |
+| 18 | `code_sub` | Code | 코드 소분류 | [code-system.md](./schema/code-system.md#code_sub-테이블) |
 
 ---
 
@@ -83,6 +84,12 @@ CommuteMate 백엔드 시스템은 다양한 데이터베이스를 지원합니�
 - **category**: FAQ 카테고리
 - **manager_category**: 매니저-카테고리 매핑
 - **faq_history**: 수정 이력
+
+### 👨‍💼 매니저 ([manager.md](./schema/manager.md))
+- **manager**: FAQ 담당 매니저 정보
+
+### 🔐 인증 ([emailverification.md](./schema/emailverification.md))
+- **email_verification_code**: 이메일 인증 코드 관리
 
 ### 🔢 코드 시스템 ([code-system.md](./schema/code-system.md))
 - **code**: 코드 마스터 테이블
@@ -170,6 +177,30 @@ CommuteMate 백엔드 시스템은 다양한 데이터베이스를 지원합니�
 
 ---
 
+### [매니저 스키마](./schema/manager.md)
+`manager`, `manager_category` 테이블 구조
+
+**주요 내용**:
+- FAQ 담당 매니저 정보
+- 매니저-카테고리 매핑 관계
+- 담당자 할당 및 관리
+
+**바로가기**: [manager.md →](./schema/manager.md)
+
+---
+
+### [이메일 인증](./schema/emailverification.md)
+`email_verification_code` 테이블 구조
+
+**주요 내용**:
+- 회원가입 이메일 인증 코드
+- 인증 코드 발송 및 검증
+- 만료 시간 관리 및 자동 정리
+
+**바로가기**: [emailverification.md →](./schema/emailverification.md)
+
+---
+
 ## 🔍 빠른 참조
 
 ### 주요 테이블
@@ -231,3 +262,5 @@ WHERE DATE(wa.check_time) = CURDATE();
   - [업무 관리 스키마](./schema/task.md)
   - [코드 시스템](./schema/code-system.md)
   - [FAQ 시스템](./schema/faq.md)
+  - [매니저 스키마](./schema/manager.md)
+  - [이메일 인증](./schema/emailverification.md)
