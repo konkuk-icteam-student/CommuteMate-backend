@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 public class WorkScheduleHistoryResponse extends ResponseDetail {
     private final Long id;
+    private final String userName;
     private final LocalDateTime start;
     private final LocalDateTime end;
     private final CodeType status;
@@ -20,9 +21,10 @@ public class WorkScheduleHistoryResponse extends ResponseDetail {
     private final Long workDurationMinutes;
 
     @Builder
-    public WorkScheduleHistoryResponse(Long id, LocalDateTime start, LocalDateTime end, CodeType status,
+    public WorkScheduleHistoryResponse(Long id, String userName, LocalDateTime start, LocalDateTime end, CodeType status,
                                        LocalDateTime actualStart, LocalDateTime actualEnd, Long workDurationMinutes) {
         this.id = id;
+        this.userName = userName;
         this.start = start;
         this.end = end;
         this.status = status;

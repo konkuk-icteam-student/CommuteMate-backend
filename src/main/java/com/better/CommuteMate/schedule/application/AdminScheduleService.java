@@ -217,6 +217,7 @@ public class AdminScheduleService {
 
         return WorkScheduleHistoryResponse.builder()
                 .id(schedule.getScheduleId())
+                .userName(schedule.getUser().getName())
                 .start(schedule.getStartTime())
                 .end(schedule.getEndTime())
                 .status(schedule.getStatusCode())

@@ -137,3 +137,14 @@ https://dbdiagram.io/d/ku_ict-68db5736d2b621e422822757
 | **faq** | **Category** | **category** | **FAQ 대분류** |
 | **faq** | **Faq** | **faq** | **FAQ 게시글** |
 | **faq** | **FaqHistory** | **faq_history** | **FAQ 수정 이력** |
+
+## 📚 문서
+
+상세 문서는 `docs/` 폴더를 참조하세요:
+
+- **[📖 문서 허브](./docs/README.md)** - 모든 문서 탐색
+- **[🏗️ 아키텍처](./docs/architecture/README.md)** - 시스템 구조 및 설계
+- **[📡 API 레퍼런스](./docs/api/README.md)** - REST API 명세
+- **[💾 데이터베이스](./docs/database/README.md)** - DB 스키마 및 ERD
+- **[📋 개발 규약](./docs/conventions/README.md)** - 코딩 스타일, API 규약
+- **[🚀 배포 가이드](./docs/deployment/README.md)** - 인프라 및 배포
