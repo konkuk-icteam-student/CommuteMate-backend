@@ -29,6 +29,6 @@ public class RegisterRequest {
     @NotNull
     private CodeType roleCode;
 
-    private Integer organizationId;
+    private Long organizationId;
 
 }

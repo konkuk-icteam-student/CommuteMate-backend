@@ -59,7 +59,7 @@ public class AdminScheduleController {
     public ResponseEntity<Response> setMonthlyLimit(
             @RequestBody SetMonthlyLimitRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer userId = userDetails.getUser().getUserId();
+        Long userId = userDetails.getUser().getUserId();
 
         MonthlyScheduleConfig result = monthlyScheduleConfigService.setMonthlyLimit(
                 MonthlyScheduleConfigCommand.from(
@@ -131,7 +131,7 @@ public class AdminScheduleController {
     @Operation(summary = "사용자별 근무 시간 조회", description = "특정 사용자의 월별 근무 시간을 조회합니다.")
     @GetMapping("/work-time")
     public ResponseEntity<Response> getUserWorkTime(
-            @RequestParam Integer userId,
+            @RequestParam Long userId,
             @RequestParam Integer year,
             @RequestParam Integer month) {
         UserWorkTimeResponse response = adminScheduleService.getUserWorkTime(userId, year, month);
@@ -165,7 +165,7 @@ public class AdminScheduleController {
     @Operation(summary = "사용자별 근무 이력 조회", description = "특정 사용자의 월별 근무 이력을 조회합니다.")
     @GetMapping("/history")
     public ResponseEntity<Response> getUserWorkHistory(
-            @RequestParam Integer userId,
+            @RequestParam Long userId,
             @RequestParam Integer year,
             @RequestParam Integer month) {
         return ResponseEntity.ok(Response.of(
@@ -209,7 +209,7 @@ public class AdminScheduleController {
     public ResponseEntity<Response> setApplyTerm(
             @RequestBody SetApplyTermRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer userId = userDetails.getUser().getUserId();
+        Long userId = userDetails.getUser().getUserId();
 
         MonthlyScheduleConfig result = monthlyScheduleConfigService.setApplyTerm(
                 SetApplyTermCommand.from(
@@ -243,7 +243,7 @@ public class AdminScheduleController {
     public ResponseEntity<Response> processChangeRequest(
             @RequestBody ProcessChangeRequestRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Integer adminId = userDetails.getUser().getUserId();
+        Long adminId = userDetails.getUser().getUserId();
 
         // requestIds 개수가 짝수인지 검증
         if (request.requestIds().size() % 2 != 0) {

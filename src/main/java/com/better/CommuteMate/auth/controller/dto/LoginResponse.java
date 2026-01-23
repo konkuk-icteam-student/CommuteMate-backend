@@ -14,4 +14,8 @@ public class LoginResponse extends ResponseDetail {
     private final String refreshToken;
     private final String tokenType;
     private final Long expiresAt;
+    private final Long userId;
+    private final String userName;
+    private final String email;
+    private final String roleCode;
 }

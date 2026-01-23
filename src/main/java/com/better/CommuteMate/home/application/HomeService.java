@@ -44,7 +44,7 @@ public class HomeService {
      * @throws BasicException 사용자를 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
-    public HomeWorkTimeResponse getTodayWorkTime(Integer userId) {
+    public HomeWorkTimeResponse getTodayWorkTime(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
 
@@ -83,7 +83,7 @@ public class HomeService {
      * @throws BasicException 사용자를 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
-    public HomeAttendanceStatusResponse getAttendanceStatus(Integer userId) {
+    public HomeAttendanceStatusResponse getAttendanceStatus(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
 
@@ -224,7 +224,7 @@ public class HomeService {
      * @throws BasicException 사용자를 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
-    public WeeklyWorkSummaryResponse getWorkSummary(Integer userId) {
+    public WeeklyWorkSummaryResponse getWorkSummary(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
 

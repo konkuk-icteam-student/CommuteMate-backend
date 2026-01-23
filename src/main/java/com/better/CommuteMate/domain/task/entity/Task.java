@@ -29,7 +29,7 @@ public class Task {
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assignee_id", nullable = false)
+    @JoinColumn(name = "assignee_id")
     private User assignee;
 
     @Column(name = "task_date", nullable = false)
@@ -46,17 +46,23 @@ public class Task {
     @Builder.Default
     private Boolean isCompleted = false;
 
+    @Column(name = "completed_by_name", length = 50)
+    private String completedByName;
+
+    @Column(name = "completed_time")
+    private LocalTime completedTime;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "created_by")
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private Integer updatedBy;
+    private Long updatedBy;
 
     @PrePersist
     protected void onCreate() {
@@ -70,7 +76,7 @@ public class Task {
     }
 
     // 업무 정보 수정
-    public void update(String title, User assignee, LocalTime taskTime, Integer updatedBy) {
+    public void update(String title, User assignee, LocalTime taskTime, Long updatedBy) {
         if (title != null) {
             this.title = title;
         }
@@ -84,23 +90,44 @@ public class Task {
     }
 
     // 완료 상태 토글
-    public void toggleComplete(Integer updatedBy) {
+    public void toggleComplete(Long updatedBy) {
         this.isCompleted = !this.isCompleted;
         this.updatedBy = updatedBy;
     }
 
     // 완료 상태 설정
-    public void setCompleted(Boolean isCompleted, Integer updatedBy) {
+    public void setCompleted(Boolean isCompleted, Long updatedBy) {
         this.isCompleted = isCompleted;
         this.updatedBy = updatedBy;
     }
 
-    // 팩토리 메서드
+    // 업무 완료 기록 (실제 수행자, 수행 시간)
+    public void completeRecord(String completedByName, LocalTime completedTime, Long updatedBy) {
+        this.completedByName = completedByName;
+        this.completedTime = completedTime;
+        this.isCompleted = true;
+        this.updatedBy = updatedBy;
+    }
+
+    // 팩토리 메서드 (담당자 지정)
     public static Task create(String title, User assignee, LocalDate taskDate,
-            LocalTime taskTime, CodeType taskType, Integer createdBy) {
+            LocalTime taskTime, CodeType taskType, Long createdBy) {
         return Task.builder()
                 .title(title)
                 .assignee(assignee)
+                .taskDate(taskDate)
+                .taskTime(taskTime)
+                .taskType(taskType)
+                .isCompleted(false)
+                .createdBy(createdBy)
+                .build();
+    }
+
+    // 팩토리 메서드 (담당자 미지정)
+    public static Task create(String title, LocalDate taskDate,
+            LocalTime taskTime, CodeType taskType, Long createdBy) {
+        return Task.builder()
+                .title(title)
                 .taskDate(taskDate)
                 .taskTime(taskTime)
                 .taskType(taskType)

@@ -2,7 +2,7 @@ package com.better.CommuteMate.faq.application;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
-import com.better.CommuteMate.faq.dto.request.PostFaqCreateRequest;
+import com.better.CommuteMate.faq.dto.request.PostFaqRequest;
 import com.better.CommuteMate.faq.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.faq.entity.FaqHistory;
@@ -10,17 +10,17 @@ import com.better.CommuteMate.domain.faq.repository.FaqHistoryRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
-import com.better.CommuteMate.faq.dto.response.PostFaqCreateResponse;
+import com.better.CommuteMate.faq.dto.response.PostFaqResponse;
 import com.better.CommuteMate.faq.dto.response.PutFaqUpdateResponse;
 import com.better.CommuteMate.global.exceptions.BasicException;
+import com.better.CommuteMate.global.exceptions.CategoryException;
+import com.better.CommuteMate.global.exceptions.FaqException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -32,77 +32,64 @@ public class FaqService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
 
-    public PostFaqCreateResponse createFaq(PostFaqCreateRequest request) {
+    public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
 
-        // Todo 임시 인증 로직
-        User writer = userRepository.findById(request.userId())
+        User writer = userRepository.findById(userId)
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
 
-        Category category = categoryRepository.findByName(request.category())
-                .orElseThrow(() -> BasicException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> CategoryException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
 
-
-        Faq faq = Faq.builder()
-                .category(category)
-                .title(request.title())
-                .content(request.content())
-                .attachmentUrl(request.attachmentUrl())
-                .etc(request.etc())
-
-                // 작성자, 수정자 (최초 동일)
-                .writer(writer)
-                .writerName(writer.getName())
-                .lastEditor(writer)
-                .lastEditorName(writer.getName())
-
-                // 관리 필드
-                .manager(writer.getName())   // Todo 관리자 표시 화면 나오면 로직 수정할 것
-                .deletedFlag(false)
-                .build();
+        Faq faq = Faq.create(
+                request.title(),
+                request.complainantName(),
+                request.content(),
+                request.answer(),
+                request.etc(),
+                writer,
+                category
+        );
 
         faqRepository.save(faq);
-        return new PostFaqCreateResponse(faq.getId());
+
+        FaqHistory faqhistory = FaqHistory.create(faq);
+        faqHistoryRepository.save(faqhistory);
+
+        return new PostFaqResponse(faq.getId());
     }
 
-    public PutFaqUpdateResponse updateFaq(Long faqId, PutFaqUpdateRequest request) {
-        Faq faq = faqRepository.findById(faqId)
-                .orElseThrow(() -> BasicException.of(FaqErrorCode.FAQ_NOT_FOUND));
-
-        // 해당 FAQ 삭제 여부 확인
-        if (Boolean.TRUE.equals(faq.getDeletedFlag())) {
-            throw BasicException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
-        }
-
-        // 수정자 조회
-        // Todo 임시 인증 로직. 토큰 활용 안정화되면 삭제 예정
-        User editor = userRepository.findById(request.userId())
+    public PutFaqUpdateResponse updateFaq(Long userId, Long faqId, PutFaqUpdateRequest request) {
+        User modifier = userRepository.findById(userId)
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
 
-        // 히스토리 저장
-        FaqHistory history = FaqHistory.builder()
-                .faq(faq)
-                .title(faq.getTitle())
-                .category(faq.getCategory().getName())
-                .content(faq.getContent())
-                .attachmentUrl(faq.getAttachmentUrl())
-                .manager(faq.getManager())
-                .writerName(faq.getWriterName())
-                .editorName(faq.getLastEditorName())
-                .editedAt(LocalDateTime.now())
-                .build();
+        Faq faq = faqRepository.findById(faqId)
+                .orElseThrow(() -> FaqException.of(FaqErrorCode.FAQ_NOT_FOUND));
 
-        faqHistoryRepository.save(history);
+        if (Boolean.TRUE.equals(faq.getDeletedFlag())) {
+            throw FaqException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
+        }
 
-        // FAQ 최신 상태로 업데이트
-        faq.setTitle(request.title());
-        faq.setContent(request.content());
-        faq.setEtc(request.etc());
-        faq.setAttachmentUrl(request.attachmentUrl());
-        faq.setManager(request.manager());
+        Category category = faq.getCategory();
+        if (request.categoryId() != null) {
+            category = categoryRepository.findById(request.categoryId())
+                    .orElseThrow(() -> CategoryException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
+        }
 
-        faq.setLastEditor(editor);
-        faq.setLastEditorName(editor.getName());
-        faq.setLastEditedAt(LocalDateTime.now());
-        return new PutFaqUpdateResponse(faq.getId());
+        faq.update(
+                request.title(),
+                request.complainantName(),
+                request.content(),
+                request.answer(),
+                request.etc(),
+                category,
+                modifier
+        );
+
+        faqRepository.save(faq);
+
+        FaqHistory faqhistory = FaqHistory.create(faq);
+        faqHistoryRepository.save(faqhistory);
+
+        return new PutFaqUpdateResponse(faqId);
     }
 }

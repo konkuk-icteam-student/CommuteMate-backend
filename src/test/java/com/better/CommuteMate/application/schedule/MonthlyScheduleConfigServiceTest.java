@@ -47,7 +47,7 @@ class MonthlyScheduleConfigServiceTest {
     void setMonthlyLimit_NewConfig_Success() {
         // Given
         MonthlyScheduleConfigCommand command = MonthlyScheduleConfigCommand.from(
-                2025, 11, 15, 1
+                2025, 11, 15, 1L
         );
 
         when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(2025, 11))
@@ -59,8 +59,8 @@ class MonthlyScheduleConfigServiceTest {
                 .maxConcurrent(15)
                 .applyStartTime(command.applyStartTime())
                 .applyEndTime(command.applyEndTime())
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         when(monthlyScheduleConfigRepository.save(any(MonthlyScheduleConfig.class)))
@@ -86,12 +86,12 @@ class MonthlyScheduleConfigServiceTest {
                 .maxConcurrent(10)
                 .applyStartTime(LocalDateTime.of(2025, 10, 23, 0, 0))
                 .applyEndTime(LocalDateTime.of(2025, 10, 27, 0, 0))
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         MonthlyScheduleConfigCommand command = MonthlyScheduleConfigCommand.from(
-                2025, 11, 20, 1
+                2025, 11, 20, 1L
         );
 
         when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(2025, 11))
@@ -224,7 +224,7 @@ class MonthlyScheduleConfigServiceTest {
                 2025, 12,
                 LocalDateTime.of(2025, 11, 23, 0, 0),
                 LocalDateTime.of(2025, 11, 27, 0, 0),
-                1
+                1L
         );
 
         when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(2025, 12))
@@ -236,8 +236,8 @@ class MonthlyScheduleConfigServiceTest {
                 .applyStartTime(command.applyStartTime())
                 .applyEndTime(command.applyEndTime())
                 .maxConcurrent(10) // DEFAULT_MAX_CONCURRENT_SCHEDULES
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         when(monthlyScheduleConfigRepository.save(any(MonthlyScheduleConfig.class)))
@@ -265,15 +265,15 @@ class MonthlyScheduleConfigServiceTest {
                 .maxConcurrent(15)
                 .applyStartTime(LocalDateTime.of(2025, 10, 20, 0, 0))
                 .applyEndTime(LocalDateTime.of(2025, 10, 25, 0, 0))
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         SetApplyTermCommand command = new SetApplyTermCommand(
                 2025, 11,
                 LocalDateTime.of(2025, 10, 23, 0, 0),
                 LocalDateTime.of(2025, 10, 27, 0, 0),
-                1
+                1L
         );
 
         when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(2025, 11))
@@ -299,7 +299,7 @@ class MonthlyScheduleConfigServiceTest {
                 2025, 11,
                 LocalDateTime.of(2025, 10, 27, 0, 0), // 종료 시간
                 LocalDateTime.of(2025, 10, 23, 0, 0), // 시작 시간
-                1
+                1L
         );
 
         // When & Then
@@ -318,7 +318,7 @@ class MonthlyScheduleConfigServiceTest {
                 2025, 11,
                 sameTime,
                 sameTime,
-                1
+                1L
         );
 
         // When & Then

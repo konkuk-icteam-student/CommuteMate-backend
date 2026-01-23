@@ -17,7 +17,7 @@ public class TemplateItemRequest {
     @NotNull(message = "업무명은 필수입니다.")
     private String title;
 
-    private Integer defaultAssigneeId;
+    private Long defaultAssigneeId;
 
     @NotNull(message = "업무 시간은 필수입니다.")
     private LocalTime taskTime;

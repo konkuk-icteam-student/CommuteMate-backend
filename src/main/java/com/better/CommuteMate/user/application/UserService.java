@@ -39,7 +39,7 @@ public class UserService {
      * @throws BasicException 사용자가 존재하지 않을 경우 USER_NOT_FOUND 에러 발생
      */
     @Transactional(readOnly = true)
-    public UserInfoResponse getUserInfo(Integer userId) {
+    public UserInfoResponse getUserInfo(Long userId) {
         // 사용자 조회 (없으면 예외 발생)
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
@@ -54,7 +54,7 @@ public class UserService {
      * @return 주간 총 근무 시간 (분)
      */
     @Transactional(readOnly = true)
-    public UserWorkTimeResponse getWeeklyWorkTime(Integer userId) {
+    public UserWorkTimeResponse getWeeklyWorkTime(Long userId) {
         LocalDate now = LocalDate.now();
         // 이번 주 월요일 00:00 계산
         LocalDate startOfWeek = now.with(WeekFields.ISO.dayOfWeek(), 1);
@@ -62,7 +62,7 @@ public class UserService {
         // 다음 주 월요일 00:00 (이번 주 일요일 24:00) 계산
         LocalDateTime end = startOfWeek.plusDays(7).atStartOfDay();
 
-        long minutes = calculateTotalWorkTime(userId, start, end);
+        Long minutes = calculateTotalWorkTime(userId, start, end);
         return new UserWorkTimeResponse(minutes, "WEEKLY");
     }
 
@@ -74,7 +74,7 @@ public class UserService {
      * @return 월간 총 근무 시간 (분)
      */
     @Transactional(readOnly = true)
-    public UserWorkTimeResponse getMonthlyWorkTime(Integer userId) {
+    public UserWorkTimeResponse getMonthlyWorkTime(Long userId) {
         LocalDate now = LocalDate.now();
         // 이번 달 1일 00:00 계산
         LocalDate startOfMonth = now.with(TemporalAdjusters.firstDayOfMonth());
@@ -82,7 +82,7 @@ public class UserService {
         // 다음 달 1일 00:00 (이번 달 말일 24:00) 계산
         LocalDateTime end = startOfMonth.plusMonths(1).atStartOfDay();
 
-        long minutes = calculateTotalWorkTime(userId, start, end);
+        Long minutes = calculateTotalWorkTime(userId, start, end);
         return new UserWorkTimeResponse(minutes, "MONTHLY");
     }
 
@@ -95,7 +95,7 @@ public class UserService {
      * @param end 조회 종료 일시
      * @return 총 근무 시간 (분)
      */
-    private long calculateTotalWorkTime(Integer userId, LocalDateTime start, LocalDateTime end) {
+    private long calculateTotalWorkTime(Long userId, LocalDateTime start, LocalDateTime end) {
         // 해당 기간 내의 모든 일정 조회
         List<WorkSchedule> schedules = workSchedulesRepository.findAllSchedulesByUserAndDateRange(
                 userId, start, end);

@@ -12,6 +12,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Clean and Create Deploy Directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USERNAME }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            rm -rf ~/app/source
+            mkdir -p ~/app/source
+
       - name: Copy source to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -28,8 +38,8 @@ jobs:
           username: ${{ secrets.ORACLE_USERNAME }}
           key: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
-            cd ~/app/source
-            docker build -t commute-mate-backend:latest .
-            cd ~/app
-            chmod +x deploy.sh
+            cd ~/app/source && \
+            docker build -t commute-mate-backend:latest . && \
+            cd ~/app && \
+            chmod +x deploy.sh && \
             ./deploy.sh

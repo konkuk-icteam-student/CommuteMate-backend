@@ -58,10 +58,10 @@ class AttendanceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        testUser = User.builder().userId(1).name("Test User").build();
+        testUser = User.builder().userId(1L).name("Test User").build();
         LocalDateTime now = LocalDateTime.now();
         testSchedule = WorkSchedule.builder()
-                .scheduleId(100)
+                .scheduleId(100L)
                 .user(testUser)
                 .startTime(now.minusHours(1))
                 .endTime(now.plusMinutes(1)) // Valid for both check-in and check-out
@@ -77,12 +77,12 @@ class AttendanceIntegrationTest {
         assertThat(token).isNotNull();
 
         // 2. Check In
-        when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
-        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyInt(), any(), any()))
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyLong(), any(), any()))
                 .thenReturn(List.of(testSchedule));
-        when(workAttendanceRepository.findBySchedule_ScheduleId(100)).thenReturn(Collections.emptyList());
+        when(workAttendanceRepository.findBySchedule_ScheduleId(100L)).thenReturn(Collections.emptyList());
 
-        workAttendanceService.checkIn(1, token);
+        workAttendanceService.checkIn(1L, token);
         
         verify(workAttendanceRepository, times(1)).save(argThat(a -> 
             a.getCheckTypeCode() == CodeType.CT01 && a.getSchedule().getScheduleId() == 100
@@ -91,20 +91,20 @@ class AttendanceIntegrationTest {
         // 3. Check Out
         // Mock state: User is now checked in
         WorkAttendance checkInRecord = WorkAttendance.builder()
-                .attendanceId(1)
+                .attendanceId(1L)
                 .user(testUser)
                 .schedule(testSchedule)
                 .checkTypeCode(CodeType.CT01)
                 .checkTime(LocalDateTime.now())
                 .build();
         
-        when(workAttendanceRepository.findBySchedule_ScheduleId(100)).thenReturn(List.of(checkInRecord));
+        when(workAttendanceRepository.findBySchedule_ScheduleId(100L)).thenReturn(List.of(checkInRecord));
         
         // Generate new token for checkout (simulating time passing or fresh token)
         QrTokenResponse tokenResponse2 = workAttendanceService.generateQrToken();
         String token2 = tokenResponse2.getToken();
 
-        workAttendanceService.checkOut(1, token2);
+        workAttendanceService.checkOut(1L, token2);
 
         verify(workAttendanceRepository, times(1)).save(argThat(a -> 
             a.getCheckTypeCode() == CodeType.CT02 && a.getSchedule().getScheduleId() == 100
@@ -117,7 +117,7 @@ class AttendanceIntegrationTest {
         // Generate a token but use a different one
         workAttendanceService.generateQrToken();
         
-        assertThatThrownBy(() -> workAttendanceService.checkIn(1, "fake-token"))
+        assertThatThrownBy(() -> workAttendanceService.checkIn(1L, "fake-token"))
                 .isInstanceOf(AttendanceException.class)
                 .hasMessage(AttendanceErrorCode.INVALID_QR_TOKEN.getMessage());
         

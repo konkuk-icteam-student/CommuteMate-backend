@@ -18,7 +18,7 @@ public class WorkSchedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "schedule_id", nullable = false)
-    private Integer scheduleId;
+    private Long scheduleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -38,20 +38,20 @@ public class WorkSchedule {
     private LocalDateTime createdAt;
 
     @Column(name = "created_by", nullable = false, updatable = false)
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private Integer updatedBy;
+    private Long updatedBy;
 
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
     private Boolean isDeleted = false;
 
     // 스케줄 제거 요청 보낸 상태. statusCode는 최종적으로 [WS04: 일정 취소] 혹은 [WS01: 신청] 으로 저장됨.
-    public void deleteApplySchedule(Integer userId, CodeType codeType) {
+    public void deleteApplySchedule(Long userId, CodeType codeType) {
         this.statusCode = codeType;
         this.updatedBy = userId;
         if(codeType.equals(CodeType.WS02)) {// WS02: 승인(취소가 승인되었다는 뜻) -> WS04: 취소
@@ -62,7 +62,7 @@ public class WorkSchedule {
 
     // 변경 요청 승인 처리 (관리자용)
     // typeCode로 넘어오는 값 : 요청 유형 코드 (CR01: 수정 요청, CR02: 삭제 요청)
-    public void approveChangeRequest(Integer adminId, CodeType typeCode) {
+    public void approveChangeRequest(Long adminId, CodeType typeCode) {
         this.updatedBy = adminId;
         if (typeCode.equals(CodeType.CR01)) { // CR01: 수정 요청
             this.statusCode = CodeType.WS02; // WS02: 승인
@@ -73,7 +73,7 @@ public class WorkSchedule {
     }
 
     // 상태 변경 (관리자용)
-    public void updateStatus(CodeType statusCode, Integer adminId) {
+    public void updateStatus(CodeType statusCode, Long adminId) {
         this.statusCode = statusCode;
         this.updatedBy = adminId;
     }

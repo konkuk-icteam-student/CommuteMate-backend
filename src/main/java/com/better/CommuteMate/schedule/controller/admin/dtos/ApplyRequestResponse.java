@@ -4,8 +4,8 @@ import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import java.time.LocalDateTime;
 
 public record ApplyRequestResponse(
-        Integer scheduleId,
-        Integer userId,
+        Long scheduleId,
+        Long userId,
         String userName,
         LocalDateTime startTime,
         LocalDateTime endTime

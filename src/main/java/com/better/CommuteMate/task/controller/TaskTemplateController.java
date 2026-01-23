@@ -65,7 +65,7 @@ public class TaskTemplateController {
         public ResponseEntity<Response> createTemplate(
                         @Valid @RequestBody CreateTemplateRequest request,
                         @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Integer currentUserId = userDetails.getUser().getUserId();
+                Long currentUserId = userDetails.getUser().getUserId();
                 TemplateDetailResponse response = templateService.createTemplate(request, currentUserId);
                 return ResponseEntity.status(HttpStatus.CREATED)
                                 .body(new Response(true, "템플릿이 생성되었습니다.", response));
@@ -84,7 +84,7 @@ public class TaskTemplateController {
                         @PathVariable Long templateId,
                         @Valid @RequestBody UpdateTemplateRequest request,
                         @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Integer currentUserId = userDetails.getUser().getUserId();
+                Long currentUserId = userDetails.getUser().getUserId();
                 TemplateDetailResponse response = templateService.updateTemplate(templateId, request, currentUserId);
                 return ResponseEntity.ok(new Response(true, "템플릿이 수정되었습니다.", response));
         }
@@ -115,7 +115,7 @@ public class TaskTemplateController {
                         @PathVariable Long templateId,
                         @RequestParam boolean isActive,
                         @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Integer currentUserId = userDetails.getUser().getUserId();
+                Long currentUserId = userDetails.getUser().getUserId();
                 TemplateListResponse response = templateService.setTemplateActive(templateId, isActive, currentUserId);
                 String message = isActive ? "템플릿이 활성화되었습니다." : "템플릿이 비활성화되었습니다.";
                 return ResponseEntity.ok(new Response(true, message, response));
@@ -134,7 +134,7 @@ public class TaskTemplateController {
                         @PathVariable Long templateId,
                         @Valid @RequestBody ApplyTemplateRequest request,
                         @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Integer currentUserId = userDetails.getUser().getUserId();
+                Long currentUserId = userDetails.getUser().getUserId();
                 ApplyTemplateResponse response = templateService.applyTemplate(templateId, request, currentUserId);
                 String message = String.format("템플릿이 적용되어 %d개의 업무가 생성되었습니다.", response.getCreatedCount());
                 return ResponseEntity.status(HttpStatus.CREATED)

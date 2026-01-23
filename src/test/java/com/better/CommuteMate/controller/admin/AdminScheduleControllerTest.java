@@ -57,14 +57,14 @@ class AdminScheduleControllerTest {
     @MockBean
     private TokenBlacklistService tokenBlacklistService;
 
-    private CustomUserDetails createMockUserDetails(int userId) {
+    private CustomUserDetails createMockUserDetails(Long userId) {
         User user = new User();
         user.setUserId(userId);
         user.setEmail("admin" + userId + "@test.com");
         user.setPassword("password");
         user.setRoleCode(CodeType.RL02);
         user.setName("Admin User");
-        user.setOrganizationId(1);
+        user.setOrganizationId(1L);
         return new CustomUserDetails(user);
     }
 
@@ -75,12 +75,12 @@ class AdminScheduleControllerTest {
         SetMonthlyLimitRequest request = new SetMonthlyLimitRequest(2025, 10, 6);
 
         MonthlyScheduleConfig savedLimit = MonthlyScheduleConfig.builder()
-                .limitId(1)
+                .limitId(1L)
                 .scheduleYear(2025)
                 .scheduleMonth(10)
                 .maxConcurrent(6)
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         when(monthlyScheduleConfigService.setMonthlyLimit(any(MonthlyScheduleConfigCommand.class)))
@@ -88,7 +88,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/admin/schedule/monthly-limit")
-                        .with(user(createMockUserDetails(1)))
+                        .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -109,12 +109,12 @@ class AdminScheduleControllerTest {
         SetMonthlyLimitRequest request = new SetMonthlyLimitRequest(2025, 10, 8);
 
         MonthlyScheduleConfig updatedLimit = MonthlyScheduleConfig.builder()
-                .limitId(1)
+                .limitId(1L)
                 .scheduleYear(2025)
                 .scheduleMonth(10)
                 .maxConcurrent(8)
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         when(monthlyScheduleConfigService.setMonthlyLimit(any(MonthlyScheduleConfigCommand.class)))
@@ -122,7 +122,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/admin/schedule/monthly-limit")
-                        .with(user(createMockUserDetails(1)))
+                        .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -142,12 +142,12 @@ class AdminScheduleControllerTest {
         Integer month = 10;
 
         MonthlyScheduleConfig limit = MonthlyScheduleConfig.builder()
-                .limitId(1)
+                .limitId(1L)
                 .scheduleYear(year)
                 .scheduleMonth(month)
                 .maxConcurrent(6)
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         when(monthlyScheduleConfigService.getMonthlyLimit(year, month))
@@ -155,7 +155,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(get("/api/v1/admin/schedule/monthly-limit/{year}/{month}", year, month)
-                        .with(user(createMockUserDetails(1))))
+                        .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("월별 스케줄 제한을 조회했습니다."))
@@ -178,7 +178,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(get("/api/v1/admin/schedule/monthly-limit/{year}/{month}", year, month)
-                        .with(user(createMockUserDetails(1))))
+                        .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.isSuccess").value(false))
                 .andExpect(jsonPath("$.message").value("해당 월의 스케줄 제한 설정을 찾을 수 없습니다."))
@@ -192,21 +192,21 @@ class AdminScheduleControllerTest {
     void getAllMonthlyLimits_Success() throws Exception {
         // Given
         MonthlyScheduleConfig limit1 = MonthlyScheduleConfig.builder()
-                .limitId(1)
+                .limitId(1L)
                 .scheduleYear(2025)
                 .scheduleMonth(10)
                 .maxConcurrent(6)
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         MonthlyScheduleConfig limit2 = MonthlyScheduleConfig.builder()
-                .limitId(2)
+                .limitId(2L)
                 .scheduleYear(2025)
                 .scheduleMonth(11)
                 .maxConcurrent(5)
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         List<MonthlyScheduleConfig> limits = List.of(limit1, limit2);
@@ -214,7 +214,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(get("/api/v1/admin/schedule/monthly-limits")
-                        .with(user(createMockUserDetails(1))))
+                        .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("모든 월별 스케줄 제한을 조회했습니다."))
@@ -238,7 +238,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(get("/api/v1/admin/schedule/monthly-limits")
-                        .with(user(createMockUserDetails(1))))
+                        .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("모든 월별 스케줄 제한을 조회했습니다."))
@@ -257,14 +257,14 @@ class AdminScheduleControllerTest {
         SetApplyTermRequest request = new SetApplyTermRequest(2025, 11, startTime, endTime);
 
         MonthlyScheduleConfig savedConfig = MonthlyScheduleConfig.builder()
-                .limitId(1)
+                .limitId(1L)
                 .scheduleYear(2025)
                 .scheduleMonth(11)
                 .applyStartTime(startTime)
                 .applyEndTime(endTime)
                 .maxConcurrent(10)
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         when(monthlyScheduleConfigService.setApplyTerm(any(SetApplyTermCommand.class)))
@@ -272,7 +272,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/admin/schedule/set-apply-term")
-                        .with(user(createMockUserDetails(1)))
+                        .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -296,14 +296,14 @@ class AdminScheduleControllerTest {
         SetApplyTermRequest request = new SetApplyTermRequest(2025, 11, startTime, endTime);
 
         MonthlyScheduleConfig updatedConfig = MonthlyScheduleConfig.builder()
-                .limitId(1)
+                .limitId(1L)
                 .scheduleYear(2025)
                 .scheduleMonth(11)
                 .applyStartTime(startTime)
                 .applyEndTime(endTime)
                 .maxConcurrent(10)
-                .createdBy(1)
-                .updatedBy(1)
+                .createdBy(1L)
+                .updatedBy(1L)
                 .build();
 
         when(monthlyScheduleConfigService.setApplyTerm(any(SetApplyTermCommand.class)))
@@ -311,7 +311,7 @@ class AdminScheduleControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/admin/schedule/set-apply-term")
-                        .with(user(createMockUserDetails(1)))
+                        .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())

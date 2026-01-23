@@ -16,7 +16,7 @@ import lombok.Getter;
 public class UserInfoResponse extends ResponseDetail {
     
     /** 사용자 ID (PK) */
-    private final Integer userId;
+    private final Long userId;
     
     /** 사용자 이메일 */
     private final String email;
@@ -28,7 +28,7 @@ public class UserInfoResponse extends ResponseDetail {
     private final CodeType role;
     
     /** 소속 조직 ID */
-    private final Integer organizationId;
+    private final Long organizationId;
 
     /**
      * User 엔티티로부터 응답 DTO를 생성합니다.
