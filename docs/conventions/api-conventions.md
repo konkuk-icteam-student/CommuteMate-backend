@@ -386,10 +386,10 @@ GET /api/v1/users?sortBy=createdAt&direction=asc
 
 ### 토큰 타입
 
-| 토큰 | 용도 | 전달 방식 | 유효 시간 |
-|------|------|----------|----------|
-| **AccessToken** | API 요청 인증 | `Authorization` 헤더 | 1시간 |
-| **RefreshToken** | AccessToken 갱신 | `Authorization` 헤더 | 7일 |
+| 토큰 | 용도 | 전달 방식 | 저장 위치 | 유효 시간 |
+|------|------|----------|----------|----------|
+| **AccessToken** | API 요청 인증 | 응답 본문 + Authorization 헤더 | 클라이언트 (메모리/로컬스토리지) | 1시간 |
+| **RefreshToken** | AccessToken 갱신 | 응답 본문 | 클라이언트 + 데이터베이스 (User.refreshToken) | 7일 |
 
 ### 헤더 형식
 
@@ -403,7 +403,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 1. POST /api/v1/auth/login
    → AccessToken + RefreshToken 발급
-   → AccessToken은 HttpOnly Cookie로도 설정되지만, 인증 필터는 Authorization 헤더만 사용
+   → 응답 본문에 토큰 전달 (클라이언트에서 저장)
 
 2. GET /api/v1/tasks (인증 필요)
    → Authorization 헤더로 AccessToken 전달
@@ -415,6 +415,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 4. POST /api/v1/auth/logout
    → AccessToken 블랙리스트 등록
+   → User.refreshToken = null (DB 업데이트)
    → 토큰 무효화
 ```
 
@@ -428,8 +429,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **Request**:
 ```http
-POST /api/v1/work-schedules
+POST /api/v1/work-schedules/apply
 Content-Type: application/json
+Authorization: Bearer {accessToken}
 
 [
   {
@@ -481,6 +483,7 @@ Content-Type: application/json
 **Request**:
 ```http
 GET /api/v1/work-schedules?year=2025&month=11&page=0&size=10&sortBy=scheduleDate&direction=asc
+Authorization: Bearer {accessToken}
 ```
 
 **Response (200 OK)**:
