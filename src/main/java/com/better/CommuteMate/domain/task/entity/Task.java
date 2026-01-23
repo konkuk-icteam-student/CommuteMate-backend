@@ -29,7 +29,7 @@ public class Task {
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assignee_id", nullable = false)
+    @JoinColumn(name = "assignee_id")
     private User assignee;
 
     @Column(name = "task_date", nullable = false)
@@ -45,6 +45,12 @@ public class Task {
     @Column(name = "is_completed", nullable = false)
     @Builder.Default
     private Boolean isCompleted = false;
+
+    @Column(name = "completed_by_name", length = 50)
+    private String completedByName;
+
+    @Column(name = "completed_time")
+    private LocalTime completedTime;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -95,12 +101,33 @@ public class Task {
         this.updatedBy = updatedBy;
     }
 
-    // 팩토리 메서드
+    // 업무 완료 기록 (실제 수행자, 수행 시간)
+    public void completeRecord(String completedByName, LocalTime completedTime, Integer updatedBy) {
+        this.completedByName = completedByName;
+        this.completedTime = completedTime;
+        this.isCompleted = true;
+        this.updatedBy = updatedBy;
+    }
+
+    // 팩토리 메서드 (담당자 지정)
     public static Task create(String title, User assignee, LocalDate taskDate,
             LocalTime taskTime, CodeType taskType, Long createdBy) {
         return Task.builder()
                 .title(title)
                 .assignee(assignee)
+                .taskDate(taskDate)
+                .taskTime(taskTime)
+                .taskType(taskType)
+                .isCompleted(false)
+                .createdBy(createdBy)
+                .build();
+    }
+
+    // 팩토리 메서드 (담당자 미지정)
+    public static Task create(String title, LocalDate taskDate,
+            LocalTime taskTime, CodeType taskType, Integer createdBy) {
+        return Task.builder()
+                .title(title)
                 .taskDate(taskDate)
                 .taskTime(taskTime)
                 .taskType(taskType)

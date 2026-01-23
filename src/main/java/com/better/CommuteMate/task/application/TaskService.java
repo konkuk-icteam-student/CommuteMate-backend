@@ -80,7 +80,7 @@ public class TaskService {
     }
 
     /**
-     * 업무 생성
+     * 업무 생성 (담당자 미지정)
      */
     @Transactional
     public TaskResponse createTask(CreateTaskRequest request, Long currentUserId) {
@@ -89,7 +89,6 @@ public class TaskService {
 
         Task task = Task.create(
                 request.getTitle(),
-                assignee,
                 request.getTaskDate(),
                 request.getTaskTime(),
                 taskType,
@@ -132,6 +131,16 @@ public class TaskService {
     public TaskResponse setComplete(Long taskId, Boolean isCompleted, Long currentUserId) {
         Task task = findTaskById(taskId);
         task.setCompleted(isCompleted, currentUserId);
+        return TaskResponse.from(task);
+    }
+
+    /**
+     * 업무 완료 기록 (실제 수행자, 수행 시간)
+     */
+    @Transactional
+    public TaskResponse completeRecord(Long taskId, CompleteRecordRequest request, Integer currentUserId) {
+        Task task = findTaskById(taskId);
+        task.completeRecord(request.getCompletedByName(), request.getCompletedTime(), currentUserId);
         return TaskResponse.from(task);
     }
 
