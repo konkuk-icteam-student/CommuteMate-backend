@@ -16,7 +16,7 @@ RUN ./gradlew build -x test --no-daemon --build-cache && \
     rm -f build/libs/*-plain.jar
 
 # Run stage (Alpine 이미지로 경량화)
-FROM eclipse-temurin:17-jre-alpine
+FROM bellsoft/liberica-openjdk-alpine:17
 WORKDIR /app
 
 # curl 설치 (healthcheck용)
