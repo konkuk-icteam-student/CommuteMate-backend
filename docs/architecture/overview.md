@@ -285,7 +285,7 @@ Client
 Client
   ↓ POST /api/v1/auth/login
 [AuthController]
-  ↓ LoginRequest
+  ↓ LoginRequest (email, password)
 [AuthService]
   ↓ 이메일, 비밀번호
 [UserRepository] → User 조회
@@ -293,12 +293,14 @@ Client
 [PasswordEncoder] → 비밀번호 검증
   ↓ 검증 성공
 [JwtTokenProvider] → AccessToken + RefreshToken 생성
-  ↓ AuthTokens
+  ↓ AuthTokens (accessToken, refreshToken, expiresIn)
+[AuthService] → User.refreshToken 업데이트 (DB 저장)
+  ↓ User Entity (refreshToken 포함)
 [AuthService] → LoginResponse 변환
-  ↓ LoginResponse
+  ↓ LoginResponse (accessToken, refreshToken, expiresIn)
 [AuthController] → Response<LoginResponse>
   ↓ HTTP 200 OK
-Client (토큰 저장)
+Client (토큰을 로컬스토리지/메모리에 저장)
 ```
 
 ### 3. 근무 일정 신청 흐름
@@ -323,7 +325,7 @@ Client (인증된 사용자)
 [WorkScheduleController] → Response 변환
   ↓ Response<ApplyScheduleResultCommand>
 Client
-  - 201 Created: 모든 일정 신청 성공
+  - 200 OK: 모든 일정 신청 성공
   - 207 Multi-Status: 일부 성공, 일부 실패
   - 422 Unprocessable Entity: 모든 일정 신청 실패
 ```
@@ -355,7 +357,7 @@ HTTP Response
 
 **AccessToken**:
 - 유효 기간: 1시간
-- 전달 방식: Authorization 헤더 (Bearer {token})
+- 전달 방식: 응답 본문 + Authorization 헤더 (Bearer {token})
 - 용도: API 요청 인증
 
 **RefreshToken**:
