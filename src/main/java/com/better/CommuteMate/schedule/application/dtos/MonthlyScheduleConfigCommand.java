@@ -9,13 +9,13 @@ public record MonthlyScheduleConfigCommand(
         Integer maxConcurrent,
         LocalDateTime applyStartTime,
         LocalDateTime applyEndTime,
-        Integer userId) {
+        Long userId) {
 
     public static MonthlyScheduleConfigCommand from(
             Integer scheduleYear,
             Integer scheduleMonth,
             Integer maxConcurrent,
-            Integer userId) {
+            Long userId) {
         // 기본 신청 기간 설정: 해당 월의 전달 23일 00:00 ~ 27일 00:00
         LocalDateTime applyStartTime = getDefaultApplyStartTime(scheduleYear, scheduleMonth);
         LocalDateTime applyEndTime = getDefaultApplyEndTime(scheduleYear, scheduleMonth);

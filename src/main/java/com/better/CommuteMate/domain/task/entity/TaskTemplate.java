@@ -39,13 +39,13 @@ public class TaskTemplate {
     private LocalDateTime createdAt;
 
     @Column(name = "created_by")
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private Integer updatedBy;
+    private Long updatedBy;
 
     @PrePersist
     protected void onCreate() {
@@ -59,7 +59,7 @@ public class TaskTemplate {
     }
 
     // 템플릿 정보 수정
-    public void update(String templateName, String description, Integer updatedBy) {
+    public void update(String templateName, String description, Long updatedBy) {
         if (templateName != null) {
             this.templateName = templateName;
         }
@@ -70,7 +70,7 @@ public class TaskTemplate {
     }
 
     // 활성화/비활성화
-    public void setActive(Boolean isActive, Integer updatedBy) {
+    public void setActive(Boolean isActive, Long updatedBy) {
         this.isActive = isActive;
         this.updatedBy = updatedBy;
     }
@@ -90,7 +90,7 @@ public class TaskTemplate {
     }
 
     // 팩토리 메서드
-    public static TaskTemplate create(String templateName, String description, Integer createdBy) {
+    public static TaskTemplate create(String templateName, String description, Long createdBy) {
         return TaskTemplate.builder()
                 .templateName(templateName)
                 .description(description)

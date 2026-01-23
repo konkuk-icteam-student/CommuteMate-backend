@@ -17,7 +17,7 @@ public class BatchTaskItem {
 
     private String title; // 새로 생성 시 필수
 
-    private Integer assigneeId;
+    private Long assigneeId;
 
     private LocalTime taskTime;
 

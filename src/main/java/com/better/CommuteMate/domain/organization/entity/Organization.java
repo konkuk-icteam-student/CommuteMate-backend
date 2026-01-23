@@ -17,7 +17,7 @@ public class Organization {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "organization_id", nullable = false)
-    private Integer organizationId;
+    private Long organizationId;
 
     @Column(name = "name", length = 100, nullable = false)
     private String name;
@@ -29,13 +29,13 @@ public class Organization {
     private LocalDateTime createdAt;
 
     @Column(name = "created_by", nullable = false, updatable = false)
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private Integer updatedBy;
+    private Long updatedBy;
 
     @PrePersist
     protected void onCreate() {

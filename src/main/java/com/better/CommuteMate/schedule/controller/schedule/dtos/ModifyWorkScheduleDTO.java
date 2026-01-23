@@ -4,7 +4,7 @@ import java.util.List;
 
 public record ModifyWorkScheduleDTO(
         List<WorkScheduleDTO> applySlots,
-        List<Integer> cancelScheduleIds,
+        List<Long> cancelScheduleIds,
         String reason
 ) {
 }

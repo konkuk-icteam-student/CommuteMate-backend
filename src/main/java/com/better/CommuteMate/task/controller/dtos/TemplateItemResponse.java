@@ -16,7 +16,7 @@ public class TemplateItemResponse {
 
     private Long itemId;
     private String title;
-    private Integer defaultAssigneeId;
+    private Long defaultAssigneeId;
     private String defaultAssigneeName;
     private LocalTime taskTime;
     private String taskType;

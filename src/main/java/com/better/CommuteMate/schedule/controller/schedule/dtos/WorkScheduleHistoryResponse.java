@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Getter
 public class WorkScheduleHistoryResponse extends ResponseDetail {
-    private final Integer id;
+    private final Long id;
     private final LocalDateTime start;
     private final LocalDateTime end;
     private final CodeType status;
@@ -20,7 +20,7 @@ public class WorkScheduleHistoryResponse extends ResponseDetail {
     private final Long workDurationMinutes;
 
     @Builder
-    public WorkScheduleHistoryResponse(Integer id, LocalDateTime start, LocalDateTime end, CodeType status,
+    public WorkScheduleHistoryResponse(Long id, LocalDateTime start, LocalDateTime end, CodeType status,
                                        LocalDateTime actualStart, LocalDateTime actualEnd, Long workDurationMinutes) {
         this.id = id;
         this.start = start;

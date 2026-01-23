@@ -32,7 +32,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      */
     @Query("SELECT t FROM Task t WHERE t.assignee.userId = :assigneeId AND t.taskDate = :taskDate ORDER BY t.taskTime ASC")
     List<Task> findByAssigneeIdAndTaskDate(
-            @Param("assigneeId") Integer assigneeId,
+            @Param("assigneeId") Long assigneeId,
             @Param("taskDate") LocalDate taskDate);
 
     /**

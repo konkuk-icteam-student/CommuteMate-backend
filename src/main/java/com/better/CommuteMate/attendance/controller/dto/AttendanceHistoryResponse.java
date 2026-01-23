@@ -13,10 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AttendanceHistoryResponse {
-    private Integer attendanceId;
+    private Long attendanceId;
     private LocalDateTime checkTime;
     private CodeType checkType;
-    private Integer scheduleId;
+    private Long scheduleId;
     private LocalDateTime scheduleStartTime;
     private LocalDateTime scheduleEndTime;
 }

@@ -9,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface WorkAttendanceRepository extends JpaRepository<WorkAttendance, Integer> {
-    List<WorkAttendance> findByUser_UserIdAndCheckTime(Integer userId, LocalDateTime checkTime);
-    List<WorkAttendance> findBySchedule_ScheduleId(Integer scheduleId);
-    List<WorkAttendance> findByUser_UserIdAndCheckTimeBetween(Integer userId, LocalDateTime start, LocalDateTime end);
+    List<WorkAttendance> findByUser_UserIdAndCheckTime(Long userId, LocalDateTime checkTime);
+    List<WorkAttendance> findBySchedule_ScheduleId(Long scheduleId);
+    List<WorkAttendance> findByUser_UserIdAndCheckTimeBetween(Long userId, LocalDateTime start, LocalDateTime end);
 }

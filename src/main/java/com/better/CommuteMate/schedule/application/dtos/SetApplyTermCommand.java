@@ -7,14 +7,14 @@ public record SetApplyTermCommand(
         Integer scheduleMonth,
         LocalDateTime applyStartTime,
         LocalDateTime applyEndTime,
-        Integer userId
+        Long userId
 ) {
     public static SetApplyTermCommand from(
             Integer scheduleYear,
             Integer scheduleMonth,
             LocalDateTime applyStartTime,
             LocalDateTime applyEndTime,
-            Integer userId) {
+            Long userId) {
         return new SetApplyTermCommand(
                 scheduleYear,
                 scheduleMonth,

@@ -10,44 +10,38 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "faq")
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class Faq {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // category 엔티티와 FK 연관관계
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
-
     @Column(length = 100, nullable = false)
     private String title;
+
+    @Column(name = "complainant_name", length = 30)
+    private String complainantName;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String answer;
+
     @Column(columnDefinition = "TEXT")
     private String etc;
 
-    @Column(name = "attachment_url", length = 150)
-    private String attachmentUrl;
-
-    @Column(name = "writer_name", length = 30, nullable = false)
-    private String writerName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "writer_id", nullable = false)
+    private User writer;
 
     @Column(name = "last_edited_at", nullable = false)
     private LocalDateTime lastEditedAt;
 
-    @Column(name = "last_editor_name", length = 30, nullable = false)
-    private String lastEditorName;
-
-    @Column(length = 30, nullable = false)
-    private String manager;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -58,17 +52,72 @@ public class Faq {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "writer_id", nullable = false)
-    private User writer;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "last_editor_id", nullable = false)
-    private User lastEditor;
-
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        lastEditedAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+        this.lastEditedAt = LocalDateTime.now();
+        this.deletedFlag = false;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        this.lastEditedAt = LocalDateTime.now();
+    }
+
+    @Builder
+    private Faq(
+            String title,
+            String complainantName,
+            String content,
+            String answer,
+            String etc,
+            User writer,
+            Category category
+    ) {
+        this.title = title;
+        this.complainantName = complainantName;
+        this.content = content;
+        this.answer = answer;
+        this.etc = etc;
+        this.writer = writer;
+        this.category = category;
+    }
+
+    public static Faq create(
+            String title,
+            String complainantName,
+            String content,
+            String answer,
+            String etc,
+            User writer,
+            Category category
+    ) {
+        return Faq.builder()
+                .title(title)
+                .complainantName(complainantName)
+                .content(content)
+                .answer(answer)
+                .etc(etc)
+                .writer(writer)
+                .category(category)
+                .build();
+    }
+
+    public void update(
+            String title,
+            String complainantName,
+            String content,
+            String answer,
+            String etc,
+            Category category,
+            User writer
+    ) {
+        this.title = title;
+        this.complainantName = complainantName;
+        this.content = content;
+        this.answer = answer;
+        this.etc = etc;
+        this.category = category;
+        this.writer = writer;
     }
 }
