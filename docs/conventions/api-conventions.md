@@ -167,9 +167,8 @@ public class RegisterRequest {
 ```java
 public class WorkScheduleDTO {
     private Long scheduleId;
-    private LocalDate scheduleDate;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private LocalDateTime start;
+    private LocalDateTime end;
     private CodeType statusCode;  // ✅ CodeType Enum 사용
 
     // ❌ private String statusCode;  // 문자열 사용 금지
@@ -388,7 +387,7 @@ GET /api/v1/users?sortBy=createdAt&direction=asc
 
 | 토큰 | 용도 | 전달 방식 | 저장 위치 | 유효 시간 |
 |------|------|----------|----------|----------|
-| **AccessToken** | API 요청 인증 | 응답 본문 + Authorization 헤더 | 클라이언트 (메모리/로컬스토리지) | 1시간 |
+| **AccessToken** | API 요청 인증 | 응답 본문 + Authorization 헤더 + HttpOnly Cookie | 클라이언트 (메모리/로컬스토리지) | 1시간 |
 | **RefreshToken** | AccessToken 갱신 | 응답 본문 | 클라이언트 + 데이터베이스 (User.refreshToken) | 7일 |
 
 ### 헤더 형식
@@ -403,10 +402,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 1. POST /api/v1/auth/login
    → AccessToken + RefreshToken 발급
-   → 응답 본문에 토큰 전달 (클라이언트에서 저장)
+   → 응답 본문 및 HttpOnly Cookie로 토큰 전달
+   → 클라이언트는 안전한 곳에 저장
 
 2. GET /api/v1/tasks (인증 필요)
-   → Authorization 헤더로 AccessToken 전달
+   → Authorization 헤더로 AccessToken 전달 (또는 쿠키)
    → 서버에서 검증 후 응답
 
 3. AccessToken 만료 시
@@ -433,31 +433,31 @@ POST /api/v1/work-schedules/apply
 Content-Type: application/json
 Authorization: Bearer {accessToken}
 
-[
-  {
-    "scheduleDate": "2025-11-15",
-    "startTime": "09:00:00",
-    "endTime": "18:00:00"
-  },
-  {
-    "scheduleDate": "2025-11-16",
-    "startTime": "09:00:00",
-    "endTime": "18:00:00"
-  }
-]
+{
+  "slots": [
+    {
+      "start": "2025-11-15T09:00:00",
+      "end": "2025-11-15T18:00:00"
+    },
+    {
+      "start": "2025-11-16T09:00:00",
+      "end": "2025-11-16T18:00:00"
+    }
+  ]
+}
 ```
 
-**Response (200 OK - 모두 성공)**:
+**Response (201 Created - 모두 성공)**:
 ```json
 {
   "isSuccess": true,
-  "message": "모든 일정 신청이 완료되었습니다.",
+  "message": "신청하신 일정이 모두 등록되었습니다.",
   "details": {
     "success": [
-      { "scheduleId": 1, "scheduleDate": "2025-11-15", ... },
-      { "scheduleId": 2, "scheduleDate": "2025-11-16", ... }
+      { "scheduleId": 1, "start": "2025-11-15T09:00:00", "end": "2025-11-15T18:00:00", ... },
+      { "scheduleId": 2, "start": "2025-11-16T09:00:00", "end": "2025-11-16T18:00:00", ... }
     ],
-    "failure": []
+    "fail": []
   }
 }
 ```
@@ -469,10 +469,10 @@ Authorization: Bearer {accessToken}
   "message": "일부 일정 신청이 실패했습니다.",
   "details": {
     "success": [
-      { "scheduleId": 1, "scheduleDate": "2025-11-15", ... }
+      { "scheduleId": 1, "start": "2025-11-15T09:00:00", "end": "2025-11-15T18:00:00", ... }
     ],
-    "failure": [
-      { "scheduleDate": "2025-11-16", "reason": "월별 제한 초과" }
+    "fail": [
+      { "start": "2025-11-16T09:00:00", "end": "2025-11-16T18:00:00", "reason": "월별 제한 초과" }
     ]
   }
 }
@@ -495,9 +495,8 @@ Authorization: Bearer {accessToken}
     "content": [
       {
         "scheduleId": 1,
-        "scheduleDate": "2025-11-15",
-        "startTime": "09:00:00",
-        "endTime": "18:00:00",
+        "start": "2025-11-15T09:00:00",
+        "end": "2025-11-15T18:00:00",
         "statusCode": "WS02"
       }
     ],
