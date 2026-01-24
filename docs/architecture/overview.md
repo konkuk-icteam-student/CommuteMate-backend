@@ -299,8 +299,8 @@ Client
 [AuthService] → LoginResponse 변환
   ↓ LoginResponse (accessToken, refreshToken, expiresIn)
 [AuthController] → Response<LoginResponse>
-  ↓ HTTP 200 OK
-Client (토큰을 로컬스토리지/메모리에 저장)
+  ↓ HTTP 200 OK (Body + Cookie)
+Client (토큰을 로컬스토리지/메모리/쿠키에 저장)
 ```
 
 ### 3. 근무 일정 신청 흐름
@@ -325,7 +325,7 @@ Client (인증된 사용자)
 [WorkScheduleController] → Response 변환
   ↓ Response<ApplyScheduleResultCommand>
 Client
-  - 200 OK: 모든 일정 신청 성공
+  - 201 Created: 모든 일정 신청 성공
   - 207 Multi-Status: 일부 성공, 일부 실패
   - 422 Unprocessable Entity: 모든 일정 신청 실패
 ```
@@ -357,7 +357,7 @@ HTTP Response
 
 **AccessToken**:
 - 유효 기간: 1시간
-- 전달 방식: 응답 본문 + Authorization 헤더 (Bearer {token})
+- 전달 방식: 응답 본문 + Authorization 헤더 (Bearer {token}) + HttpOnly Cookie (accessToken)
 - 용도: API 요청 인증
 
 **RefreshToken**:
@@ -373,7 +373,7 @@ HTTP Response
    Client → POST /api/v1/auth/login
           → AuthService.login()
           → JwtTokenProvider.generateTokens()
-          → AccessToken + RefreshToken 반환
+          → AccessToken + RefreshToken 반환 (Body + Cookie)
    ```
 
 2. **API 요청**:
@@ -538,8 +538,8 @@ public enum CodeType {
 ### 상위/하위 문서
 - ⬆️ **상위**: [아키텍처 README](./README.md)
 - ➡️ **관련**:
+  - [아키텍처 개요](./overview.md)
   - [코드베이스 구조](./codebase-structure.md)
-  - [설계 결정 기록](./design-decisions.md)
 
 ### 실무 적용
 - **신규 개발자**: 이 문서를 먼저 읽어 전체 구조 이해

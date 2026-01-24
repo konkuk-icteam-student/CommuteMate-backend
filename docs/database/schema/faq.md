@@ -325,16 +325,12 @@ private Faq faq;
 - **중간 테이블**: `manager_category`
 - **특징**: 배정 일시(`assigned_at`) 추적 가능
 
-**Java 코드**:
-```java
-// Category.java
-@OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<ManagerCategory> managers = new ArrayList<>();
-
-// Manager.java (예상)
-@OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<ManagerCategory> managerCategories = new ArrayList<>();
-```
+    **Java 코드**:
+    ```java
+    // Category.java
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ManagerCategory> managers = new ArrayList<>();
+    ```
 
 ---
 

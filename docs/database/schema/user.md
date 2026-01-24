@@ -94,12 +94,11 @@ CREATE TABLE `user` (
 
 ## 🔗 관계
 
-### ERD 다이어그램
-```
-User (1) ──< (N) Faq (writer)
-User (1) ──< (N) Faq (lastEditor)
-User (1) ──< (N) ManagerCategory
-```
+    ### ERD 다이어그램
+    ```
+    User (1) ──< (N) Faq (writer)
+    User (1) ──< (N) Faq (lastEditor)
+    ```
 
 ### 관계 상세
 
@@ -117,16 +116,7 @@ private User lastEditor;
 - **관계**: 한 명의 사용자는 여러 FAQ를 작성/수정할 수 있음
 - **참조 필드**: `Faq.writer`, `Faq.lastEditor`
 
-#### 2. ManagerCategory (1:N)
-```java
-@OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<ManagerCategory> managerCategories = new ArrayList<>();
-```
-- **관계**: 관리자는 여러 카테고리를 담당할 수 있음
-- **제약**: roleCode가 RL02(관리자)인 경우만 가능
-- **참조 필드**: `ManagerCategory.manager`
-
-#### 3. Organization 관계 (역정규화)
+    #### 2. Organization 관계 (역정규화)
 
 **설계 결정**: User 엔티티에서 Organization을 `organizationId (Long)` 컬럼으로만 저장
 

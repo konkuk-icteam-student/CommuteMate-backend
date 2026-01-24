@@ -129,7 +129,7 @@ Content-Type: application/json
   "message": "신청하신 일정이 모두 실패하였습니다.",
   "details": {
     "success": [],
-    "fail": [
+    "failure": [
       {
         "start": "2026-01-22T09:00:00",
         "end": "2026-01-22T10:30:00"
@@ -481,7 +481,7 @@ curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
   -H "Authorization: Bearer <USER_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "applySlots": [
+    "slots": [
       {
         "start": "2026-01-25T09:00:00",
         "end": "2026-01-25T11:00:00"
@@ -538,7 +538,7 @@ async function applyWorkSchedule(slots: Slot[]) {
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ applySlots: slots })
+    body: JSON.stringify({ slots: slots })
   });
 
   const data: ApplyResponse = await response.json();
@@ -570,7 +570,7 @@ curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
   -H "Authorization: Bearer <USER_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "applySlots": [
+    "slots": [
       {
         "start": "2026-01-25T09:00:00",
         "end": "2026-01-25T10:30:00"  # 1시간 30분만!
@@ -602,7 +602,7 @@ curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
   -H "Authorization: Bearer <USER_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "applySlots": [
+    "slots": [
       {
         "start": "2026-01-28T09:00:00",
         "end": "2026-01-28T13:00:00"  # 4시간 (총 29시간 = 초과!)
@@ -658,21 +658,11 @@ curl -X PATCH "http://localhost:8080/api/v1/work-schedules/modify" \
     "reason": "시간 변경 요청"
   }'
 
-# 응답 200
+# 응답 201
 {
   "isSuccess": true,
-  "message": "근무 일정 수정 완료",
-  "details": {
-    "cancelledSchedules": [123],
-    "newSchedules": [
-      {
-        "id": 999,
-        "start": "2026-01-26T10:00:00",
-        "end": "2026-01-26T12:00:00",
-        "status": "WS02"  # 신청 기간 내면 즉시 승인
-      }
-    ]
-  }
+  "message": "신청하신 일정이 모두 수정(요청)되었습니다.",
+  "details": null
 }
 ```
 
