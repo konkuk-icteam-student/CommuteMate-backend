@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class FaqController {
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping
+    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> createFaq(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid PostFaqRequest request
@@ -61,6 +63,7 @@ public class FaqController {
             @ApiResponse(responseCode = "409", description = "삭제된 FAQ는 수정 불가")
     })
     @PutMapping("/{faqId}")
+    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> updateFaq(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long faqId,
