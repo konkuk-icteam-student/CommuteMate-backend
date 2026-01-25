@@ -7,8 +7,8 @@ public record PostManagerRequest(
         @Schema(description = "담당자 이름", example = "홍길동")
         String name,
 
-        @Schema(description = "소속", example = "정보운영팀")
-        String team,
+        @Schema(description = "소속 id", example = "1")
+        Long teamId,
 
         @Schema(description = "카테고리 id", example = "1")
         Long categoryId,
