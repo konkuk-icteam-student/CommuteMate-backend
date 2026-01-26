@@ -2,6 +2,8 @@ package com.better.CommuteMate.faq.application;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
+import com.better.CommuteMate.domain.faq.repository.FaqQueryRepository;
+import com.better.CommuteMate.faq.dto.request.FaqSearchScope;
 import com.better.CommuteMate.faq.dto.request.PostFaqRequest;
 import com.better.CommuteMate.faq.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.domain.faq.entity.Faq;
@@ -10,6 +12,8 @@ import com.better.CommuteMate.domain.faq.repository.FaqHistoryRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
+import com.better.CommuteMate.faq.dto.response.GetFaqListResponse;
+import com.better.CommuteMate.faq.dto.response.GetFaqListWrapper;
 import com.better.CommuteMate.faq.dto.response.PostFaqResponse;
 import com.better.CommuteMate.faq.dto.response.PutFaqUpdateResponse;
 import com.better.CommuteMate.global.exceptions.BasicException;
@@ -19,8 +23,14 @@ import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -91,5 +101,19 @@ public class FaqService {
         faqHistoryRepository.save(faqhistory);
 
         return new PutFaqUpdateResponse(faqId);
+    }
+
+    @Transactional(readOnly = true)
+    public GetFaqListWrapper getFaqList(Long teamId, Long categoryId, String keyword, FaqSearchScope searchScope, LocalDate startDate, LocalDate endDate, int page) {
+        Pageable pageable = PageRequest.of(page, 10);
+
+        Page<Faq> faqPage = faqRepository.searchFaqs(teamId, categoryId, keyword, searchScope, startDate, endDate, pageable);
+
+        List<GetFaqListResponse> faqs = faqPage.getContent().stream()
+                .map(GetFaqListResponse::new)
+                .toList();
+
+        return new GetFaqListWrapper(faqs, faqPage.getNumber(), faqPage.getTotalPages());
+
     }
 }

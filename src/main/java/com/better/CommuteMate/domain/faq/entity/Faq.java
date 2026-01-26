@@ -36,9 +36,6 @@ public class Faq {
     @JoinColumn(name = "writer_id", nullable = false)
     private User writer;
 
-    @Column(name = "last_edited_at", nullable = false)
-    private LocalDateTime lastEditedAt;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
@@ -55,13 +52,12 @@ public class Faq {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-        this.lastEditedAt = LocalDateTime.now();
         this.deletedFlag = false;
     }
 
     @PreUpdate
     void onUpdate() {
-        this.lastEditedAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 
     @Builder

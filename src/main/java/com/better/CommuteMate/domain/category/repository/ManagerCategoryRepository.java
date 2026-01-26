@@ -1,6 +1,7 @@
 package com.better.CommuteMate.domain.category.repository;
 
 import com.better.CommuteMate.domain.category.entity.ManagerCategory;
+import com.better.CommuteMate.domain.team.entity.Team;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +23,7 @@ public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory
     """)
     List<ManagerCategory> getManagers(
             @Param("categoryId") Long categoryId,
-            @Param("team") String team,
+            @Param("team") Team team,
             @Param("favoriteOnly") boolean favoriteOnly
     );
 

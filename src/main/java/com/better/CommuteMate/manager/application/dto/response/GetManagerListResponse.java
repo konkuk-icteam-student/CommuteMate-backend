@@ -24,8 +24,11 @@ public class GetManagerListResponse{
     @Schema(description = "담당자 이름", example = "홍길동")
     private final String managerName;
 
-    @Schema(description = "소속", example = "정보운영팀")
-    private final String team;
+    @Schema(description = "소속 ID", example = "1")
+    private final Long teamId;
+
+    @Schema(description = "소속 이름", example = "정보운영팀")
+    private final String teamName;
 
     @Schema(description = "전화번호", example = "01012345678")
     private final String phonenum;
@@ -36,8 +39,8 @@ public class GetManagerListResponse{
         this.categoryFavorite = category.isFavorite();
         this.managerId = manager.getId();
         this.managerName = manager.getName();
-        this.team = manager.getTeam();
+        this.teamId = manager.getTeam().getId();
+        this.teamName = manager.getTeam().getName();
         this.phonenum = manager.getPhonenum();
-
     }
 }

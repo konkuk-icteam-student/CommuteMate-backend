@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface FaqRepository extends JpaRepository<Faq, Long> {
+public interface FaqRepository extends JpaRepository<Faq, Long>, FaqQueryRepository {
 
     boolean existsByCategoryId(Long categoryId);
 
