@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -42,7 +41,6 @@ public class FaqService {
     private final FaqHistoryRepository faqHistoryRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
-    private final FaqQueryRepository faqQueryRepository;
 
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
 
@@ -109,7 +107,7 @@ public class FaqService {
     public GetFaqListWrapper getFaqList(Long teamId, Long categoryId, String keyword, FaqSearchScope searchScope, LocalDate startDate, LocalDate endDate, int page) {
         Pageable pageable = PageRequest.of(page, 10);
 
-        Page<Faq> faqPage = faqQueryRepository.searchFaqs(teamId, categoryId, keyword, searchScope, startDate, endDate, pageable);
+        Page<Faq> faqPage = faqRepository.searchFaqs(teamId, categoryId, keyword, searchScope, startDate, endDate, pageable);
 
         List<GetFaqListResponse> faqs = faqPage.getContent().stream()
                 .map(GetFaqListResponse::new)
