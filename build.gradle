@@ -47,8 +47,22 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
     // DevTools
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    //Querydsl
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+    annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+def querydslDir = layout.buildDirectory.dir("generated/querydsl")
+
+sourceSets {
+    main.java.srcDirs += querydslDir
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.generatedSourceOutputDirectory.set(file(querydslDir))
 }
