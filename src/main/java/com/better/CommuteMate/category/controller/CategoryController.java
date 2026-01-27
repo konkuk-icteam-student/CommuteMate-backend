@@ -75,14 +75,13 @@ public class CategoryController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "전체 카테고리 조회 성공",
-                    content = @Content(schema = @Schema(implementation = GetCategoryListResponse.class))),
+                    content = @Content(schema = @Schema(implementation = GetCategoryListWrapper.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     })
     @GetMapping
-    public ResponseEntity<Response> getAllCategories() {
-        List<GetCategoryListResponse> list = categoryService.getAllCategories();
+    public ResponseEntity<Response> getCategoryList() {
         return ResponseEntity.ok(
-                new Response(true, "전체 카테고리 조회 성공", new GetCategoryListWrapper(list))
+                new Response(true, "전체 카테고리 조회 성공", categoryService.getCategoryList())
         );
     }
 

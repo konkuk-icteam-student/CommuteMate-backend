@@ -2,6 +2,7 @@ package com.better.CommuteMate.category.application;
 
 import com.better.CommuteMate.category.application.dto.request.PostCategoryRequest;
 import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
+import com.better.CommuteMate.category.application.dto.response.GetCategoryListWrapper;
 import com.better.CommuteMate.category.application.dto.response.PatchFavoriteCategoryResponse;
 import com.better.CommuteMate.category.application.dto.response.PostCategoryResponse;
 import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,15 +52,14 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<GetCategoryListResponse> getAllCategories() {
+    public GetCategoryListWrapper getCategoryList() {
         List<Category> categories = categoryRepository.findAll();
 
-        return categories.stream()
-                .map(category -> new GetCategoryListResponse(
-                        category.getId(),
-                        category.getName()
-                ))
-                .collect(Collectors.toList());
+        List<GetCategoryListResponse> result = categories.stream()
+                .map(category -> new GetCategoryListResponse(category.getId(), category.getName()))
+                .toList();
+
+        return new GetCategoryListWrapper(result);
     }
 
     public void deleteCategory(Long categoryId) {
