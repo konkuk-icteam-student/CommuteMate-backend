@@ -80,9 +80,7 @@ public class CategoryController {
     })
     @GetMapping
     public ResponseEntity<Response> getCategoryList() {
-        return ResponseEntity.ok(
-                new Response(true, "전체 카테고리 조회 성공", categoryService.getCategoryList())
-        );
+        return ResponseEntity.ok(new Response(true, "전체 카테고리 조회 성공", categoryService.getCategoryList()));
     }
 
     @Operation(
@@ -90,7 +88,7 @@ public class CategoryController {
             description = "category를 삭제할 수 있습니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "200", description = "카테고리 삭제 성공"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 categoryId"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
@@ -99,9 +97,7 @@ public class CategoryController {
             @PathVariable Long categoryId
     ) {
         categoryService.deleteCategory(categoryId);
-        return ResponseEntity.ok(
-                new Response(true, "성공적으로 삭제되었습니다.", null)
-        );
+        return ResponseEntity.ok(new Response(true, "카테고리 삭제 성공", null));
     }
 
     @Operation(
