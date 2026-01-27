@@ -1,9 +1,9 @@
 package com.better.CommuteMate.category.application;
 
-import com.better.CommuteMate.category.application.dto.request.PostCategoryRegisterRequest;
+import com.better.CommuteMate.category.application.dto.request.PostCategoryRequest;
 import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
 import com.better.CommuteMate.category.application.dto.response.PatchFavoriteCategoryResponse;
-import com.better.CommuteMate.category.application.dto.response.PostCategoryRegisterResponse;
+import com.better.CommuteMate.category.application.dto.response.PostCategoryResponse;
 import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
 import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
 import com.better.CommuteMate.domain.category.entity.Category;
@@ -26,19 +26,17 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final FaqRepository faqRepository;
 
-    public PostCategoryRegisterResponse registerCategory(PostCategoryRegisterRequest request) {
+    public PostCategoryResponse registerCategory(PostCategoryRequest request) {
 
         if (categoryRepository.existsByName(request.categoryName())) {
             throw new CategoryException(CategoryErrorCode.CATEGORY_ALREADY_EXISTS);
         }
 
-        Category category = Category.builder()
-                .name(request.categoryName())
-                .build();
+        Category category = new Category(request.categoryName());
 
         Category saved = categoryRepository.save(category);
 
-        return new PostCategoryRegisterResponse(saved.getId());
+        return new PostCategoryResponse(saved.getId());
     }
 
     public PutCategoryUpdateResponse updateCategory(Long categoryId, PutCategoryUpdateRequest request) {

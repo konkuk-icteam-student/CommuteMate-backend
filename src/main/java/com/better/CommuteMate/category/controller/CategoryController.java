@@ -1,11 +1,11 @@
 package com.better.CommuteMate.category.controller;
 
 import com.better.CommuteMate.category.application.CategoryService;
-import com.better.CommuteMate.category.application.dto.request.PostCategoryRegisterRequest;
+import com.better.CommuteMate.category.application.dto.request.PostCategoryRequest;
 import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
 import com.better.CommuteMate.category.application.dto.response.GetCategoryListWrapper;
 import com.better.CommuteMate.category.application.dto.response.PatchFavoriteCategoryResponse;
-import com.better.CommuteMate.category.application.dto.response.PostCategoryRegisterResponse;
+import com.better.CommuteMate.category.application.dto.response.PostCategoryResponse;
 import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
 import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
 import com.better.CommuteMate.global.controller.dtos.Response;
@@ -36,7 +36,7 @@ public class CategoryController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "카테고리 등록 성공",
-                    content = @Content(schema = @Schema(implementation = PostCategoryRegisterResponse.class))),
+                    content = @Content(schema = @Schema(implementation = PostCategoryResponse.class))),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터",
                     content = @Content),
             @ApiResponse(responseCode = "409", description = "이미 존재하는 분류명",
@@ -45,7 +45,7 @@ public class CategoryController {
                     content = @Content)
     })    @PostMapping
     public ResponseEntity<Response> registerCategory(
-            @RequestBody PostCategoryRegisterRequest request
+            @RequestBody PostCategoryRequest request
     ) {
         return ResponseEntity.ok(new Response(true, "카테고리 등록 성공", categoryService.registerCategory(request)));
     }
