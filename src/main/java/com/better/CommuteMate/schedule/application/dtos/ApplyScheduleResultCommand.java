@@ -1,0 +1,18 @@
+package com.better.CommuteMate.schedule.application.dtos;
+
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
+
+import java.util.List;
+
+public record ApplyScheduleResultCommand(
+        List<WorkScheduleDTO> success,
+        List<WorkScheduleDTO> fail,
+        List<Long> failIds
+) {
+    public static ApplyScheduleResultCommand from(List<WorkScheduleDTO> success, List<WorkScheduleDTO> fail) {
+        return new ApplyScheduleResultCommand(success, fail,null);
+    }
+    public static ApplyScheduleResultCommand fromIds(List<WorkScheduleDTO> success, List<Long> fail) {
+        return new ApplyScheduleResultCommand(success, null, fail);
+    }
+}

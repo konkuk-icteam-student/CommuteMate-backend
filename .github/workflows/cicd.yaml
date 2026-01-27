@@ -1,0 +1,232 @@
+name: CI/CD 파이프라인
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io                        # GitHub Container Registry
+  OWNER: ${{ github.repository_owner }}    # 조직/사용자 자동 참조
+  IMAGE_NAME: ${{ github.repository_owner }}/commutemate-server  # Helm values의 springApp.image와 일치하도록 설정
+
+jobs:
+  # ===================================================================
+  # Job 1: 테스트 실행 (build-and-push와 병렬 실행)
+  # ===================================================================
+  test:
+    name: 테스트 실행
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 소스 코드 체크아웃
+      - name: 소스 코드 체크아웃
+        uses: actions/checkout@v4
+
+      # 2. JDK 17 설정
+      - name: JDK 17 설정
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'           # Java 17 사용
+          distribution: 'temurin'      # Eclipse Temurin 배포판
+          cache: 'gradle'              # Gradle 캐싱 활성화
+
+      # 3. Gradle 실행 권한 부여
+      - name: Gradle 실행 권한 부여
+        run: chmod +x gradlew
+
+      # 4. Gradle 테스트 실행 (빌드 캐시 활성화)
+      - name: 테스트 실행
+        run: ./gradlew test --no-daemon --build-cache
+        env:
+          GRADLE_BUILD_CACHE_ENABLED: true
+
+      # 5. 테스트 결과 업로드 (실패 시에도 업로드)
+      - name: 테스트 결과 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/test-results/
+
+  # ===================================================================
+  # Job 2: 컨테이너 이미지 빌드 및 GHCR 푸시 (test와 병렬 실행)
+  # ===================================================================
+  build-and-push:
+    name: 컨테이너 이미지 빌드 및 푸시
+    runs-on: ubuntu-latest
+    # needs 제거 - test와 병렬 실행
+    # PR인 경우 빌드만 하고 push는 하지 않음
+    if: github.event_name == 'push'
+
+    # GHCR 접근 권한 설정
+    permissions:
+      contents: read      # 소스 코드 읽기
+      packages: write     # GHCR에 이미지 푸시
+      id-token: write
+      attestations: write
+
+    # 다음 Job에 전달할 출력값
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build-and-push.outputs.digest }}
+
+    steps:
+      # 1. 소스 코드 체크아웃
+      - name: 소스 코드 체크아웃
+        uses: actions/checkout@v4
+
+      # 2. BuildKit 설정 (OCI 표준 이미지 빌드)
+      - name: BuildKit 설정
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+
+      # 3. GHCR 로그인 (GITHUB_TOKEN 사용)
+      - name: GHCR 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. OCI 이미지 메타데이터 추출 (태그, 레이블)
+      - name: 컨테이너 이미지 메타데이터 추출
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # 1. 브랜치 이름 태그 (예: main)
+            type=ref,event=branch
+            # 2. 커밋 해시 태그 (예: sha-cf5126e...)
+            type=sha,format=long,prefix=sha-
+            # 3. Latest 태그 (메인 브랜치일 때만)
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # 5. 컨테이너 이미지 빌드 및 푸시
+      - name: 컨테이너 이미지 빌드 및 푸시
+        id: build-and-push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          #cache-from: type=gha
+          #cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          outputs: type=image,oci-mediatypes=true
+
+      # 6. 이미지 출처 증명 생성 (보안 강화)
+      - name: 이미지 출처 증명 생성
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build-and-push.outputs.digest }}
+          push-to-registry: true
+
+  # ===================================================================
+  # Job 3: SSH를 통한 Docker Compose 배포
+  # test와 build-and-push 둘 다 성공해야 실행함
+  # ===================================================================
+  deploy-to-server:
+    name: 서버에 Docker Compose 배포
+    runs-on: ubuntu-latest
+    needs: [test, build-and-push]    # 테스트와 빌드 모두 성공 후 실행
+    if: github.event_name == 'push'
+
+    steps:
+      # 1. 소스 코드 체크아웃 (docker-compose.yaml 사용)
+      - name: 소스 코드 체크아웃
+        uses: actions/checkout@v4
+
+      # 2. sshpass 설치 (SSH 비밀번호 인증용)
+      - name: sshpass 설치
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      # 3. docker-compose.yaml을 서버로 복사
+      - name: 배포 파일 서버로 복사
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p ${{ secrets.DEPLOY_PATH }}"
+          sshpass -e scp -o StrictHostKeyChecking=no docker-compose.yaml ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
+
+      # 4. 서버에서 .env 파일의 IMAGE_TAG 업데이트
+      - name: .env 파일 생성 및 업데이트
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # .env 파일이 없으면 생성
+            touch .env
+
+            # 기존 내용을 유지하면서 필요한 변수만 업데이트
+            # 1. DOCKER_REGISTRY 업데이트
+            if grep -q "^DOCKER_REGISTRY=" .env; then
+              sed -i "s|^DOCKER_REGISTRY=.*|DOCKER_REGISTRY=${{ env.REGISTRY }}|" .env
+            else
+              echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> .env
+            fi
+
+            # 2. DOCKER_IMAGE_NAME 업데이트
+            if grep -q "^DOCKER_IMAGE_NAME=" .env; then
+              sed -i "s|^DOCKER_IMAGE_NAME=.*|DOCKER_IMAGE_NAME=${{ env.IMAGE_NAME }}|" .env
+            else
+              echo "DOCKER_IMAGE_NAME=${{ env.IMAGE_NAME }}" >> .env
+            fi
+
+            # 3. IMAGE_TAG 업데이트
+            if grep -q "^IMAGE_TAG=" .env; then
+              sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=sha-${{ github.sha }}|" .env
+            else
+              echo "IMAGE_TAG=sha-${{ github.sha }}" >> .env
+            fi
+
+            echo "✅ .env 파일이 업데이트되었습니다."
+            cat .env
+          EOF
+
+      # 서버 로그인 (이미지가 Public이면 생략 가능)
+      - name: 서버에서 GHCR 로그인
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          EOF
+
+      - name: Docker Compose 배포
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # 최신 상태 반영을 위해 down 후 up (또는 pull 후 up -d)
+            docker-compose pull app
+            docker-compose up -d --remove-orphans
+            docker image prune -f
+          EOF
+
+      # 7. 배포 상태 확인
+      - name: 배포 상태 확인
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd ${{ secrets.DEPLOY_PATH }}
+            echo "📊 실행 중인 컨테이너:"
+            docker-compose ps
+
+            echo ""
+            echo "🔍 최근 로그 (마지막 20줄):"
+            docker-compose logs --tail=20 app
+          EOF

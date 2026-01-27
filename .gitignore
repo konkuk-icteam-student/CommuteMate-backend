@@ -6,6 +6,7 @@ out/
 # IDE
 .idea/
 *.iml
+CLAUDE.md
 
 # Logs & temp
 *.log
@@ -32,3 +33,15 @@ src/main/resources/application-*.local.yml
 # DB dump
 *.sql
 dump/
+
+# Documentation & Guides
+GlobalExceptionHandler_Guide.md
+PROJECT_STRUCTURE.md
+
+pull_request_template.md
+
+# Postman
+postman/
+
+# Override .env.example (remove from tracking)
+.env.example
