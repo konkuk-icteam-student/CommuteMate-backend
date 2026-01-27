@@ -1,11 +1,10 @@
 package com.better.CommuteMate.team.controller;
 
-import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
-import com.better.CommuteMate.category.application.dto.response.GetCategoryListWrapper;
 import com.better.CommuteMate.global.controller.dtos.Response;
-import com.better.CommuteMate.manager.application.dto.response.PostManagerResponse;
 import com.better.CommuteMate.team.application.TeamService;
 import com.better.CommuteMate.team.application.dto.request.PostTeamRequest;
+import com.better.CommuteMate.team.application.dto.response.GetTeamListWrapper;
+import com.better.CommuteMate.team.application.dto.response.PostTeamResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,7 +37,7 @@ public class TeamController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "소속 등록 성공",
-                    content = @Content(schema = @Schema(implementation = PostManagerResponse.class))),
+                    content = @Content(schema = @Schema(implementation = PostTeamResponse.class))),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content),
             @ApiResponse(responseCode = "409", description = "이미 등록된 소속", content = @Content),
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
@@ -56,7 +55,7 @@ public class TeamController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "소속 전체 목록 조회 성공",
-                    content = @Content(schema = @Schema(implementation = GetCategoryListResponse.class))),
+                    content = @Content(schema = @Schema(implementation = GetTeamListWrapper.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     })
     @GetMapping
@@ -74,7 +73,7 @@ public class TeamController {
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @DeleteMapping("/{teamId}")
-    public ResponseEntity<Response> deleteCategory(
+    public ResponseEntity<Response> deleteTeam(
             @PathVariable Long teamId
     ) {
         teamService.deleteTeam(teamId);

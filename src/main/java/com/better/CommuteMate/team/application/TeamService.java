@@ -1,14 +1,8 @@
 package com.better.CommuteMate.team.application;
 
-import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
-import com.better.CommuteMate.category.application.dto.response.GetCategoryListWrapper;
-import com.better.CommuteMate.domain.category.entity.Category;
-import com.better.CommuteMate.domain.manager.repository.ManagerRepository;
 import com.better.CommuteMate.domain.team.entity.Team;
 import com.better.CommuteMate.domain.team.repository.TeamRepository;
-import com.better.CommuteMate.global.exceptions.CategoryException;
 import com.better.CommuteMate.global.exceptions.TeamException;
-import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.TeamErrorCode;
 import com.better.CommuteMate.team.application.dto.request.PostTeamRequest;
 import com.better.CommuteMate.team.application.dto.response.GetTeamListResponse;
@@ -19,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +20,6 @@ import java.util.stream.Collectors;
 public class TeamService {
 
     private final TeamRepository teamRepository;
-    private final ManagerRepository managerRepository;
 
     public PostTeamResponse registerTeam(PostTeamRequest request) {
 
