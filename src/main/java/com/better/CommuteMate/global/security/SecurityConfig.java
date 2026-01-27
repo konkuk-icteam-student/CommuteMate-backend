@@ -37,11 +37,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 허용할 출처: 환경변수 + localhost 개발 환경
+        // 허용할 출처: 환경변수 + localhost 개발 환경 + Vercel 배포
         configuration.setAllowedOrigins(List.of(
                 frontendUrl,
                 "http://localhost:3000",
-                "http://localhost:5173"
+                "http://localhost:5173",
+                "https://commute-worklog-fe-deploy.vercel.app"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
