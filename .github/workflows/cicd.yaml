@@ -4,12 +4,9 @@ on:
   push:
     branches:
       - main
-      - dev
-      - feat/work-schedule
   pull_request:
     branches:
       - main
-      - dev
 
 env:
   REGISTRY: ghcr.io                        # GitHub Container Registry
