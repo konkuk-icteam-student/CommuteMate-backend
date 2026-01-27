@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 @Getter
-@Schema(description = "Category 리스트 응답 DTO")
+@Schema(description = "Category 상세 정보 조회 응답 DTO")
 public class GetCategoryListResponse {
 
     @Schema(description = "분류 ID", example = "1")
