@@ -55,8 +55,8 @@ public class FaqService {
                 request.content(),
                 request.answer(),
                 request.etc(),
-                writer,
-                category
+                category,
+                writer
         );
 
         faqRepository.save(faq);
@@ -95,6 +95,8 @@ public class FaqService {
         );
 
         faqRepository.save(faq);
+
+        faqHistoryRepository.deleteByFaqIdAndEditedAt(faqId, LocalDate.now());
 
         FaqHistory faqhistory = FaqHistory.create(faq);
         faqHistoryRepository.save(faqhistory);
