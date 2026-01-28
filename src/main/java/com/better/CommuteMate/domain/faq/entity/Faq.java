@@ -5,6 +5,7 @@ import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -40,8 +41,8 @@ public class Faq {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "updated_date", nullable = false)
+    private LocalDate updatedDate;
 
     @Column(name = "deleted_flag", nullable = false)
     private Boolean deletedFlag;
@@ -51,32 +52,13 @@ public class Faq {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        this.updatedDate = LocalDate.now();
         this.deletedFlag = false;
     }
 
     @PreUpdate
     void onUpdate() {
-        this.createdAt = LocalDateTime.now();
-    }
-
-    @Builder
-    private Faq(
-            String title,
-            String complainantName,
-            String content,
-            String answer,
-            String etc,
-            User writer,
-            Category category
-    ) {
-        this.title = title;
-        this.complainantName = complainantName;
-        this.content = content;
-        this.answer = answer;
-        this.etc = etc;
-        this.writer = writer;
-        this.category = category;
+        this.updatedDate = LocalDate.now();
     }
 
     public static Faq create(
@@ -85,18 +67,18 @@ public class Faq {
             String content,
             String answer,
             String etc,
-            User writer,
-            Category category
+            Category category,
+            User writer
     ) {
-        return Faq.builder()
-                .title(title)
-                .complainantName(complainantName)
-                .content(content)
-                .answer(answer)
-                .etc(etc)
-                .writer(writer)
-                .category(category)
-                .build();
+        Faq faq = new Faq();
+        faq.title = title;
+        faq.complainantName = complainantName;
+        faq.content = content;
+        faq.answer = answer;
+        faq.etc = etc;
+        faq.category = category;
+        faq.writer = writer;
+        return faq;
     }
 
     public void update(
