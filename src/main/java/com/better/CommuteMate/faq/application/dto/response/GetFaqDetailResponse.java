@@ -76,6 +76,6 @@ public class GetFaqDetailResponse extends ResponseDetail {
                 ))
                 .toList();
         this.editedDates = editedDates;
-        this.deletedAt = faq.getDeletedAt() != null ? faq.getDeletedAt().toLocalDate() : null;
+        this.deletedAt = faq.getDeletedAt();
     }
 }
