@@ -121,11 +121,10 @@ public class FaqService {
 
     @Transactional(readOnly = true)
     public GetFaqDetailResponse getFaqDetailByDate(Long faqId, LocalDate date) {
-
         Faq faq = faqRepository.findById(faqId)
                 .orElseThrow(() -> FaqException.of(FaqErrorCode.FAQ_NOT_FOUND));
 
-        if (faq.getDeletedAt() != null && faq.getDeletedAt().toLocalDate().equals(date)) {
+        if (faq.getDeletedAt() != null && faq.getDeletedAt().equals(date)) {
             throw FaqException.of(FaqErrorCode.INVALID_FAQ_HISTORY_DATE);
         }
 
@@ -135,5 +134,16 @@ public class FaqService {
         List<LocalDate> editedDates = faqHistoryRepository.findAllEditedDatesByFaqId(faqId);
 
         return new GetFaqDetailResponse(faq, history, editedDates);
+    }
+
+    public void deleteFaq(Long faqId) {
+        Faq faq = faqRepository.findById(faqId)
+                .orElseThrow(() -> FaqException.of(FaqErrorCode.FAQ_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(faq.getDeletedFlag())) {
+            throw FaqException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
+        }
+
+        faq.delete();
     }
 }

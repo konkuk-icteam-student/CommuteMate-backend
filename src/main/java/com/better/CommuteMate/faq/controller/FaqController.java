@@ -87,15 +87,16 @@ public class FaqController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "FAQ 삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음", content = @Content)
+            @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음", content = @Content),
+            @ApiResponse(responseCode = "400", description = "이미 삭제된 FAQ", content = @Content)
     })
     @DeleteMapping("/{faqId}")
-    public ResponseEntity<?> deleteFAQ(
+    public ResponseEntity<Response> deleteFAQ(
             @Parameter(description = "삭제할 FAQ ID", required = true)
             @PathVariable Long faqId
     ) {
-        // TODO: FAQ 삭제 로직 구현
-        return null;
+        faqService.deleteFaq(faqId);
+        return ResponseEntity.ok(new Response(true, "FAQ 삭제 성공", null));
     }
 
     @Operation(
@@ -113,7 +114,7 @@ public class FaqController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content)
     })
     @GetMapping("/{faqId}")
-    public ResponseEntity<?> getFaqDetail(
+    public ResponseEntity<Response> getFaqDetail(
             @Parameter(description = "조회할 FAQ ID", required = true)
             @PathVariable Long faqId,
 
