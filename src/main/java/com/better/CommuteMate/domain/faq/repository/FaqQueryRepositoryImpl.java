@@ -60,17 +60,18 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
         }
 
         if (startDate != null) {
-            where.and(faq.createdAt.goe(startDate.atStartOfDay()));
+            where.and(faq.updatedDate.goe(startDate));
         }
+
         if (endDate != null) {
-            where.and(faq.createdAt.loe(endDate.atTime(23, 59, 59)));
+            where.and(faq.updatedDate.loe(endDate));
         }
 
         List<Faq> contents = queryFactory
                 .selectFrom(faq)
                 .join(faq.category).fetchJoin()
                 .where(where)
-                .orderBy(faq.createdAt.desc())
+                .orderBy(faq.updatedDate.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
