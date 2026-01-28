@@ -8,6 +8,7 @@ import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdate
 import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
+import com.better.CommuteMate.domain.category.repository.ManagerCategoryRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.global.exceptions.CategoryException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
@@ -24,6 +25,7 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final FaqRepository faqRepository;
+    private final ManagerCategoryRepository managerCategoryRepository;
 
     public PostCategoryResponse registerCategory(PostCategoryRequest request) {
 
@@ -65,7 +67,7 @@ public class CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
 
-        if (faqRepository.existsByCategoryId(categoryId)) {
+        if (faqRepository.existsByCategoryId(categoryId)|| managerCategoryRepository.existsByCategoryId(categoryId)) {
             throw new CategoryException(CategoryErrorCode.CATEGORY_DELETE_NOT_ALLOWED);
         }
 

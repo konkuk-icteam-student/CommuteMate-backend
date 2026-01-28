@@ -13,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory, Long> {
     boolean existsByManagerIdAndCategoryId(Long managerId, Long categoryId);
+    boolean existsByCategoryId(Long categoryId);
     Optional<ManagerCategory>  findByManagerIdAndCategoryId(Long managerId, Long categoryId);
 
     @Query("""
