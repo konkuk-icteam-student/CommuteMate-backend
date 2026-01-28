@@ -3,7 +3,6 @@ package com.better.CommuteMate.category.application;
 import com.better.CommuteMate.category.application.dto.request.PostCategoryRequest;
 import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
 import com.better.CommuteMate.category.application.dto.response.GetCategoryListWrapper;
-import com.better.CommuteMate.category.application.dto.response.PatchFavoriteCategoryResponse;
 import com.better.CommuteMate.category.application.dto.response.PostCategoryResponse;
 import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
 import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
@@ -73,12 +72,4 @@ public class CategoryService {
         categoryRepository.delete(category);
     }
 
-    public PatchFavoriteCategoryResponse updateFavorite(Long categoryId, boolean favorite) {
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
-
-        category.updateFavorite(favorite);
-
-        return new PatchFavoriteCategoryResponse(category.getId(), category.isFavorite());
-    }
 }

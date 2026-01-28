@@ -17,6 +17,7 @@ import com.better.CommuteMate.global.exceptions.error.TeamErrorCode;
 import com.better.CommuteMate.manager.application.dto.request.PostManagerRequest;
 import com.better.CommuteMate.manager.application.dto.response.GetManagerListResponse;
 import com.better.CommuteMate.manager.application.dto.response.GetManagerListWrapper;
+import com.better.CommuteMate.manager.application.dto.response.PatchFavoriteManagerResponse;
 import com.better.CommuteMate.manager.application.dto.response.PostManagerResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -68,9 +69,20 @@ public class ManagerService {
         List<ManagerCategory> managerCategories = managerCategoryRepository.getManagers(categoryId, team, favoriteOnly);
 
         List<GetManagerListResponse> result = managerCategories.stream()
-                .map(mc -> new GetManagerListResponse(mc.getCategory(), mc.getManager()))
+                .map(GetManagerListResponse::new)
                 .toList();
 
         return new GetManagerListWrapper(result);
+    }
+
+
+    public PatchFavoriteManagerResponse updateFavorite(Long managerId, Long categoryId, boolean favorite) {
+        ManagerCategory managerCategory = managerCategoryRepository
+                .findByManagerIdAndCategoryId(managerId, categoryId)
+                .orElseThrow(() -> new ManagerException(ManagerErrorCode.MANAGER_CATEGORY_NOT_FOUND));
+
+        managerCategory.updateFavorite(favorite);
+
+        return new PatchFavoriteManagerResponse(managerCategory);
     }
 }

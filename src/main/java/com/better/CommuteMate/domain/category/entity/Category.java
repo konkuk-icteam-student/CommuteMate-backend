@@ -18,10 +18,6 @@ public class Category {
     @Column(length = 100, nullable = false)
     private String name;  // 분류명
 
-    // 즐겨찾기 여부 (기본값 false)
-    @Column(name = "favorite", nullable = false)
-    private boolean favorite = false;
-
     // 카테고리 담당자 리스트
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ManagerCategory> managers = new ArrayList<>();
@@ -32,9 +28,5 @@ public class Category {
 
     public void updateName(String newName) {
         this.name = newName;
-    }
-
-    public void updateFavorite(boolean favorite) {
-        this.favorite = favorite;
     }
 }
