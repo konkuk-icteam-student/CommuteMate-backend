@@ -48,7 +48,7 @@ public class Faq {
     private Boolean deletedFlag;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private LocalDate deletedAt;
 
     @PrePersist
     protected void onCreate() {
@@ -98,4 +98,10 @@ public class Faq {
         this.category = category;
         this.writer = writer;
     }
+
+    public void delete() {
+        this.deletedFlag = true;
+        this.deletedAt = LocalDate.now();
+    }
+
 }

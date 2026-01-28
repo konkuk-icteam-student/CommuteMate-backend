@@ -11,6 +11,7 @@ import com.better.CommuteMate.domain.faq.repository.FaqHistoryRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
+import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
 import com.better.CommuteMate.faq.application.dto.response.PostFaqResponse;
@@ -116,5 +117,33 @@ public class FaqService {
 
         return new GetFaqListWrapper(faqs, faqPage.getNumber(), faqPage.getTotalPages());
 
+    }
+
+    @Transactional(readOnly = true)
+    public GetFaqDetailResponse getFaqDetailByDate(Long faqId, LocalDate date) {
+        Faq faq = faqRepository.findById(faqId)
+                .orElseThrow(() -> FaqException.of(FaqErrorCode.FAQ_NOT_FOUND));
+
+        if (faq.getDeletedAt() != null && faq.getDeletedAt().equals(date)) {
+            throw FaqException.of(FaqErrorCode.INVALID_FAQ_HISTORY_DATE);
+        }
+
+        FaqHistory history = faqHistoryRepository.findByFaqIdAndEditedAt(faqId, date)
+                .orElseThrow(() -> FaqException.of(FaqErrorCode.INVALID_FAQ_HISTORY_DATE));
+
+        List<LocalDate> editedDates = faqHistoryRepository.findAllEditedDatesByFaqId(faqId);
+
+        return new GetFaqDetailResponse(faq, history, editedDates);
+    }
+
+    public void deleteFaq(Long faqId) {
+        Faq faq = faqRepository.findById(faqId)
+                .orElseThrow(() -> FaqException.of(FaqErrorCode.FAQ_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(faq.getDeletedFlag())) {
+            throw FaqException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
+        }
+
+        faq.delete();
     }
 }
