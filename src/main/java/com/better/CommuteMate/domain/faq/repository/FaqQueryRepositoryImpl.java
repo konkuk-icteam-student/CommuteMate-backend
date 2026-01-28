@@ -4,7 +4,7 @@ import com.better.CommuteMate.domain.category.entity.QManagerCategory;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.faq.entity.QFaq;
 import com.better.CommuteMate.domain.manager.entity.QManager;
-import com.better.CommuteMate.faq.dto.request.FaqSearchScope;
+import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
