@@ -83,4 +83,22 @@ public class ManagerController {
         return ResponseEntity.ok(new Response(true, message, managerService.updateFavorite(managerId, categoryId, favorite)));
     }
 
+
+    @Operation(
+            summary = "담당자 삭제",
+            description = "담당자를 삭제할 수 있습니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "담당자 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 managerId"),
+            @ApiResponse(responseCode = "409", description = "해당 담당자에 카테고리가 존재하여 삭제 불가"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @DeleteMapping("/{managerId}")
+    public ResponseEntity<Response> deleteManager(
+            @PathVariable Long managerId
+    ) {
+        managerService.deleteManager(managerId);
+        return ResponseEntity.ok(new Response(true, "담당자 삭제 성공", null));
+    }
 }

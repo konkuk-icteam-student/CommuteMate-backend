@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory, Long> {
     boolean existsByManagerIdAndCategoryId(Long managerId, Long categoryId);
     boolean existsByCategoryId(Long categoryId);
+    boolean existsByManagerId(Long managerId);
     Optional<ManagerCategory>  findByManagerIdAndCategoryId(Long managerId, Long categoryId);
 
     @Query("""
@@ -28,5 +29,4 @@ public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory
             @Param("team") Team team,
             @Param("favoriteOnly") boolean favoriteOnly
     );
-
 }
