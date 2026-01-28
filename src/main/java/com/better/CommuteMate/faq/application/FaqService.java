@@ -2,20 +2,19 @@ package com.better.CommuteMate.faq.application;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
-import com.better.CommuteMate.domain.faq.repository.FaqQueryRepository;
-import com.better.CommuteMate.faq.dto.request.FaqSearchScope;
-import com.better.CommuteMate.faq.dto.request.PostFaqRequest;
-import com.better.CommuteMate.faq.dto.request.PutFaqUpdateRequest;
+import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
+import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
+import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.faq.entity.FaqHistory;
 import com.better.CommuteMate.domain.faq.repository.FaqHistoryRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
-import com.better.CommuteMate.faq.dto.response.GetFaqListResponse;
-import com.better.CommuteMate.faq.dto.response.GetFaqListWrapper;
-import com.better.CommuteMate.faq.dto.response.PostFaqResponse;
-import com.better.CommuteMate.faq.dto.response.PutFaqUpdateResponse;
+import com.better.CommuteMate.faq.application.dto.response.GetFaqListResponse;
+import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
+import com.better.CommuteMate.faq.application.dto.response.PostFaqResponse;
+import com.better.CommuteMate.faq.application.dto.response.PutFaqUpdateResponse;
 import com.better.CommuteMate.global.exceptions.BasicException;
 import com.better.CommuteMate.global.exceptions.CategoryException;
 import com.better.CommuteMate.global.exceptions.FaqException;
@@ -56,8 +55,8 @@ public class FaqService {
                 request.content(),
                 request.answer(),
                 request.etc(),
-                writer,
-                category
+                category,
+                writer
         );
 
         faqRepository.save(faq);
@@ -96,6 +95,8 @@ public class FaqService {
         );
 
         faqRepository.save(faq);
+
+        faqHistoryRepository.deleteByFaqIdAndEditedAt(faqId, LocalDate.now());
 
         FaqHistory faqhistory = FaqHistory.create(faq);
         faqHistoryRepository.save(faqhistory);

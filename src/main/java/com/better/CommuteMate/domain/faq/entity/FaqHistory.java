@@ -3,6 +3,7 @@ package com.better.CommuteMate.domain.faq.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -43,7 +44,7 @@ public class FaqHistory {
     private String writerName;  // 작성자 이름
 
     @Column(name = "edited_at", nullable = false)
-    private LocalDateTime editedAt;  // 수정된 날짜
+    private LocalDate editedAt;  // 수정된 날짜
 
     @Column(name = "category_name", length = 100, nullable = false)
     private String categoryName;  // 분류명
@@ -55,48 +56,24 @@ public class FaqHistory {
 
     @PrePersist
     protected void onCreate() {
-        this.editedAt = LocalDateTime.now();
-    }
-
-    @Builder
-    private FaqHistory(
-            Faq faq,
-            String title,
-            String complainantName,
-            String content,
-            String answer,
-            String etc,
-            String writerName,
-            List<String> managerNames,
-            String categoryName
-    ) {
-        this.faq = faq;
-        this.title = title;
-        this.complainantName = complainantName;
-        this.content = content;
-        this.answer = answer;
-        this.etc = etc;
-        this.writerName = writerName;
-        this.managerNames = managerNames;
-        this.categoryName = categoryName;
-        this.editedAt = LocalDateTime.now();
+        this.editedAt = LocalDate.now();
     }
 
     public static FaqHistory create(Faq faq) {
-        return FaqHistory.builder()
-                .faq(faq)
-                .title(faq.getTitle())
-                .complainantName(faq.getComplainantName())
-                .content(faq.getContent())
-                .answer(faq.getAnswer())
-                .etc(faq.getEtc())
-                .writerName(faq.getWriter().getName())
-                .managerNames(faq.getCategory().getManagers()
-                        .stream()
-                        .map(mc -> mc.getManager().getName())
-                        .toList())
-                .categoryName(faq.getCategory().getName())
-                .build();
+        FaqHistory history = new FaqHistory();
+        history.faq = faq;
+        history.title = faq.getTitle();
+        history.complainantName = faq.getComplainantName();
+        history.content = faq.getContent();
+        history.answer = faq.getAnswer();
+        history.etc = faq.getEtc();
+        history.writerName = faq.getWriter().getName();
+        history.managerNames = faq.getCategory().getManagers()
+                .stream()
+                .map(mc -> mc.getManager().getName())
+                .toList();
+        history.categoryName = faq.getCategory().getName();
+        return history;
     }
 
 }

@@ -4,7 +4,7 @@ import com.better.CommuteMate.domain.category.entity.QManagerCategory;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.faq.entity.QFaq;
 import com.better.CommuteMate.domain.manager.entity.QManager;
-import com.better.CommuteMate.faq.dto.request.FaqSearchScope;
+import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -60,17 +60,18 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
         }
 
         if (startDate != null) {
-            where.and(faq.createdAt.goe(startDate.atStartOfDay()));
+            where.and(faq.updatedDate.goe(startDate));
         }
+
         if (endDate != null) {
-            where.and(faq.createdAt.loe(endDate.atTime(23, 59, 59)));
+            where.and(faq.updatedDate.loe(endDate));
         }
 
         List<Faq> contents = queryFactory
                 .selectFrom(faq)
                 .join(faq.category).fetchJoin()
                 .where(where)
-                .orderBy(faq.createdAt.desc())
+                .orderBy(faq.updatedDate.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

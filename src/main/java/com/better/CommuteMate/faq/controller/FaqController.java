@@ -1,9 +1,9 @@
 package com.better.CommuteMate.faq.controller;
 
 import com.better.CommuteMate.auth.application.CustomUserDetails;
-import com.better.CommuteMate.faq.dto.request.FaqSearchScope;
-import com.better.CommuteMate.faq.dto.request.PostFaqRequest;
-import com.better.CommuteMate.faq.dto.request.PutFaqUpdateRequest;
+import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
+import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
+import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.faq.application.FaqService;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import io.swagger.v3.oas.annotations.Operation;
