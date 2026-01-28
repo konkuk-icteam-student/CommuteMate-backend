@@ -2,9 +2,7 @@ package com.better.CommuteMate.category.controller;
 
 import com.better.CommuteMate.category.application.CategoryService;
 import com.better.CommuteMate.category.application.dto.request.PostCategoryRequest;
-import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
 import com.better.CommuteMate.category.application.dto.response.GetCategoryListWrapper;
-import com.better.CommuteMate.category.application.dto.response.PatchFavoriteCategoryResponse;
 import com.better.CommuteMate.category.application.dto.response.PostCategoryResponse;
 import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
 import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
@@ -18,8 +16,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -98,26 +94,6 @@ public class CategoryController {
     ) {
         categoryService.deleteCategory(categoryId);
         return ResponseEntity.ok(new Response(true, "카테고리 삭제 성공", null));
-    }
-
-    @Operation(
-            summary = "Category 즐겨찾기 등록 및 해제",
-            description = "Category를 즐겨찾기 등록 및 해제합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "즐겨찾기 등록 및 해제 성공",
-                    content = @Content(schema = @Schema(implementation = PatchFavoriteCategoryResponse.class))),
-            @ApiResponse(responseCode = "404", description = "분류 ID 없음"),
-            @ApiResponse(responseCode = "500", description = "서버 오류")
-    })
-    @PatchMapping("/{categoryId}")
-    public ResponseEntity<Response> updateFavoriteCategory(
-            @PathVariable Long categoryId,
-            @RequestParam boolean favorite
-    ) {
-        String message = favorite ? "즐겨찾기 등록 성공" : "즐겨찾기 해제 성공";
-
-        return ResponseEntity.ok(new Response(true, message, categoryService.updateFavorite(categoryId, favorite)));
     }
 
 }

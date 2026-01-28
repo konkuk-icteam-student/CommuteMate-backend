@@ -27,6 +27,9 @@ public class ManagerCategory {
     @Column(name = "assigned_at", nullable = false)
     private LocalDateTime assignedAt;
 
+    @Column(name = "favorite", nullable = false)
+    private boolean favorite = false;
+
      //insert 직전에 자동으로 assignedAt 세팅
     @PrePersist
     protected void onCreate() {
@@ -38,5 +41,9 @@ public class ManagerCategory {
         mc.manager = manager;
         mc.category = category;
         return mc;
+    }
+
+    public void updateFavorite(boolean favorite) {
+        this.favorite = favorite;
     }
 }

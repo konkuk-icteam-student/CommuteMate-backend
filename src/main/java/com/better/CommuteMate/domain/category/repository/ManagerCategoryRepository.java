@@ -8,18 +8,19 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory, Long> {
     boolean existsByManagerIdAndCategoryId(Long managerId, Long categoryId);
-
+    Optional<ManagerCategory>  findByManagerIdAndCategoryId(Long managerId, Long categoryId);
 
     @Query("""
     select mc
     from ManagerCategory mc
     where (:categoryId is null or mc.category.id = :categoryId)
       and (:team is null or mc.manager.team = :team)
-      and (:favoriteOnly = false or mc.category.favorite = true)
+      and (:favoriteOnly = false or mc.favorite = true)
     """)
     List<ManagerCategory> getManagers(
             @Param("categoryId") Long categoryId,
