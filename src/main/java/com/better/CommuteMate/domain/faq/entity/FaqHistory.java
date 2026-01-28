@@ -1,10 +1,10 @@
 package com.better.CommuteMate.domain.faq.entity;
 
+import com.better.CommuteMate.domain.faq.embedded.ManagerSnapshot;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -37,8 +37,7 @@ public class FaqHistory {
             name = "faq_history_managers",
             joinColumns = @JoinColumn(name = "faq_history_id")
     )
-    @Column(name = "manager_name", length = 30, nullable = false)
-    private List<String> managerNames;
+    private List<ManagerSnapshot> managers;
 
     @Column(name = "writer_name", length = 30, nullable = false)
     private String writerName;  // 작성자 이름
@@ -68,9 +67,13 @@ public class FaqHistory {
         history.answer = faq.getAnswer();
         history.etc = faq.getEtc();
         history.writerName = faq.getWriter().getName();
-        history.managerNames = faq.getCategory().getManagers()
+        history.managers = faq.getCategory().getManagers()
                 .stream()
-                .map(mc -> mc.getManager().getName())
+                .map(mc -> new ManagerSnapshot(
+                        mc.getManager().getName(),
+                        mc.getManager().getTeam().getName(),
+                        mc.getCategory().getName()
+                ))
                 .toList();
         history.categoryName = faq.getCategory().getName();
         return history;
