@@ -1,5 +1,6 @@
 package com.better.CommuteMate.team.application;
 
+import com.better.CommuteMate.domain.manager.repository.ManagerRepository;
 import com.better.CommuteMate.domain.team.entity.Team;
 import com.better.CommuteMate.domain.team.repository.TeamRepository;
 import com.better.CommuteMate.global.exceptions.TeamException;
@@ -20,6 +21,7 @@ import java.util.List;
 public class TeamService {
 
     private final TeamRepository teamRepository;
+    private final ManagerRepository managerRepository;
 
     public PostTeamResponse registerTeam(PostTeamRequest request) {
 
@@ -47,6 +49,10 @@ public class TeamService {
     public void deleteTeam(Long teamId) {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new TeamException(TeamErrorCode.TEAM_NOT_FOUND));
+
+        if (managerRepository.existsByTeamId(teamId)) {
+            throw new TeamException(TeamErrorCode.TEAM_DELETE_NOT_ALLOWED);
+        }
 
         teamRepository.delete(team);
     }

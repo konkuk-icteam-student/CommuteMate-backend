@@ -70,6 +70,7 @@ public class TeamController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "소속 삭제 성공"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 teamId"),
+            @ApiResponse(responseCode = "409", description = "해당 소속에 담당자가 존재하여 삭제 불가"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @DeleteMapping("/{teamId}")
