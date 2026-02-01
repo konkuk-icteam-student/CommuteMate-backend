@@ -91,7 +91,6 @@ public class ManagerController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "담당자 삭제 성공"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 managerId"),
-            @ApiResponse(responseCode = "409", description = "해당 담당자에 카테고리가 존재하여 삭제 불가"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @DeleteMapping("/{managerId}")
