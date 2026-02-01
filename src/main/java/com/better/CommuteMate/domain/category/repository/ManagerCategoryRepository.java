@@ -1,6 +1,7 @@
 package com.better.CommuteMate.domain.category.repository;
 
 import com.better.CommuteMate.domain.category.entity.ManagerCategory;
+import com.better.CommuteMate.domain.manager.entity.Manager;
 import com.better.CommuteMate.domain.team.entity.Team;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,7 +15,7 @@ import java.util.Optional;
 public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory, Long> {
     boolean existsByManagerIdAndCategoryId(Long managerId, Long categoryId);
     boolean existsByCategoryId(Long categoryId);
-    boolean existsByManagerId(Long managerId);
+    void deleteByManager(Manager manager);
     Optional<ManagerCategory>  findByManagerIdAndCategoryId(Long managerId, Long categoryId);
 
     @Query("""

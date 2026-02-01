@@ -91,9 +91,7 @@ public class ManagerService {
         Manager manager = managerRepository.findById(managerId)
                 .orElseThrow(() -> new ManagerException(ManagerErrorCode.MANAGER_NOT_FOUND));
 
-        if (managerCategoryRepository.existsByManagerId(managerId)) {
-            throw new ManagerException(ManagerErrorCode.MANAGER_DELETE_NOT_ALLOWED);
-        }
+        managerCategoryRepository.deleteByManager(manager);
 
         managerRepository.delete(manager);
     }
