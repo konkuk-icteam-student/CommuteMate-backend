@@ -36,14 +36,6 @@ public class Manager {
     @Column(length = 30)
     private String phonenum;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
-
     public Manager(String name, Team team, String phonenum) {
         this.name = name;
         this.team = team;
