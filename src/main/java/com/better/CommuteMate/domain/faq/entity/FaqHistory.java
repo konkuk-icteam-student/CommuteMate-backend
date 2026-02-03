@@ -17,7 +17,7 @@ public class FaqHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 100, nullable = false)
+    @Column(length = 30, nullable = false)
     private String title;  // 제목
 
     @Column(name = "complainant_name", length = 30)
