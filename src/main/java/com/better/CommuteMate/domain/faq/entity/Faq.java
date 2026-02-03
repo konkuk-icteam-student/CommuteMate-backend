@@ -21,7 +21,7 @@ public class Faq {
     @Column(length = 30, nullable = false)
     private String title;
 
-    @Column(name = "complainant_name", length = 30)
+    @Column(name = "complainant_name", length = 50)
     private String complainantName;
 
     @Column(columnDefinition = "TEXT", nullable = false)

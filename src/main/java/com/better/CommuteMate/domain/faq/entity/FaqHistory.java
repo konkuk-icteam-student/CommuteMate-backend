@@ -20,7 +20,7 @@ public class FaqHistory {
     @Column(length = 30, nullable = false)
     private String title;  // 제목
 
-    @Column(name = "complainant_name", length = 30)
+    @Column(name = "complainant_name", length = 50)
     private String complainantName; //민원인 이름
 
     @Column(columnDefinition = "TEXT", nullable = false)
@@ -39,7 +39,7 @@ public class FaqHistory {
     )
     private List<ManagerSnapshot> managers;
 
-    @Column(name = "writer_name", length = 30, nullable = false)
+    @Column(name = "writer_name", length = 50, nullable = false)
     private String writerName;  // 작성자 이름
 
     @Column(name = "edited_at", nullable = false)
