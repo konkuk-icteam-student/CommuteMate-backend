@@ -51,6 +51,9 @@ services:
       # Frontend URL
       FRONTEND_URL: ${FRONTEND_URL}
 
+      # CORS 추가 허용 출처 (쉼표로 구분)
+      CORS_ADDITIONAL_ORIGINS: ${CORS_ADDITIONAL_ORIGINS:-}
+
       # Schedule Configuration
       SCHEDULE_CONCURRENT_MAX: ${SCHEDULE_CONCURRENT_MAX:-5}
 
