@@ -58,7 +58,7 @@ public class ManagerService {
     }
 
     @Transactional(readOnly = true)
-    public GetManagerListWrapper getManagerList(Long categoryId, Long teamId, boolean favoriteOnly) {
+    public GetManagerListWrapper getManagerList(Long categoryId, Long teamId, boolean favoriteOnly, String searchName) {
         Team team = null;
 
         if (teamId != null) {
@@ -66,7 +66,7 @@ public class ManagerService {
                     .orElseThrow(() -> new TeamException(TeamErrorCode.TEAM_NOT_FOUND));
         }
 
-        List<ManagerCategory> managerCategories = managerCategoryRepository.getManagers(categoryId, team, favoriteOnly);
+        List<ManagerCategory> managerCategories = managerCategoryRepository.getManagers(categoryId, team, favoriteOnly, searchName);
 
         List<GetManagerListResponse> result = managerCategories.stream()
                 .map(GetManagerListResponse::new)
