@@ -66,8 +66,10 @@ schedule/
 - `schedule/` - 근무 일정 (WorkSchedule, MonthlyScheduleLimit)
 - `workchangerequest/` - 근무 변경 요청
 - `workattendance/` - 출근 기록
-- `faq/` - **FAQ 시스템 (신규)** ✨
-  - Category, Faq, FaqHistory
+- `faq/` - faq (Faq, FaqHistory)
+- `category/` - faq 분류 (Category, ManagerCategory)
+- `manager/` - 담당자 
+- `team/` - 소속
 
 #### `global/` - 전역 설정 및 공통 코드
 ```
@@ -106,37 +108,36 @@ global/
 - **RL**: 사용자 역할 (STUDENT, ADMIN)
 
 ## FAQ 시스템
-
-자주 묻는 질문을 관리하는 FAQ 시스템이 추가되었습니다.
+근로 사무실에서 수행되는 다양한 행정 업무를 체계적으로 기록·관리할 수 있는 업무일지 관리 시스템
 
 ### 주요 기능
-- **작성자/수정자 추적**: Writer, LastEditor로 변경 이력 추적
-- **수정 이력 관리**: FaqHistory로 모든 수정 사항 기록
-- **소프트 삭제**: deletedFlag를 사용한 논리적 삭제
-
-### 엔티티 구조
-- `Category` - 분류
-- `Faq` - FAQ 게시글
-- `FaqHistory` - 수정 이력
+- **faq 등록/수정/삭제**: faq을 생성 및 수정하고 삭제 시 소프트 삭제 처리로 삭제 이후에도 정보 보존
+- **수정 이력 관리**: FaqHistory로 모든 수정 사항을 기록하여 조회 시 과거 수정 내역 조회 가능
+- **검색 필터링**: 날짜, 분류, 소속 기준으로 FAQ 목록 필터링 가능하며 키워드 기반 검색 기능도 지원 
+- **담당자/소속/분류 관리** : 소속 및 분류 등록/조회/삭제 가능, 담당자 등록/조회/수정/삭제 가능
 
 ## 데이터베이스 엔티티 목록
 
 https://dbdiagram.io/d/ku_ict-68db5736d2b621e422822757
 
-| 도메인 | 엔티티 | 테이블명 | 설명 |
-|--------|--------|--------|------|
-| code | CodeMajor | code_major | 코드 대분류 |
-| code | CodeSub | code_sub | 코드 소분류 |
-| code | Code | code | 코드 마스터 |
-| organization | Organization | organization | 조직 |
-| user | User | user | 사용자 |
-| schedule | WorkSchedule | work_schedule | 근무 일정 |
-| schedule | MonthlyScheduleLimit | monthly_schedule_limit | 월별 일정 제한 |
-| workchangerequest | WorkChangeRequest | work_change_request | 근무 변경 요청 |
-| workattendance | WorkAttendance | work_attendance | 출근 기록 |
-| **faq** | **Category** | **category** | **FAQ 대분류** |
-| **faq** | **Faq** | **faq** | **FAQ 게시글** |
-| **faq** | **FaqHistory** | **faq_history** | **FAQ 수정 이력** |
+| 도메인               | 엔티티                  | 테이블명                   | 설명            |
+|-------------------|----------------------|------------------------|---------------|
+| code              | CodeMajor            | code_major             | 코드 대분류        |
+| code              | CodeSub              | code_sub               | 코드 소분류        |
+| code              | Code                 | code                   | 코드 마스터        |
+| organization      | Organization         | organization           | 조직            |
+| user              | User                 | user                   | 사용자           |
+| schedule          | WorkSchedule         | work_schedule          | 근무 일정         |
+| schedule          | MonthlyScheduleLimit | monthly_schedule_limit | 월별 일정 제한      |
+| workchangerequest | WorkChangeRequest    | work_change_request    | 근무 변경 요청      |
+| workattendance    | WorkAttendance       | work_attendance        | 출근 기록         |
+| **faq**           | **Faq**              | **faq**                | **FAQ 게시글**   |
+| **faq**           | **FaqHistory**       | **faq_history**        | **FAQ 수정 이력** |
+| **category**      | **Category**         | **category**           | **FAQ 분류**    |
+| **category**      | **ManagerCategory**  | **manager_category**   | **분류 담당자 매핑** |
+| **manager**       | **Manager**          | **manager**            | **담당자**       |
+| **team**          | **Team**             | **team**               | **소속**        |
+
 
 ## 📚 문서
 
