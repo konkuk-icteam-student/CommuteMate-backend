@@ -45,6 +45,8 @@ app:
   # 프론트엔드 URL (이메일 인증 링크에 사용)
   frontend:
     url: ${FRONTEND_URL:http://localhost:3000}
+  cors:
+    additional-origins: ${CORS_ADDITIONAL_ORIGINS:}
   schedule:
     concurrent:
       max: ${SCHEDULE_CONCURRENT_MAX:5}

@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface ManagerRepository extends JpaRepository<Manager, Long> {
     Optional<Manager> findByNameAndTeamAndPhonenum(String name, Team team, String phonenum);
+    boolean existsByTeamId(Long teamId);
 }

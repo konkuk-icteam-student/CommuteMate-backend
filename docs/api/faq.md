@@ -108,8 +108,6 @@ FAQ 작성/수정 및 조회를 위한 API입니다. 일부 조회/삭제 기능
 - **키워드 검색**: `GET /api/v1/faq?searchkey=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd`
 - **필터 검색**: `GET /api/v1/faq/filter?category=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd`
 
-현재 컨트롤러가 `TODO` 상태로, 실제 응답 로직이 구현되어 있지 않습니다.
-
 ---
 
 ## 🔗 관련 문서

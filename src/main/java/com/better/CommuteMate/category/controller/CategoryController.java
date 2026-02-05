@@ -1,11 +1,9 @@
 package com.better.CommuteMate.category.controller;
 
 import com.better.CommuteMate.category.application.CategoryService;
-import com.better.CommuteMate.category.application.dto.request.PostCategoryRegisterRequest;
-import com.better.CommuteMate.category.application.dto.response.GetCategoryListResponse;
+import com.better.CommuteMate.category.application.dto.request.PostCategoryRequest;
 import com.better.CommuteMate.category.application.dto.response.GetCategoryListWrapper;
-import com.better.CommuteMate.category.application.dto.response.PatchFavoriteCategoryResponse;
-import com.better.CommuteMate.category.application.dto.response.PostCategoryRegisterResponse;
+import com.better.CommuteMate.category.application.dto.response.PostCategoryResponse;
 import com.better.CommuteMate.category.application.dto.request.PutCategoryUpdateRequest;
 import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdateResponse;
 import com.better.CommuteMate.global.controller.dtos.Response;
@@ -18,8 +16,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -36,7 +32,7 @@ public class CategoryController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "카테고리 등록 성공",
-                    content = @Content(schema = @Schema(implementation = PostCategoryRegisterResponse.class))),
+                    content = @Content(schema = @Schema(implementation = PostCategoryResponse.class))),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터",
                     content = @Content),
             @ApiResponse(responseCode = "409", description = "이미 존재하는 분류명",
@@ -45,7 +41,7 @@ public class CategoryController {
                     content = @Content)
     })    @PostMapping
     public ResponseEntity<Response> registerCategory(
-            @RequestBody PostCategoryRegisterRequest request
+            @RequestBody PostCategoryRequest request
     ) {
         return ResponseEntity.ok(new Response(true, "카테고리 등록 성공", categoryService.registerCategory(request)));
     }
@@ -75,15 +71,12 @@ public class CategoryController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "전체 카테고리 조회 성공",
-                    content = @Content(schema = @Schema(implementation = GetCategoryListResponse.class))),
+                    content = @Content(schema = @Schema(implementation = GetCategoryListWrapper.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     })
     @GetMapping
-    public ResponseEntity<Response> getAllCategories() {
-        List<GetCategoryListResponse> list = categoryService.getAllCategories();
-        return ResponseEntity.ok(
-                new Response(true, "전체 카테고리 조회 성공", new GetCategoryListWrapper(list))
-        );
+    public ResponseEntity<Response> getCategoryList() {
+        return ResponseEntity.ok(new Response(true, "전체 카테고리 조회 성공", categoryService.getCategoryList()));
     }
 
     @Operation(
@@ -91,8 +84,9 @@ public class CategoryController {
             description = "category를 삭제할 수 있습니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "200", description = "카테고리 삭제 성공"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 categoryId"),
+            @ApiResponse(responseCode = "409", description = "해당 카테고리에 FAQ 또는 담당자가 존재하여 삭제 불가"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @DeleteMapping("/{categoryId}")
@@ -100,29 +94,7 @@ public class CategoryController {
             @PathVariable Long categoryId
     ) {
         categoryService.deleteCategory(categoryId);
-        return ResponseEntity.ok(
-                new Response(true, "성공적으로 삭제되었습니다.", null)
-        );
-    }
-
-    @Operation(
-            summary = "Category 즐겨찾기 등록 및 해제",
-            description = "Category를 즐겨찾기 등록 및 해제합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "즐겨찾기 등록 및 해제 성공",
-                    content = @Content(schema = @Schema(implementation = PatchFavoriteCategoryResponse.class))),
-            @ApiResponse(responseCode = "404", description = "분류 ID 없음"),
-            @ApiResponse(responseCode = "500", description = "서버 오류")
-    })
-    @PatchMapping("/{categoryId}")
-    public ResponseEntity<Response> updateFavoriteCategory(
-            @PathVariable Long categoryId,
-            @RequestParam boolean favorite
-    ) {
-        String message = favorite ? "즐겨찾기 등록 성공" : "즐겨찾기 해제 성공";
-
-        return ResponseEntity.ok(new Response(true, message, categoryService.updateFavorite(categoryId, favorite)));
+        return ResponseEntity.ok(new Response(true, "카테고리 삭제 성공", null));
     }
 
 }

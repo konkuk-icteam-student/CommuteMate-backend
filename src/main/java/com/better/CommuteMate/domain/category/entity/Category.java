@@ -9,8 +9,6 @@ import java.util.List;
 @Table(name = "category")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class Category {
 
     @Id
@@ -20,21 +18,15 @@ public class Category {
     @Column(length = 100, nullable = false)
     private String name;  // 분류명
 
-    // 즐겨찾기 여부 (기본값 false)
-    @Column(name = "favorite", nullable = false)
-    @Builder.Default
-    private boolean favorite = false;
-
     // 카테고리 담당자 리스트
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<ManagerCategory> managers = new ArrayList<>();
+
+    public Category(String name) {
+        this.name = name;
+    }
 
     public void updateName(String newName) {
         this.name = newName;
-    }
-
-    public void updateFavorite(boolean favorite) {
-        this.favorite = favorite;
     }
 }

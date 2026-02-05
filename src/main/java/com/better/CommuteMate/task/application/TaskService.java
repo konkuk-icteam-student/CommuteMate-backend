@@ -84,7 +84,6 @@ public class TaskService {
      */
     @Transactional
     public TaskResponse createTask(CreateTaskRequest request, Long currentUserId) {
-        User assignee = findUserById(request.getAssigneeId());
         CodeType taskType = validateAndGetTaskType(request.getTaskType());
 
         Task task = Task.create(

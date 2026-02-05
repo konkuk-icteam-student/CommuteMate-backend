@@ -4,6 +4,7 @@ import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.manager.application.ManagerService;
 import com.better.CommuteMate.manager.application.dto.request.PostManagerRequest;
 import com.better.CommuteMate.manager.application.dto.response.GetManagerListWrapper;
+import com.better.CommuteMate.manager.application.dto.response.PatchFavoriteManagerResponse;
 import com.better.CommuteMate.manager.application.dto.response.PostManagerResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -55,10 +56,49 @@ public class ManagerController {
     public ResponseEntity<Response> getManagerList(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long teamId,
-            @RequestParam(defaultValue = "false") boolean favoriteOnly
+            @RequestParam(defaultValue = "false") boolean favoriteOnly,
+            @RequestParam(required = false) String searchName
     ) {
-        return ResponseEntity.ok(new Response(true, "카테고리 담당자 목록 조회 성공", managerService.getManagerList(categoryId, teamId, favoriteOnly)));
+        return ResponseEntity.ok(new Response(true, "카테고리 담당자 목록 조회 성공", managerService.getManagerList(categoryId, teamId, favoriteOnly, searchName)));
     }
 
 
+    @Operation(
+            summary = "담당자 즐겨찾기 등록 및 해제",
+            description = "담당자를 즐겨찾기 등록 및 해제합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "담당자 즐겨찾기 등록 및 해제 성공",
+                    content = @Content(schema = @Schema(implementation = PatchFavoriteManagerResponse.class))),
+            @ApiResponse(responseCode = "404", description = "해당 담당자-분류 매핑 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PatchMapping("/{managerId}/category/{categoryId}")
+    public ResponseEntity<Response> updateFavoriteManager(
+            @PathVariable Long managerId,
+            @PathVariable Long categoryId,
+            @RequestParam boolean favorite
+    ) {
+        String message = favorite ? "즐겨찾기 등록 성공" : "즐겨찾기 해제 성공";
+
+        return ResponseEntity.ok(new Response(true, message, managerService.updateFavorite(managerId, categoryId, favorite)));
+    }
+
+
+    @Operation(
+            summary = "담당자 삭제",
+            description = "담당자를 삭제할 수 있습니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "담당자 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 managerId"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @DeleteMapping("/{managerId}")
+    public ResponseEntity<Response> deleteManager(
+            @PathVariable Long managerId
+    ) {
+        managerService.deleteManager(managerId);
+        return ResponseEntity.ok(new Response(true, "담당자 삭제 성공", null));
+    }
 }

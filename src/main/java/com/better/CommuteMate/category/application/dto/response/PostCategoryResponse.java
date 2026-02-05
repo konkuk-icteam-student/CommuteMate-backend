@@ -6,12 +6,12 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "Category 등록 응답 DTO")
-public class PostCategoryRegisterResponse extends ResponseDetail {
+public class PostCategoryResponse extends ResponseDetail {
 
     @Schema(description = "등록된 분류 ID", example = "1")
     private final Long categoryId;
 
-    public PostCategoryRegisterResponse(Long categoryId) {
+    public PostCategoryResponse(Long categoryId) {
         super();
         this.categoryId = categoryId;
     }

@@ -217,7 +217,6 @@ Content-Type: application/json
 ```json
 {
   "title": "일일 회의",
-  "assigneeId": 1,
   "taskDate": "2026-01-22",
   "taskTime": "09:00:00",
   "taskType": "TT01"
@@ -228,7 +227,6 @@ Content-Type: application/json
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `title` | String | Yes | 업무명 (최대 200자) |
-| `assigneeId` | Integer | Yes | 담당자 ID |
 | `taskDate` | LocalDate | Yes | 업무 날짜 (yyyy-MM-dd) |
 | `taskTime` | LocalTime | Yes | 업무 시간 (HH:mm:ss) |
 | `taskType` | String | No | 업무 타입 (TT01/TT02), 기본값: TT01 |
@@ -243,8 +241,8 @@ Content-Type: application/json
   "details": {
     "taskId": 1,
     "title": "일일 회의",
-    "assigneeId": 1,
-    "assigneeName": "홍길동",
+    "assigneeId": null,
+    "assigneeName": null,
     "taskDate": "2026-01-22",
     "taskTime": "09:00:00",
     "taskType": "TT01",
@@ -258,8 +256,7 @@ Content-Type: application/json
 
 | Status | Error Code | Message | 설명 |
 |--------|-----------|---------|------|
-| 400 | `VALIDATION_ERROR` | 필수 입력값 누락 | title, assigneeId, taskDate, taskTime 누락 |
-| 404 | `USER_NOT_FOUND` | 담당자를 찾을 수 없습니다. | 지정된 assigneeId가 존재하지 않음 |
+| 400 | `VALIDATION_ERROR` | 필수 입력값 누락 | title, taskDate, taskTime 누락 |
 
 ---
 
