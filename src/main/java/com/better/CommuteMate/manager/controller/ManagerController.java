@@ -56,9 +56,10 @@ public class ManagerController {
     public ResponseEntity<Response> getManagerList(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long teamId,
-            @RequestParam(defaultValue = "false") boolean favoriteOnly
+            @RequestParam(defaultValue = "false") boolean favoriteOnly,
+            @RequestParam(required = false) String searchName
     ) {
-        return ResponseEntity.ok(new Response(true, "카테고리 담당자 목록 조회 성공", managerService.getManagerList(categoryId, teamId, favoriteOnly)));
+        return ResponseEntity.ok(new Response(true, "카테고리 담당자 목록 조회 성공", managerService.getManagerList(categoryId, teamId, favoriteOnly, searchName)));
     }
 
 

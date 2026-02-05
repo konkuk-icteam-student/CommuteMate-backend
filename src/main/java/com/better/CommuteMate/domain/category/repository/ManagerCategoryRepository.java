@@ -24,10 +24,16 @@ public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory
     where (:categoryId is null or mc.category.id = :categoryId)
       and (:team is null or mc.manager.team = :team)
       and (:favoriteOnly = false or mc.favorite = true)
+      and (
+          :searchName is null\s
+          or length(trim(:searchName)) = 0
+          or lower(mc.manager.name) like lower(concat('%', :searchName, '%'))
+      )
     """)
     List<ManagerCategory> getManagers(
             @Param("categoryId") Long categoryId,
             @Param("team") Team team,
-            @Param("favoriteOnly") boolean favoriteOnly
+            @Param("favoriteOnly") boolean favoriteOnly,
+            @Param("searchName") String searchName
     );
 }
