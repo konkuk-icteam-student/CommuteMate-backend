@@ -20,7 +20,7 @@ FAQ 분류용 카테고리를 관리하는 API입니다.
 
 ---
 
-## ✏️ 카테고리 등록
+## ✅ 카테고리 등록
 
 ### Endpoint:
 **POST /api/v1/categories**
@@ -58,27 +58,41 @@ POST /api/v1/categories
 
 ## ✏️ 카테고리 수정
 
-**Endpoint**: `PUT /api/v1/categories/{categoryId}`
+### Endpoint: 
+**PUT /api/v1/categories/{categoryId}**
 
-**Request Body**:
+기존 category의 이름을 변경하는 API입니다.
+
+동작 방식은 다음과 같습니다:\
+•	전달된 categoryId가 존재하는지 확인합니다.\
+•	변경하려는 이름이 이미 존재하는지 확인합니다.\
+•	중복이 아닐 경우 category 이름을 변경합니다.
+
+
+### Request Body:
 ```json
 {
-  "categoryName": "학생복지"
+"categoryName": "학생복지"
 }
 ```
 
-**Response (200 OK)**:
+
+### Request Example:
+PUT /api/v1/categories/1
+
+
+
+### Response (200 OK):
 ```json
 {
-  "isSuccess": true,
-  "message": "카테고리 수정 성공",
-  "details": {
-    "categoryId": 1,
-    "updatedName": "학생복지"
-  }
+"isSuccess": true,
+"message": "카테고리 수정 성공",
+"details": {
+"categoryId": 1,
+"updatedName": "학생복지"
+}
 }
 ```
-
 ---
 
 ## 📋 카테고리 전체 조회
