@@ -24,287 +24,198 @@
 
 ---
 
-## 🔐 인증
+## ✅담당자 등록
 
-| 엔드포인트 | 인증 필요 | 설명 |
-|-----------|---------|------|
-| `POST /manager` | ❌ 아니오 | 담당자 등록 (현재 공개) |
-| `GET /manager` | ❌ 아니오 | 담당자 목록 조회 (현재 공개) |
+### Endpoint: 
+**POST /api/v1/manager**
 
-**주의**: 현재 `SecurityConfig` 기준으로 인증이 강제되지 않습니다. (permitAll)
+새로운 담당자를 등록하는 API입니다.
 
-향후 보안 강화를 위해 관리자 권한 검증이 필요할 수 있습니다.
+동작 방식은 다음과 같습니다:\
+•	전달된 categoryId가 존재하는지 확인합니다.\
+•	전달된 teamId가 존재하는지 확인합니다.\
+•	같은 이름 + 같은 소속 + 같은 전화번호를 가진 담당자가 이미 존재하면 해당 담당자를 재사용합니다.\
+•	존재하지 않으면 새로운 담당자를 생성합니다.\
+•	해당 담당자가 이미 해당 카테고리에 등록되어 있다면 등록할 수 없습니다.\
+•	중복이 아닐 경우 담당자-카테고리 매핑(ManagerCategory)을 생성합니다.
 
----
 
-## 🎯 주요 엔드포인트
-
-| 메서드 | 경로 | 설명 | HTTP 상태 | 인증 |
-|--------|------|------|----------|------|
-| POST | `/` | 담당자 등록 | 200 | ❌ |
-| GET | `/` | 담당자 목록 조회 (필터링 가능) | 200 | ❌ |
-
----
-
-## 📋 상세 엔드포인트 문서
-
-### 1️⃣ POST `/api/v1/manager` - 담당자 등록
-
-**설명**: 새로운 담당자를 등록합니다.
-
-담당자는 카테고리별로 관리되며, 이미 등록된 담당자는 재등록할 수 없습니다.
-
-**Request**
-
-```bash
-curl -X POST http://localhost:8080/api/v1/manager \
-  -H "Content-Type: application/json" \
-  -d '{
-    "managerId": 5,
-    "categoryIds": [1, 2, 3]
-  }'
-```
-
-**Request Body Schema**:
-
+### Request Body:
 ```json
 {
-  "managerId": 5,
-  "categoryIds": [1, 2, 3]
-}
-```
-
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| managerId | Long | ✅ | 담당자의 사용자 ID |
-| categoryIds | Array[Long] | ✅ | 담당 카테고리 ID 목록 |
-
-**Response 200 OK** - 등록 성공
-
-```json
-{
-  "isSuccess": true,
-  "message": "담당자 등록 성공",
-  "details": {
-    "managerId": 5,
-    "categories": [
-      {
-        "categoryId": 1,
-        "categoryName": "도서관시스템"
-      },
-      {
-        "categoryId": 2,
-        "categoryName": "학사정보시스템"
-      },
-      {
-        "categoryId": 3,
-        "categoryName": "기숙사시스템"
-      }
-    ],
-    "registeredAt": "2025-01-24T14:30:00"
-  }
-}
-```
-
-**응답 필드 설명**:
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| managerId | Long | 등록된 담당자 ID |
-| categories | Array | 할당된 카테고리 목록 |
-| categories[].categoryId | Long | 카테고리 ID |
-| categories[].categoryName | String | 카테고리 이름 |
-| registeredAt | DateTime | 등록 일시 |
-
-**에러 응답**
-
-**400 Bad Request** - 잘못된 요청
-
-```json
-{
-  "isSuccess": false,
-  "message": "요청 데이터가 유효하지 않습니다.",
-  "details": null
-}
-```
-
-**404 Not Found** - 해당 카테고리 없음
-
-```json
-{
-  "isSuccess": false,
-  "message": "존재하지 않는 카테고리입니다.",
-  "details": {
-    "categoryId": 999,
-    "reason": "카테고리 ID 999가 DB에 없습니다."
-  }
-}
-```
-
-**409 Conflict** - 이미 등록된 담당자
-
-```json
-{
-  "isSuccess": false,
-  "message": "이미 등록된 담당자입니다.",
-  "details": {
-    "managerId": 5,
+    "name": "홍길동",
+    "teamId": 1,
     "categoryId": 1,
-    "reason": "담당자 5는 이미 카테고리 1의 담당자로 등록되어 있습니다."
-  }
+    "phonenum": "01012345678"
 }
 ```
 
-**500 Internal Server Error** - 서버 오류
+### Request Example:
+POST /api/v1/manager
 
+
+
+### Response (200 OK):
 ```json
 {
-  "isSuccess": false,
-  "message": "담당자 등록 중 오류가 발생했습니다.",
-  "details": null
+    "isSuccess": true,
+    "message": "담당자 등록 성공",
+    "details": {
+        "managerId": 1,
+        "categoryId": 1
+    }
 }
 ```
 
 ---
 
-### 2️⃣ GET `/api/v1/manager` - 담당자 목록 조회
+## 🔎 담당자 목록 조회
 
-**설명**: 담당자 목록을 조회합니다.
+### Endpoint: 
+**GET /api/v1/manager**
 
-카테고리, 팀(조직), 즐겨찾기 여부로 필터링할 수 있습니다.
+담당자 목록을 조회하는 API입니다.
 
-**Request**
+다음 조건으로 필터링할 수 있습니다:\
+•	카테고리(categoryId)\
+•	소속(teamId)\
+•	즐겨찾기 여부(favoriteOnly)\
+•	담당자 이름 검색(searchName)\
 
-```bash
-# 모든 담당자 조회
-curl -X GET "http://localhost:8080/api/v1/manager" \
-  -H "Content-Type: application/json"
+조건을 조합하여 조회할 수 있으며, 필터를 지정하지 않으면 전체 담당자 목록이 조회됩니다.
 
-# 특정 카테고리의 담당자만 조회
-curl -X GET "http://localhost:8080/api/v1/manager?categoryId=1" \
-  -H "Content-Type: application/json"
+### Query Parameters:
+(***key	/ 설명	/ 타입	/ 필수 여부 /	예시***)\
+categoryId	/ 카테고리 / ID /	Long /	X /	1\
+teamId / 소속 / ID /	Long /	X /	2\
+favoriteOnly /	즐겨찾기한 담당자만 조회 여부 / boolean / X (default=false) / true\
+searchName / 담당자 이름 검색 / String / X / 홍길동
 
-# 특정 팀의 담당자만 조회
-curl -X GET "http://localhost:8080/api/v1/manager?team=IT부서" \
-  -H "Content-Type: application/json"
+### Request Example:
+GET /api/v1/manager?categoryId=1&teamId=2&favoriteOnly=true&searchName=홍길동
 
-# 즐겨찾기한 담당자만 조회
-curl -X GET "http://localhost:8080/api/v1/manager?favoriteOnly=true" \
-  -H "Content-Type: application/json"
+또는 전체 조회:\
+GET /api/v1/manager
 
-# 조건 조합: 특정 카테고리의 즐겨찾기 담당자
-curl -X GET "http://localhost:8080/api/v1/manager?categoryId=1&favoriteOnly=true" \
-  -H "Content-Type: application/json"
-```
 
-**Query Parameters**:
-
-| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
-|---------|------|------|--------|------|
-| categoryId | Long | ❌ | - | 카테고리 ID (지정 시 해당 카테고리의 담당자만 조회) |
-| team | String | ❌ | - | 팀/조직명 (지정 시 해당 팀의 담당자만 조회) |
-| favoriteOnly | Boolean | ❌ | false | true 시 즐겨찾기한 담당자만 조회 |
-
-**Response 200 OK** - 조회 성공
-
+### Response (200 OK):
 ```json
 {
-  "isSuccess": true,
-  "message": "카테고리 담당자 목록 조회 성공",
-  "details": {
-    "totalCount": 3,
-    "managers": [
-      {
+    "isSuccess": true,
+    "message": "카테고리 담당자 목록 조회 성공",
+    "details": {
+        "managers": [
+            {
+                "categoryId": 1,
+                "categoryName": "인사관리",
+                "managerId": 1,
+                "managerName": "홍길동",
+                "managerFavorite": true,
+                "teamId": 2,
+                "teamName": "정보운영팀",
+                "phonenum": "01012345678"
+            },
+            {
+                "categoryId": 1,
+                "categoryName": "인사관리",
+                "managerId": 2,
+                "managerName": "김철수",
+                "managerFavorite": false,
+                "teamId": 2,
+                "teamName": "정보운영팀",
+                "phonenum": "01098765432"
+            }
+        ]
+    }
+}
+```
+---
+
+## ✏️ ️담당자 즐겨찾기 등록 및 해제
+
+### Endpoint:
+**PATCH /api/v1/manager/{managerId}/category/{categoryId}**
+
+특정 담당자를 특정 카테고리 기준으로 즐겨찾기 등록 또는 해제하는 API입니다.\
+•	favorite=true → 즐겨찾기 등록\
+•	favorite=false → 즐겨찾기 해제
+
+담당자와 카테고리 간 매핑(ManagerCategory)이 존재해야 하며,\
+존재하지 않는 경우 예외가 발생합니다.
+
+### Query Parameter:
+(***key / 설명타입 / 필수 여부 / 예시***)\
+(favorite / 즐겨찾기 여부 / boolean / O / true)
+
+
+### Request Example:
+즐겨찾기 등록:\
+PATCH /api/v1/manager/1/category/3?favorite=true
+
+즐겨찾기 해제:\
+PATCH /api/v1/manager/1/category/3?favorite=false
+
+
+### Response (200 OK):
+즐겨찾기 등록 성공
+```json
+{
+    "isSuccess": true,
+    "message": "즐겨찾기 등록 성공",
+    "details": {
         "managerId": 1,
-        "managerName": "이순신",
-        "email": "lee@example.com",
-        "phone": "010-1234-5678",
-        "team": "IT부서",
-        "categories": [
-          {
-            "categoryId": 1,
-            "categoryName": "도서관시스템"
-          },
-          {
-            "categoryId": 2,
-            "categoryName": "학사정보시스템"
-          }
-        ],
-        "isFavorite": true,
-        "registeredAt": "2025-01-10T09:00:00"
-      },
-      {
-        "managerId": 2,
-        "managerName": "김유신",
-        "email": "kim@example.com",
-        "phone": "010-2345-6789",
-        "team": "인프라팀",
-        "categories": [
-          {
-            "categoryId": 3,
-            "categoryName": "기숙사시스템"
-          }
-        ],
-        "isFavorite": false,
-        "registeredAt": "2025-01-12T10:30:00"
-      },
-      {
-        "managerId": 5,
-        "managerName": "장보고",
-        "email": "jang@example.com",
-        "phone": "010-3456-7890",
-        "team": "IT부서",
-        "categories": [
-          {
-            "categoryId": 1,
-            "categoryName": "도서관시스템"
-          }
-        ],
-        "isFavorite": true,
-        "registeredAt": "2025-01-15T14:20:00"
-      }
-    ]
-  }
+        "categoryId": 3,
+        "favorite": true
+    }
+}
+```
+즐겨찾기 해제 성공
+```json
+{
+    "isSuccess": true,
+    "message": "즐겨찾기 해제 성공",
+    "details": {
+        "managerId": 1,
+        "categoryId": 3,
+        "favorite": false
+    }
 }
 ```
 
-**응답 필드 설명**:
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| totalCount | Integer | 조회된 담당자 총 개수 |
-| managers | Array | 담당자 정보 배열 |
-| managers[].managerId | Long | 담당자 ID |
-| managers[].managerName | String | 담당자 이름 |
-| managers[].email | String | 담당자 이메일 |
-| managers[].phone | String | 담당자 휴대폰 번호 |
-| managers[].team | String | 소속 팀/조직명 |
-| managers[].categories | Array | 담당 카테고리 목록 |
-| managers[].isFavorite | Boolean | 즐겨찾기 여부 |
-| managers[].registeredAt | DateTime | 등록 일시 |
+### 응답 필드 설명
+***필드명 - 설명***\
+managerId -	즐겨찾기 상태가 변경된 담당자 ID\
+categoryId - 즐겨찾기 상태가 변경된 카테고리 ID\
+favorite -	변경된 즐겨찾기 상태
 
-**에러 응답**
+---
+## 🗑️ 담당자 삭제
 
-**400 Bad Request** - 잘못된 쿼리 파라미터
+### Endpoint:
+**DELETE /api/v1/managers/{managerId}**
 
+특정 담당자를 삭제하는 API입니다.
+
+동작 방식은 다음과 같습니다:\
+•	전달된 managerId가 존재하는지 확인합니다.\
+•	해당 담당자와 연결된 모든 카테고리 매핑(ManagerCategory)을 먼저 삭제합니다.\
+•	이후 담당자(Manager)를 삭제합니다.
+
+즉, 담당자 삭제 시 연관된 카테고리 매핑 정보도 함께 제거됩니다.
+
+
+
+### Request Example:
+DELETE /api/v1/managers/1
+
+
+### Response (200 OK):
 ```json
 {
-  "isSuccess": false,
-  "message": "요청 파라미터가 유효하지 않습니다.",
-  "details": {
-    "invalidParam": "categoryId",
-    "reason": "categoryId는 양수여야 합니다."
-  }
-}
-```
-
-**500 Internal Server Error** - 서버 오류
-
-```json
-{
-  "isSuccess": false,
-  "message": "담당자 목록 조회 중 오류가 발생했습니다.",
-  "details": null
+    "isSuccess": true,
+    "message": "담당자 삭제 성공",
+    "details": null
 }
 ```
 

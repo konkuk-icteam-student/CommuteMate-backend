@@ -28,6 +28,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -404,6 +405,12 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("modifyWorkSchedules - 정상적인 일정 수정 (시간 일치, 검증 통과)")
     void modifyWorkSchedules_Success() {
+        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDateTime cancelStart = thisMonth.plusDays(14).atTime(9, 0);
+        LocalDateTime cancelEnd = thisMonth.plusDays(14).atTime(12, 0);
+        LocalDateTime addStart = thisMonth.plusDays(19).atTime(13, 0);
+        LocalDateTime addEnd = thisMonth.plusDays(19).atTime(16, 0);
+
         User mockUser = User.builder()
                 .userId(1L)
                 .email("test@example.com")
@@ -413,15 +420,12 @@ class ScheduleServiceTest {
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100L)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
-                .endTime(LocalDateTime.of(2026, 1, 15, 12, 0))
+                .startTime(cancelStart)
+                .endTime(cancelEnd)
                 .statusCode(CodeType.WS02)
                 .build();
 
-        WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2026, 1, 20, 13, 0),
-                LocalDateTime.of(2026, 1, 20, 16, 0)
-        );
+        WorkScheduleDTO addSlot = new WorkScheduleDTO(addStart, addEnd);
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
                 List.of(addSlot),
@@ -446,6 +450,12 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("modifyWorkSchedules - 시간 불일치로 실패 (취소 3시간, 추가 4시간)")
     void modifyWorkSchedules_TimeMismatch_Failure() {
+        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDateTime cancelStart = thisMonth.plusDays(14).atTime(9, 0);
+        LocalDateTime cancelEnd = thisMonth.plusDays(14).atTime(12, 0); // 3시간
+        LocalDateTime addStart = thisMonth.plusDays(19).atTime(9, 0);
+        LocalDateTime addEnd = thisMonth.plusDays(19).atTime(13, 0);    // 4시간
+
         User mockUser = User.builder()
                 .userId(1L)
                 .email("test@example.com")
@@ -455,15 +465,12 @@ class ScheduleServiceTest {
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100L)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
-                .endTime(LocalDateTime.of(2026, 1, 15, 12, 0))
+                .startTime(cancelStart)
+                .endTime(cancelEnd)
                 .statusCode(CodeType.WS02)
                 .build();
 
-        WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2026, 1, 20, 9, 0),
-                LocalDateTime.of(2026, 1, 20, 13, 0)
-        );
+        WorkScheduleDTO addSlot = new WorkScheduleDTO(addStart, addEnd);
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
                 List.of(addSlot),
@@ -485,6 +492,12 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("modifyWorkSchedules - 최소 근무 시간 미달 (2시간 미만)")
     void modifyWorkSchedules_MinWorkTimeViolation_Failure() {
+        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDateTime cancelStart = thisMonth.plusDays(14).atTime(9, 0);
+        LocalDateTime cancelEnd = thisMonth.plusDays(14).atTime(11, 0);
+        LocalDateTime addStart = thisMonth.plusDays(19).atTime(9, 0);
+        LocalDateTime addEnd = thisMonth.plusDays(19).atTime(10, 30);
+
         User mockUser = User.builder()
                 .userId(1L)
                 .email("test@example.com")
@@ -494,15 +507,12 @@ class ScheduleServiceTest {
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100L)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
-                .endTime(LocalDateTime.of(2026, 1, 15, 11, 0))
+                .startTime(cancelStart)
+                .endTime(cancelEnd)
                 .statusCode(CodeType.WS02)
                 .build();
 
-        WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2026, 1, 20, 9, 0),
-                LocalDateTime.of(2026, 1, 20, 10, 30)
-        );
+        WorkScheduleDTO addSlot = new WorkScheduleDTO(addStart, addEnd);
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
                 List.of(addSlot),
@@ -522,6 +532,12 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("modifyWorkSchedules - 월 총 근무 시간 초과 (27시간 초과)")
     void modifyWorkSchedules_MonthlyWorkTimeViolation_Failure() {
+        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDateTime cancelStart = thisMonth.plusDays(14).atTime(9, 0);
+        LocalDateTime cancelEnd = thisMonth.plusDays(14).atTime(11, 0);
+        LocalDateTime addStart = thisMonth.plusDays(19).atTime(9, 0);
+        LocalDateTime addEnd = thisMonth.plusDays(19).atTime(11, 0);
+
         User mockUser = User.builder()
                 .userId(1L)
                 .email("test@example.com")
@@ -531,15 +547,12 @@ class ScheduleServiceTest {
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100L)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
-                .endTime(LocalDateTime.of(2026, 1, 15, 11, 0))
+                .startTime(cancelStart)
+                .endTime(cancelEnd)
                 .statusCode(CodeType.WS02)
                 .build();
 
-        WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2026, 1, 20, 9, 0),
-                LocalDateTime.of(2026, 1, 20, 11, 0)
-        );
+        WorkScheduleDTO addSlot = new WorkScheduleDTO(addStart, addEnd);
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
                 List.of(addSlot),
@@ -559,6 +572,12 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("modifyWorkSchedules - 주 최대 근무 시간 초과 (13시간 초과)")
     void modifyWorkSchedules_WeeklyWorkTimeViolation_Failure() {
+        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDateTime cancelStart = thisMonth.plusDays(14).atTime(9, 0);
+        LocalDateTime cancelEnd = thisMonth.plusDays(14).atTime(11, 0);
+        LocalDateTime addStart = thisMonth.plusDays(15).atTime(9, 0);
+        LocalDateTime addEnd = thisMonth.plusDays(15).atTime(11, 0);
+
         User mockUser = User.builder()
                 .userId(1L)
                 .email("test@example.com")
@@ -568,15 +587,12 @@ class ScheduleServiceTest {
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100L)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
-                .endTime(LocalDateTime.of(2026, 1, 15, 11, 0))
+                .startTime(cancelStart)
+                .endTime(cancelEnd)
                 .statusCode(CodeType.WS02)
                 .build();
 
-        WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2026, 1, 16, 9, 0),
-                LocalDateTime.of(2026, 1, 16, 11, 0)
-        );
+        WorkScheduleDTO addSlot = new WorkScheduleDTO(addStart, addEnd);
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
                 List.of(addSlot),
@@ -596,6 +612,12 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("modifyWorkSchedules - 동시 근무자 수 초과로 실패")
     void modifyWorkSchedules_ConcurrentLimitExceeded_Failure() {
+        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDateTime cancelStart = thisMonth.plusDays(14).atTime(9, 0);
+        LocalDateTime cancelEnd = thisMonth.plusDays(14).atTime(11, 0);
+        LocalDateTime addStart = thisMonth.plusDays(19).atTime(9, 0);
+        LocalDateTime addEnd = thisMonth.plusDays(19).atTime(11, 0);
+
         User mockUser = User.builder()
                 .userId(1L)
                 .email("test@example.com")
@@ -605,15 +627,12 @@ class ScheduleServiceTest {
         WorkSchedule existingSchedule = WorkSchedule.builder()
                 .scheduleId(100L)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
-                .endTime(LocalDateTime.of(2026, 1, 15, 11, 0))
+                .startTime(cancelStart)
+                .endTime(cancelEnd)
                 .statusCode(CodeType.WS02)
                 .build();
 
-        WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                LocalDateTime.of(2026, 1, 20, 9, 0),
-                LocalDateTime.of(2026, 1, 20, 11, 0)
-        );
+        WorkScheduleDTO addSlot = new WorkScheduleDTO(addStart, addEnd);
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(
                 List.of(addSlot),
@@ -666,6 +685,8 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("modifyWorkSchedules - 여러 일정 취소 및 추가 (배치 처리)")
     void modifyWorkSchedules_MultipleCancelAndAdd_Success() {
+        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+
         User mockUser = User.builder()
                 .userId(1L)
                 .email("test@example.com")
@@ -675,27 +696,27 @@ class ScheduleServiceTest {
         WorkSchedule schedule1 = WorkSchedule.builder()
                 .scheduleId(100L)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2026, 1, 15, 9, 0))
-                .endTime(LocalDateTime.of(2026, 1, 15, 11, 0))
+                .startTime(thisMonth.plusDays(14).atTime(9, 0))
+                .endTime(thisMonth.plusDays(14).atTime(11, 0))
                 .statusCode(CodeType.WS02)
                 .build();
 
         WorkSchedule schedule2 = WorkSchedule.builder()
                 .scheduleId(101L)
                 .user(mockUser)
-                .startTime(LocalDateTime.of(2026, 1, 16, 13, 0))
-                .endTime(LocalDateTime.of(2026, 1, 16, 15, 0))
+                .startTime(thisMonth.plusDays(15).atTime(13, 0))
+                .endTime(thisMonth.plusDays(15).atTime(15, 0))
                 .statusCode(CodeType.WS02)
                 .build();
 
         WorkScheduleDTO addSlot1 = new WorkScheduleDTO(
-                LocalDateTime.of(2026, 1, 20, 9, 0),
-                LocalDateTime.of(2026, 1, 20, 11, 0)
+                thisMonth.plusDays(19).atTime(9, 0),
+                thisMonth.plusDays(19).atTime(11, 0)
         );
 
         WorkScheduleDTO addSlot2 = new WorkScheduleDTO(
-                LocalDateTime.of(2026, 1, 21, 14, 0),
-                LocalDateTime.of(2026, 1, 21, 16, 0)
+                thisMonth.plusDays(20).atTime(14, 0),
+                thisMonth.plusDays(20).atTime(16, 0)
         );
 
         ModifyWorkScheduleDTO modifyRequest = new ModifyWorkScheduleDTO(

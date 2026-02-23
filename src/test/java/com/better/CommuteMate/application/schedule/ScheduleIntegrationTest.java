@@ -776,12 +776,16 @@ class ScheduleIntegrationTest {
         @DisplayName("수정 시 취소/추가 시간이 일치해야 성공")
         void modify_MatchingDuration_ShouldSucceed() {
             // Given: 4시간 취소, 4시간 추가
-            WorkSchedule existingSchedule = createWorkScheduleWithId(1L, LocalDate.of(2026, 1, 2), 9, 0, 13, 0);
+            LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+            LocalDate cancelDate = thisMonth.plusDays(1);
+            LocalDate addDate = thisMonth.plusDays(2);
+
+            WorkSchedule existingSchedule = createWorkScheduleWithId(1L, cancelDate, 9, 0, 13, 0);
             ReflectionTestUtils.setField(existingSchedule, "user", testUser);
 
             WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                    LocalDateTime.of(2026, 1, 3, 9, 0),
-                    LocalDateTime.of(2026, 1, 3, 13, 0)  // 4시간
+                    addDate.atTime(9, 0),
+                    addDate.atTime(13, 0)  // 4시간
             );
 
             ModifyWorkScheduleDTO request = new ModifyWorkScheduleDTO(
@@ -800,7 +804,7 @@ class ScheduleIntegrationTest {
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule newSchedule = createWorkScheduleWithId(2L, LocalDate.of(2026, 1, 3), 9, 0, 13, 0);
+            WorkSchedule newSchedule = createWorkScheduleWithId(2L, addDate, 9, 0, 13, 0);
             when(workSchedulesRepository.save(any())).thenReturn(newSchedule);
             when(workChangeRequestRepository.save(any())).thenReturn(mock(WorkChangeRequest.class));
 
@@ -817,12 +821,16 @@ class ScheduleIntegrationTest {
         @DisplayName("수정 시 취소/추가 시간 불일치 시 실패")
         void modify_MismatchedDuration_ShouldFail() {
             // Given: 4시간 취소, 2시간 추가 (불일치)
-            WorkSchedule existingSchedule = createWorkScheduleWithId(1L, LocalDate.of(2026, 1, 2), 9, 0, 13, 0);
+            LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+            LocalDate cancelDate = thisMonth.plusDays(1);
+            LocalDate addDate = thisMonth.plusDays(2);
+
+            WorkSchedule existingSchedule = createWorkScheduleWithId(1L, cancelDate, 9, 0, 13, 0);
             ReflectionTestUtils.setField(existingSchedule, "user", testUser);
 
             WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                    LocalDateTime.of(2026, 1, 3, 9, 0),
-                    LocalDateTime.of(2026, 1, 3, 11, 0)  // 2시간 (4시간과 불일치)
+                    addDate.atTime(9, 0),
+                    addDate.atTime(11, 0)  // 2시간 (4시간과 불일치)
             );
 
             ModifyWorkScheduleDTO request = new ModifyWorkScheduleDTO(
@@ -841,7 +849,7 @@ class ScheduleIntegrationTest {
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule newSchedule = createWorkScheduleWithId(2L, LocalDate.of(2026, 1, 3), 9, 0, 11, 0);
+            WorkSchedule newSchedule = createWorkScheduleWithId(2L, addDate, 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(newSchedule);
             when(workChangeRequestRepository.save(any())).thenReturn(mock(WorkChangeRequest.class));
 
