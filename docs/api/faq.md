@@ -163,10 +163,52 @@ GET /api/v1/faq/1?date=2026-01-01
 
 ## 📋 FAQ 목록/검색 (TODO)
 
+**Endpoint**:
 - **목록 조회**: `GET /api/v1/faq/list?filter=latest`
 - **키워드 검색**: `GET /api/v1/faq?searchkey=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd`
 - **필터 검색**: `GET /api/v1/faq/filter?category=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd`
 
+필터 조건에 따라 FAQ 목록을 조회하는 API입니다.
+
+다음과 같은 조건으로 필터링할 수 있습니다:\
+•	소속(teamId)\
+•	분류(categoryId)\
+•	검색어(keyword)\
+•	검색 범위(searchScope)\
+•	날짜 범위(startDate ~ endDate)
+
+기본 정렬은 최신순이며,
+페이지 단위로 조회하고 페이지당 10개씩 조회됩니다.
+페이지 번호는 0부터 시작합니다.
+
+**Request Example**:
+GET /api/v1/faq?teamId=1&categoryId=3&keyword=로그인&searchScope=TITLE&page=0
+
+**Response (200 OK)**:
+```json
+{
+    "isSuccess": true,
+    "message": "FAQ 목록 조회 성공",
+    "details": {
+        "faqs": [
+            {
+                "faqId": 1,
+                "title": "학정시 로그인 오류",
+                "updatedDate": "2025-01-25",
+                "deletedFlag": false
+            },
+            {
+                "faqId": 2,
+                "title": "비밀번호 재설정 방법",
+                "updatedDate": "2025-01-20",
+                "deletedFlag": true
+            }
+        ],
+        "page": 0,
+        "totalPages": 5
+    }
+}
+```
 ---
 
 ## 🔗 관련 문서
