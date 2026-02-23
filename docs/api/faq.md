@@ -114,7 +114,50 @@ DELETE /api/v1/faq/1
 
 **Endpoint**: `GET /api/v1/faq/{faqId}`
 
-현재 컨트롤러가 `TODO` 상태로, 실제 응답 로직이 구현되어 있지 않습니다.
+특정 FAQ를 조회 날짜 기준으로 상세 조회하는 API입니다.
+같은 FAQ라도 수정 이력이 존재하는 경우, date 파라미터를 기준으로 해당 시점의 이력(FaqHistory)을 조회합니다.
+
+삭제된 FAQ도 조회 가능하며, deletedFlag 및 deletedAt 값을 통해 삭제 여부를 확인할 수 있습니다.
+
+**Request Example**:
+GET /api/v1/faq/1?date=2026-01-01
+
+**Response (200 OK)**:
+```json
+{
+    "isSuccess": true,
+    "message": "FAQ 상세 조회 성공",
+    "details": {
+        "faqId": 1,
+        "title": "학정시 로그인 오류",
+        "categoryName": "로그인",
+        "deletedFlag": false,
+        "complainantName": "홍길동",
+        "writerName": "양지윤",
+        "answer": "비밀번호 재설정 후 다시 로그인해주세요.",
+        "etc": "반복 문의 발생",
+        "pastManagers": [
+            {
+            "managerName": "김철수",
+            "teamName": "인사팀",
+            "categoryName": "로그인"
+            }
+        ],
+        "currentManagers": [
+            {
+            "managerName": "이영희",
+            "teamName": "고객지원팀",
+            "categoryName": "로그인"
+            }
+        ],
+        "editedDates": [
+            "2024-11-01",
+            "2024-11-10"
+        ],
+        "deletedAt": null
+    }
+}
+```
 
 ---
 
