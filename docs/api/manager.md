@@ -24,9 +24,7 @@
 
 ---
 
-## 📋 상세 엔드포인트 문서
-
-### 1️⃣ POST `/api/v1/manager` - 담당자 등록
+## ✏️담당자 등록
 
 **Endpoint**: POST /api/v1/manager
 
@@ -70,7 +68,7 @@ POST /api/v1/managers
 
 ---
 
-### 2️⃣ GET `/api/v1/manager` - 담당자 목록 조회
+## 🔎 담당자 목록 조회
 
 **Endpoint**: 
 GET /api/v1/manager
@@ -130,6 +128,67 @@ GET /api/v1/managers
     }
 }
 ```
+---
+
+## ✏️ ️담당자 즐겨찾기 등록 및 해제
+
+### Endpoint:
+PATCH /api/v1/managers/{managerId}/category/{categoryId}
+
+특정 담당자를 특정 카테고리 기준으로 즐겨찾기 등록 또는 해제하는 API입니다.\
+•	favorite=true → 즐겨찾기 등록\
+•	favorite=false → 즐겨찾기 해제
+
+담당자와 카테고리 간 매핑(ManagerCategory)이 존재해야 하며,\
+존재하지 않는 경우 예외가 발생합니다.
+
+### Query Parameter:
+(**key / 설명타입 / 필수 여부 / 예시**)\
+(favorite / 즐겨찾기 여부 / boolean / O / true)
+
+
+### Request Example:
+즐겨찾기 등록:\
+PATCH /api/v1/managers/1/category/3?favorite=true
+
+즐겨찾기 해제:\
+PATCH /api/v1/managers/1/category/3?favorite=false
+
+
+### Response (200 OK):
+즐겨찾기 등록 성공
+```json
+{
+    "isSuccess": true,
+    "message": "즐겨찾기 등록 성공",
+    "details": {
+        "managerId": 1,
+        "categoryId": 3,
+        "favorite": true
+    }
+}
+```
+즐겨찾기 해제 성공
+```json
+{
+    "isSuccess": true,
+    "message": "즐겨찾기 해제 성공",
+    "details": {
+        "managerId": 1,
+        "categoryId": 3,
+        "favorite": false
+    }
+}
+```
+
+
+### 응답 필드 설명
+managerId -	즐겨찾기 상태가 변경된 담당자 ID\
+categoryId - 즐겨찾기 상태가 변경된 카테고리 ID\
+favorite -	변경된 즐겨찾기 상태
+
+
+
 ---
 
 ## 🚨 에러 처리
