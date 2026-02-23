@@ -26,7 +26,8 @@
 
 ## ✏️담당자 등록
 
-**Endpoint**: POST /api/v1/manager
+### Endpoint: 
+**POST /api/v1/manager**
 
 새로운 담당자를 등록하는 API입니다.
 
@@ -39,7 +40,7 @@
 •	중복이 아닐 경우 담당자-카테고리 매핑(ManagerCategory)을 생성합니다.
 
 
-**Request Body**:
+### Request Body:
 ```json
 {
     "name": "홍길동",
@@ -49,12 +50,12 @@
 }
 ```
 
-**Request Example**:
+### Request Example:
 POST /api/v1/managers
 
 
 
-**Response (200 OK)**:
+### Response (200 OK):
 ```json
 {
     "isSuccess": true,
@@ -70,8 +71,8 @@ POST /api/v1/managers
 
 ## 🔎 담당자 목록 조회
 
-**Endpoint**: 
-GET /api/v1/manager
+### Endpoint: 
+**GET /api/v1/manager**
 
 담당자 목록을 조회하는 API입니다.
 
@@ -83,21 +84,21 @@ GET /api/v1/manager
 
 조건을 조합하여 조회할 수 있으며, 필터를 지정하지 않으면 전체 담당자 목록이 조회됩니다.
 
-**Query Parameters**:\
+### Query Parameters:
 (**key	/ 설명	/ 타입	/ 필수 여부 /	예시**)\
 **categoryId**	/ 카테고리 / ID /	Long /	X /	1\
 **teamId** / 소속 / ID /	Long /	X /	2\
 **favoriteOnly** /	즐겨찾기한 담당자만 조회 여부 / boolean / X (default=false) / true\
 **searchName** / 담당자 이름 검색 / String / X / 홍길동
 
-**Request Example**:\
+### Request Example:
 GET /api/v1/managers?categoryId=1&teamId=2&favoriteOnly=true&searchName=홍길동
 
 또는 전체 조회:\
 GET /api/v1/managers
 
 
-**Response (200 OK)**:
+### Response (200 OK):
 ```json
 {
     "isSuccess": true,
@@ -133,7 +134,7 @@ GET /api/v1/managers
 ## ✏️ ️담당자 즐겨찾기 등록 및 해제
 
 ### Endpoint:
-PATCH /api/v1/managers/{managerId}/category/{categoryId}
+**PATCH /api/v1/managers/{managerId}/category/{categoryId}**
 
 특정 담당자를 특정 카테고리 기준으로 즐겨찾기 등록 또는 해제하는 API입니다.\
 •	favorite=true → 즐겨찾기 등록\
