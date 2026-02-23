@@ -20,31 +20,37 @@ FAQ 분류용 카테고리를 관리하는 API입니다.
 
 ---
 
-## 🔐 인증
+## ✏️ 카테고리 등록
 
-현재 `SecurityConfig` 기준으로 인증이 강제되지 않습니다. (permitAll)
+### Endpoint:
+**POST /api/v1/categories**
 
----
+새로운 category(분류)를 등록하는 API입니다.\
+•	동일한 이름의 분류가 이미 존재하는 경우 등록할 수 없습니다.\
+•	중복이 아닌 경우 새로운 Category를 생성하고 저장합니다.
 
-## ✅ 카테고리 등록
 
-**Endpoint**: `POST /api/v1/categories`
-
-**Request Body**:
+### Request Body:
 ```json
 {
-  "categoryName": "인사관리"
+    "categoryName": "인사관리"
 }
 ```
 
-**Response (200 OK)**:
+
+### Request Example:\
+POST /api/v1/categories
+
+
+
+### Response (200 OK):
 ```json
 {
-  "isSuccess": true,
-  "message": "카테고리 등록 성공",
-  "details": {
-    "categoryId": 1
-  }
+    "isSuccess": true,
+    "message": "카테고리 등록 성공",
+    "details": {
+        "categoryId": 1
+    }
 }
 ```
 
