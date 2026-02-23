@@ -51,7 +51,7 @@
 ```
 
 ### Request Example:
-POST /api/v1/managers
+POST /api/v1/manager
 
 
 
@@ -92,10 +92,10 @@ POST /api/v1/managers
 **searchName** / 담당자 이름 검색 / String / X / 홍길동
 
 ### Request Example:
-GET /api/v1/managers?categoryId=1&teamId=2&favoriteOnly=true&searchName=홍길동
+GET /api/v1/manager?categoryId=1&teamId=2&favoriteOnly=true&searchName=홍길동
 
 또는 전체 조회:\
-GET /api/v1/managers
+GET /api/v1/manager
 
 
 ### Response (200 OK):
@@ -134,7 +134,7 @@ GET /api/v1/managers
 ## ✏️ ️담당자 즐겨찾기 등록 및 해제
 
 ### Endpoint:
-**PATCH /api/v1/managers/{managerId}/category/{categoryId}**
+**PATCH /api/v1/manager/{managerId}/category/{categoryId}**
 
 특정 담당자를 특정 카테고리 기준으로 즐겨찾기 등록 또는 해제하는 API입니다.\
 •	favorite=true → 즐겨찾기 등록\
@@ -150,10 +150,10 @@ GET /api/v1/managers
 
 ### Request Example:
 즐겨찾기 등록:\
-PATCH /api/v1/managers/1/category/3?favorite=true
+PATCH /api/v1/manager/1/category/3?favorite=true
 
 즐겨찾기 해제:\
-PATCH /api/v1/managers/1/category/3?favorite=false
+PATCH /api/v1/manager/1/category/3?favorite=false
 
 
 ### Response (200 OK):
