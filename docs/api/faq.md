@@ -30,7 +30,8 @@ FAQ 작성/수정 및 조회를 위한 API입니다. 일부 조회 기능은 아
 
 ## ✅ FAQ 등록
 
-**Endpoint**: `POST /api/v1/faq`
+### Endpoint: 
+**POST /api/v1/faq**
 
 FAQ를 등록하는 API입니다.
 JWT 인증이 필요하며, 로그인한 사용자의 정보로 작성됩니다.
@@ -41,7 +42,7 @@ JWT 인증이 필요하며, 로그인한 사용자의 정보로 작성됩니다.
 •	민원인 이름, 비고, 내용은 선택 입력값입니다.
 
 
-**Request Body**:
+### Request Body:
 ```json
 {
     "title": "학정시 로그인 오류",
@@ -53,11 +54,11 @@ JWT 인증이 필요하며, 로그인한 사용자의 정보로 작성됩니다.
 }
 ```
 
-**Request URL Example**:
+### Request URL Example:
 POST /api/v1/faq
 
 
-**Response (200 OK)**:
+### Response (200 OK):
 ```json
 {
     "isSuccess": true,
@@ -72,9 +73,10 @@ POST /api/v1/faq
 
 ## ✏️ FAQ 수정
 
-**Endpoint**: `PUT /api/v1/faq/{faqId}`
+### Endpoint: 
+**PUT /api/v1/faq/{faqId}**
 
-**Request Body**:
+### Request Body:
 ```json
 {
   "userId": 1,
@@ -86,7 +88,7 @@ POST /api/v1/faq
 }
 ```
 
-**Response (200 OK)**:
+### Response (200 OK):
 ```json
 {
   "isSuccess": true,
@@ -99,9 +101,10 @@ POST /api/v1/faq
 
 ---
 
-## 🗑️ FAQ 삭제 (TODO)
+## 🗑️ FAQ 삭제
 
-**Endpoint**: `DELETE /api/v1/faq/{faqId}`
+### Endpoint: 
+**DELETE /api/v1/faq/{faqId}**
 
 특정 FAQ를 삭제 처리하는 API입니다.
 실제 데이터는 삭제하지 않고 deleted_flag를 true로 변경하며, deleted_at에 삭제 시간을 기록하는 Soft Delete 방식을 사용합니다.
@@ -110,10 +113,11 @@ Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만
 과거 문서 보존을 위해 사용됩니다.
 프론트에서는 삭제된 FAQ에 대해 “삭제됨” 배지를 표시합니다.
 
-**Request Example**:
-DELETE /api/v1/faq/1
+### Request Example:
+***DELETE /api/v1/faq/1***
 
-**Response (200 OK)**:
+
+### Response (200 OK):
 ```json
 {
   "isSuccess": true,
@@ -121,21 +125,24 @@ DELETE /api/v1/faq/1
   "details": null
 }
 ```
+
 ---
 
-## 🔎 FAQ 상세 조회 (TODO)
+## 🔎 FAQ 상세 조회
 
-**Endpoint**: `GET /api/v1/faq/{faqId}`
+### Endpoint: 
+**GET /api/v1/faq/{faqId}**
 
 특정 FAQ를 조회 날짜 기준으로 상세 조회하는 API입니다.
 같은 FAQ라도 수정 이력이 존재하는 경우, date 파라미터를 기준으로 해당 시점의 이력(FaqHistory)을 조회합니다.
 
 삭제된 FAQ도 조회 가능하며, deletedFlag 및 deletedAt 값을 통해 삭제 여부를 확인할 수 있습니다.
 
-**Request Example**:
-GET /api/v1/faq/1?date=2026-01-01
+### Request Example:
+**GET /api/v1/faq/1?date=2026-01-01**
 
-**Response (200 OK)**:
+
+### Response (200 OK):
 ```json
 {
     "isSuccess": true,
@@ -174,12 +181,12 @@ GET /api/v1/faq/1?date=2026-01-01
 
 ---
 
-## 📋 FAQ 목록/검색 (TODO)
+## 📋 FAQ 목록/검색
 
-**Endpoint**:
-- **목록 조회**: `GET /api/v1/faq/list?filter=latest`
-- **키워드 검색**: `GET /api/v1/faq?searchkey=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd`
-- **필터 검색**: `GET /api/v1/faq/filter?category=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd`
+### Endpoint:
+- 목록 조회: **GET /api/v1/faq/list?filter=latest**
+- 키워드 검색: **GET /api/v1/faq?searchkey=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd**
+- 필터 검색: **GET /api/v1/faq/filter?category=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd**
 
 필터 조건에 따라 FAQ 목록을 조회하는 API입니다.
 
@@ -194,10 +201,10 @@ GET /api/v1/faq/1?date=2026-01-01
 페이지 단위로 조회하고 페이지당 10개씩 조회됩니다.
 페이지 번호는 0부터 시작합니다.
 
-**Request Example**:
-GET /api/v1/faq?teamId=1&categoryId=3&keyword=로그인&searchScope=TITLE&page=0
+### Request Example:
+**GET /api/v1/faq?teamId=1&categoryId=3&keyword=로그인&searchScope=TITLE&page=0**
 
-**Response (200 OK)**:
+### Response (200 OK):
 ```json
 {
     "isSuccess": true,

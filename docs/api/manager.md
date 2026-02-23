@@ -24,7 +24,7 @@
 
 ---
 
-## ✏️담당자 등록
+## ✅담당자 등록
 
 ### Endpoint: 
 **POST /api/v1/manager**
@@ -85,11 +85,11 @@ POST /api/v1/manager
 조건을 조합하여 조회할 수 있으며, 필터를 지정하지 않으면 전체 담당자 목록이 조회됩니다.
 
 ### Query Parameters:
-(**key	/ 설명	/ 타입	/ 필수 여부 /	예시**)\
-**categoryId**	/ 카테고리 / ID /	Long /	X /	1\
-**teamId** / 소속 / ID /	Long /	X /	2\
-**favoriteOnly** /	즐겨찾기한 담당자만 조회 여부 / boolean / X (default=false) / true\
-**searchName** / 담당자 이름 검색 / String / X / 홍길동
+(***key	/ 설명	/ 타입	/ 필수 여부 /	예시***)\
+categoryId	/ 카테고리 / ID /	Long /	X /	1\
+teamId / 소속 / ID /	Long /	X /	2\
+favoriteOnly /	즐겨찾기한 담당자만 조회 여부 / boolean / X (default=false) / true\
+searchName / 담당자 이름 검색 / String / X / 홍길동
 
 ### Request Example:
 GET /api/v1/manager?categoryId=1&teamId=2&favoriteOnly=true&searchName=홍길동
@@ -144,7 +144,7 @@ GET /api/v1/manager
 존재하지 않는 경우 예외가 발생합니다.
 
 ### Query Parameter:
-(**key / 설명타입 / 필수 여부 / 예시**)\
+(***key / 설명타입 / 필수 여부 / 예시***)\
 (favorite / 즐겨찾기 여부 / boolean / O / true)
 
 
@@ -184,12 +184,13 @@ PATCH /api/v1/manager/1/category/3?favorite=false
 
 
 ### 응답 필드 설명
+***필드명 - 설명***\
 managerId -	즐겨찾기 상태가 변경된 담당자 ID\
 categoryId - 즐겨찾기 상태가 변경된 카테고리 ID\
 favorite -	변경된 즐겨찾기 상태
 
 ---
-## ✂️ 담당자 삭제
+## 🗑️ 담당자 삭제
 
 ### Endpoint:
 **DELETE /api/v1/managers/{managerId}**
