@@ -95,29 +95,51 @@ PUT /api/v1/categories/1
 ```
 ---
 
-## 📋 카테고리 전체 조회
+## 🔎 카테고리 전체 조회
 
-**Endpoint**: `GET /api/v1/categories`
+### Endpoint: 
+**GET /api/v1/categories**
 
-**Response (200 OK)**:
+전체 category(분류) 목록을 조회하는 API입니다.
+
+등록되어 있는 모든 카테고리를 조회하며,\
+별도의 필터 조건 없이 전체 목록을 반환합니다.
+
+
+### Request Example:
+GET /api/v1/categories
+
+
+### Response (200 OK):
 ```json
 {
-  "isSuccess": true,
-  "message": "전체 카테고리 조회 성공",
-  "details": {
-    "categories": [
-      {
-        "categoryId": 1,
-        "categoryName": "시스템"
-      },
-      {
-        "categoryId": 2,
-        "categoryName": "인사관리"
-      }
-    ]
-  }
+    "isSuccess": true,
+    "message": "전체 카테고리 조회 성공",
+    "details": {
+        "categories": [
+            {
+                "categoryId": 1,
+                "categoryName": "시스템"
+            },
+            {
+                "categoryId": 2,
+                "categoryName": "인사관리"
+            },
+            {
+                "categoryId": 3,
+                "categoryName": "학생복지"
+            }
+        ]
+    }
 }
 ```
+
+### 응답 필드 설명
+***필드명	- 설명***\
+categories - 전체 카테고리 목록\
+categoryId - 분류 ID\
+categoryName - 분류 이름
+
 
 ---
 
