@@ -28,7 +28,7 @@
 
 ### 1️⃣ POST `/api/v1/manager` - 담당자 등록
 
-**Endpoint**: POST /api/v1/managers
+**Endpoint**: POST /api/v1/manager
 
 새로운 담당자를 등록하는 API입니다.
 
@@ -72,145 +72,64 @@ POST /api/v1/managers
 
 ### 2️⃣ GET `/api/v1/manager` - 담당자 목록 조회
 
-**설명**: 담당자 목록을 조회합니다.
+**Endpoint**: 
+GET /api/v1/manager
 
-카테고리, 팀(조직), 즐겨찾기 여부로 필터링할 수 있습니다.
+담당자 목록을 조회하는 API입니다.
 
-**Request**
+다음 조건으로 필터링할 수 있습니다:\
+•	카테고리(categoryId)\
+•	소속(teamId)\
+•	즐겨찾기 여부(favoriteOnly)\
+•	담당자 이름 검색(searchName)\
 
-```bash
-# 모든 담당자 조회
-curl -X GET "http://localhost:8080/api/v1/manager" \
-  -H "Content-Type: application/json"
+조건을 조합하여 조회할 수 있으며, 필터를 지정하지 않으면 전체 담당자 목록이 조회됩니다.
 
-# 특정 카테고리의 담당자만 조회
-curl -X GET "http://localhost:8080/api/v1/manager?categoryId=1" \
-  -H "Content-Type: application/json"
+**Query Parameters**:\
+(**key	/ 설명	/ 타입	/ 필수 여부 /	예시**)\
+**categoryId**	/ 카테고리 / ID /	Long /	X /	1\
+**teamId** / 소속 / ID /	Long /	X /	2\
+**favoriteOnly** /	즐겨찾기한 담당자만 조회 여부 / boolean / X (default=false) / true\
+**searchName** / 담당자 이름 검색 / String / X / 홍길동
 
-# 특정 팀의 담당자만 조회
-curl -X GET "http://localhost:8080/api/v1/manager?team=IT부서" \
-  -H "Content-Type: application/json"
+**Request Example**:\
+GET /api/v1/managers?categoryId=1&teamId=2&favoriteOnly=true&searchName=홍길동
 
-# 즐겨찾기한 담당자만 조회
-curl -X GET "http://localhost:8080/api/v1/manager?favoriteOnly=true" \
-  -H "Content-Type: application/json"
+또는 전체 조회:\
+GET /api/v1/managers
 
-# 조건 조합: 특정 카테고리의 즐겨찾기 담당자
-curl -X GET "http://localhost:8080/api/v1/manager?categoryId=1&favoriteOnly=true" \
-  -H "Content-Type: application/json"
-```
 
-**Query Parameters**:
-
-| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
-|---------|------|------|--------|------|
-| categoryId | Long | ❌ | - | 카테고리 ID (지정 시 해당 카테고리의 담당자만 조회) |
-| team | String | ❌ | - | 팀/조직명 (지정 시 해당 팀의 담당자만 조회) |
-| favoriteOnly | Boolean | ❌ | false | true 시 즐겨찾기한 담당자만 조회 |
-
-**Response 200 OK** - 조회 성공
-
+**Response (200 OK)**:
 ```json
 {
-  "isSuccess": true,
-  "message": "카테고리 담당자 목록 조회 성공",
-  "details": {
-    "totalCount": 3,
-    "managers": [
-      {
-        "managerId": 1,
-        "managerName": "이순신",
-        "email": "lee@example.com",
-        "phone": "010-1234-5678",
-        "team": "IT부서",
-        "categories": [
-          {
-            "categoryId": 1,
-            "categoryName": "도서관시스템"
-          },
-          {
-            "categoryId": 2,
-            "categoryName": "학사정보시스템"
-          }
-        ],
-        "isFavorite": true,
-        "registeredAt": "2025-01-10T09:00:00"
-      },
-      {
-        "managerId": 2,
-        "managerName": "김유신",
-        "email": "kim@example.com",
-        "phone": "010-2345-6789",
-        "team": "인프라팀",
-        "categories": [
-          {
-            "categoryId": 3,
-            "categoryName": "기숙사시스템"
-          }
-        ],
-        "isFavorite": false,
-        "registeredAt": "2025-01-12T10:30:00"
-      },
-      {
-        "managerId": 5,
-        "managerName": "장보고",
-        "email": "jang@example.com",
-        "phone": "010-3456-7890",
-        "team": "IT부서",
-        "categories": [
-          {
-            "categoryId": 1,
-            "categoryName": "도서관시스템"
-          }
-        ],
-        "isFavorite": true,
-        "registeredAt": "2025-01-15T14:20:00"
-      }
-    ]
-  }
+    "isSuccess": true,
+    "message": "카테고리 담당자 목록 조회 성공",
+    "details": {
+        "managers": [
+            {
+                "categoryId": 1,
+                "categoryName": "인사관리",
+                "managerId": 1,
+                "managerName": "홍길동",
+                "managerFavorite": true,
+                "teamId": 2,
+                "teamName": "정보운영팀",
+                "phonenum": "01012345678"
+            },
+            {
+                "categoryId": 1,
+                "categoryName": "인사관리",
+                "managerId": 2,
+                "managerName": "김철수",
+                "managerFavorite": false,
+                "teamId": 2,
+                "teamName": "정보운영팀",
+                "phonenum": "01098765432"
+            }
+        ]
+    }
 }
 ```
-
-**응답 필드 설명**:
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| totalCount | Integer | 조회된 담당자 총 개수 |
-| managers | Array | 담당자 정보 배열 |
-| managers[].managerId | Long | 담당자 ID |
-| managers[].managerName | String | 담당자 이름 |
-| managers[].email | String | 담당자 이메일 |
-| managers[].phone | String | 담당자 휴대폰 번호 |
-| managers[].team | String | 소속 팀/조직명 |
-| managers[].categories | Array | 담당 카테고리 목록 |
-| managers[].isFavorite | Boolean | 즐겨찾기 여부 |
-| managers[].registeredAt | DateTime | 등록 일시 |
-
-**에러 응답**
-
-**400 Bad Request** - 잘못된 쿼리 파라미터
-
-```json
-{
-  "isSuccess": false,
-  "message": "요청 파라미터가 유효하지 않습니다.",
-  "details": {
-    "invalidParam": "categoryId",
-    "reason": "categoryId는 양수여야 합니다."
-  }
-}
-```
-
-**500 Internal Server Error** - 서버 오류
-
-```json
-{
-  "isSuccess": false,
-  "message": "담당자 목록 조회 중 오류가 발생했습니다.",
-  "details": null
-}
-```
-
 ---
 
 ## 🚨 에러 처리
