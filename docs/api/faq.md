@@ -32,26 +32,39 @@ FAQ 작성/수정 및 조회를 위한 API입니다. 일부 조회 기능은 아
 
 **Endpoint**: `POST /api/v1/faq`
 
+FAQ를 등록하는 API입니다.
+JWT 인증이 필요하며, 로그인한 사용자의 정보로 작성됩니다.
+
+작성 시:\
+•	제목과 답변은 필수 입력값입니다.\
+•	분류(categoryId)는 반드시 존재해야 합니다.\
+•	민원인 이름, 비고, 내용은 선택 입력값입니다.
+
+
 **Request Body**:
 ```json
 {
-  "userId": 1,
-  "category": "인사관리",
-  "title": "학정시 로그인 오류",
-  "content": "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸",
-  "attachmentUrl": "test.pdf",
-  "etc": "없음"
+    "title": "학정시 로그인 오류",
+    "complainantName": "홍길동",
+    "answer": "핸드폰 앱에서 실행 안되고 ...",
+    "etc": "버튼 위치 변경됨",
+    "categoryId": 1,
+    "content": "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸"
 }
 ```
+
+**Request URL Example**:
+POST /api/v1/faq
+
 
 **Response (200 OK)**:
 ```json
 {
-  "isSuccess": true,
-  "message": "FAQ 작성 성공",
-  "details": {
-    "faqId": 1
-  }
+    "isSuccess": true,
+    "message": "FAQ 작성 성공",
+    "details": {
+        "faqId": 1
+    }
 }
 ```
 
