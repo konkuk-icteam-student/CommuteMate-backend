@@ -72,7 +72,7 @@ POST /api/v1/categories
 ### Request Body:
 ```json
 {
-"categoryName": "학생복지"
+  "categoryName": "학생복지"
 }
 ```
 
@@ -85,12 +85,12 @@ PUT /api/v1/categories/1
 ### Response (200 OK):
 ```json
 {
-"isSuccess": true,
-"message": "카테고리 수정 성공",
-"details": {
-"categoryId": 1,
-"updatedName": "학생복지"
-}
+    "isSuccess": true,
+    "message": "카테고리 수정 성공",
+    "details": {
+        "categoryId": 1,
+        "updatedName": "학생복지"
+    }
 }
 ```
 ---
