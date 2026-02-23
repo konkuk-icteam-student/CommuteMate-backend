@@ -14,7 +14,7 @@
 
 ## 📖 개요
 
-FAQ 작성/수정 및 조회를 위한 API입니다. 일부 조회/삭제 기능은 아직 구현되지 않았습니다.
+FAQ 작성/수정 및 조회를 위한 API입니다. 일부 조회 기능은 아직 구현되지 않았습니다.
 
 **Base Path**: `/api/v1/faq`
 
@@ -90,8 +90,24 @@ FAQ 작성/수정 및 조회를 위한 API입니다. 일부 조회/삭제 기능
 
 **Endpoint**: `DELETE /api/v1/faq/{faqId}`
 
-현재 컨트롤러가 `TODO` 상태로, 실제 응답 로직이 구현되어 있지 않습니다.
+특정 FAQ를 삭제 처리하는 API입니다.
+실제 데이터는 삭제하지 않고 deleted_flag를 true로 변경하며, deleted_at에 삭제 시간을 기록하는 Soft Delete 방식을 사용합니다.
 
+Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만 표시하는 방식으로,
+삭제 이력 관리위해 사용됩니다.
+프론트에서는 삭제된 FAQ에 대해 “삭제됨” 배지를 표시합니다.
+---
+**Request Example**:
+DELETE /api/v1/faq/1
+
+**Response (200 OK)**:
+```json
+{
+  "isSuccess": true,
+  "message": "FAQ 삭제 성공",
+  "details": null
+}
+```
 ---
 
 ## 🔎 FAQ 상세 조회 (TODO)
