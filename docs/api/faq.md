@@ -94,9 +94,9 @@ FAQ 작성/수정 및 조회를 위한 API입니다. 일부 조회 기능은 아
 실제 데이터는 삭제하지 않고 deleted_flag를 true로 변경하며, deleted_at에 삭제 시간을 기록하는 Soft Delete 방식을 사용합니다.
 
 Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만 표시하는 방식으로,
-삭제 이력 관리위해 사용됩니다.
+과거 문서 보존을 위해 사용됩니다.
 프론트에서는 삭제된 FAQ에 대해 “삭제됨” 배지를 표시합니다.
----
+
 **Request Example**:
 DELETE /api/v1/faq/1
 
