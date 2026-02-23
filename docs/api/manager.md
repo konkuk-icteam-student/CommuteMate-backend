@@ -188,7 +188,35 @@ managerId -	즐겨찾기 상태가 변경된 담당자 ID\
 categoryId - 즐겨찾기 상태가 변경된 카테고리 ID\
 favorite -	변경된 즐겨찾기 상태
 
+---
+## ✂️ 담당자 삭제
 
+### Endpoint:
+**DELETE /api/v1/managers/{managerId}**
+
+특정 담당자를 삭제하는 API입니다.
+
+동작 방식은 다음과 같습니다:\
+•	전달된 managerId가 존재하는지 확인합니다.\
+•	해당 담당자와 연결된 모든 카테고리 매핑(ManagerCategory)을 먼저 삭제합니다.\
+•	이후 담당자(Manager)를 삭제합니다.
+
+즉, 담당자 삭제 시 연관된 카테고리 매핑 정보도 함께 제거됩니다.
+
+
+
+### Request Example:
+DELETE /api/v1/managers/1
+
+
+### Response (200 OK):
+```json
+{
+    "isSuccess": true,
+    "message": "담당자 삭제 성공",
+    "details": null
+}
+```
 
 ---
 
