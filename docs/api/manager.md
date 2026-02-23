@@ -24,144 +24,47 @@
 
 ---
 
-## 🔐 인증
-
-| 엔드포인트 | 인증 필요 | 설명 |
-|-----------|---------|------|
-| `POST /manager` | ❌ 아니오 | 담당자 등록 (현재 공개) |
-| `GET /manager` | ❌ 아니오 | 담당자 목록 조회 (현재 공개) |
-
-**주의**: 현재 `SecurityConfig` 기준으로 인증이 강제되지 않습니다. (permitAll)
-
-향후 보안 강화를 위해 관리자 권한 검증이 필요할 수 있습니다.
-
----
-
-## 🎯 주요 엔드포인트
-
-| 메서드 | 경로 | 설명 | HTTP 상태 | 인증 |
-|--------|------|------|----------|------|
-| POST | `/` | 담당자 등록 | 200 | ❌ |
-| GET | `/` | 담당자 목록 조회 (필터링 가능) | 200 | ❌ |
-
----
-
 ## 📋 상세 엔드포인트 문서
 
 ### 1️⃣ POST `/api/v1/manager` - 담당자 등록
 
-**설명**: 새로운 담당자를 등록합니다.
+**Endpoint**: POST /api/v1/managers
 
-담당자는 카테고리별로 관리되며, 이미 등록된 담당자는 재등록할 수 없습니다.
+새로운 담당자를 등록하는 API입니다.
 
-**Request**
+동작 방식은 다음과 같습니다:\
+•	전달된 categoryId가 존재하는지 확인합니다.\
+•	전달된 teamId가 존재하는지 확인합니다.\
+•	같은 이름 + 같은 소속 + 같은 전화번호를 가진 담당자가 이미 존재하면 해당 담당자를 재사용합니다.\
+•	존재하지 않으면 새로운 담당자를 생성합니다.\
+•	해당 담당자가 이미 해당 카테고리에 등록되어 있다면 등록할 수 없습니다.\
+•	중복이 아닐 경우 담당자-카테고리 매핑(ManagerCategory)을 생성합니다.
 
-```bash
-curl -X POST http://localhost:8080/api/v1/manager \
-  -H "Content-Type: application/json" \
-  -d '{
-    "managerId": 5,
-    "categoryIds": [1, 2, 3]
-  }'
-```
 
-**Request Body Schema**:
-
+**Request Body**:
 ```json
 {
-  "managerId": 5,
-  "categoryIds": [1, 2, 3]
-}
-```
-
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| managerId | Long | ✅ | 담당자의 사용자 ID |
-| categoryIds | Array[Long] | ✅ | 담당 카테고리 ID 목록 |
-
-**Response 200 OK** - 등록 성공
-
-```json
-{
-  "isSuccess": true,
-  "message": "담당자 등록 성공",
-  "details": {
-    "managerId": 5,
-    "categories": [
-      {
-        "categoryId": 1,
-        "categoryName": "도서관시스템"
-      },
-      {
-        "categoryId": 2,
-        "categoryName": "학사정보시스템"
-      },
-      {
-        "categoryId": 3,
-        "categoryName": "기숙사시스템"
-      }
-    ],
-    "registeredAt": "2025-01-24T14:30:00"
-  }
-}
-```
-
-**응답 필드 설명**:
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| managerId | Long | 등록된 담당자 ID |
-| categories | Array | 할당된 카테고리 목록 |
-| categories[].categoryId | Long | 카테고리 ID |
-| categories[].categoryName | String | 카테고리 이름 |
-| registeredAt | DateTime | 등록 일시 |
-
-**에러 응답**
-
-**400 Bad Request** - 잘못된 요청
-
-```json
-{
-  "isSuccess": false,
-  "message": "요청 데이터가 유효하지 않습니다.",
-  "details": null
-}
-```
-
-**404 Not Found** - 해당 카테고리 없음
-
-```json
-{
-  "isSuccess": false,
-  "message": "존재하지 않는 카테고리입니다.",
-  "details": {
-    "categoryId": 999,
-    "reason": "카테고리 ID 999가 DB에 없습니다."
-  }
-}
-```
-
-**409 Conflict** - 이미 등록된 담당자
-
-```json
-{
-  "isSuccess": false,
-  "message": "이미 등록된 담당자입니다.",
-  "details": {
-    "managerId": 5,
+    "name": "홍길동",
+    "teamId": 1,
     "categoryId": 1,
-    "reason": "담당자 5는 이미 카테고리 1의 담당자로 등록되어 있습니다."
-  }
+    "phonenum": "01012345678"
 }
 ```
 
-**500 Internal Server Error** - 서버 오류
+**Request Example**:
+POST /api/v1/managers
 
+
+
+**Response (200 OK)**:
 ```json
 {
-  "isSuccess": false,
-  "message": "담당자 등록 중 오류가 발생했습니다.",
-  "details": null
+    "isSuccess": true,
+    "message": "담당자 등록 성공",
+    "details": {
+        "managerId": 1,
+        "categoryId": 1
+    }
 }
 ```
 
