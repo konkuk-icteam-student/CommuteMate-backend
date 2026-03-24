@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+      - dev
 
 env:
   REGISTRY: ghcr.io                        # GitHub Container Registry
@@ -227,6 +228,10 @@ jobs:
             docker-compose ps
 
             echo ""
-            echo "🔍 최근 로그 (마지막 20줄):"
-            docker-compose logs --tail=20 app
+            echo "🚨 ERROR / WARN 로그:"
+            docker-compose logs --tail=200 app | grep -E "ERROR|WARN" || true
+      
+            echo ""
+            echo "📜 최근 전체 로그:"
+            docker-compose logs --tail=200 --timestamps app
           EOF
