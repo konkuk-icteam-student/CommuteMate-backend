@@ -43,3 +43,14 @@ jobs:
             cd ~/app && \
             chmod +x deploy.sh && \
             ./deploy.sh
+            
+            echo "📊 컨테이너 상태"
+            docker ps
+
+            echo ""
+            echo "🚨 ERROR / WARN 로그"
+            docker logs $(docker ps -q --filter "name=commutemate-backend") | grep -E "ERROR|WARN" || true
+
+            echo ""
+            echo "최근 로그 (200줄)"
+            docker logs --tail=200 $(docker ps -q --filter "name=commutemate-backend")
