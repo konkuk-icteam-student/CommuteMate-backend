@@ -39,7 +39,7 @@ jobs:
           key: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
             cd ~/app/source 
-            docker build -t commute-mate-backend:latest
+            docker build -t commute-mate-backend:latest .
             cd ~/app
             chmod +x deploy.sh
             ./deploy.sh
@@ -49,8 +49,8 @@ jobs:
 
             echo ""
             echo "🚨 ERROR / WARN 로그"
-            docker logs $(docker ps -q --filter "name=commutemate-backend") | grep -E "ERROR|WARN" || true
+            docker logs $(docker ps -q --filter "name=commute-mate") | grep -E "ERROR|WARN" || true
 
             echo ""
             echo "최근 로그 (200줄)"
-            docker logs --tail=200 $(docker ps -q --filter "name=commutemate-backend")
+            docker logs --tail=200 $(docker ps -q --filter "name=commute-mate")
