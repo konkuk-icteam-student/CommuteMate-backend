@@ -1,7 +1,6 @@
 package com.better.CommuteMate.attendance.application;
 
-import com.better.CommuteMate.attendance.application.exception.AttendanceErrorCode;
-import com.better.CommuteMate.attendance.application.exception.AttendanceException;
+import com.better.CommuteMate.global.exceptions.error.AttendanceErrorCode;
 import com.better.CommuteMate.attendance.controller.dto.AttendanceHistoryResponse;
 import com.better.CommuteMate.attendance.controller.dto.QrTokenResponse;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
@@ -49,7 +48,7 @@ public class WorkAttendanceService {
     @Transactional
     public void checkIn(Long userId, String qrToken) {
         if (!qrTokenManager.validateToken(qrToken)) {
-            throw new AttendanceException(AttendanceErrorCode.INVALID_QR_TOKEN);
+            throw new CustomException(AttendanceErrorCode.INVALID_QR_TOKEN);
         }
 
         User user = userRepository.findById(userId)
@@ -63,13 +62,13 @@ public class WorkAttendanceService {
                 userId, startOfDay, endOfDay);
 
         if (schedules.isEmpty()) {
-            throw new AttendanceException(AttendanceErrorCode.NO_SCHEDULE_FOUND);
+            throw new CustomException(AttendanceErrorCode.NO_SCHEDULE_FOUND);
         }
 
         WorkSchedule targetSchedule = findTargetScheduleForCheckIn(schedules, now);
 
         if (targetSchedule == null) {
-            throw new AttendanceException(AttendanceErrorCode.NOT_WORK_TIME);
+            throw new CustomException(AttendanceErrorCode.NOT_WORK_TIME);
         }
 
         checkIfAlreadyCheckedIn(targetSchedule);
@@ -91,7 +90,7 @@ public class WorkAttendanceService {
     @Transactional
     public void checkOut(Long userId, String qrToken) {
         if (!qrTokenManager.validateToken(qrToken)) {
-            throw new AttendanceException(AttendanceErrorCode.INVALID_QR_TOKEN);
+            throw new CustomException(AttendanceErrorCode.INVALID_QR_TOKEN);
         }
 
         User user = userRepository.findById(userId)
@@ -105,17 +104,17 @@ public class WorkAttendanceService {
                 userId, startOfDay, endOfDay);
 
         if (schedules.isEmpty()) {
-            throw new AttendanceException(AttendanceErrorCode.NO_SCHEDULE_FOUND);
+            throw new CustomException(AttendanceErrorCode.NO_SCHEDULE_FOUND);
         }
 
         WorkSchedule targetSchedule = findTargetScheduleForCheckOut(schedules, now);
 
         if (targetSchedule == null) {
-            throw new AttendanceException(AttendanceErrorCode.NOT_WORK_TIME);
+            throw new CustomException(AttendanceErrorCode.NOT_WORK_TIME);
         }
 
         if (!hasCheckedIn(targetSchedule)) {
-            throw new AttendanceException(AttendanceErrorCode.CHECK_IN_REQUIRED);
+            throw new CustomException(AttendanceErrorCode.CHECK_IN_REQUIRED);
         }
         
         checkIfAlreadyCheckedOut(targetSchedule);
@@ -174,7 +173,7 @@ public class WorkAttendanceService {
         boolean exists = attendances.stream()
                 .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT01);
         if (exists) {
-            throw new AttendanceException(AttendanceErrorCode.ALREADY_CHECKED_IN);
+            throw new CustomException(AttendanceErrorCode.ALREADY_CHECKED_IN);
         }
     }
     
@@ -183,7 +182,7 @@ public class WorkAttendanceService {
         boolean exists = attendances.stream()
                 .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT02);
         if (exists) {
-            throw new AttendanceException(AttendanceErrorCode.ALREADY_CHECKED_OUT);
+            throw new CustomException(AttendanceErrorCode.ALREADY_CHECKED_OUT);
         }
     }
 

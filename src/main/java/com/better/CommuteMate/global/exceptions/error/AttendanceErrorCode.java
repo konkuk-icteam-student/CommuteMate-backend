@@ -1,6 +1,5 @@
-package com.better.CommuteMate.attendance.application.exception;
+package com.better.CommuteMate.global.exceptions.error;
 
-import com.better.CommuteMate.global.exceptions.error.CustomErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

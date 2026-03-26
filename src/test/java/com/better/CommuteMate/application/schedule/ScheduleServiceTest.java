@@ -120,7 +120,7 @@ class ScheduleServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
-                .isInstanceOf(ScheduleAllFailureException.class);
+                .isInstanceOf(CustomException.class);
 
         verify(workSchedulesRepository, never()).save(any());
         verify(userRepository, never()).findById(anyLong());
@@ -156,7 +156,7 @@ class ScheduleServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
-                .isInstanceOf(SchedulePartialFailureException.class);
+                .isInstanceOf(CustomException.class);
 
         verify(workSchedulesRepository, times(1)).save(any());
         verify(userRepository, times(1)).findById(1L);
@@ -177,7 +177,7 @@ class ScheduleServiceTest {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
-                .isInstanceOf(ScheduleAllFailureException.class);
+                .isInstanceOf(CustomException.class);
 
         verify(workSchedulesRepository, never()).save(any());
         verify(userRepository, times(1)).findById(999L);
@@ -191,7 +191,7 @@ class ScheduleServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(emptySlots))
-                .isInstanceOf(ScheduleAllFailureException.class);
+                .isInstanceOf(CustomException.class);
 
         verify(workSchedulesRepository, never()).save(any());
         verify(userRepository, never()).findById(anyLong());
@@ -307,7 +307,7 @@ class ScheduleServiceTest {
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
 
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
-                .isInstanceOf(SchedulePartialFailureException.class);
+                .isInstanceOf(CustomException.class);
 
         verify(workSchedulesRepository, times(1)).save(any());
         verify(userRepository, times(1)).findById(1L);
@@ -344,7 +344,7 @@ class ScheduleServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
-                .isInstanceOf(SchedulePartialFailureException.class);
+                .isInstanceOf(CustomException.class);
 
         verify(workSchedulesRepository, times(1)).save(any());
         verify(userRepository, times(1)).findById(1L);
@@ -384,12 +384,11 @@ class ScheduleServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleService.applyWorkSchedules(slots))
-                .isInstanceOf(SchedulePartialFailureException.class)
+                .isInstanceOf(CustomException.class)
                 .satisfies(exception -> {
-                    SchedulePartialFailureException ex = (SchedulePartialFailureException) exception;
-                    ScheduleResponseDetail detail = (ScheduleResponseDetail) ex.getErrorResponseDetail();
-                    assertThat(detail.getSuccess()).hasSize(2);
-                    assertThat(detail.getFailure()).hasSize(2);
+                    CustomException ex = (CustomException) exception;
+                    assertThat(ex.getErrorCode())
+                            .isEqualTo(ScheduleErrorCode.SCHEDULE_PARTIAL_FAILURE);
                 });
 
         verify(workSchedulesRepository, times(2)).save(any());
@@ -481,7 +480,7 @@ class ScheduleServiceTest {
         when(workChangeRequestRepository.save(any())).thenReturn(null);
 
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1L))
-                .isInstanceOf(ScheduleAllFailureException.class);
+                .isInstanceOf(CustomException.class);
     }
 
     @Test
@@ -641,7 +640,7 @@ class ScheduleServiceTest {
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(false);
 
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1L))
-                .isInstanceOf(ScheduleAllFailureException.class);
+                .isInstanceOf(CustomException.class);
     }
 
     @Test
@@ -671,7 +670,7 @@ class ScheduleServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1L))
-                .isInstanceOf(ScheduleAllFailureException.class);
+                .isInstanceOf(CustomException.class);
 
         verify(workSchedulesRepository, times(1)).findById(999L);
         verify(workSchedulesRepository, never()).save(any());

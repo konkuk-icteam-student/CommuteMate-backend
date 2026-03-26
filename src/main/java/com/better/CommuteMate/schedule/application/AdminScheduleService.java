@@ -5,6 +5,7 @@ import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository
 import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequest;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestRepository;
 import com.better.CommuteMate.global.code.CodeType;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestResponse;
 import lombok.RequiredArgsConstructor;
@@ -50,13 +51,9 @@ public class AdminScheduleService {
         // 변경 요청 조회
         for (Long id : requestIds) {
             WorkChangeRequest request = workChangeRequestRepository.findById(id)
-                    .orElseThrow(() -> ScheduleAllFailureException.of(
-                            ScheduleErrorCode.SCHEDULE_FAILURE,
-                            null));
+                    .orElseThrow(() -> CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE));
             if (!request.getStatusCode().equals(CodeType.CS01)) { // CS01: 대기 상태가 아니라면 오류 반환
-                throw ScheduleAllFailureException.of(
-                        ScheduleErrorCode.SCHEDULE_FAILURE,
-                        null);
+                throw CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE);
             }
             // 요청 상태 업데이트
             request.setStatusCode(statusCode);

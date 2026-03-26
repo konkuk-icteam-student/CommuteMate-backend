@@ -1,5 +1,6 @@
 package com.better.CommuteMate.application.schedule;
 
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
@@ -302,7 +303,7 @@ class MonthlyScheduleConfigServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> monthlyScheduleConfigService.setApplyTerm(command))
-                .isInstanceOf(ScheduleConfigException.class);
+                .isInstanceOf(CustomException.class);
 
         verify(monthlyScheduleConfigRepository, never()).save(any(MonthlyScheduleConfig.class));
     }
@@ -321,7 +322,7 @@ class MonthlyScheduleConfigServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> monthlyScheduleConfigService.setApplyTerm(command))
-                .isInstanceOf(ScheduleConfigException.class);
+                .isInstanceOf(CustomException.class);
 
         verify(monthlyScheduleConfigRepository, never()).save(any(MonthlyScheduleConfig.class));
     }

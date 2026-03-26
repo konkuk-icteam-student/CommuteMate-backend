@@ -1,6 +1,7 @@
 package com.better.CommuteMate.schedule.controller.admin;
 
 import com.better.CommuteMate.global.code.CodeType;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.schedule.application.AdminScheduleService;
 import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
@@ -245,10 +246,7 @@ public class AdminScheduleController {
 
         // requestIds 개수가 짝수인지 검증
         if (request.requestIds().size() % 2 != 0) {
-            throw ScheduleAllFailureException.of(
-                    ScheduleErrorCode.INVALID_REQUEST_IDS_COUNT,
-                    null
-            );
+            throw CustomException.of(ScheduleErrorCode.INVALID_REQUEST_IDS_COUNT);
         }
 
         adminScheduleService.processChangeRequest(
