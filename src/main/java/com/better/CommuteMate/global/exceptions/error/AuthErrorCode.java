@@ -27,11 +27,6 @@ public enum AuthErrorCode implements CustomErrorCode {
             "[Error] : Authorization 헤더 누락",
             HttpStatus.BAD_REQUEST
     ),
-    USER_NOT_FOUND(
-            "사용자를 찾을 수 없습니다.",
-            "[Error] : 사용자 조회 실패",
-            HttpStatus.NOT_FOUND
-    ),
     INVALID_REFRESH_TOKEN(
             "유효하지 않은 리프레시 토큰입니다.",
             "[Error] : 리프레시 토큰 검증 실패",

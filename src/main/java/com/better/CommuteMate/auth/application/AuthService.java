@@ -7,6 +7,7 @@ import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.AuthErrorCode;
+import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.global.security.jwt.JwtTokenProvider;
 import com.better.CommuteMate.auth.application.dto.AuthTokens;
 import lombok.RequiredArgsConstructor;
@@ -169,7 +170,7 @@ public class AuthService {
         jwtTokenProvider.validateToken(refreshToken);
         String email = jwtTokenProvider.getEmail(refreshToken);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(AuthErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(GlobalErrorCode.USER_NOT_FOUND));
         String stored = user.getRefreshToken();
         if (stored == null || !stored.equals(refreshToken)) {
             throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
