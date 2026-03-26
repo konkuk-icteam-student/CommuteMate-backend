@@ -10,7 +10,7 @@ import com.better.CommuteMate.auth.application.AuthService;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.auth.application.dto.AuthTokens;
 import com.better.CommuteMate.global.controller.dtos.Response;
-import com.better.CommuteMate.global.exceptions.AuthException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.AuthErrorCode;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -96,7 +96,7 @@ public class AuthController {
     public ResponseEntity<Response> refresh(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            throw new AuthException(AuthErrorCode.AUTHORIZATION_HEADER_MISSING);
+            throw new CustomException(AuthErrorCode.AUTHORIZATION_HEADER_MISSING);
         }
         String refreshToken = header.substring(7);
         AuthTokens tokens = authService.refresh(refreshToken);

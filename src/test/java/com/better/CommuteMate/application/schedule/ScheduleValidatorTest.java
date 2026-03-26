@@ -7,7 +7,7 @@ import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleConfigRe
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.exceptions.BasicException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,12 +21,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -394,7 +392,7 @@ class ScheduleValidatorTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleValidator.validateMinWorkTime(schedule))
-                .isInstanceOf(BasicException.class);
+                .isInstanceOf(CustomException.class);
     }
 
     @Test
@@ -423,7 +421,7 @@ class ScheduleValidatorTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleValidator.validateMinWorkTime(schedule))
-                .isInstanceOf(BasicException.class);
+                .isInstanceOf(CustomException.class);
     }
 
     @Test
@@ -446,7 +444,7 @@ class ScheduleValidatorTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleValidator.validateTotalWorkTime(currentMonthlyMinutes, newSlotMinutes))
-                .isInstanceOf(BasicException.class);
+                .isInstanceOf(CustomException.class);
     }
 
     @Test
@@ -469,7 +467,7 @@ class ScheduleValidatorTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleValidator.validateTotalWorkTime(currentMonthlyMinutes, newSlotMinutes))
-                .isInstanceOf(BasicException.class);
+                .isInstanceOf(CustomException.class);
     }
 
     @Test
@@ -492,7 +490,7 @@ class ScheduleValidatorTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleValidator.validateWeeklyWorkTime(currentWeeklyMinutes, newSlotMinutes))
-                .isInstanceOf(BasicException.class);
+                .isInstanceOf(CustomException.class);
     }
 
     @Test
@@ -515,6 +513,6 @@ class ScheduleValidatorTest {
 
         // When & Then
         assertThatThrownBy(() -> scheduleValidator.validateWeeklyWorkTime(currentWeeklyMinutes, newSlotMinutes))
-                .isInstanceOf(BasicException.class);
+                .isInstanceOf(CustomException.class);
     }
 }

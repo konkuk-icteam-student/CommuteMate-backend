@@ -1,6 +1,5 @@
-package com.better.CommuteMate.schedule.application.exceptions;
+package com.better.CommuteMate.global.exceptions.error;
 
-import com.better.CommuteMate.global.exceptions.error.CustomErrorCode;
 import org.springframework.http.HttpStatus;
 
 public enum ScheduleErrorCode implements CustomErrorCode {

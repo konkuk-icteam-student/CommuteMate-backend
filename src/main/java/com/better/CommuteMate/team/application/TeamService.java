@@ -3,7 +3,7 @@ package com.better.CommuteMate.team.application;
 import com.better.CommuteMate.domain.manager.repository.ManagerRepository;
 import com.better.CommuteMate.domain.team.entity.Team;
 import com.better.CommuteMate.domain.team.repository.TeamRepository;
-import com.better.CommuteMate.global.exceptions.TeamException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.TeamErrorCode;
 import com.better.CommuteMate.team.application.dto.request.PostTeamRequest;
 import com.better.CommuteMate.team.application.dto.response.GetTeamListResponse;
@@ -26,7 +26,7 @@ public class TeamService {
     public PostTeamResponse registerTeam(PostTeamRequest request) {
 
         if (teamRepository.existsByName(request.teamName())) {
-            throw new TeamException(TeamErrorCode.TEAM_ALREADY_EXISTS);
+            throw new CustomException(TeamErrorCode.TEAM_ALREADY_EXISTS);
         }
 
         Team team = new Team(request.teamName());
@@ -48,10 +48,10 @@ public class TeamService {
 
     public void deleteTeam(Long teamId) {
         Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new TeamException(TeamErrorCode.TEAM_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(TeamErrorCode.TEAM_NOT_FOUND));
 
         if (managerRepository.existsByTeamId(teamId)) {
-            throw new TeamException(TeamErrorCode.TEAM_DELETE_NOT_ALLOWED);
+            throw new CustomException(TeamErrorCode.TEAM_DELETE_NOT_ALLOWED);
         }
 
         teamRepository.delete(team);

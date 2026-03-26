@@ -1,10 +1,9 @@
 package com.better.CommuteMate.schedule.application;
 
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleConfigException;
-import com.better.CommuteMate.schedule.application.exceptions.response.ApplyTermValidationResponseDetail;
+import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleConfigRepository;
 import lombok.RequiredArgsConstructor;
@@ -111,20 +110,14 @@ public class MonthlyScheduleConfigService {
      *
      * @param command 설정할 기간 정보 (연도, 월, 시작/종료 시간)
      * @return 저장된 월별 설정 엔티티
-     * @throws ScheduleConfigException 기간이 유효하지 않을 경우
+     * @throws CustomException 기간이 유효하지 않을 경우
      */
     @Transactional
     public MonthlyScheduleConfig setApplyTerm(SetApplyTermCommand command) {
         // 신청 기간 유효성 검증 (시작 시간 < 종료 시간)
         if (command.applyStartTime().isAfter(command.applyEndTime()) ||
             command.applyStartTime().isEqual(command.applyEndTime())) {
-            throw ScheduleConfigException.of(
-                    ScheduleErrorCode.INVALID_APPLY_TERM,
-                    ApplyTermValidationResponseDetail.of(
-                            command.applyStartTime().toString(),
-                            command.applyEndTime().toString()
-                    )
-            );
+            throw CustomException.of(ScheduleErrorCode.INVALID_APPLY_TERM);
         }
 
         Optional<MonthlyScheduleConfig> existingConfig = monthlyScheduleConfigRepository

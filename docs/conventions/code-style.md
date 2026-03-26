@@ -510,7 +510,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import com.better.CommuteMate.domain.user.entity.User;
-import com.better.CommuteMate.global.exceptions.UserNotFoundException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 ```
 
 ---
@@ -611,7 +611,7 @@ import com.better.CommuteMate.auth.controller.dto.LoginResponse;
 import com.better.CommuteMate.auth.controller.dto.RegisterRequest;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
-import com.better.CommuteMate.global.exceptions.UserNotFoundException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.security.jwt.JwtTokenProvider;
 
 /**

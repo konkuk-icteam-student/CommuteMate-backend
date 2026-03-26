@@ -5,7 +5,7 @@ import com.better.CommuteMate.domain.task.repository.TaskRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.exceptions.TaskException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.TaskErrorCode;
 import com.better.CommuteMate.task.controller.dtos.*;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -187,7 +186,7 @@ public class TaskService {
                     }
                     updatedTasks.add(TaskResponse.from(task));
                 }
-            } catch (TaskException e) {
+            } catch (CustomException e) {
                 errors.add(BatchTaskError.builder()
                         .taskId(item.getTaskId())
                         .title(item.getTitle())
@@ -210,12 +209,12 @@ public class TaskService {
 
     private Task findTaskById(Long taskId) {
         return taskRepository.findById(taskId)
-                .orElseThrow(() -> new TaskException(TaskErrorCode.TASK_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(TaskErrorCode.TASK_NOT_FOUND));
     }
 
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new TaskException(TaskErrorCode.ASSIGNEE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(TaskErrorCode.ASSIGNEE_NOT_FOUND));
     }
 
     private CodeType validateAndGetTaskType(String taskTypeCode) {
@@ -225,11 +224,11 @@ public class TaskService {
         try {
             CodeType taskType = CodeType.fromFullCode(taskTypeCode);
             if (taskType != CodeType.TT01 && taskType != CodeType.TT02) {
-                throw new TaskException(TaskErrorCode.INVALID_TASK_TYPE);
+                throw new CustomException(TaskErrorCode.INVALID_TASK_TYPE);
             }
             return taskType;
         } catch (IllegalArgumentException e) {
-            throw new TaskException(TaskErrorCode.INVALID_TASK_TYPE);
+            throw new CustomException(TaskErrorCode.INVALID_TASK_TYPE);
         }
     }
 }

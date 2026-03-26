@@ -16,9 +16,7 @@ import com.better.CommuteMate.faq.application.dto.response.GetFaqListResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
 import com.better.CommuteMate.faq.application.dto.response.PostFaqResponse;
 import com.better.CommuteMate.faq.application.dto.response.PutFaqUpdateResponse;
-import com.better.CommuteMate.global.exceptions.BasicException;
-import com.better.CommuteMate.global.exceptions.CategoryException;
-import com.better.CommuteMate.global.exceptions.FaqException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
@@ -45,10 +43,10 @@ public class FaqService {
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
 
         User writer = userRepository.findById(userId)
-                .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         Category category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> CategoryException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
 
         Faq faq = Faq.create(
                 request.title(),
@@ -70,19 +68,19 @@ public class FaqService {
 
     public PutFaqUpdateResponse updateFaq(Long userId, Long faqId, PutFaqUpdateRequest request) {
         User modifier = userRepository.findById(userId)
-                .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         Faq faq = faqRepository.findById(faqId)
-                .orElseThrow(() -> FaqException.of(FaqErrorCode.FAQ_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(FaqErrorCode.FAQ_NOT_FOUND));
 
         if (Boolean.TRUE.equals(faq.getDeletedFlag())) {
-            throw FaqException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
+            throw CustomException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
         }
 
         Category category = faq.getCategory();
         if (request.categoryId() != null) {
             category = categoryRepository.findById(request.categoryId())
-                    .orElseThrow(() -> CategoryException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
+                    .orElseThrow(() -> CustomException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
         }
 
         faq.update(
@@ -122,14 +120,14 @@ public class FaqService {
     @Transactional(readOnly = true)
     public GetFaqDetailResponse getFaqDetailByDate(Long faqId, LocalDate date) {
         Faq faq = faqRepository.findById(faqId)
-                .orElseThrow(() -> FaqException.of(FaqErrorCode.FAQ_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(FaqErrorCode.FAQ_NOT_FOUND));
 
         if (faq.getDeletedAt() != null && faq.getDeletedAt().equals(date)) {
-            throw FaqException.of(FaqErrorCode.INVALID_FAQ_HISTORY_DATE);
+            throw CustomException.of(FaqErrorCode.INVALID_FAQ_HISTORY_DATE);
         }
 
         FaqHistory history = faqHistoryRepository.findByFaqIdAndEditedAt(faqId, date)
-                .orElseThrow(() -> FaqException.of(FaqErrorCode.INVALID_FAQ_HISTORY_DATE));
+                .orElseThrow(() -> CustomException.of(FaqErrorCode.INVALID_FAQ_HISTORY_DATE));
 
         List<LocalDate> editedDates = faqHistoryRepository.findAllEditedDatesByFaqId(faqId);
 
@@ -138,10 +136,10 @@ public class FaqService {
 
     public void deleteFaq(Long faqId) {
         Faq faq = faqRepository.findById(faqId)
-                .orElseThrow(() -> FaqException.of(FaqErrorCode.FAQ_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(FaqErrorCode.FAQ_NOT_FOUND));
 
         if (Boolean.TRUE.equals(faq.getDeletedFlag())) {
-            throw FaqException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
+            throw CustomException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
         }
 
         faq.delete();

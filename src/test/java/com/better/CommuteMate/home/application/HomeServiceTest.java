@@ -7,8 +7,7 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.exceptions.BasicException;
-import com.better.CommuteMate.home.application.HomeService;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse.AttendanceStatus;
 import com.better.CommuteMate.home.controller.dto.HomeWorkTimeResponse;
@@ -51,7 +50,7 @@ class HomeServiceTest {
         when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> homeService.getTodayWorkTime(1L))
-                .isInstanceOf(BasicException.class);
+                .isInstanceOf(CustomException.class);
     }
 
     @Test
