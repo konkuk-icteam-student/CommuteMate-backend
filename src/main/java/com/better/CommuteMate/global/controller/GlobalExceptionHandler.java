@@ -1,9 +1,7 @@
 package com.better.CommuteMate.global.controller;
 
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleAllFailureException;
-import com.better.CommuteMate.schedule.application.exceptions.SchedulePartialFailureException;
 import com.better.CommuteMate.global.controller.dtos.Response;
-import com.better.CommuteMate.global.exceptions.BasicException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +15,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(BasicException.class)
-    protected ResponseEntity<Response> handleBasicException(final BasicException e) {
+    @ExceptionHandler(CustomException.class)
+    protected ResponseEntity<Response> handleCustomException(final CustomException e) {
         //TODO: log 저장 규칙 지정
-        log.error("{}: {}", e.getHttpStatus(), e.getMessage(), e);
-        Response response = new Response(false, e.getMessage(), e.getErrorResponseDetail());
+        log.error("{}: {}", e.getHttpStatus(), e.getLogMessage(), e);
+        Response response = new Response(false, e.getMessage(), null);
         return new ResponseEntity<>(response, e.getHttpStatus());
     }
 
@@ -54,5 +52,19 @@ public class GlobalExceptionHandler {
         log.warn("Access denied: {}", e.getMessage());
         Response response = new Response(false, "해당 작업을 수행할 권한이 없습니다.", null);
         return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(Exception.class)
+    protected ResponseEntity<Response> handleException(final Exception e) {
+
+        log.error("Unhandled exception", e);
+
+        Response response = new Response(
+                false,
+                "서버 내부 오류가 발생했습니다.",
+                null
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

@@ -5,8 +5,7 @@ import com.better.CommuteMate.schedule.application.AdminScheduleService;
 import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleAllFailureException;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode;
+import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.MonthlyLimitsResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessChangeRequestRequest;
@@ -31,7 +30,6 @@ import com.better.CommuteMate.auth.application.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.util.List;
 
-import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestListResponse;
 
 

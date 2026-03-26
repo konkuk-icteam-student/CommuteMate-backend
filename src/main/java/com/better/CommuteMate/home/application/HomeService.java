@@ -6,7 +6,7 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.exceptions.BasicException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse.AttendanceStatus;
@@ -41,12 +41,12 @@ public class HomeService {
      *
      * @param userId 조회를 요청한 사용자의 ID
      * @return {@link HomeWorkTimeResponse} (총 근무 분, 스케줄 개수)
-     * @throws BasicException 사용자를 찾을 수 없는 경우
+     * @throws CustomException 사용자를 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
     public HomeWorkTimeResponse getTodayWorkTime(Long userId) {
         userRepository.findById(userId)
-                .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
@@ -80,12 +80,12 @@ public class HomeService {
      *
      * @param userId 상태를 조회할 사용자의 ID
      * @return {@link HomeAttendanceStatusResponse} (상태 코드, 메시지, 스케줄 정보)
-     * @throws BasicException 사용자를 찾을 수 없는 경우
+     * @throws CustomException 사용자를 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
     public HomeAttendanceStatusResponse getAttendanceStatus(Long userId) {
         userRepository.findById(userId)
-                .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
@@ -221,12 +221,12 @@ public class HomeService {
      *
      * @param userId 조회를 요청한 사용자의 ID
      * @return {@link WeeklyWorkSummaryResponse} (주간 전체/완료, 월간 완료 시간)
-     * @throws BasicException 사용자를 찾을 수 없는 경우
+     * @throws CustomException 사용자를 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
     public WeeklyWorkSummaryResponse getWorkSummary(Long userId) {
         userRepository.findById(userId)
-                .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         LocalDateTime now = LocalDateTime.now();
 

@@ -11,7 +11,7 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.exceptions.BasicException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,7 +53,7 @@ public class WorkAttendanceService {
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
@@ -96,7 +95,7 @@ public class WorkAttendanceService {
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();

@@ -2,9 +2,7 @@ package com.better.CommuteMate.schedule.application;
 
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleConfigException;
-import com.better.CommuteMate.schedule.application.exceptions.response.ApplyTermValidationResponseDetail;
+import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleConfigRepository;
 import lombok.RequiredArgsConstructor;

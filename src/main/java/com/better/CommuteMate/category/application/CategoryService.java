@@ -10,7 +10,7 @@ import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
 import com.better.CommuteMate.domain.category.repository.ManagerCategoryRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
-import com.better.CommuteMate.global.exceptions.CategoryException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ public class CategoryService {
     public PostCategoryResponse registerCategory(PostCategoryRequest request) {
 
         if (categoryRepository.existsByName(request.categoryName())) {
-            throw new CategoryException(CategoryErrorCode.CATEGORY_ALREADY_EXISTS);
+            throw new CustomException(CategoryErrorCode.CATEGORY_ALREADY_EXISTS);
         }
 
         Category category = new Category(request.categoryName());
@@ -42,10 +42,10 @@ public class CategoryService {
 
     public PutCategoryUpdateResponse updateCategory(Long categoryId, PutCategoryUpdateRequest request) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(CategoryErrorCode.CATEGORY_NOT_FOUND));
 
         if (categoryRepository.existsByName(request.categoryName())) {
-            throw new CategoryException(CategoryErrorCode.CATEGORY_ALREADY_EXISTS);
+            throw new CustomException(CategoryErrorCode.CATEGORY_ALREADY_EXISTS);
         }
 
         category.updateName(request.categoryName());
@@ -65,10 +65,10 @@ public class CategoryService {
 
     public void deleteCategory(Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(CategoryErrorCode.CATEGORY_NOT_FOUND));
 
         if (faqRepository.existsByCategoryId(categoryId)|| managerCategoryRepository.existsByCategoryId(categoryId)) {
-            throw new CategoryException(CategoryErrorCode.CATEGORY_DELETE_NOT_ALLOWED);
+            throw new CustomException(CategoryErrorCode.CATEGORY_DELETE_NOT_ALLOWED);
         }
 
         categoryRepository.delete(category);

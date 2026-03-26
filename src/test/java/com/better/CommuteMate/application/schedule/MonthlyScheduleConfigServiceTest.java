@@ -3,7 +3,6 @@ package com.better.CommuteMate.application.schedule;
 import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleConfigException;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleConfigRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +21,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
