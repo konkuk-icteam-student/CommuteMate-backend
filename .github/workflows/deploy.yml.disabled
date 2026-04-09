@@ -38,12 +38,12 @@ jobs:
           username: ${{ secrets.ORACLE_USERNAME }}
           key: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
-            cd ~/app/source 
+            cd ~/app/source
             docker build -t commute-mate-backend:latest .
             cd ~/app
             chmod +x deploy.sh
             ./deploy.sh
-            
+
             echo "📊 컨테이너 상태"
             docker ps
 
