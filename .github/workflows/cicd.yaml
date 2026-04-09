@@ -110,7 +110,7 @@ jobs:
         with:
           host: ${{ secrets.ORACLE_HOST }}
           username: ${{ secrets.ORACLE_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
+          password: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
@@ -119,7 +119,7 @@ jobs:
         with:
           host: ${{ secrets.ORACLE_HOST }}
           username: ${{ secrets.ORACLE_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
+          password: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
             cd ~/deploy/backend-staging
 
@@ -159,7 +159,7 @@ jobs:
         with:
           host: ${{ secrets.ORACLE_HOST }}
           username: ${{ secrets.ORACLE_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
+          password: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
@@ -168,7 +168,7 @@ jobs:
         with:
           host: ${{ secrets.ORACLE_HOST }}
           username: ${{ secrets.ORACLE_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
+          password: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
             cd ~/deploy/backend-prod
 
