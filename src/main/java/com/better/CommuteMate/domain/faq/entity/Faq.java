@@ -7,6 +7,8 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "faq")
@@ -40,6 +42,9 @@ public class Faq {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqCategory> faqCategories = new ArrayList<>();
 
     @Column(name = "updated_date", nullable = false)
     private LocalDate updatedDate;
