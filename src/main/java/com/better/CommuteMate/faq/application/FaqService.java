@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -72,7 +73,12 @@ public class FaqService {
 
         faqRepository.save(faq);
 
+        String categoryNames = categories.stream()
+                .map(Category::getName)
+                .collect(Collectors.joining(", "));
+
         FaqHistory faqhistory = FaqHistory.create(faq);
+
         faqHistoryRepository.save(faqhistory);
 
         return new PostFaqResponse(faq.getId());

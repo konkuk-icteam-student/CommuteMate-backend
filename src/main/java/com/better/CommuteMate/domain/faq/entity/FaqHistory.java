@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "faq_history")
@@ -68,6 +69,7 @@ public class FaqHistory {
 
     public static FaqHistory create(Faq faq) {
         FaqHistory history = new FaqHistory();
+
         history.faq = faq;
         history.title = faq.getTitle();
         history.complainantName = faq.getComplainantName();
@@ -75,6 +77,7 @@ public class FaqHistory {
         history.answer = faq.getAnswer();
         history.etc = faq.getEtc();
         history.writerName = faq.getWriter().getName();
+
         history.managers = faq.getFaqCategories()
                 .stream()
                 .flatMap(fc -> fc.getCategory().getManagers().stream())
@@ -84,10 +87,12 @@ public class FaqHistory {
                         mc.getCategory().getName()
                 ))
                 .toList();
-        history.categoryNames = faq.getFaqCategories()
+
+        history.categoryName = faq.getFaqCategories()
                 .stream()
                 .map(fc -> fc.getCategory().getName())
-                .toList();
+                .collect(Collectors.joining(", ")); // ← 문자열로 변환
+
         return history;
     }
 
