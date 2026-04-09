@@ -55,6 +55,15 @@ public class Faq {
     @Column(name = "deleted_at")
     private LocalDate deletedAt;
 
+//    public void addCategory(Category category) {
+//        if (this.faqCategories.size() >= 3) {
+//            throw new IllegalArgumentException("카테고리는 최대 3개까지 가능합니다.");
+//        }
+//
+//        FaqCategory fc = new FaqCategory(this, category);
+//        this.faqCategories.add(fc);
+//    }
+
     @PrePersist
     protected void onCreate() {
         this.updatedDate = LocalDate.now();
