@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "홈 화면", description = "홈 화면용 정보 조회 API")
 @RestController
-@RequestMapping("api/v1/home")
+@RequestMapping("/api/home")
 @RequiredArgsConstructor
 public class HomeController {
 

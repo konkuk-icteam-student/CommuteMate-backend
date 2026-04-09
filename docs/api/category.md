@@ -16,14 +16,14 @@
 
 FAQ 분류용 카테고리를 관리하는 API입니다.
 
-**Base Path**: `/api/v1/categories`
+**Base Path**: `/api/categories`
 
 ---
 
 ## ✅ 카테고리 등록
 
 ### Endpoint:
-**POST /api/v1/categories**
+**POST /api/categories**
 
 새로운 category(분류)를 등록하는 API입니다.\
 •	동일한 이름의 분류가 이미 존재하는 경우 등록할 수 없습니다.\
@@ -39,7 +39,7 @@ FAQ 분류용 카테고리를 관리하는 API입니다.
 
 
 ### Request Example:\
-POST /api/v1/categories
+POST /api/categories
 
 
 
@@ -59,7 +59,7 @@ POST /api/v1/categories
 ## ✏️ 카테고리 수정
 
 ### Endpoint: 
-**PUT /api/v1/categories/{categoryId}**
+**PUT /api/categories/{categoryId}**
 
 기존 category의 이름을 변경하는 API입니다.
 
@@ -78,7 +78,7 @@ POST /api/v1/categories
 
 
 ### Request Example:
-PUT /api/v1/categories/1
+PUT /api/categories/1
 
 
 
@@ -98,7 +98,7 @@ PUT /api/v1/categories/1
 ## 🔎 카테고리 전체 조회
 
 ### Endpoint: 
-**GET /api/v1/categories**
+**GET /api/categories**
 
 전체 category(분류) 목록을 조회하는 API입니다.
 
@@ -107,7 +107,7 @@ PUT /api/v1/categories/1
 
 
 ### Request Example:
-GET /api/v1/categories
+GET /api/categories
 
 
 ### Response (200 OK):
@@ -146,7 +146,7 @@ categoryName - 분류 이름
 ## 🗑️ 카테고리 삭제
 
 ### Endpoint: 
-**DELETE /api/v1/categories/{categoryId}**
+**DELETE /api/categories/{categoryId}**
 
 특정 category(분류)를 삭제하는 API입니다.
 
@@ -160,7 +160,7 @@ categoryName - 분류 이름
 
 
 ### Request Example:
-DELETE /api/v1/categories/1
+DELETE /api/categories/1
 
 
 

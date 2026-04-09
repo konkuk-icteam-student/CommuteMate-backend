@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "사용자 근무 일정", description = "사용자 근무 일정 신청 및 수정 API")
 @RestController
-@RequestMapping("api/v1/work-schedules")
+@RequestMapping("/api/work-schedules")
 @RequiredArgsConstructor
 public class WorkScheduleController {
 

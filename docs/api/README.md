@@ -37,7 +37,7 @@ CommuteMate는 **JWT (JSON Web Token)** 기반 인증을 사용합니다.
 ### 토큰 타입
 - **AccessToken**: 실제 API 요청 시 사용. 로그인/갱신 응답 본문에 포함되며 `HttpOnly Cookie(accessToken)`도 함께 설정됩니다.  
   ※ 현재 인증 필터는 **Authorization 헤더만** 검사합니다.
-- **RefreshToken**: 토큰 갱신 시 사용. 로그인/갱신 응답 본문에 포함되며 `/api/v1/auth/refresh` 호출 시 `Authorization` 헤더로 전달합니다.
+- **RefreshToken**: 토큰 갱신 시 사용. 로그인/갱신 응답 본문에 포함되며 `/api/auth/refresh` 호출 시 `Authorization` 헤더로 전달합니다.
 
 ### 헤더 형식
 ```
@@ -45,28 +45,28 @@ Authorization: Bearer <token>
 ```
 
 ### 인증 흐름
-1. **로그인**: `/api/v1/auth/login` → AccessToken + RefreshToken 발급
+1. **로그인**: `/api/auth/login` → AccessToken + RefreshToken 발급
 2. **API 요청**: `Authorization: Bearer <AccessToken>` 헤더로 호출
-3. **토큰 갱신**: `Authorization: Bearer <RefreshToken>` 헤더로 `/api/v1/auth/refresh` 호출
-4. **로그아웃**: `/api/v1/auth/logout` → 토큰 블랙리스트 등록
+3. **토큰 갱신**: `Authorization: Bearer <RefreshToken>` 헤더로 `/api/auth/refresh` 호출
+4. **로그아웃**: `/api/auth/logout` → 토큰 블랙리스트 등록
 
 자세한 내용은 [인증 API 문서](./auth.md)를 참고하세요.
 
 ### 인증 적용 범위 (SecurityConfig 기준)
 
 **Spring Security 강제 인증**:
-- `/api/v1/tasks/**`: Task API 모든 엔드포인트
-- `/api/v1/task-templates/**`: TaskTemplate API 모든 엔드포인트
+- `/api/tasks/**`: Task API 모든 엔드포인트
+- `/api/task-templates/**`: TaskTemplate API 모든 엔드포인트
 
 **선택적 인증** (`@AuthenticationPrincipal` 사용):
 다음 API들은 Spring Security에서는 인증을 강제하지 않지만, 컨트롤러에서 `@AuthenticationPrincipal CustomUserDetails userDetails` 파라미터를 요구합니다.
 따라서 **실제 호출 시에는 반드시 AccessToken을 포함**해야 합니다.
-- `/api/v1/work-schedules/*`: 근무 일정 API (사용자 본인 데이터만 조회/수정 가능)
-- `/api/v1/attendance/*`: 출퇴근 API (출근/퇴근 체크, 이력 조회)
+- `/api/work-schedules/*`: 근무 일정 API (사용자 본인 데이터만 조회/수정 가능)
+- `/api/attendance/*`: 출퇴근 API (출근/퇴근 체크, 이력 조회)
 
 **인증 미필요**:
-- `/api/v1/auth/*`: 회원가입, 로그인, 토큰 갱신 등
-- `/api/v1/attendance/qr-token`: QR 토큰 발급 (관리자용)
+- `/api/auth/*`: 회원가입, 로그인, 토큰 갱신 등
+- `/api/attendance/qr-token`: QR 토큰 발급 (관리자용)
 - 그 외 모든 경로: `permitAll`
 
 ※ **중요**: 선택적 인증 API의 경우, SecurityConfig에서 인증을 강제하지 않으므로 `curl`이나 테스트 도구에서는 헤더 없이 호출 가능하지만,
@@ -130,7 +130,7 @@ Authorization: Bearer <token>
 
 ## 📂 API 문서 목록
 
-### 🔐 [인증 API](./auth.md) (`/api/v1/auth`)
+### 🔐 [인증 API](./auth.md) (`/api/auth`)
 사용자 인증 및 토큰 관리 API
 
 | 엔드포인트 | 메서드 | 설명 |
@@ -146,7 +146,7 @@ Authorization: Bearer <token>
 
 ---
 
-### 📅 [근무 일정 API](./schedule.md) (`/api/v1/work-schedules`)
+### 📅 [근무 일정 API](./schedule.md) (`/api/work-schedules`)
 사용자 근무 일정 신청, 조회, 수정 API
 
 | 엔드포인트 | 메서드 | 설명 |
@@ -162,7 +162,7 @@ Authorization: Bearer <token>
 
 ---
 
-### ⏰ [출퇴근 API](./attendance.md) (`/api/v1/attendance`)
+### ⏰ [출퇴근 API](./attendance.md) (`/api/attendance`)
 QR 코드 기반 출퇴근 체크 API
 
 | 엔드포인트 | 메서드 | 설명 |
@@ -177,23 +177,23 @@ QR 코드 기반 출퇴근 체크 API
 
 ---
 
-### 🏠 [대시보드 API](./home.md) (`/api/v1/home`, `/api/v1/users`)
+### 🏠 [대시보드 API](./home.md) (`/api/home`, `/api/users`)
 홈 화면 및 사용자 정보 API
 
 | 엔드포인트 | 메서드 | 설명 |
 |----------|--------|------|
-| `/api/v1/home/work-time` | GET | 오늘의 근무 시간 조회 |
-| `/api/v1/home/attendance-status` | GET | 현재 출퇴근 상태 조회 |
-| `/api/v1/home/work-summary` | GET | 주간/월간 근무 시간 요약 |
-| `/api/v1/users/me` | GET | 내 정보 조회 |
-| `/api/v1/users/me/work-time/weekly` | GET | 주간 근무 시간 조회 |
-| `/api/v1/users/me/work-time/monthly` | GET | 월간 근무 시간 조회 |
+| `/api/home/work-time` | GET | 오늘의 근무 시간 조회 |
+| `/api/home/attendance-status` | GET | 현재 출퇴근 상태 조회 |
+| `/api/home/work-summary` | GET | 주간/월간 근무 시간 요약 |
+| `/api/users/me` | GET | 내 정보 조회 |
+| `/api/users/me/work-time/weekly` | GET | 주간 근무 시간 조회 |
+| `/api/users/me/work-time/monthly` | GET | 월간 근무 시간 조회 |
 
 **바로가기**: [대시보드 API 상세 →](./home.md)
 
 ---
 
-### 📋 [업무 관리 API](./task.md) (`/api/v1/tasks`, `/api/v1/task-templates`)
+### 📋 [업무 관리 API](./task.md) (`/api/tasks`, `/api/task-templates`)
 업무 생성, 수정, 완료 및 템플릿 관리 API
 
 #### 업무 관리
@@ -223,7 +223,7 @@ QR 코드 기반 출퇴근 체크 API
 
 ---
 
-### 🗂️ [카테고리 API](./category.md) (`/api/v1/categories`)
+### 🗂️ [카테고리 API](./category.md) (`/api/categories`)
 FAQ 카테고리 관리 API
 
 | 엔드포인트 | 메서드 | 설명 |
@@ -238,7 +238,7 @@ FAQ 카테고리 관리 API
 
 ---
 
-### ❓ [FAQ API](./faq.md) (`/api/v1/faq`)
+### ❓ [FAQ API](./faq.md) (`/api/faq`)
 FAQ 관리 API (일부 엔드포인트는 구현 진행 중)
 
 | 엔드포인트 | 메서드 | 설명 |
@@ -255,7 +255,7 @@ FAQ 관리 API (일부 엔드포인트는 구현 진행 중)
 
 ---
 
-### 👤 [담당자 API](./manager.md) (`/api/v1/manager`)
+### 👤 [담당자 API](./manager.md) (`/api/manager`)
 담당자 등록 및 목록 관리 API
 
 | 엔드포인트 | 메서드 | 설명 |
@@ -267,7 +267,7 @@ FAQ 관리 API (일부 엔드포인트는 구현 진행 중)
 
 ---
 
-### 👨‍💼 [관리자 근무 일정 API](./admin.md) (`/api/v1/admin/schedule`)
+### 👨‍💼 [관리자 근무 일정 API](./admin.md) (`/api/admin/schedule`)
 관리자 전용 근무 일정 설정 및 변경 요청 처리 API
 
 #### 근무 일정 관리
@@ -294,13 +294,13 @@ FAQ 관리 API (일부 엔드포인트는 구현 진행 중)
 
 | 기능 | 엔드포인트 | 문서 |
 |------|----------|------|
-| **로그인** | `POST /api/v1/auth/login` | [auth.md#로그인](./auth.md#14-login) |
-| **근무 일정 신청** | `POST /api/v1/work-schedules/apply` | [schedule.md#일정-신청](./schedule.md#211-apply-work-schedule) |
-| **나의 일정 조회** | `GET /api/v1/work-schedules?year={year}&month={month}` | [schedule.md#일정-조회](./schedule.md#213-get-my-schedules) |
-| **출근 체크** | `POST /api/v1/attendance/check-in` | [attendance.md#출근](./attendance.md#32-check-in) |
-| **퇴근 체크** | `POST /api/v1/attendance/check-out` | [attendance.md#퇴근](./attendance.md#33-check-out) |
-| **홈 화면 데이터** | `GET /api/v1/home/work-summary` | [home.md#근무-요약](./home.md#53-get-work-summary) |
-| **월별 제한 설정** | `POST /api/v1/admin/schedule/monthly-limit` | [admin.md](./admin.md) |
+| **로그인** | `POST /api/auth/login` | [auth.md#로그인](./auth.md#14-login) |
+| **근무 일정 신청** | `POST /api/work-schedules/apply` | [schedule.md#일정-신청](./schedule.md#211-apply-work-schedule) |
+| **나의 일정 조회** | `GET /api/work-schedules?year={year}&month={month}` | [schedule.md#일정-조회](./schedule.md#213-get-my-schedules) |
+| **출근 체크** | `POST /api/attendance/check-in` | [attendance.md#출근](./attendance.md#32-check-in) |
+| **퇴근 체크** | `POST /api/attendance/check-out` | [attendance.md#퇴근](./attendance.md#33-check-out) |
+| **홈 화면 데이터** | `GET /api/home/work-summary` | [home.md#근무-요약](./home.md#53-get-work-summary) |
+| **월별 제한 설정** | `POST /api/admin/schedule/monthly-limit` | [admin.md](./admin.md) |
 
 ### CodeType 참조
 

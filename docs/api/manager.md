@@ -18,7 +18,7 @@
 
 조직 내 다양한 카테고리(도서관시스템, 학사정보시스템 등)의 담당자를 등록하고 조회할 수 있습니다.
 
-**Base Path**: `/api/v1/manager`
+**Base Path**: `/api/manager`
 
 **태그**: `Manager`
 
@@ -27,7 +27,7 @@
 ## ✅담당자 등록
 
 ### Endpoint: 
-**POST /api/v1/manager**
+**POST /api/manager**
 
 새로운 담당자를 등록하는 API입니다.
 
@@ -51,7 +51,7 @@
 ```
 
 ### Request Example:
-POST /api/v1/manager
+POST /api/manager
 
 
 
@@ -72,7 +72,7 @@ POST /api/v1/manager
 ## 🔎 담당자 목록 조회
 
 ### Endpoint: 
-**GET /api/v1/manager**
+**GET /api/manager**
 
 담당자 목록을 조회하는 API입니다.
 
@@ -92,10 +92,10 @@ favoriteOnly /	즐겨찾기한 담당자만 조회 여부 / boolean / X (default
 searchName / 담당자 이름 검색 / String / X / 홍길동
 
 ### Request Example:
-GET /api/v1/manager?categoryId=1&teamId=2&favoriteOnly=true&searchName=홍길동
+GET /api/manager?categoryId=1&teamId=2&favoriteOnly=true&searchName=홍길동
 
 또는 전체 조회:\
-GET /api/v1/manager
+GET /api/manager
 
 
 ### Response (200 OK):
@@ -134,7 +134,7 @@ GET /api/v1/manager
 ## ✏️ ️담당자 즐겨찾기 등록 및 해제
 
 ### Endpoint:
-**PATCH /api/v1/manager/{managerId}/category/{categoryId}**
+**PATCH /api/manager/{managerId}/category/{categoryId}**
 
 특정 담당자를 특정 카테고리 기준으로 즐겨찾기 등록 또는 해제하는 API입니다.\
 •	favorite=true → 즐겨찾기 등록\
@@ -150,10 +150,10 @@ GET /api/v1/manager
 
 ### Request Example:
 즐겨찾기 등록:\
-PATCH /api/v1/manager/1/category/3?favorite=true
+PATCH /api/manager/1/category/3?favorite=true
 
 즐겨찾기 해제:\
-PATCH /api/v1/manager/1/category/3?favorite=false
+PATCH /api/manager/1/category/3?favorite=false
 
 
 ### Response (200 OK):
@@ -193,7 +193,7 @@ favorite -	변경된 즐겨찾기 상태
 ## 🗑️ 담당자 삭제
 
 ### Endpoint:
-**DELETE /api/v1/managers/{managerId}**
+**DELETE /api/managers/{managerId}**
 
 특정 담당자를 삭제하는 API입니다.
 
@@ -207,7 +207,7 @@ favorite -	변경된 즐겨찾기 상태
 
 
 ### Request Example:
-DELETE /api/v1/managers/1
+DELETE /api/managers/1
 
 
 ### Response (200 OK):
@@ -238,7 +238,7 @@ DELETE /api/v1/managers/1
 **1. 유효하지 않은 카테고리 ID**
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/manager \
+curl -X POST http://localhost:8080/api/manager \
   -H "Content-Type: application/json" \
   -d '{
     "managerId": 5,
@@ -265,7 +265,7 @@ curl -X POST http://localhost:8080/api/v1/manager \
 **2. 이미 등록된 담당자**
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/manager \
+curl -X POST http://localhost:8080/api/manager \
   -H "Content-Type: application/json" \
   -d '{
     "managerId": 5,
@@ -295,7 +295,7 @@ curl -X POST http://localhost:8080/api/v1/manager \
 **3. 빈 요청 바디**
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/manager \
+curl -X POST http://localhost:8080/api/manager \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -325,7 +325,7 @@ curl -X POST http://localhost:8080/api/v1/manager \
 ```bash
 #!/bin/bash
 
-curl -X POST http://localhost:8080/api/v1/manager \
+curl -X POST http://localhost:8080/api/manager \
   -H "Content-Type: application/json" \
   -d '{
     "managerId": 5,
@@ -364,7 +364,7 @@ curl -X POST http://localhost:8080/api/v1/manager \
 ```bash
 #!/bin/bash
 
-curl -X GET "http://localhost:8080/api/v1/manager" \
+curl -X GET "http://localhost:8080/api/manager" \
   -H "Content-Type: application/json" | jq '.details.managers[] | {managerId, managerName, team, categories}'
 ```
 
@@ -404,7 +404,7 @@ curl -X GET "http://localhost:8080/api/v1/manager" \
 ```bash
 #!/bin/bash
 
-curl -X GET "http://localhost:8080/api/v1/manager?categoryId=1" \
+curl -X GET "http://localhost:8080/api/manager?categoryId=1" \
   -H "Content-Type: application/json" | jq '.details | {totalCount, managers}'
 ```
 
@@ -451,7 +451,7 @@ curl -X GET "http://localhost:8080/api/v1/manager?categoryId=1" \
 ```bash
 #!/bin/bash
 
-curl -X GET "http://localhost:8080/api/v1/manager?favoriteOnly=true" \
+curl -X GET "http://localhost:8080/api/manager?favoriteOnly=true" \
   -H "Content-Type: application/json" | jq '.details.managers[] | {managerName, email, isFavorite}'
 ```
 
@@ -485,7 +485,7 @@ interface PostManagerRequest {
 }
 
 async function registerManager(request: PostManagerRequest): Promise<any> {
-  const response = await fetch('http://localhost:8080/api/v1/manager', {
+  const response = await fetch('http://localhost:8080/api/manager', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -514,7 +514,7 @@ async function getManagerList(
   params.append('favoriteOnly', favoriteOnly.toString());
 
   const response = await fetch(
-    `http://localhost:8080/api/v1/manager?${params}`,
+    `http://localhost:8080/api/manager?${params}`,
     {
       method: 'GET',
       headers: {

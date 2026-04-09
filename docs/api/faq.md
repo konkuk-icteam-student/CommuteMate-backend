@@ -16,7 +16,7 @@
 
 FAQ 작성/수정 및 조회를 위한 API입니다. 일부 조회 기능은 아직 구현되지 않았습니다.
 
-**Base Path**: `/api/v1/faq`
+**Base Path**: `/api/faq`
 
 ---
 
@@ -31,7 +31,7 @@ FAQ 작성/수정 및 조회를 위한 API입니다. 일부 조회 기능은 아
 ## ✅ FAQ 등록
 
 ### Endpoint: 
-**POST /api/v1/faq**
+**POST /api/faq**
 
 FAQ를 등록하는 API입니다.
 JWT 인증이 필요하며, 로그인한 사용자의 정보로 작성됩니다.
@@ -55,7 +55,7 @@ JWT 인증이 필요하며, 로그인한 사용자의 정보로 작성됩니다.
 ```
 
 ### Request URL Example:
-POST /api/v1/faq
+POST /api/faq
 
 
 ### Response (200 OK):
@@ -74,7 +74,7 @@ POST /api/v1/faq
 ## ✏️ FAQ 수정
 
 ### Endpoint: 
-**PUT /api/v1/faq/{faqId}**
+**PUT /api/faq/{faqId}**
 
 ### Request Body:
 ```json
@@ -104,7 +104,7 @@ POST /api/v1/faq
 ## 🗑️ FAQ 삭제
 
 ### Endpoint: 
-**DELETE /api/v1/faq/{faqId}**
+**DELETE /api/faq/{faqId}**
 
 특정 FAQ를 삭제 처리하는 API입니다.
 실제 데이터는 삭제하지 않고 deleted_flag를 true로 변경하며, deleted_at에 삭제 시간을 기록하는 Soft Delete 방식을 사용합니다.
@@ -114,7 +114,7 @@ Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만
 프론트에서는 삭제된 FAQ에 대해 “삭제됨” 배지를 표시합니다.
 
 ### Request Example:
-***DELETE /api/v1/faq/1***
+***DELETE /api/faq/1***
 
 
 ### Response (200 OK):
@@ -131,7 +131,7 @@ Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만
 ## 🔎 FAQ 상세 조회
 
 ### Endpoint: 
-**GET /api/v1/faq/{faqId}**
+**GET /api/faq/{faqId}**
 
 특정 FAQ를 조회 날짜 기준으로 상세 조회하는 API입니다.
 같은 FAQ라도 수정 이력이 존재하는 경우, date 파라미터를 기준으로 해당 시점의 이력(FaqHistory)을 조회합니다.
@@ -139,7 +139,7 @@ Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만
 삭제된 FAQ도 조회 가능하며, deletedFlag 및 deletedAt 값을 통해 삭제 여부를 확인할 수 있습니다.
 
 ### Request Example:
-**GET /api/v1/faq/1?date=2026-01-01**
+**GET /api/faq/1?date=2026-01-01**
 
 
 ### Response (200 OK):
@@ -184,9 +184,9 @@ Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만
 ## 📋 FAQ 목록/검색
 
 ### Endpoint:
-- 목록 조회: **GET /api/v1/faq/list?filter=latest**
-- 키워드 검색: **GET /api/v1/faq?searchkey=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd**
-- 필터 검색: **GET /api/v1/faq/filter?category=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd**
+- 목록 조회: **GET /api/faq/list?filter=latest**
+- 키워드 검색: **GET /api/faq?searchkey=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd**
+- 필터 검색: **GET /api/faq/filter?category=...&startDate=yyyy-MM-dd&endDate=yyyy-MM-dd**
 
 필터 조건에 따라 FAQ 목록을 조회하는 API입니다.
 
@@ -202,7 +202,7 @@ Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만
 페이지 번호는 0부터 시작합니다.
 
 ### Request Example:
-**GET /api/v1/faq?teamId=1&categoryId=3&keyword=로그인&searchScope=TITLE&page=0**
+**GET /api/faq?teamId=1&categoryId=3&keyword=로그인&searchScope=TITLE&page=0**
 
 ### Response (200 OK):
 ```json

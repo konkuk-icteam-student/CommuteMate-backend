@@ -17,7 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/manager")
+@RequestMapping("/api/manager")
 @RequiredArgsConstructor
 @Tag(name = "Manager", description = "담당자 관리 API")
 public class ManagerController {

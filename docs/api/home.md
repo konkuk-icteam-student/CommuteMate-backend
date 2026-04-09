@@ -22,7 +22,7 @@
 
 홈 화면(대시보드)에 필요한 정보를 조회하는 API입니다. 사용자의 오늘 근무 현황, 출퇴근 상태, 주간/월간 근무 시간 요약 정보를 제공합니다.
 
-**Base Path**: `/api/v1/home`, `/api/v1/users`
+**Base Path**: `/api/home`, `/api/users`
 
 **주요 기능**:
 - 오늘의 누적 근무 시간 및 스케줄 개수 조회
@@ -60,9 +60,9 @@ Authorization: Bearer <JWT_TOKEN>
 | GET | `/work-time` | 오늘의 근무 시간 조회 | 200 |
 | GET | `/attendance-status` | 출퇴근 상태 조회 | 200 |
 | GET | `/work-summary` | 주간/월간 근무 시간 요약 조회 | 200 |
-| GET | `/api/v1/users/me` | 내 정보 조회 | 200 |
-| GET | `/api/v1/users/me/work-time/weekly` | 주간 근무 시간 조회 | 200 |
-| GET | `/api/v1/users/me/work-time/monthly` | 월간 근무 시간 조회 | 200 |
+| GET | `/api/users/me` | 내 정보 조회 | 200 |
+| GET | `/api/users/me/work-time/weekly` | 주간 근무 시간 조회 | 200 |
+| GET | `/api/users/me/work-time/monthly` | 월간 근무 시간 조회 | 200 |
 
 ---
 
@@ -70,7 +70,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 1️⃣ 오늘의 근무 시간 조회
 
-**Endpoint**: `GET /api/v1/home/work-time`
+**Endpoint**: `GET /api/home/work-time`
 
 **설명**: 현재 사용자의 오늘 누적 근무 시간(분)과 예정된 스케줄 개수를 조회합니다.
 
@@ -154,7 +154,7 @@ Content-Type: application/json
 
 ### 2️⃣ 출퇴근 상태 조회
 
-**Endpoint**: `GET /api/v1/home/attendance-status`
+**Endpoint**: `GET /api/home/attendance-status`
 
 **설명**: 현재 시간 기반으로 사용자의 출퇴근 버튼 상태를 실시간으로 조회합니다.
 
@@ -368,7 +368,7 @@ LATE_CHECK_IN (지각 상태)
 
 ### 3️⃣ 주간/월간 근무 시간 요약 조회
 
-**Endpoint**: `GET /api/v1/home/work-summary`
+**Endpoint**: `GET /api/home/work-summary`
 
 **설명**: 이번 주 및 이번 달의 근무 시간 통계를 조회합니다.
 
@@ -477,7 +477,7 @@ completedMonthlyHours: 25.5시간 (예시)
 
 ### 4️⃣ 내 정보 조회
 
-**Endpoint**: `GET /api/v1/users/me`
+**Endpoint**: `GET /api/users/me`
 
 #### Request
 
@@ -507,7 +507,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 5️⃣ 주간 근무 시간 조회
 
-**Endpoint**: `GET /api/v1/users/me/work-time/weekly`
+**Endpoint**: `GET /api/users/me/work-time/weekly`
 
 #### Request
 
@@ -534,7 +534,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 6️⃣ 월간 근무 시간 조회
 
-**Endpoint**: `GET /api/v1/users/me/work-time/monthly`
+**Endpoint**: `GET /api/users/me/work-time/monthly`
 
 #### Request
 
@@ -600,17 +600,17 @@ Authorization: Bearer <JWT_TOKEN>
 
 ```bash
 # 1. 오늘의 근무 시간 조회
-curl -X GET "https://api.commutemate.com/api/v1/home/work-time" \
+curl -X GET "https://api.commutemate.com/api/home/work-time" \
   -H "Authorization: Bearer eyJhbGc..." \
   -H "Content-Type: application/json"
 
 # 2. 출퇴근 상태 조회
-curl -X GET "https://api.commutemate.com/api/v1/home/attendance-status" \
+curl -X GET "https://api.commutemate.com/api/home/attendance-status" \
   -H "Authorization: Bearer eyJhbGc..." \
   -H "Content-Type: application/json"
 
 # 3. 주간/월간 요약 조회
-curl -X GET "https://api.commutemate.com/api/v1/home/work-summary" \
+curl -X GET "https://api.commutemate.com/api/home/work-summary" \
   -H "Authorization: Bearer eyJhbGc..." \
   -H "Content-Type: application/json"
 ```
@@ -621,7 +621,7 @@ curl -X GET "https://api.commutemate.com/api/v1/home/work-summary" \
 // JavaScript 예시
 async function checkMorningStatus() {
   try {
-    const response = await fetch('/api/v1/home/attendance-status', {
+    const response = await fetch('/api/home/attendance-status', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -654,7 +654,7 @@ async function checkMorningStatus() {
 // 근무 중 상태 조회
 async function checkLunchTime() {
   try {
-    const response = await fetch('/api/v1/home/attendance-status', {
+    const response = await fetch('/api/home/attendance-status', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -684,7 +684,7 @@ async function checkLunchTime() {
 // 매 분마다 근무 시간 갱신
 setInterval(async () => {
   try {
-    const response = await fetch('/api/v1/home/work-time', {
+    const response = await fetch('/api/home/work-time', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -714,7 +714,7 @@ setInterval(async () => {
 // 주간 요약 정보 조회
 async function showWeeklySummary() {
   try {
-    const response = await fetch('/api/v1/home/work-summary', {
+    const response = await fetch('/api/home/work-summary', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

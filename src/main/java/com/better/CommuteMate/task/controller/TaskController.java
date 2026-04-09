@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/tasks")
+@RequestMapping("/api/tasks")
 @RequiredArgsConstructor
 @Tag(name = "Task", description = "업무 관리 API")
 public class TaskController {
