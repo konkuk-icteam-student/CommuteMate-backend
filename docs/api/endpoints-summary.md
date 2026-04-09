@@ -8,7 +8,7 @@
 홈 화면 대시보드에서 사용자의 현재 상태와 오늘의 요약을 보여주기 위한 API입니다.
 
 ### 1.1 오늘의 근무 시간 조회
-- **Endpoint**: `GET /api/v1/home/work-time`
+- **Endpoint**: `GET /api/home/work-time`
 - **설명**: 사용자의 오늘(00:00 ~ 23:59) 예정된 근무 일정 개수와, 현재까지의 누적 근무 시간(분 단위)을 조회합니다.
 - **로직**:
   1. 오늘 날짜의 유효한(삭제되지 않은) `WorkSchedule`을 모두 조회합니다.
@@ -25,7 +25,7 @@
   - **스케줄 없음**: 0분, 0개 반환.
 
 ### 1.2 출퇴근 상태 조회
-- **Endpoint**: `GET /api/v1/home/attendance-status`
+- **Endpoint**: `GET /api/home/attendance-status`
 - **설명**: 현재 시간과 스케줄을 비교하여 사용자의 출퇴근 가능 여부 및 상태를 반환합니다.
 - **반환 상태 (`AttendanceStatus`)**:
   - `NO_SCHEDULE`: 오늘 일정이 없음.
@@ -48,13 +48,13 @@
 QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당합니다.
 
 ### 2.1 QR 토큰 발급 (Admin)
-- **Endpoint**: `GET /api/v1/attendance/qr-token`
+- **Endpoint**: `GET /api/attendance/qr-token`
 - **설명**: 관리자 태블릿 등에서 띄울 QR 코드용 토큰을 생성합니다.
 - **특이사항**: 토큰은 60초간 유효합니다 (`validSeconds`).
 - **사용 시나리오**: 공용 태블릿 화면에서 1분마다 QR 코드를 갱신.
 
 ### 2.2 출근 체크 (User)
-- **Endpoint**: `POST /api/v1/attendance/check-in`
+- **Endpoint**: `POST /api/attendance/check-in`
 - **Body**: `{ "qrToken": "..." }`
 - **로직**:
   1. 토큰 유효성 검증 (Redis/Memory 등).
@@ -68,7 +68,7 @@ QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당합니다.
   - **스케줄 없음**: `NO_SCHEDULE_FOUND`.
 
 ### 2.3 퇴근 체크 (User)
-- **Endpoint**: `POST /api/v1/attendance/check-out`
+- **Endpoint**: `POST /api/attendance/check-out`
 - **Body**: `{ "qrToken": "..." }`
 - **로직**:
   1. 토큰 검증.
@@ -82,9 +82,9 @@ QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당합니다.
   - **너무 늦은 퇴근**: 종료 후 1시간 지나면 퇴근 불가 (자동 퇴근 처리 로직 필요 시 배치로 처리, 현재 API로는 불가).
 
 ### 2.4 출퇴근 이력 조회 (User)
-- **Endpoint (오늘)**: `GET /api/v1/attendance/today`
+- **Endpoint (오늘)**: `GET /api/attendance/today`
   - 오늘 날짜의 출퇴근 이력 리스트 조회.
-- **Endpoint (특정일)**: `GET /api/v1/attendance/history?date={yyyy-MM-dd}`
+- **Endpoint (특정일)**: `GET /api/attendance/history?date={yyyy-MM-dd}`
   - 특정 날짜의 출퇴근 이력 리스트 조회.
 - **사용 시나리오**: 사용자 화면에서 내가 오늘 언제 찍었는지 확인용.
 
@@ -94,7 +94,7 @@ QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당합니다.
 근무 일정을 관리하며, 가장 복잡한 비즈니스 로직(제한 검증, 상태 변경)을 포함합니다.
 
 ### 3.1 근무 일정 일괄 신청
-- **Endpoint**: `POST /api/v1/work-schedules/apply`
+- **Endpoint**: `POST /api/work-schedules/apply`
 - **로직**:
   - 여러 `slot`을 받아 순차적으로 처리합니다.
   - **검증 로직 (`ScheduleValidator`)**:
@@ -111,7 +111,7 @@ QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당합니다.
   - **동시성 이슈**: 마지막 1자리를 두고 동시에 신청 시 DB 락이나 검증 로직에 따라 처리 (현재 로직은 애플리케이션 레벨 검증).
 
 ### 3.2 근무 일정 수정
-- **Endpoint**: `PATCH /api/v1/work-schedules/modify`
+- **Endpoint**: `PATCH /api/work-schedules/modify`
 - **설명**: 기존 일정을 취소(`cancelScheduleIds`)하고 새로운 일정(`applySlots`)을 추가합니다.
 - **제약 사항**: **취소하는 총 시간 == 추가하는 총 시간**이어야 합니다 (`WORK_DURATION_MISMATCH`). "근무 시간 보존의 법칙".
 - **로직**:
@@ -128,15 +128,15 @@ QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당합니다.
   - **삭제 대상이 이미 변경 요청 중**: 상태 충돌 가능성.
 
 ### 3.3 근무 일정 취소/삭제
-- **Endpoint**: `DELETE /api/v1/work-schedules/{scheduleId}`
+- **Endpoint**: `DELETE /api/work-schedules/{scheduleId}`
 - **로직**: 단일 건에 대한 취소 처리. `modify`의 취소 로직과 동일하게 기간에 따라 즉시 취소(`WS04`) 또는 취소 요청(`CR02`)으로 나뉨.
 
 ### 3.4 근무 일정 조회 (User)
-- **Endpoint (월별 조회)**: `GET /api/v1/work-schedules?year={yyyy}&month={MM}`
+- **Endpoint (월별 조회)**: `GET /api/work-schedules?year={yyyy}&month={MM}`
   - 해당 월의 나의 스케줄 목록 조회.
-- **Endpoint (이력 조회)**: `GET /api/v1/work-schedules/history?year={yyyy}&month={MM}`
+- **Endpoint (이력 조회)**: `GET /api/work-schedules/history?year={yyyy}&month={MM}`
   - 해당 월의 스케줄 + 실제 출퇴근 기록(attendance)까지 합쳐서 조회. (실근무 시간 포함)
-- **Endpoint (상세 조회)**: `GET /api/v1/work-schedules/{scheduleId}`
+- **Endpoint (상세 조회)**: `GET /api/work-schedules/{scheduleId}`
   - 특정 스케줄의 상세 정보 조회.
 
 ---
@@ -145,35 +145,35 @@ QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당합니다.
 관리자가 시스템 설정을 제어하고 사용자 요청을 처리합니다.
 
 ### 4.1 월별 제한 및 신청 기간 설정
-- **Endpoint (제한 설정)**: `POST /api/v1/admin/schedule/monthly-limit`
+- **Endpoint (제한 설정)**: `POST /api/admin/schedule/monthly-limit`
   - 월별 최대 동시 근무 인원(`maxConcurrent`) 설정.
-- **Endpoint (기간 설정)**: `POST /api/v1/admin/schedule/set-apply-term`
+- **Endpoint (기간 설정)**: `POST /api/admin/schedule/set-apply-term`
   - 사용자가 자유롭게 신청 가능한 기간(`applyTerm`) 설정.
-- **Endpoint (제한 조회)**: `GET /api/v1/admin/schedule/monthly-limit/{year}/{month}`
-- **Endpoint (전체 제한 조회)**: `GET /api/v1/admin/schedule/monthly-limits`
+- **Endpoint (제한 조회)**: `GET /api/admin/schedule/monthly-limit/{year}/{month}`
+- **Endpoint (전체 제한 조회)**: `GET /api/admin/schedule/monthly-limits`
 - **Edge Cases**:
   - **기간 역전**: 시작 시간이 종료 시간보다 늦으면 `400` 에러.
   - **설정 미존재**: 조회 시 404가 아닌 기본값 처리 혹은 예외 처리 필요.
 
 ### 4.2 변경 요청 일괄 처리
-- **Endpoint**: `POST /api/v1/admin/schedule/process-change-request`
+- **Endpoint**: `POST /api/admin/schedule/process-change-request`
 - **설명**: 사용자가 신청 기간 외에 보낸 `WS01`(신규 신청), `CR01`(수정), `CR02`(삭제) 요청을 승인(`CS02`)하거나 거부합니다.
 - **특이사항**: `requestIds` 리스트의 크기는 반드시 **짝수**여야 합니다. (이유: Controller 레벨 검증 `requestIds().size() % 2 != 0`)
   - *참고: 수정 요청(Modify)은 '삭제 요청 1건 + 추가 요청 1건'이 세트로 오기 때문에 짝수 검증을 하는 것으로 추정되나, 단일 신청(WS01) 처리 시에는 제약이 될 수 있음.*
 - **로직**:
   - 승인 시: 해당 스케줄의 상태를 `WS02`(승인) 또는 `WS04`(취소)로 최종 변경.
   - 거부 시: 요청 상태만 `REJECTED`로 변경하고 스케줄은 원복.
-- **Endpoint (신청 목록 조회)**: `GET /api/v1/admin/schedule/apply-requests`
+- **Endpoint (신청 목록 조회)**: `GET /api/admin/schedule/apply-requests`
   - 승인 대기 중인 모든 근무 신청 목록 조회.
 
 ### 4.3 근무 현황 및 통계 조회 (Admin)
-- **Endpoint (사용자 근무시간)**: `GET /api/v1/admin/schedule/work-time?userId={id}&year={y}&month={m}`
+- **Endpoint (사용자 근무시간)**: `GET /api/admin/schedule/work-time?userId={id}&year={y}&month={m}`
   - 특정 사용자의 월별 근무 시간 조회.
-- **Endpoint (전체 통계)**: `GET /api/v1/admin/schedule/work-time/summary?year={y}&month={m}`
+- **Endpoint (전체 통계)**: `GET /api/admin/schedule/work-time/summary?year={y}&month={m}`
   - 특정 월의 모든 사용자 근무 시간 요약 통계.
-- **Endpoint (사용자 근무이력)**: `GET /api/v1/admin/schedule/history?userId={id}&year={y}&month={m}`
+- **Endpoint (사용자 근무이력)**: `GET /api/admin/schedule/history?userId={id}&year={y}&month={m}`
   - 특정 사용자의 상세 근무 이력 조회.
-- **Endpoint (전체 이력)**: `GET /api/v1/admin/schedule/history/all?year={y}&month={m}`
+- **Endpoint (전체 이력)**: `GET /api/admin/schedule/history/all?year={y}&month={m}`
   - 특정 월의 전체 사용자 근무 이력 조회.
 
 ---

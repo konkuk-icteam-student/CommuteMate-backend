@@ -16,7 +16,7 @@
 QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당하는 API입니다.
 관리자가 발급한 QR 토큰을 스캔하여 출퇴근을 체크하고, 이력을 조회할 수 있습니다.
 
-**Base Path**: `/api/v1/attendance`
+**Base Path**: `/api/attendance`
 
 **주요 기능**:
 - QR 토큰 발급 (관리자용, 60초 유효)
@@ -27,7 +27,7 @@ QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당하는 API입
 
 ## 🔐 인증
 
-**QR 토큰 발급** (`GET /api/v1/attendance/qr-token`):
+**QR 토큰 발급** (`GET /api/attendance/qr-token`):
 - 인증 없이 호출 가능 (관리자용 QR 토큰 발급용)
 - SecurityConfig에서 `permitAll` 설정
 
@@ -44,7 +44,7 @@ QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당하는 API입
 
 ### 2.1 QR Token 발급
 
-**Endpoint**: `GET /api/v1/attendance/qr-token`
+**Endpoint**: `GET /api/attendance/qr-token`
 
 **설명**: 관리자 태블릿 등에서 띄울 QR 코드용 토큰을 생성합니다. 토큰은 60초간 유효합니다.
 
@@ -84,7 +84,7 @@ QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당하는 API입
 
 ### 3.1 Check-In
 
-**Endpoint**: `POST /api/v1/attendance/check-in`
+**Endpoint**: `POST /api/attendance/check-in`
 
 **설명**: QR 코드를 스캔하여 출근 체크를 수행합니다.
 
@@ -152,7 +152,7 @@ Content-Type: application/json
 
 ### 3.2 Check-Out
 
-**Endpoint**: `POST /api/v1/attendance/check-out`
+**Endpoint**: `POST /api/attendance/check-out`
 
 **설명**: QR 코드를 스캔하여 퇴근 체크를 수행합니다. **출근 체크가 선행되어야 합니다.**
 
@@ -221,7 +221,7 @@ Content-Type: application/json
 
 ### 4.1 오늘의 출퇴근 기록 조회
 
-**Endpoint**: `GET /api/v1/attendance/today`
+**Endpoint**: `GET /api/attendance/today`
 
 **설명**: 오늘 날짜의 출퇴근 이력 리스트를 조회합니다.
 
@@ -268,7 +268,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 4.2 특정 날짜 출퇴근 기록 조회
 
-**Endpoint**: `GET /api/v1/attendance/history`
+**Endpoint**: `GET /api/attendance/history`
 
 **설명**: 특정 날짜의 출퇴근 이력 리스트를 조회합니다.
 
@@ -286,7 +286,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 **Example**:
 ```
-GET /api/v1/attendance/history?date=2026-01-15
+GET /api/attendance/history?date=2026-01-15
 ```
 
 #### Response
@@ -336,7 +336,7 @@ GET /api/v1/attendance/history?date=2026-01-15
 **Step 1: 관리자가 QR 토큰 발급**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v1/attendance/qr-token" \
+curl -X GET "http://localhost:8080/api/attendance/qr-token" \
   -H "Content-Type: application/json"
 ```
 
@@ -361,7 +361,7 @@ curl -X GET "http://localhost:8080/api/v1/attendance/qr-token" \
 
 ```bash
 # 출근 체크
-curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
+curl -X POST "http://localhost:8080/api/attendance/check-in" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTY5Mzk3NDQ2MH0.abcdef" \
   -H "Content-Type: application/json" \
   -d '{
@@ -383,7 +383,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
 // QR 스캔 후 토큰 추출
 async function handleCheckIn(qrToken: string): Promise<void> {
   try {
-    const response = await fetch('/api/v1/attendance/check-in', {
+    const response = await fetch('/api/attendance/check-in', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -414,7 +414,7 @@ async function handleCheckIn(qrToken: string): Promise<void> {
 
 ```bash
 # 퇴근 체크
-curl -X POST "http://localhost:8080/api/v1/attendance/check-out" \
+curl -X POST "http://localhost:8080/api/attendance/check-out" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTY5Mzk3NDQ2MH0.abcdef" \
   -H "Content-Type: application/json" \
   -d '{
@@ -434,7 +434,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-out" \
 **Step 4: 출퇴근 이력 조회**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v1/attendance/today" \
+curl -X GET "http://localhost:8080/api/attendance/today" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTY5Mzk3NDQ2MH0.abcdef"
 ```
 
@@ -476,7 +476,7 @@ curl -X GET "http://localhost:8080/api/v1/attendance/today" \
 
 ```bash
 # 만료된 토큰으로 시도
-curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
+curl -X POST "http://localhost:8080/api/attendance/check-in" \
   -H "Authorization: Bearer <valid_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -502,7 +502,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
 **상황**: 사용자가 오늘 승인된 근무 일정이 없는데 출근을 시도합니다.
 
 ```bash
-curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
+curl -X POST "http://localhost:8080/api/attendance/check-in" \
   -H "Authorization: Bearer <valid_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -519,7 +519,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
 }
 ```
 
-**해결책**: 근무 일정 API (`/api/v1/work-schedules/apply`)를 통해 일정을 신청하고, 관리자 승인을 받은 후 출근을 시도합니다.
+**해결책**: 근무 일정 API (`/api/work-schedules/apply`)를 통해 일정을 신청하고, 관리자 승인을 받은 후 출근을 시도합니다.
 
 ---
 
@@ -529,7 +529,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
 
 ```bash
 # 08:45에 출근 시도 (09:00 - 10분 = 08:50보다 이름)
-curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
+curl -X POST "http://localhost:8080/api/attendance/check-in" \
   -H "Authorization: Bearer <valid_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -556,7 +556,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
 
 ```bash
 # 08:50 이후에 다시 시도
-curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
+curl -X POST "http://localhost:8080/api/attendance/check-in" \
   -H "Authorization: Bearer <valid_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -571,7 +571,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
 **상황**: 사용자가 이미 오늘 해당 일정에 대해 출근했는데 다시 출근을 시도합니다.
 
 ```bash
-curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
+curl -X POST "http://localhost:8080/api/attendance/check-in" \
   -H "Authorization: Bearer <valid_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -597,7 +597,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
 **상황**: 사용자가 출근하지 않고 바로 퇴근을 시도합니다.
 
 ```bash
-curl -X POST "http://localhost:8080/api/v1/attendance/check-out" \
+curl -X POST "http://localhost:8080/api/attendance/check-out" \
   -H "Authorization: Bearer <valid_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -626,7 +626,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-out" \
 
 ```bash
 # 11:50에 퇴근 시도 (12:00 - 5분 = 11:55보다 이름)
-curl -X POST "http://localhost:8080/api/v1/attendance/check-out" \
+curl -X POST "http://localhost:8080/api/attendance/check-out" \
   -H "Authorization: Bearer <valid_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -651,7 +651,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-out" \
 **올바른 퇴근**:
 ```bash
 # 11:55 이후에 다시 시도
-curl -X POST "http://localhost:8080/api/v1/attendance/check-out" \
+curl -X POST "http://localhost:8080/api/attendance/check-out" \
   -H "Authorization: Bearer <valid_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -676,7 +676,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-out" \
 
 ```bash
 # 09:30 출근
-curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
+curl -X POST "http://localhost:8080/api/attendance/check-in" \
   -H "Authorization: Bearer <valid_access_token>" \
   -d '{"qrToken": "<valid_qr_token>"}'
 ```
@@ -688,7 +688,7 @@ curl -X POST "http://localhost:8080/api/v1/attendance/check-in" \
 
 ```bash
 # 11:00 퇴근 (11:55 ~ 13:00 윈도우 내)
-curl -X POST "http://localhost:8080/api/v1/attendance/check-out" \
+curl -X POST "http://localhost:8080/api/attendance/check-out" \
   -H "Authorization: Bearer <valid_access_token>" \
   -d '{"qrToken": "<valid_qr_token>"}'
 ```

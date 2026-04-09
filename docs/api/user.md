@@ -18,7 +18,7 @@
 
 사용자는 자신의 기본 정보, 주간 근무 시간, 월간 근무 시간을 조회할 수 있습니다.
 
-**Base Path**: `/api/v1/users`
+**Base Path**: `/api/users`
 
 **태그**: `사용자 마이페이지`
 
@@ -35,7 +35,7 @@ Authorization: Bearer {accessToken}
 
 **예시**:
 ```bash
-curl -X GET http://localhost:8080/api/v1/users/me \
+curl -X GET http://localhost:8080/api/users/me \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -53,7 +53,7 @@ curl -X GET http://localhost:8080/api/v1/users/me \
 
 ## 📋 상세 엔드포인트 문서
 
-### 1️⃣ GET `/api/v1/users/me` - 내 정보 조회
+### 1️⃣ GET `/api/users/me` - 내 정보 조회
 
 **설명**: 현재 로그인한 사용자의 상세 정보를 조회합니다.
 
@@ -62,7 +62,7 @@ curl -X GET http://localhost:8080/api/v1/users/me \
 **Request**
 
 ```bash
-curl -X GET http://localhost:8080/api/v1/users/me \
+curl -X GET http://localhost:8080/api/users/me \
   -H "Authorization: Bearer {accessToken}" \
   -H "Content-Type: application/json"
 ```
@@ -124,7 +124,7 @@ curl -X GET http://localhost:8080/api/v1/users/me \
 
 ---
 
-### 2️⃣ GET `/api/v1/users/me/work-time/weekly` - 주간 근무 시간 조회
+### 2️⃣ GET `/api/users/me/work-time/weekly` - 주간 근무 시간 조회
 
 **설명**: 현재 주(월요일 ~ 일요일)의 총 근무 시간을 조회합니다.
 
@@ -133,7 +133,7 @@ curl -X GET http://localhost:8080/api/v1/users/me \
 **Request**
 
 ```bash
-curl -X GET http://localhost:8080/api/v1/users/me/work-time/weekly \
+curl -X GET http://localhost:8080/api/users/me/work-time/weekly \
   -H "Authorization: Bearer {accessToken}" \
   -H "Content-Type: application/json"
 ```
@@ -227,7 +227,7 @@ curl -X GET http://localhost:8080/api/v1/users/me/work-time/weekly \
 
 ---
 
-### 3️⃣ GET `/api/v1/users/me/work-time/monthly` - 월간 근무 시간 조회
+### 3️⃣ GET `/api/users/me/work-time/monthly` - 월간 근무 시간 조회
 
 **설명**: 현재 월(1일 ~ 말일)의 총 근무 시간을 조회합니다.
 
@@ -236,7 +236,7 @@ curl -X GET http://localhost:8080/api/v1/users/me/work-time/weekly \
 **Request**
 
 ```bash
-curl -X GET http://localhost:8080/api/v1/users/me/work-time/monthly \
+curl -X GET http://localhost:8080/api/users/me/work-time/monthly \
   -H "Authorization: Bearer {accessToken}" \
   -H "Content-Type: application/json"
 ```
@@ -336,7 +336,7 @@ curl -X GET http://localhost:8080/api/v1/users/me/work-time/monthly \
 **1. 토큰 없음**
 
 ```bash
-curl -X GET http://localhost:8080/api/v1/users/me
+curl -X GET http://localhost:8080/api/users/me
 ```
 
 **응답 (401 Unauthorized)**:
@@ -356,7 +356,7 @@ curl -X GET http://localhost:8080/api/v1/users/me
 **2. 토큰 만료**
 
 ```bash
-curl -X GET http://localhost:8080/api/v1/users/me \
+curl -X GET http://localhost:8080/api/users/me \
   -H "Authorization: Bearer expired_token_here"
 ```
 
@@ -370,14 +370,14 @@ curl -X GET http://localhost:8080/api/v1/users/me \
 }
 ```
 
-**해결 방법**: `/api/v1/auth/refresh` 엔드포인트로 새로운 AccessToken 발급
+**해결 방법**: `/api/auth/refresh` 엔드포인트로 새로운 AccessToken 발급
 
 ---
 
 **3. 서버 오류**
 
 ```bash
-curl -X GET http://localhost:8080/api/v1/users/me \
+curl -X GET http://localhost:8080/api/users/me \
   -H "Authorization: Bearer {validToken}"
 ```
 
@@ -408,13 +408,13 @@ ACCESS_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
 # Step 1: 내 정보 조회
 echo "=== 내 정보 조회 ==="
-curl -X GET http://localhost:8080/api/v1/users/me \
+curl -X GET http://localhost:8080/api/users/me \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" | jq '.'
 
 echo -e "\n=== 주간 근무 시간 조회 ==="
 # Step 2: 주간 근무 시간 조회
-curl -X GET http://localhost:8080/api/v1/users/me/work-time/weekly \
+curl -X GET http://localhost:8080/api/users/me/work-time/weekly \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" | jq '.'
 ```
@@ -453,7 +453,7 @@ curl -X GET http://localhost:8080/api/v1/users/me/work-time/weekly \
 
 ACCESS_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
-curl -X GET http://localhost:8080/api/v1/users/me/work-time/monthly \
+curl -X GET http://localhost:8080/api/users/me/work-time/monthly \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" | jq '.details | {totalHours, period, workDays}'
 ```
@@ -488,7 +488,7 @@ curl -X GET http://localhost:8080/api/v1/users/me/work-time/monthly \
 
 ACCESS_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
-curl -X GET http://localhost:8080/api/v1/users/me/work-time/weekly \
+curl -X GET http://localhost:8080/api/users/me/work-time/weekly \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" | jq '.'
 ```
@@ -520,7 +520,7 @@ curl -X GET http://localhost:8080/api/v1/users/me/work-time/weekly \
 // user.service.ts
 
 async function getUserInfo(accessToken: string): Promise<UserInfo> {
-  const response = await fetch('http://localhost:8080/api/v1/users/me', {
+  const response = await fetch('http://localhost:8080/api/users/me', {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
@@ -538,7 +538,7 @@ async function getUserInfo(accessToken: string): Promise<UserInfo> {
 }
 
 async function getWeeklyWorkTime(accessToken: string): Promise<WorkTimeResponse> {
-  const response = await fetch('http://localhost:8080/api/v1/users/me/work-time/weekly', {
+  const response = await fetch('http://localhost:8080/api/users/me/work-time/weekly', {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${accessToken}`,

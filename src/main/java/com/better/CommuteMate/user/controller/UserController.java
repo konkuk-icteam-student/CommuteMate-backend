@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "사용자 마이페이지", description = "사용자 정보 및 근무 시간 통계 API")
 @RestController
-@RequestMapping("api/v1/users")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 /**
  * 사용자 관련 요청을 처리하는 컨트롤러 클래스입니다.

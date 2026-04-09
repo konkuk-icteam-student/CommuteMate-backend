@@ -66,7 +66,7 @@ CommuteMate는 **계층형 아키텍처(Layered Architecture)**를 기반으로 
 **예시**:
 ```java
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService authService;
 
@@ -283,7 +283,7 @@ Client
 
 ```
 Client
-  ↓ POST /api/v1/auth/login
+  ↓ POST /api/auth/login
 [AuthController]
   ↓ LoginRequest (email, password)
 [AuthService]
@@ -307,7 +307,7 @@ Client (토큰을 로컬스토리지/메모리/쿠키에 저장)
 
 ```
 Client (인증된 사용자)
-  ↓ POST /api/v1/work-schedules/apply (with JWT)
+  ↓ POST /api/work-schedules/apply (with JWT)
 [JwtAuthenticationFilter] → 토큰 검증, 사용자 인증
   ↓ Authentication
 [WorkScheduleController]
@@ -370,7 +370,7 @@ HTTP Response
 
 1. **로그인**:
    ```
-   Client → POST /api/v1/auth/login
+   Client → POST /api/auth/login
           → AuthService.login()
           → JwtTokenProvider.generateTokens()
           → AccessToken + RefreshToken 반환 (Body + Cookie)
@@ -378,7 +378,7 @@ HTTP Response
 
 2. **API 요청**:
    ```
-   Client → GET /api/v1/work-schedules
+   Client → GET /api/work-schedules
              Authorization: Bearer {AccessToken}
           → JwtAuthenticationFilter.doFilterInternal()
           → Authorization 헤더에서 토큰 추출
@@ -389,7 +389,7 @@ HTTP Response
 
 3. **로그아웃**:
    ```
-   Client → POST /api/v1/auth/logout
+   Client → POST /api/auth/logout
              Authorization: Bearer {AccessToken}
           → TokenBlacklistService.blacklist()
           → AccessToken 블랙리스트 추가
@@ -420,7 +420,7 @@ if (userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_RL02"
 
 **인증 요구 API**:
 - 기본: 모든 API는 권한 없이 접근 가능 (permitAll)
-- **예외**: `/api/v1/tasks/**`, `/api/v1/task-templates/**` → 인증 필수
+- **예외**: `/api/tasks/**`, `/api/task-templates/**` → 인증 필수
 
 ---
 

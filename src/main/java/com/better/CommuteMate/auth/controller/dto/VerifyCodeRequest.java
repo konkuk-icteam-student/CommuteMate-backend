@@ -10,7 +10,7 @@ import lombok.Setter;
 /**
  * 인증번호 확인 요청 DTO
  *
- * 사용처: POST /api/v1/auth/verify-code
+ * 사용처: POST /api/auth/verify-code
  */
 @Getter
 @Setter

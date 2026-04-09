@@ -56,7 +56,7 @@ class HomeControllerTest {
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/home/work-time")
+        mockMvc.perform(get("/api/home/work-time")
                         .with(user(userDetails))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
@@ -82,7 +82,7 @@ class HomeControllerTest {
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/home/attendance-status")
+        mockMvc.perform(get("/api/home/attendance-status")
                         .with(user(userDetails))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
