@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -45,8 +46,19 @@ public class FaqService {
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
-        Category category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> CustomException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
+        if (request.categoryIds() == null || request.categoryIds().isEmpty()) {
+            throw CustomException.of(FaqErrorCode.CATEGORY_REQUIRED);
+        }
+
+        if (request.categoryIds().size() > 3) {
+            throw CustomException.of(FaqErrorCode.CATEGORY_LIMIT_EXCEEDED);
+        }
+
+        List<Category> categories = categoryRepository.findAllById(request.categoryIds());
+
+        if (categories.size() != request.categoryIds().size()) {
+            throw CustomException.of(CategoryErrorCode.CATEGORY_NOT_FOUND);
+        }
 
         Faq faq = Faq.create(
                 request.title(),
@@ -54,7 +66,7 @@ public class FaqService {
                 request.content(),
                 request.answer(),
                 request.etc(),
-                category,
+                categories,
                 writer
         );
 
@@ -77,10 +89,19 @@ public class FaqService {
             throw CustomException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
         }
 
-        Category category = faq.getCategory();
-        if (request.categoryId() != null) {
-            category = categoryRepository.findById(request.categoryId())
-                    .orElseThrow(() -> CustomException.of(CategoryErrorCode.CATEGORY_NOT_FOUND));
+        List<Category> categories = new ArrayList<>();
+
+        if (request.categoryIds() != null && !request.categoryIds().isEmpty()) {
+
+            if (request.categoryIds().size() > 3) {
+                throw CustomException.of(FaqErrorCode.CATEGORY_LIMIT_EXCEEDED);
+            }
+
+            categories = categoryRepository.findAllById(request.categoryIds());
+
+            if (categories.size() != request.categoryIds().size()) {
+                throw CustomException.of(CategoryErrorCode.CATEGORY_NOT_FOUND);
+            }
         }
 
         faq.update(
@@ -89,7 +110,7 @@ public class FaqService {
                 request.content(),
                 request.answer(),
                 request.etc(),
-                category,
+                categories,
                 modifier
         );
 

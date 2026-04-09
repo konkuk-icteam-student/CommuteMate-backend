@@ -9,8 +9,6 @@ import java.util.List;
 @Repository
 public interface FaqRepository extends JpaRepository<Faq, Long>, FaqQueryRepository {
 
-    boolean existsByCategoryId(Long categoryId);
-
     // 제목에 특정 키워드가 포함된 FAQ 검색 (부분 일치)
     List<Faq> findByTitleContaining(String keyword);
 

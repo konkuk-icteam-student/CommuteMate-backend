@@ -39,10 +39,6 @@ public class Faq {
     @JoinColumn(name = "writer_id", nullable = false)
     private User writer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
-
     @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FaqCategory> faqCategories = new ArrayList<>();
 
@@ -55,14 +51,14 @@ public class Faq {
     @Column(name = "deleted_at")
     private LocalDate deletedAt;
 
-//    public void addCategory(Category category) {
-//        if (this.faqCategories.size() >= 3) {
-//            throw new IllegalArgumentException("카테고리는 최대 3개까지 가능합니다.");
-//        }
-//
-//        FaqCategory fc = new FaqCategory(this, category);
-//        this.faqCategories.add(fc);
-//    }
+    public void addCategory(Category category) {
+        if (this.faqCategories.size() >= 3) {
+            throw new IllegalArgumentException("카테고리는 최대 3개까지 가능합니다.");
+        }
+
+        FaqCategory fc = new FaqCategory(this, category);
+        this.faqCategories.add(fc);
+    }
 
     @PrePersist
     protected void onCreate() {
@@ -81,7 +77,7 @@ public class Faq {
             String content,
             String answer,
             String etc,
-            Category category,
+            List<Category> categories,
             User writer
     ) {
         Faq faq = new Faq();
@@ -90,8 +86,12 @@ public class Faq {
         faq.content = content;
         faq.answer = answer;
         faq.etc = etc;
-        faq.category = category;
         faq.writer = writer;
+
+        for (Category category : categories) {
+            faq.addCategory(category);
+        }
+
         return faq;
     }
 
@@ -101,7 +101,7 @@ public class Faq {
             String content,
             String answer,
             String etc,
-            Category category,
+            List<Category> categories,
             User writer
     ) {
         this.title = title;
@@ -109,8 +109,13 @@ public class Faq {
         this.content = content;
         this.answer = answer;
         this.etc = etc;
-        this.category = category;
         this.writer = writer;
+
+        this.faqCategories.clear();
+
+        for (Category category : categories) {
+            this.addCategory(category);
+        }
     }
 
     public void delete() {

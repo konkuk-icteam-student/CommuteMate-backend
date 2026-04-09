@@ -46,7 +46,15 @@ public class FaqHistory {
     private LocalDate editedAt;  // 수정된 날짜
 
     @Column(name = "category_name", length = 100, nullable = false)
-    private String categoryName;  // 분류명
+    private String categoryName;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "faq_history_categories",
+            joinColumns = @JoinColumn(name = "faq_history_id")
+    )
+    @Column(name = "category_name")
+    private List<String> categoryNames; // 분류명
 
     // FK: faq_id → faq(id)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -67,15 +75,19 @@ public class FaqHistory {
         history.answer = faq.getAnswer();
         history.etc = faq.getEtc();
         history.writerName = faq.getWriter().getName();
-        history.managers = faq.getCategory().getManagers()
+        history.managers = faq.getFaqCategories()
                 .stream()
+                .flatMap(fc -> fc.getCategory().getManagers().stream())
                 .map(mc -> new ManagerSnapshot(
                         mc.getManager().getName(),
                         mc.getManager().getTeam().getName(),
                         mc.getCategory().getName()
                 ))
                 .toList();
-        history.categoryName = faq.getCategory().getName();
+        history.categoryNames = faq.getFaqCategories()
+                .stream()
+                .map(fc -> fc.getCategory().getName())
+                .toList();
         return history;
     }
 

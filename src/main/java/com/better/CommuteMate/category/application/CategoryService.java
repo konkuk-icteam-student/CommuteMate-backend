@@ -9,7 +9,7 @@ import com.better.CommuteMate.category.application.dto.response.PutCategoryUpdat
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
 import com.better.CommuteMate.domain.category.repository.ManagerCategoryRepository;
-import com.better.CommuteMate.domain.faq.repository.FaqRepository;
+import com.better.CommuteMate.domain.faq.repository.FaqCategoryRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
-    private final FaqRepository faqRepository;
+    private final FaqCategoryRepository faqCategoryRepository;
     private final ManagerCategoryRepository managerCategoryRepository;
 
     public PostCategoryResponse registerCategory(PostCategoryRequest request) {
@@ -67,7 +67,7 @@ public class CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CustomException(CategoryErrorCode.CATEGORY_NOT_FOUND));
 
-        if (faqRepository.existsByCategoryId(categoryId)|| managerCategoryRepository.existsByCategoryId(categoryId)) {
+        if (faqCategoryRepository.existsByCategory_Id(categoryId)|| managerCategoryRepository.existsByCategoryId(categoryId)) {
             throw new CustomException(CategoryErrorCode.CATEGORY_DELETE_NOT_ALLOWED);
         }
 
