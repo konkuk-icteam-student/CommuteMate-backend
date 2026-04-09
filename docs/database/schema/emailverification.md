@@ -233,7 +233,7 @@ public void cleanupExpiredCodes() {
 
 ### 관련 엔드포인트
 
-#### 1. POST /api/v1/auth/send-verification-code
+#### 1. POST /api/auth/send-verification-code
 - **기능**: 인증번호 발송
 - **Request**: `{ "email": "user@example.com" }`
 - **Process**:
@@ -242,7 +242,7 @@ public void cleanupExpiredCodes() {
   3. 이메일 발송
 - **Response**: `200 OK` (발송 성공)
 
-#### 2. POST /api/v1/auth/verify-code
+#### 2. POST /api/auth/verify-code
 - **기능**: 인증번호 검증
 - **Request**: `{ "email": "user@example.com", "code": "123456" }`
 - **Process**:
@@ -251,7 +251,7 @@ public void cleanupExpiredCodes() {
   3. `verified = true` 업데이트
 - **Response**: `200 OK` (인증 성공)
 
-#### 3. POST /api/v1/auth/register
+#### 3. POST /api/auth/register
 - **기능**: 회원가입
 - **전제 조건**: 이메일 인증 완료 (`verified = true`)
 - **Process**:

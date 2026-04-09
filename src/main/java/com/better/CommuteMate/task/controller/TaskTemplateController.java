@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/task-templates")
+@RequestMapping("/api/task-templates")
 @RequiredArgsConstructor
 @Tag(name = "Task Template", description = "업무 템플릿 관리 API")
 public class TaskTemplateController {

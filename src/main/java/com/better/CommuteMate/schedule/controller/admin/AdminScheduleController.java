@@ -36,7 +36,7 @@ import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestListRes
 
 @Tag(name = "관리자 근무 일정 관리", description = "관리자 전용 근무 일정 설정 및 변경 요청 처리 API")
 @RestController
-@RequestMapping("api/v1/admin/schedule")
+@RequestMapping("/api/admin/schedule")
 @RequiredArgsConstructor
 public class AdminScheduleController {
 

@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/team")
+@RequestMapping("/api/team")
 @RequiredArgsConstructor
 @Tag(name = "Team", description = "소속 관리 API")
 public class TeamController {

@@ -26,7 +26,7 @@ CommuteMate 인증 API는 **JWT (JSON Web Token)** 기반 인증을 제공합니
 ## Base Path
 
 ```
-/api/v1/auth
+/api/auth
 ```
 
 ---
@@ -56,7 +56,7 @@ CommuteMate 인증 API는 **JWT (JSON Web Token)** 기반 인증을 제공합니
 
 **Endpoint**
 ```
-POST /api/v1/auth/send-verification-code
+POST /api/auth/send-verification-code
 ```
 
 **Request Body**
@@ -93,7 +93,7 @@ POST /api/v1/auth/send-verification-code
 
 **Endpoint**
 ```
-POST /api/v1/auth/verify-code
+POST /api/auth/verify-code
 ```
 
 **Request Body**
@@ -130,7 +130,7 @@ POST /api/v1/auth/verify-code
 
 **Endpoint**
 ```
-POST /api/v1/auth/register
+POST /api/auth/register
 ```
 
 **Request Body**
@@ -190,7 +190,7 @@ POST /api/v1/auth/register
 
 **Endpoint**
 ```
-POST /api/v1/auth/login
+POST /api/auth/login
 ```
 
 **Request Body**
@@ -242,7 +242,7 @@ POST /api/v1/auth/login
 
 **토큰 사용 방법**
 - **AccessToken**: `Authorization: Bearer <AccessToken>` 헤더로 전달 (쿠키는 서버 인증 필터에서 사용하지 않음)
-- **RefreshToken**: 클라이언트에 저장 후 `/api/v1/auth/refresh` 호출 시 `Authorization` 헤더로 전달
+- **RefreshToken**: 클라이언트에 저장 후 `/api/auth/refresh` 호출 시 `Authorization` 헤더로 전달
 
 **관련 문서**: [JWT 인증 구조](../conventions/api-conventions.md#jwt-인증)
 
@@ -254,7 +254,7 @@ POST /api/v1/auth/login
 
 **Endpoint**
 ```
-POST /api/v1/auth/logout
+POST /api/auth/logout
 ```
 
 **Headers**
@@ -291,7 +291,7 @@ Authorization: Bearer <accessToken>   // 선택 사항 (없어도 200 응답)
 
 **Endpoint**
 ```
-POST /api/v1/auth/refresh
+POST /api/auth/refresh
 ```
 
 **Headers**
@@ -334,7 +334,7 @@ Authorization: Bearer <refreshToken>
 
 **토큰 갱신 시나리오**
 1. 클라이언트가 API 요청 시 `401 Unauthorized` 수신
-2. 저장된 RefreshToken으로 `/api/v1/auth/refresh` 호출
+2. 저장된 RefreshToken으로 `/api/auth/refresh` 호출
 3. 새로운 AccessToken + RefreshToken 수신
 4. 실패한 API 요청 재시도
 

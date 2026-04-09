@@ -28,7 +28,7 @@ import java.time.LocalDate;
 
 @Tag(name = "FAQ", description = "FAQ 관련 API")
 @RestController
-@RequestMapping("/api/v1/faq")
+@RequestMapping("/api/faq")
 @RequiredArgsConstructor
 public class FaqController {
 

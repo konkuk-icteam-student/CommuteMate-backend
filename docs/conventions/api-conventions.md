@@ -35,18 +35,18 @@ CommuteMate 프로젝트의 REST API 설계 표준을 정의합니다.
 
 ✅ **올바른 예시**:
 ```
-GET    /api/v1/work-schedules         # 일정 목록 조회
-POST   /api/v1/work-schedules         # 일정 생성
-GET    /api/v1/work-schedules/{id}    # 특정 일정 조회
-PUT    /api/v1/work-schedules/{id}    # 일정 수정
-DELETE /api/v1/work-schedules/{id}    # 일정 삭제
+GET    /api/work-schedules         # 일정 목록 조회
+POST   /api/work-schedules         # 일정 생성
+GET    /api/work-schedules/{id}    # 특정 일정 조회
+PUT    /api/work-schedules/{id}    # 일정 수정
+DELETE /api/work-schedules/{id}    # 일정 삭제
 ```
 
 ❌ **잘못된 예시**:
 ```
-GET    /api/v1/getSchedules      # 동사 사용 금지
-POST   /api/v1/createSchedule    # 동사 사용 금지
-POST   /api/v1/schedule/delete   # POST + delete 혼용 금지
+GET    /api/getSchedules      # 동사 사용 금지
+POST   /api/createSchedule    # 동사 사용 금지
+POST   /api/schedule/delete   # POST + delete 혼용 금지
 ```
 
 ### 2. 계층적 URL 구조
@@ -55,34 +55,25 @@ POST   /api/v1/schedule/delete   # POST + delete 혼용 금지
 
 ✅ **올바른 예시**:
 ```
-GET /api/v1/users/{userId}/schedules        # 특정 사용자의 일정 목록
-GET /api/v1/work-schedules/{scheduleId}/attendance  # 특정 일정의 출퇴근 기록
+GET /api/users/{userId}/schedules        # 특정 사용자의 일정 목록
+GET /api/work-schedules/{scheduleId}/attendance  # 특정 일정의 출퇴근 기록
 ```
 
-### 3. 버전 관리
-
-**원칙**: URL에 API 버전 포함 (`/api/v1/`, `/api/v2/`)
-
-```
-/api/v1/work-schedules   # 버전 1
-/api/v2/work-schedules   # 버전 2 (호환성 깨질 때)
-```
-
-### 4. 복수형 사용
+### 3. 복수형 사용
 
 **원칙**: 리소스 이름은 복수형 사용
 
 ✅ **올바른 예시**:
 ```
-/api/v1/users
-/api/v1/work-schedules
-/api/v1/organizations
+/api/users
+/api/work-schedules
+/api/organizations
 ```
 
 ❌ **잘못된 예시**:
 ```
-/api/v1/user
-/api/v1/schedule
+/api/user
+/api/schedule
 ```
 
 ---
@@ -185,16 +176,16 @@ public class WorkScheduleDTO {
 
 ✅ **올바른 예시**:
 ```
-/api/v1/work-schedules
-/api/v1/monthly-schedule-limits
-/api/v1/attendance
+/api/work-schedules
+/api/monthly-schedule-limits
+/api/attendance
 ```
 
 ❌ **잘못된 예시**:
 ```
-/api/v1/workSchedules       # camelCase 금지
-/api/v1/work_schedules      # snake_case 금지
-/api/v1/WorkSchedules       # PascalCase 금지
+/api/workSchedules       # camelCase 금지
+/api/work_schedules      # snake_case 금지
+/api/WorkSchedules       # PascalCase 금지
 ```
 
 ### 쿼리 파라미터 네이밍
@@ -203,9 +194,9 @@ public class WorkScheduleDTO {
 
 ✅ **올바른 예시**:
 ```
-GET /api/v1/work-schedules?year=2025&month=11
-GET /api/v1/work-schedules?userId=123&statusCode=WS02
-GET /api/v1/users?page=1&size=10&sortBy=createdAt
+GET /api/work-schedules?year=2025&month=11
+GET /api/work-schedules?userId=123&statusCode=WS02
+GET /api/users?page=1&size=10&sortBy=createdAt
 ```
 
 ### Request/Response 필드 네이밍
@@ -250,48 +241,48 @@ GET /api/v1/users?page=1&size=10&sortBy=createdAt
 
 **GET - 조회**:
 ```
-GET /api/v1/work-schedules           # 목록 조회
-GET /api/v1/work-schedules/{id}      # 상세 조회
-GET /api/v1/work-schedules?year=2025&month=11  # 필터링 조회
+GET /api/work-schedules           # 목록 조회
+GET /api/work-schedules/{id}      # 상세 조회
+GET /api/work-schedules?year=2025&month=11  # 필터링 조회
 ```
 
 **POST - 생성**:
 ```
-POST /api/v1/auth/register      # 회원가입
-POST /api/v1/work-schedules          # 일정 신청 (배치 가능)
-POST /api/v1/attendance/check-in  # 출근 체크
+POST /api/auth/register      # 회원가입
+POST /api/work-schedules          # 일정 신청 (배치 가능)
+POST /api/attendance/check-in  # 출근 체크
 ```
 
 **PUT - 전체 수정**:
 ```
-PUT /api/v1/work-schedules/{id}      # 일정 전체 업데이트
-PUT /api/v1/users/{id}          # 사용자 정보 전체 수정
+PUT /api/work-schedules/{id}      # 일정 전체 업데이트
+PUT /api/users/{id}          # 사용자 정보 전체 수정
 ```
 
 **PATCH - 부분 수정**:
 ```
-PATCH /api/v1/work-schedules/{id}    # 일정 시간만 수정
-PATCH /api/v1/tasks/{id}/complete  # 업무 완료 상태만 변경
+PATCH /api/work-schedules/{id}    # 일정 시간만 수정
+PATCH /api/tasks/{id}/complete  # 업무 완료 상태만 변경
 ```
 
 **DELETE - 삭제**:
 ```
-DELETE /api/v1/work-schedules/{id}   # 일정 삭제
-DELETE /api/v1/tasks/{id}       # 업무 삭제
+DELETE /api/work-schedules/{id}   # 일정 삭제
+DELETE /api/tasks/{id}       # 업무 삭제
 ```
 
 ### 특수 케이스
 
 **배치 작업**: POST 사용
 ```
-POST /api/v1/work-schedules          # 여러 일정 일괄 신청
-POST /api/v1/tasks/batch        # 업무 일괄 생성
+POST /api/work-schedules          # 여러 일정 일괄 신청
+POST /api/tasks/batch        # 업무 일괄 생성
 ```
 
 **복잡한 조회**: POST 사용 (Body로 복잡한 필터 전달)
 ```
-POST /api/v1/work-schedules/search   # 복잡한 검색 조건
-POST /api/v1/users/query        # 복잡한 사용자 쿼리
+POST /api/work-schedules/search   # 복잡한 검색 조건
+POST /api/users/query        # 복잡한 사용자 쿼리
 ```
 
 ---
@@ -306,8 +297,8 @@ POST /api/v1/users/query        # 복잡한 사용자 쿼리
 
 **예시**:
 ```
-GET /api/v1/work-schedules?page=0&size=20
-GET /api/v1/users?page=2&size=50
+GET /api/work-schedules?page=0&size=20
+GET /api/users?page=2&size=50
 ```
 
 ### 정렬 파라미터
@@ -318,8 +309,8 @@ GET /api/v1/users?page=2&size=50
 
 **예시**:
 ```
-GET /api/v1/work-schedules?sortBy=scheduleDate&direction=desc
-GET /api/v1/users?sortBy=createdAt&direction=asc
+GET /api/work-schedules?sortBy=scheduleDate&direction=desc
+GET /api/users?sortBy=createdAt&direction=asc
 ```
 
 ### 페이징 응답 형식
@@ -400,20 +391,20 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ### 인증 흐름
 
 ```
-1. POST /api/v1/auth/login
+1. POST /api/auth/login
    → AccessToken + RefreshToken 발급
    → 응답 본문 및 HttpOnly Cookie로 토큰 전달
    → 클라이언트는 안전한 곳에 저장
 
-2. GET /api/v1/tasks (인증 필요)
+2. GET /api/tasks (인증 필요)
    → Authorization 헤더로 AccessToken 전달 (또는 쿠키)
    → 서버에서 검증 후 응답
 
 3. AccessToken 만료 시
-   → POST /api/v1/auth/refresh (RefreshToken 전송)
+   → POST /api/auth/refresh (RefreshToken 전송)
    → 새로운 AccessToken + RefreshToken 발급
 
-4. POST /api/v1/auth/logout
+4. POST /api/auth/logout
    → AccessToken 블랙리스트 등록
    → User.refreshToken = null (DB 업데이트)
    → 토큰 무효화
@@ -429,7 +420,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **Request**:
 ```http
-POST /api/v1/work-schedules/apply
+POST /api/work-schedules/apply
 Content-Type: application/json
 Authorization: Bearer {accessToken}
 
@@ -482,7 +473,7 @@ Authorization: Bearer {accessToken}
 
 **Request**:
 ```http
-GET /api/v1/work-schedules?year=2025&month=11&page=0&size=10&sortBy=scheduleDate&direction=asc
+GET /api/work-schedules?year=2025&month=11&page=0&size=10&sortBy=scheduleDate&direction=asc
 Authorization: Bearer {accessToken}
 ```
 
@@ -514,7 +505,7 @@ Authorization: Bearer {accessToken}
 
 **Request**:
 ```http
-POST /api/v1/auth/register
+POST /api/auth/register
 Content-Type: application/json
 
 {

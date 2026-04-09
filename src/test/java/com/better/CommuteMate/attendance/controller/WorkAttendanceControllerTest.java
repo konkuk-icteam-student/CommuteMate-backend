@@ -60,7 +60,7 @@ class WorkAttendanceControllerTest {
 
         given(workAttendanceService.generateQrToken()).willReturn(response);
 
-        mockMvc.perform(get("/api/v1/attendance/qr-token")
+        mockMvc.perform(get("/api/attendance/qr-token")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -80,7 +80,7 @@ class WorkAttendanceControllerTest {
         User user = User.builder().userId(1L).email("test@test.com").roleCode(CodeType.RL01).build();
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
-        mockMvc.perform(post("/api/v1/attendance/check-in")
+        mockMvc.perform(post("/api/attendance/check-in")
                         .with(user(userDetails))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -100,7 +100,7 @@ class WorkAttendanceControllerTest {
         User user = User.builder().userId(1L).email("test@test.com").roleCode(CodeType.RL01).build();
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
-        mockMvc.perform(post("/api/v1/attendance/check-out")
+        mockMvc.perform(post("/api/attendance/check-out")
                         .with(user(userDetails))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
