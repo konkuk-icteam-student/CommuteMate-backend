@@ -3,6 +3,8 @@ package com.better.CommuteMate.domain.faq.entity;
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.user.entity.User;
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -49,6 +51,12 @@ public class Faq {
 
     @Column(name = "deleted_at")
     private LocalDate deletedAt;
+
+    @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqFile> files = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -104,4 +112,12 @@ public class Faq {
         this.deletedAt = LocalDate.now();
     }
 
+    public void addImage(FaqImage image) {
+        this.images.add(image);
+        image.assignFaq(this);
+    }
+
+    public void addFile(FaqFile file) {
+        this.files.add(file);
+    }
 }
