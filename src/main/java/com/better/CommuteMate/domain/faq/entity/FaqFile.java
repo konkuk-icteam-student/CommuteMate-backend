@@ -36,12 +36,15 @@ public class FaqFile {
         this.createdAt = LocalDateTime.now();
     }
 
-    public static FaqFile create(String url, String s3Key, String originalName, Faq faq) {
+    public static FaqFile create(String url, String s3Key, String originalName) {
         FaqFile file = new FaqFile();
         file.url = url;
         file.s3Key = s3Key;
         file.originalName = originalName;
-        file.faq = faq;
         return file;
+    }
+
+    public void assignFaq(Faq faq) {
+        this.faq = faq;
     }
 }

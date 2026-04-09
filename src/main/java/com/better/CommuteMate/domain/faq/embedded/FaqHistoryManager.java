@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ManagerSnapshot {
+public class FaqHistoryManager {
 
     @Column(name = "manager_name", length = 30, nullable = false)
     private String managerName;

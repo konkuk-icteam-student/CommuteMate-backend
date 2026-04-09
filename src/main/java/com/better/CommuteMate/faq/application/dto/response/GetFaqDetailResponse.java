@@ -1,6 +1,6 @@
 package com.better.CommuteMate.faq.application.dto.response;
 
-import com.better.CommuteMate.domain.faq.embedded.ManagerSnapshot;
+import com.better.CommuteMate.domain.faq.embedded.FaqHistoryManager;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.faq.entity.FaqHistory;
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
@@ -39,10 +39,10 @@ public class GetFaqDetailResponse extends ResponseDetail {
     private final String etc;
 
     @Schema(description = "수정 시점 기준 담당자 목록")
-    private final List<ManagerSnapshot> pastManagers;
+    private final List<FaqHistoryManager> pastManagers;
 
     @Schema(description = "현재 기준 담당자 목록")
-    private final List<ManagerSnapshot> currentManagers;
+    private final List<FaqHistoryManager> currentManagers;
 
     @Schema(description = "수정 날짜 목록", example = "[\"2024-11-01\", \"2024-11-10\"]")
     private final List<LocalDate> editedDates;
@@ -62,14 +62,14 @@ public class GetFaqDetailResponse extends ResponseDetail {
         this.etc = history.getEtc();
         this.pastManagers = history.getManagers()
                 .stream()
-                .map(snapshot -> new ManagerSnapshot(
+                .map(snapshot -> new FaqHistoryManager(
                         snapshot.getManagerName(),
                         snapshot.getTeamName(),
                         snapshot.getCategoryName()
                 ))
                 .toList();
         this.currentManagers = faq.getCategory().getManagers().stream()
-                .map(mc -> new ManagerSnapshot(
+                .map(mc -> new FaqHistoryManager(
                         mc.getManager().getName(),
                         mc.getManager().getTeam().getName(),
                         mc.getCategory().getName()

@@ -119,5 +119,6 @@ public class Faq {
 
     public void addFile(FaqFile file) {
         this.files.add(file);
+        file.assignFaq(this);
     }
 }

@@ -1,7 +1,8 @@
 package com.better.CommuteMate.domain.faq.entity;
 
-import com.better.CommuteMate.domain.faq.embedded.ManagerSnapshot;
+import com.better.CommuteMate.domain.faq.embedded.FaqHistoryManager;
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -37,7 +38,7 @@ public class FaqHistory {
             name = "faq_history_managers",
             joinColumns = @JoinColumn(name = "faq_history_id")
     )
-    private List<ManagerSnapshot> managers;
+    private List<FaqHistoryManager> managers;
 
     @Column(name = "writer_name", length = 50, nullable = false)
     private String writerName;  // 작성자 이름
@@ -47,6 +48,12 @@ public class FaqHistory {
 
     @Column(name = "category_name", length = 100, nullable = false)
     private String categoryName;  // 분류명
+
+    @OneToMany(mappedBy = "faqHistory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqHistoryImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "faqHistory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqHistoryFile> files = new ArrayList<>();
 
     // FK: faq_id → faq(id)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -69,13 +76,29 @@ public class FaqHistory {
         history.writerName = faq.getWriter().getName();
         history.managers = faq.getCategory().getManagers()
                 .stream()
-                .map(mc -> new ManagerSnapshot(
+                .map(mc -> new FaqHistoryManager(
                         mc.getManager().getName(),
                         mc.getManager().getTeam().getName(),
                         mc.getCategory().getName()
                 ))
                 .toList();
         history.categoryName = faq.getCategory().getName();
+        history.images = faq.getImages().stream()
+                .map(img -> FaqHistoryImage.create(
+                        img.getUrl(),
+                        img.getS3Key(),
+                        history
+                ))
+                .toList();
+
+        history.files = faq.getFiles().stream()
+                .map(file -> FaqHistoryFile.create(
+                        file.getUrl(),
+                        file.getS3Key(),
+                        file.getOriginalName(),
+                        history
+                ))
+                .toList();
         return history;
     }
 
