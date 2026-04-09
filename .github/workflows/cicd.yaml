@@ -3,12 +3,9 @@ name: CI/CD 파이프라인
 on:
   push:
     branches:
-      - main
       - dev
-  pull_request:
-    branches:
       - main
-      - dev
+      - cicd_test
 
 env:
   REGISTRY: ghcr.io
@@ -35,8 +32,6 @@ jobs:
 
       - name: 테스트 실행
         run: ./gradlew test --no-daemon --build-cache
-        env:
-          GRADLE_BUILD_CACHE_ENABLED: true
 
       - name: 테스트 결과 업로드
         if: always()
@@ -49,23 +44,17 @@ jobs:
     name: 컨테이너 이미지 빌드 및 푸시
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push'
 
     permissions:
       contents: read
       packages: write
-      id-token: write
-      attestations: write
 
     steps:
       - name: 소스 코드 체크아웃
         uses: actions/checkout@v4
 
-      - name: BuildKit 설정
+      - name: Buildx 설정
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            image=moby/buildkit:latest
 
       - name: GHCR 로그인
         uses: docker/login-action@v3
@@ -74,7 +63,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 컨테이너 이미지 메타데이터 추출
+      - name: 이미지 메타데이터 생성
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -84,8 +73,7 @@ jobs:
             type=sha,format=long,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: 컨테이너 이미지 빌드 및 푸시
-        id: build-and-push
+      - name: 이미지 빌드 및 푸시
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -93,39 +81,29 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
-          outputs: type=image,oci-mediatypes=true
-
-      - name: 이미지 출처 증명 생성
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.build-and-push.outputs.digest }}
-          push-to-registry: true
 
   deploy-to-staging:
     name: 테스트 서버 배포
     runs-on: ubuntu-latest
     needs: [test, build-and-push]
-    if: github.event_name == 'push'
 
     steps:
-      - name: sshpass 설치
-        run: sudo apt-get update && sudo apt-get install -y sshpass
-
       - name: 테스트 서버에서 GHCR 로그인
-        env:
-          SSHPASS: ${{ secrets.TEST_SSH_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.TEST_SSH_USER }}@${{ secrets.TEST_SSH_HOST }} \
-            "echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USERNAME }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: 테스트 서버 배포
-        env:
-          SSHPASS: ${{ secrets.TEST_SSH_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.TEST_SSH_USER }}@${{ secrets.TEST_SSH_HOST }} << EOF
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USERNAME }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
             cd ~/deploy/backend-staging
 
             if grep -q '^DOCKER_REGISTRY=' .env; then
@@ -149,37 +127,32 @@ jobs:
             docker compose pull app
             docker compose up -d --remove-orphans
             docker image prune -f
-
-            echo "===== STAGING STATUS ====="
             docker compose ps
-            echo "===== STAGING LOGS ====="
             docker compose logs --tail=20 app
-          EOF
 
   deploy-to-prod:
     name: 운영 서버 배포
     runs-on: ubuntu-latest
     needs: [test, build-and-push, deploy-to-staging]
-    if: github.event_name == 'push' && github.ref_name == 'main'
+    if: github.ref_name == 'main'
 
     steps:
-      - name: sshpass 설치
-        run: sudo apt-get update && sudo apt-get install -y sshpass
-
       - name: 운영 서버에서 GHCR 로그인
-        env:
-          SSHPASS: ${{ secrets.PROD_SSH_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }} \
-            "echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USERNAME }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: 운영 서버 배포
-        env:
-          SSHPASS: ${{ secrets.PROD_SSH_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }} << EOF
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USERNAME }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
             cd ~/deploy/backend-prod
 
             if grep -q '^DOCKER_REGISTRY=' .env; then
@@ -203,9 +176,5 @@ jobs:
             docker compose pull app
             docker compose up -d --remove-orphans
             docker image prune -f
-
-            echo "===== PROD STATUS ====="
             docker compose ps
-            echo "===== PROD LOGS ====="
             docker compose logs --tail=20 app
-          EOF
