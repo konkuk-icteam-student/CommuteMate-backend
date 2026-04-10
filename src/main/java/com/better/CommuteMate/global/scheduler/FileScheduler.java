@@ -30,15 +30,15 @@ public class FileScheduler {
         List<FaqImage> images = faqImageRepository.findOrphanImages(cutoffTime);
 
         for (FaqImage img : images) {
-            fileStorageService.deleteFile(img.getStoragePath());
             faqImageRepository.delete(img);
+            fileStorageService.deleteFile(img.getStoragePath());
         }
 
         List<FaqFile> files = faqFileRepository.findOrphanFiles(cutoffTime);
 
         for (FaqFile file : files) {
-            fileStorageService.deleteFile(file.getStoragePath());
             faqFileRepository.delete(file);
+            fileStorageService.deleteFile(file.getStoragePath());
         }
 
         log.info("orphan 파일 정리 완료");
