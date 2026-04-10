@@ -47,10 +47,6 @@ public class FaqService {
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
-        if (request.categoryIds() == null || request.categoryIds().isEmpty()) {
-            throw CustomException.of(FaqErrorCode.CATEGORY_REQUIRED);
-        }
-
         if (request.categoryIds().size() > 3) {
             throw CustomException.of(FaqErrorCode.CATEGORY_LIMIT_EXCEEDED);
         }
