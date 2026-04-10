@@ -6,10 +6,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 public class FileStorageService {
     @Value("${storage.path}")
@@ -40,6 +42,14 @@ public class FileStorageService {
 
         } catch (IOException e) {
             throw new RuntimeException("파일 업로드 실패");
+        }
+    }
+
+    public void deleteFile(String path) {
+        try {
+            Files.deleteIfExists(Paths.get(path));
+        } catch (IOException e) {
+            log.error("파일 삭제 실패: {}", path);
         }
     }
 }
