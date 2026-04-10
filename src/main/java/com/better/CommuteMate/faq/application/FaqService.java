@@ -72,6 +72,17 @@ public class FaqService {
 
         faqRepository.save(faq);
 
+        if (request.imageUrls() != null) {
+            List<FaqImage> images = faqImageRepository.findByUrlIn(request.imageUrls());
+            images.forEach(faq::addImage);
+        }
+
+        if (request.fileUrls() != null) {
+            List<FaqFile> files = faqFileRepository.findByUrlIn(request.fileUrls());
+            files.forEach(faq::addFile);
+        }
+
+
         FaqHistory faqhistory = FaqHistory.create(faq);
         faqHistoryRepository.save(faqhistory);
 

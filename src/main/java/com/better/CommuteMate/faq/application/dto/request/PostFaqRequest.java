@@ -3,6 +3,7 @@ package com.better.CommuteMate.faq.application.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 
 @Schema(description = "FAQ 등록 요청 DTO")
 public record PostFaqRequest(
@@ -25,6 +26,11 @@ public record PostFaqRequest(
         Long categoryId,
 
         @Schema(description = "내용", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
-        String content
+        String content,
 
-) {}
+        @Schema(description = "이미지 url 리스트", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
+        List<String> imageUrls,
+
+        @Schema(description = "파일 url 리스트", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
+        List<String> fileUrls
+        ) {}
