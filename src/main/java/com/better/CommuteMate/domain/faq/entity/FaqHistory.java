@@ -46,9 +46,6 @@ public class FaqHistory {
     @Column(name = "edited_at", nullable = false)
     private LocalDate editedAt;  // 수정된 날짜
 
-    @Column(name = "category_name", length = 100, nullable = false)
-    private String categoryName;
-
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
             name = "faq_history_categories",
@@ -88,10 +85,10 @@ public class FaqHistory {
                 ))
                 .toList();
 
-        history.categoryName = faq.getFaqCategories()
+        history.categoryNames = faq.getFaqCategories()
                 .stream()
                 .map(fc -> fc.getCategory().getName())
-                .collect(Collectors.joining(", ")); // ← 문자열로 변환
+                .toList();
 
         return history;
     }
