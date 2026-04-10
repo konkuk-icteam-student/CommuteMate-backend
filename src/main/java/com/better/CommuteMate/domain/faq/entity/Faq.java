@@ -2,6 +2,8 @@ package com.better.CommuteMate.domain.faq.entity;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -53,7 +55,7 @@ public class Faq {
 
     public void addCategory(Category category) {
         if (this.faqCategories.size() >= 3) {
-            throw new IllegalArgumentException("카테고리는 최대 3개까지 가능합니다.");
+            throw CustomException.of(FaqErrorCode.CATEGORY_LIMIT_EXCEEDED);
         }
 
         FaqCategory fc = new FaqCategory(this, category);
