@@ -2,11 +2,15 @@ package com.better.CommuteMate.domain.faq.entity;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "faq")
@@ -37,9 +41,8 @@ public class Faq {
     @JoinColumn(name = "writer_id", nullable = false)
     private User writer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
+    @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqCategory> faqCategories = new ArrayList<>();
 
     @Column(name = "updated_date", nullable = false)
     private LocalDate updatedDate;
@@ -49,6 +52,15 @@ public class Faq {
 
     @Column(name = "deleted_at")
     private LocalDate deletedAt;
+
+    public void addCategory(Category category) {
+        if (this.faqCategories.size() >= 3) {
+            throw CustomException.of(FaqErrorCode.CATEGORY_LIMIT_EXCEEDED);
+        }
+
+        FaqCategory fc = new FaqCategory(this, category);
+        this.faqCategories.add(fc);
+    }
 
     @PrePersist
     protected void onCreate() {
@@ -67,7 +79,7 @@ public class Faq {
             String content,
             String answer,
             String etc,
-            Category category,
+            List<Category> categories,
             User writer
     ) {
         Faq faq = new Faq();
@@ -76,8 +88,12 @@ public class Faq {
         faq.content = content;
         faq.answer = answer;
         faq.etc = etc;
-        faq.category = category;
         faq.writer = writer;
+
+        for (Category category : categories) {
+            faq.addCategory(category);
+        }
+
         return faq;
     }
 
@@ -87,7 +103,7 @@ public class Faq {
             String content,
             String answer,
             String etc,
-            Category category,
+            List<Category> categories,
             User writer
     ) {
         this.title = title;
@@ -95,8 +111,13 @@ public class Faq {
         this.content = content;
         this.answer = answer;
         this.etc = etc;
-        this.category = category;
         this.writer = writer;
+
+        this.faqCategories.clear();
+
+        for (Category category : categories) {
+            this.addCategory(category);
+        }
     }
 
     public void delete() {

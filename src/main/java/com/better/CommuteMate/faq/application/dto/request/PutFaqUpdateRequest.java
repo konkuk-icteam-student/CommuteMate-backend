@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.List;
+
 @Schema(description = "FAQ 수정 요청 DTO")
 public record PutFaqUpdateRequest(
         @NotBlank
@@ -21,8 +23,8 @@ public record PutFaqUpdateRequest(
         String etc,
 
         @NotNull
-        @Schema(description = "분류 id", example = "1")
-        Long categoryId,
+        @Schema(description = "분류 id 목록 (최대 3개)", example = "[1, 2, 3]")
+        List<Long> categoryIds,
 
         @Schema(description = "내용", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
         String content
