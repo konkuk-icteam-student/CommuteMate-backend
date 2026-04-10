@@ -156,7 +156,7 @@ public class FaqController {
             summary = "FAQ 이미지 업로드",
             description = """
                 FAQ 작성 중 본문에 삽입할 이미지를 업로드하는 API입니다.
-                업로드된 이미지는 즉시 S3에 저장되며 faq_id가 없는 상태(null)로 DB에 저장됩니다.
+                업로드된 이미지는 즉시 서버 로컬 스토리지에 저장되며 faq_id가 없는 상태(null)로 DB에 저장됩니다.
                 응답으로 받은 URL을 <img src="..."> 형태로 사용하면 됩니다.
                 """
     )
@@ -168,11 +168,7 @@ public class FaqController {
     @PostMapping(value = "/images", consumes = "multipart/form-data")
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> uploadFaqImage(
-            @Parameter(
-                    description = "업로드할 이미지 파일",
-                    required = true,
-                    content = @Content(mediaType = "multipart/form-data")
-            )
+            @Parameter(description = "업로드할 이미지 파일")
             @RequestPart MultipartFile imageFile
     ) {
         return ResponseEntity.ok(
@@ -180,4 +176,28 @@ public class FaqController {
         );
     }
 
+
+    @Operation(
+            summary = "FAQ 파일 업로드",
+            description = """
+              FAQ에 첨부할 파일을 업로드하는 API입니다.
+              업로드된 파일은 서버 로컬 스토리지에 저장되며 게시글과 연결되지 않은 상태(faq_id = null)로 DB에 저장됩니다.
+              응답으로 받은 URL은 FAQ 생성 시 함께 전달하여 첨부 파일로 등록됩니다.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "파일 업로드 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PostMapping(value = "/files", consumes = "multipart/form-data")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> uploadFaqFile(
+            @Parameter(description = "업로드할 파일")
+            @RequestPart MultipartFile file
+    ) {
+        return ResponseEntity.ok(
+                new Response(true, "파일 업로드 성공", faqService.uploadFaqFile(file))
+        );
+    }
 }

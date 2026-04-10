@@ -2,7 +2,9 @@ package com.better.CommuteMate.faq.application;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
+import com.better.CommuteMate.domain.faq.entity.FaqFile;
 import com.better.CommuteMate.domain.faq.entity.FaqImage;
+import com.better.CommuteMate.domain.faq.repository.FaqFileRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqImageRepository;
 import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
 import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
@@ -16,6 +18,7 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
+import com.better.CommuteMate.faq.application.dto.response.PostFaqFileResponse;
 import com.better.CommuteMate.faq.application.dto.response.PostFaqImageResponse;
 import com.better.CommuteMate.faq.application.dto.response.PostFaqResponse;
 import com.better.CommuteMate.faq.application.dto.response.PutFaqUpdateResponse;
@@ -46,6 +49,7 @@ public class FaqService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final FaqImageRepository faqImageRepository;
+    private final FaqFileRepository faqFileRepository;
     private final FileStorageService fileStorageService;
 
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
@@ -161,5 +165,23 @@ public class FaqService {
         faqImageRepository.save(image);
 
         return new PostFaqImageResponse(fileUploadResult.url());
+    }
+
+    public PostFaqFileResponse uploadFaqFile(MultipartFile file) {
+
+        FileUploadResult fileUploadResult = fileStorageService.uploadFile(file);
+
+        FaqFile faqFile = FaqFile.create(
+                fileUploadResult.url(),
+                fileUploadResult.storagePath(),
+                file.getOriginalFilename()
+        );
+
+        faqFileRepository.save(faqFile);
+
+        return new PostFaqFileResponse(
+                fileUploadResult.url(),
+                file.getOriginalFilename()
+        );
     }
 }
