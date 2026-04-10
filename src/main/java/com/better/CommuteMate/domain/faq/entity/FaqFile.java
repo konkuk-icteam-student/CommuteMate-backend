@@ -18,8 +18,8 @@ public class FaqFile {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String url;
 
-    @Column(name = "s3_key", length = 255, nullable = false)
-    private String s3Key;
+    @Column(name = "storage_path", length = 255, nullable = false)
+    private String storagePath;
 
     @Column(name = "original_name", length = 255, nullable = false)
     private String originalName;
@@ -36,10 +36,10 @@ public class FaqFile {
         this.createdAt = LocalDateTime.now();
     }
 
-    public static FaqFile create(String url, String s3Key, String originalName) {
+    public static FaqFile create(String url, String storagePath, String originalName) {
         FaqFile file = new FaqFile();
         file.url = url;
-        file.s3Key = s3Key;
+        file.storagePath = storagePath;
         file.originalName = originalName;
         return file;
     }

@@ -24,6 +24,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @Tag(name = "FAQ", description = "FAQ 관련 API")
@@ -149,6 +150,34 @@ public class FaqController {
             @RequestParam(defaultValue = "0") int page
     ) {
         return ResponseEntity.ok(new Response(true, "FAQ 목록 조회 성공", faqService.getFaqList(teamId, categoryId, keyword, searchScope, startDate, endDate, page)));
+    }
+
+    @Operation(
+            summary = "FAQ 이미지 업로드",
+            description = """
+                FAQ 작성 중 본문에 삽입할 이미지를 업로드하는 API입니다.
+                업로드된 이미지는 즉시 S3에 저장되며 faq_id가 없는 상태(null)로 DB에 저장됩니다.
+                응답으로 받은 URL을 <img src="..."> 형태로 사용하면 됩니다.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "이미지 업로드 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PostMapping(value = "/images", consumes = "multipart/form-data")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> uploadFaqImage(
+            @Parameter(
+                    description = "업로드할 이미지 파일",
+                    required = true,
+                    content = @Content(mediaType = "multipart/form-data")
+            )
+            @RequestPart MultipartFile imageFile
+    ) {
+        return ResponseEntity.ok(
+                new Response(true, "이미지 업로드 성공", faqService.uploadFaqImage(imageFile))
+        );
     }
 
 }

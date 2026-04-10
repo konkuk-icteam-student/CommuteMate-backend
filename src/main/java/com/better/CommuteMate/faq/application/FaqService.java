@@ -2,6 +2,8 @@ package com.better.CommuteMate.faq.application;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
+import com.better.CommuteMate.domain.faq.entity.FaqImage;
+import com.better.CommuteMate.domain.faq.repository.FaqImageRepository;
 import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
 import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
 import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
@@ -14,12 +16,15 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
+import com.better.CommuteMate.faq.application.dto.response.PostFaqImageResponse;
 import com.better.CommuteMate.faq.application.dto.response.PostFaqResponse;
 import com.better.CommuteMate.faq.application.dto.response.PutFaqUpdateResponse;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
+import com.better.CommuteMate.global.storage.FileStorageService;
+import com.better.CommuteMate.global.storage.FileUploadResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +45,8 @@ public class FaqService {
     private final FaqHistoryRepository faqHistoryRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final FaqImageRepository faqImageRepository;
+    private final FileStorageService fileStorageService;
 
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
 
@@ -143,5 +151,15 @@ public class FaqService {
         }
 
         faq.delete();
+    }
+
+    public PostFaqImageResponse uploadFaqImage(MultipartFile imageFile) {
+
+        FileUploadResult fileUploadResult = fileStorageService.uploadImage(imageFile);
+
+        FaqImage image = FaqImage.create(fileUploadResult.url(), fileUploadResult.storagePath());
+        faqImageRepository.save(image);
+
+        return new PostFaqImageResponse(fileUploadResult.url());
     }
 }

@@ -18,8 +18,8 @@ public class FaqImage {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String url;
 
-    @Column(name = "s3_key", length = 255, nullable = false)
-    private String s3Key;
+    @Column(name = "storage_path", length = 255, nullable = false)
+    private String storagePath;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "faq_id")
@@ -33,10 +33,10 @@ public class FaqImage {
         this.createdAt = LocalDateTime.now();
     }
 
-    public static FaqImage create(String url, String s3Key) {
+    public static FaqImage create(String url, String storagePath) {
         FaqImage image = new FaqImage();
         image.url = url;
-        image.s3Key = s3Key;
+        image.storagePath = storagePath;
         return image;
     }
 

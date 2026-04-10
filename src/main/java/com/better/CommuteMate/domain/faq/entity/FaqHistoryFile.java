@@ -26,8 +26,8 @@ public class FaqHistoryFile {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String url;
 
-    @Column(name = "s3_key", length = 255, nullable = false)
-    private String s3Key;
+    @Column(name = "storage_path", length = 255, nullable = false)
+    private String storagePath;
 
     @Column(name = "original_name", length = 255, nullable = false)
     private String originalName;
@@ -38,13 +38,13 @@ public class FaqHistoryFile {
 
     public static FaqHistoryFile create(
             String url,
-            String s3Key,
+            String storagePath,
             String originalName,
             FaqHistory history
     ) {
         FaqHistoryFile file = new FaqHistoryFile();
         file.url = url;
-        file.s3Key = s3Key;
+        file.storagePath = storagePath;
         file.originalName = originalName;
         file.faqHistory = history;
         return file;

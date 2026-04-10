@@ -26,17 +26,17 @@ public class FaqHistoryImage {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String url;
 
-    @Column(name = "s3_key", length = 255, nullable = false)
-    private String s3Key;
+    @Column(name = "storage_path", length = 255, nullable = false)
+    private String storagePath;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "faq_history_id", nullable = false)
     private FaqHistory faqHistory;
 
-    public static FaqHistoryImage create(String url, String s3Key, FaqHistory history) {
+    public static FaqHistoryImage create(String url, String storagePath, FaqHistory history) {
         FaqHistoryImage image = new FaqHistoryImage();
         image.url = url;
-        image.s3Key = s3Key;
+        image.storagePath = storagePath;
         image.faqHistory = history;
         return image;
     }

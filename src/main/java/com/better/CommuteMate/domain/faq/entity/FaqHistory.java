@@ -86,7 +86,7 @@ public class FaqHistory {
         history.images = faq.getImages().stream()
                 .map(img -> FaqHistoryImage.create(
                         img.getUrl(),
-                        img.getS3Key(),
+                        img.getStoragePath(),
                         history
                 ))
                 .toList();
@@ -94,7 +94,7 @@ public class FaqHistory {
         history.files = faq.getFiles().stream()
                 .map(file -> FaqHistoryFile.create(
                         file.getUrl(),
-                        file.getS3Key(),
+                        file.getStoragePath(),
                         file.getOriginalName(),
                         history
                 ))
