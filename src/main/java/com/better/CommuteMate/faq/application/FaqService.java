@@ -69,10 +69,6 @@ public class FaqService {
 
         faqRepository.save(faq);
 
-        String categoryNames = categories.stream()
-                .map(Category::getName)
-                .collect(Collectors.joining(", "));
-
         FaqHistory faqhistory = FaqHistory.create(faq);
 
         faqHistoryRepository.save(faqhistory);
