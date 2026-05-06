@@ -1,6 +1,6 @@
 package com.better.CommuteMate.category.application.dto.request;
 
-public record RecommendCategoryRequest(
+public record PostAICategoryRequest(
         String title,
         String content
 ) {}
