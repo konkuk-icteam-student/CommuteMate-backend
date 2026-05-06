@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class FaqCategoryRecommendService {
+public class FaqAICategoryService {
 
     private final CategoryRepository categoryRepository;
     private final OpenAIClient openAIClient;
