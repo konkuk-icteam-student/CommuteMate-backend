@@ -25,7 +25,7 @@ public class FaqFile {
     private String originalName;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "faq_id", nullable = false)
+    @JoinColumn(name = "faq_id")
     private Faq faq;
 
     @Column(name = "created_at", nullable = false)
@@ -46,5 +46,9 @@ public class FaqFile {
 
     public void assignFaq(Faq faq) {
         this.faq = faq;
+    }
+
+    public void detachFaq() {
+        this.faq = null;
     }
 }
