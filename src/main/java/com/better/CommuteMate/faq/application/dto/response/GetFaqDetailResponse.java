@@ -17,11 +17,11 @@ public class GetFaqDetailResponse extends ResponseDetail {
     @Schema(description = "faq id", example = "1")
     private final Long faqId;
 
-    @Schema(description = "faq 제목", example = "학정시 로그인 오륲")
+    @Schema(description = "faq 제목", example = "학적시 로그인 오류")
     private final String title;
 
-    @Schema(description = "카테고리 이름", example = "로그인")
-    private final String categoryName;
+    @Schema(description = "카테고리 이름 목록", example = "[\"로그인\", \"계정\"]")
+    private final List<String> categoryNames;
 
     @Schema(description = "faq 삭제 여부", example = "true")
     private final Boolean deletedFlag;
@@ -38,28 +38,31 @@ public class GetFaqDetailResponse extends ResponseDetail {
     @Schema(description = "비고", example = "반복 문의 발생")
     private final String etc;
 
-    @Schema(description = "수정 시점 기준 담당자 목록")
+    @Schema(description = "과거 담당자 목록")
     private final List<ManagerSnapshot> pastManagers;
 
-    @Schema(description = "현재 기준 담당자 목록")
+    @Schema(description = "현재 담당자 목록")
     private final List<ManagerSnapshot> currentManagers;
 
-    @Schema(description = "수정 날짜 목록", example = "[\"2024-11-01\", \"2024-11-10\"]")
+    @Schema(description = "수정 이력 날짜 목록", example = "[\"2024-03-01\", \"2024-03-05\"]")
     private final List<LocalDate> editedDates;
 
-    @Schema(description = "삭제 날짜", nullable = true, example = "2026-01-01")
+    @Schema(description = "삭제 일자", example = "2024-03-10")
     private final LocalDate deletedAt;
 
     public GetFaqDetailResponse(Faq faq, FaqHistory history, List<LocalDate> editedDates) {
         super();
         this.faqId = faq.getId();
         this.title = history.getTitle();
-        this.categoryName = history.getCategoryName();
+
+        this.categoryNames = history.getCategoryNames();
+
         this.deletedFlag = faq.getDeletedFlag();
         this.complainantName = history.getComplainantName();
         this.writerName = history.getWriterName();
         this.answer = history.getAnswer();
         this.etc = history.getEtc();
+
         this.pastManagers = history.getManagers()
                 .stream()
                 .map(snapshot -> new ManagerSnapshot(
@@ -68,13 +71,17 @@ public class GetFaqDetailResponse extends ResponseDetail {
                         snapshot.getCategoryName()
                 ))
                 .toList();
-        this.currentManagers = faq.getCategory().getManagers().stream()
+
+        this.currentManagers = faq.getFaqCategories()
+                .stream()
+                .flatMap(fc -> fc.getCategory().getManagers().stream())
                 .map(mc -> new ManagerSnapshot(
                         mc.getManager().getName(),
                         mc.getManager().getTeam().getName(),
                         mc.getCategory().getName()
                 ))
                 .toList();
+
         this.editedDates = editedDates;
         this.deletedAt = faq.getDeletedAt();
     }

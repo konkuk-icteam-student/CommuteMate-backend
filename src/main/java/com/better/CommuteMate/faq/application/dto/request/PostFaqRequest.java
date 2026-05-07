@@ -2,27 +2,32 @@ package com.better.CommuteMate.faq.application.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
+
+import java.util.List;
 
 @Schema(description = "FAQ 등록 요청 DTO")
 public record PostFaqRequest(
-        @NotBlank
+
+        @NotBlank(message = "제목은 필수 입력값입니다.")
         @Schema(description = "제목", example = "학정시 로그인 오류")
         String title,
 
         @Schema(description = "민원인 이름", example = "홍길동")
         String complainantName,
 
-        @NotBlank
+        @NotBlank(message = "답변은 필수 입력값입니다.")
         @Schema(description = "답변", example = "핸드폰 앱에서 실행 안되고 ...")
         String answer,
 
         @Schema(description = "비고", example = "버튼 위치 변경됨")
         String etc,
 
-        @NotNull
-        @Schema(description = "분류 id", example = "1")
-        Long categoryId,
+        @NotEmpty(message = "카테고리는 최소 1개 이상 선택해야 합니다.")
+        @Size(max = 3, message = "카테고리는 최대 3개까지 가능합니다.")
+        @Schema(description = "분류 id 목록 (최대 3개)", example = "[1, 2, 3]")
+        List<Long> categoryIds,
 
         @Schema(description = "내용", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
         String content
