@@ -2,6 +2,8 @@ package com.better.CommuteMate.global.scheduler;
 
 import com.better.CommuteMate.domain.faq.entity.FaqImage;
 import com.better.CommuteMate.domain.faq.entity.FaqFile;
+import com.better.CommuteMate.domain.faq.repository.FaqHistoryFileRepository;
+import com.better.CommuteMate.domain.faq.repository.FaqHistoryImageRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqImageRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqFileRepository;
 import com.better.CommuteMate.global.storage.FileStorageService;
@@ -20,6 +22,10 @@ public class FileScheduler {
 
     private final FaqImageRepository faqImageRepository;
     private final FaqFileRepository faqFileRepository;
+
+    private final FaqHistoryImageRepository faqHistoryImageRepository;
+    private final FaqHistoryFileRepository faqHistoryFileRepository;
+
     private final FileStorageService fileStorageService;
 
     // 24시간 지난 orphan 파일 삭제
@@ -41,6 +47,6 @@ public class FileScheduler {
             fileStorageService.deleteFile(file.getStoragePath());
         }
 
-        log.info("orphan 파일 정리 완료");
+        log.info("orphan image {}개, file {}개 삭제 완료", images.size(), files.size());
     }
 }

@@ -9,6 +9,15 @@ import org.springframework.data.jpa.repository.Query;
 public interface FaqFileRepository extends JpaRepository<FaqFile, Long> {
     List<FaqFile> findByUrlIn(List<String> urls);
 
-    @Query("select f from FaqFile f where f.faq is null and f.createdAt < :time")
+    @Query("""
+    select ff
+    from FaqFile ff
+    where ff.faq is null
+      and ff.createdAt < :time
+      and ff.storagePath not in (
+          select hf.storagePath
+          from FaqHistoryFile hf
+      )
+""")
     List<FaqFile> findOrphanFiles(LocalDateTime time);
 }

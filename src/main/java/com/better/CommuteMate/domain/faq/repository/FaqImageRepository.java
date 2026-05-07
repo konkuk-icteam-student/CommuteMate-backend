@@ -9,6 +9,15 @@ import org.springframework.data.jpa.repository.Query;
 public interface FaqImageRepository extends JpaRepository<FaqImage, Long> {
     List<FaqImage> findByUrlIn(List<String> urls);
 
-    @Query("select i from FaqImage i where i.faq is null and i.createdAt < :time")
+    @Query("""
+    select fi
+    from FaqImage fi
+    where fi.faq is null
+      and fi.createdAt < :time
+      and fi.storagePath not in (
+          select hi.storagePath
+          from FaqHistoryImage hi
+      )
+""")
     List<FaqImage> findOrphanImages(LocalDateTime time);
 }

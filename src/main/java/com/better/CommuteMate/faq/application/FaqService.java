@@ -28,9 +28,6 @@ import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.global.storage.FileStorageService;
 import com.better.CommuteMate.global.storage.FileUploadResult;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -119,6 +116,21 @@ public class FaqService {
                 modifier
         );
 
+        faq.getImages().forEach(FaqImage::detachFaq);
+        faq.getFiles().forEach(FaqFile::detachFaq);
+
+        if (request.imageUrls() != null) {
+            List<FaqImage> images = faqImageRepository.findByUrlIn(request.imageUrls());
+
+            images.forEach(faq::addImage);
+        }
+
+        if (request.fileUrls() != null) {
+            List<FaqFile> files = faqFileRepository.findByUrlIn(request.fileUrls());
+
+            files.forEach(faq::addFile);
+        }
+
         faqRepository.save(faq);
 
         faqHistoryRepository.deleteByFaqIdAndEditedAt(faqId, LocalDate.now());
@@ -168,8 +180,8 @@ public class FaqService {
             throw CustomException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
         }
 
-        faq.getImages().forEach(img -> fileStorageService.deleteFile(img.getStoragePath()));
-        faq.getFiles().forEach(file -> fileStorageService.deleteFile(file.getStoragePath()));
+        faq.getImages().forEach(FaqImage::detachFaq);
+        faq.getFiles().forEach(FaqFile::detachFaq);
 
         faq.delete();
     }
