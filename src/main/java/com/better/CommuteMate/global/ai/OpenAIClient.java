@@ -1,6 +1,7 @@
 package com.better.CommuteMate.global.ai;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -10,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OpenAIClient {
@@ -43,6 +45,8 @@ public class OpenAIClient {
                 .retrieve()
                 .bodyToMono(Map.class)
                 .block();
+
+        log.info("GPT response = {}", response);
 
         return extractContent(response);
     }
