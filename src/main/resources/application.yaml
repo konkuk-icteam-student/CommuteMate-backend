@@ -60,3 +60,7 @@ jwt:
   access-expiration: ${JWT_ACCESS_EXPIRATION_MS:3600000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:604800000}
   algorithm: ${JWT_ALGORITHM:HmacSHA256}
+
+storage:
+  path: ${STORAGE_PATH}
+  url: ${STORAGE_URL}

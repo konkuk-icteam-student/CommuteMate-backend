@@ -26,6 +26,8 @@ services:
     image: ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
     container_name: commutemate-backend
     restart: unless-stopped
+    volumes:
+      - /home/ict/uploads:/uploads
     environment:
       # Database Configuration
       DB_URL: jdbc:postgresql://localhost:5432/${DB_NAME}
@@ -50,6 +52,10 @@ services:
 
       # Frontend URL
       FRONTEND_URL: ${FRONTEND_URL}
+
+      # Storage Configuration
+      STORAGE_PATH: ${STORAGE_PATH:-/uploads}
+      STORAGE_URL: ${STORAGE_URL}
 
       # CORS 추가 허용 출처 (쉼표로 구분)
       CORS_ADDITIONAL_ORIGINS: ${CORS_ADDITIONAL_ORIGINS:-}
