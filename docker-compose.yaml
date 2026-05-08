@@ -27,7 +27,7 @@ services:
     container_name: commutemate-backend
     restart: unless-stopped
     volumes:
-      - /home/ict/uploads:/uploads
+      - ${UPLOAD_DIR}:/uploads
     environment:
       # Database Configuration
       DB_URL: jdbc:postgresql://localhost:5432/${DB_NAME}
