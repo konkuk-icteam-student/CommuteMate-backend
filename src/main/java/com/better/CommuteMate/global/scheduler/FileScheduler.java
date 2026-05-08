@@ -1,0 +1,52 @@
+package com.better.CommuteMate.global.scheduler;
+
+import com.better.CommuteMate.domain.faq.entity.FaqImage;
+import com.better.CommuteMate.domain.faq.entity.FaqFile;
+import com.better.CommuteMate.domain.faq.repository.FaqHistoryFileRepository;
+import com.better.CommuteMate.domain.faq.repository.FaqHistoryImageRepository;
+import com.better.CommuteMate.domain.faq.repository.FaqImageRepository;
+import com.better.CommuteMate.domain.faq.repository.FaqFileRepository;
+import com.better.CommuteMate.global.storage.FileStorageService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class FileScheduler {
+
+    private final FaqImageRepository faqImageRepository;
+    private final FaqFileRepository faqFileRepository;
+
+    private final FaqHistoryImageRepository faqHistoryImageRepository;
+    private final FaqHistoryFileRepository faqHistoryFileRepository;
+
+    private final FileStorageService fileStorageService;
+
+    // 24시간 지난 orphan 파일 삭제
+    @Scheduled(cron = "0 0 3 * * *")
+    public void cleanupOrphanFiles() {
+        LocalDateTime cutoffTime = LocalDateTime.now().minusHours(24);
+
+        List<FaqImage> images = faqImageRepository.findOrphanImages(cutoffTime);
+
+        for (FaqImage img : images) {
+            faqImageRepository.delete(img);
+            fileStorageService.deleteFile(img.getStoragePath());
+        }
+
+        List<FaqFile> files = faqFileRepository.findOrphanFiles(cutoffTime);
+
+        for (FaqFile file : files) {
+            faqFileRepository.delete(file);
+            fileStorageService.deleteFile(file.getStoragePath());
+        }
+
+        log.info("orphan image {}개, file {}개 삭제 완료", images.size(), files.size());
+    }
+}

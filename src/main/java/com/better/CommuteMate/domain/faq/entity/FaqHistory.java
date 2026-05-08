@@ -1,12 +1,12 @@
 package com.better.CommuteMate.domain.faq.entity;
 
-import com.better.CommuteMate.domain.faq.embedded.ManagerSnapshot;
+import com.better.CommuteMate.domain.faq.embedded.FaqHistoryManager;
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "faq_history")
@@ -38,7 +38,7 @@ public class FaqHistory {
             name = "faq_history_managers",
             joinColumns = @JoinColumn(name = "faq_history_id")
     )
-    private List<ManagerSnapshot> managers;
+    private List<FaqHistoryManager> managers;
 
     @Column(name = "writer_name", length = 50, nullable = false)
     private String writerName;  // 작성자 이름
@@ -53,6 +53,12 @@ public class FaqHistory {
     )
     @Column(name = "category_name")
     private List<String> categoryNames; // 분류명
+
+    @OneToMany(mappedBy = "faqHistory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqHistoryImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "faqHistory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqHistoryFile> files = new ArrayList<>();
 
     // FK: faq_id → faq(id)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -78,7 +84,7 @@ public class FaqHistory {
         history.managers = faq.getFaqCategories()
                 .stream()
                 .flatMap(fc -> fc.getCategory().getManagers().stream())
-                .map(mc -> new ManagerSnapshot(
+                .map(mc -> new FaqHistoryManager(
                         mc.getManager().getName(),
                         mc.getManager().getTeam().getName(),
                         mc.getCategory().getName()
@@ -90,6 +96,22 @@ public class FaqHistory {
                 .map(fc -> fc.getCategory().getName())
                 .toList();
 
+        history.images = faq.getImages().stream()
+                .map(img -> FaqHistoryImage.create(
+                        img.getUrl(),
+                        img.getStoragePath(),
+                        history
+                ))
+                .toList();
+
+        history.files = faq.getFiles().stream()
+                .map(file -> FaqHistoryFile.create(
+                        file.getUrl(),
+                        file.getStoragePath(),
+                        file.getOriginalName(),
+                        history
+                ))
+                .toList();
         return history;
     }
 
