@@ -1,8 +1,10 @@
 package com.better.CommuteMate.domain.faq.repository;
 
+import com.better.CommuteMate.domain.category.entity.QCategory;
 import com.better.CommuteMate.domain.category.entity.QManagerCategory;
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.faq.entity.QFaq;
+import com.better.CommuteMate.domain.faq.entity.QFaqCategory;
 import com.better.CommuteMate.domain.manager.entity.QManager;
 import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
 import com.querydsl.core.BooleanBuilder;
@@ -22,15 +24,25 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Faq> searchFaqs( Long teamId, Long categoryId, String keyword, FaqSearchScope searchScope, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+    public Page<Faq> searchFaqs(
+            Long teamId,
+            Long categoryId,
+            String keyword,
+            FaqSearchScope searchScope,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable
+    ) {
         QFaq faq = QFaq.faq;
+        QFaqCategory fc = QFaqCategory.faqCategory;
+        QCategory category = QCategory.category;
         QManagerCategory mc = QManagerCategory.managerCategory;
         QManager manager = QManager.manager;
 
         BooleanBuilder where = new BooleanBuilder();
 
         if (categoryId != null) {
-            where.and(faq.category.id.eq(categoryId));
+            where.and(fc.category.id.eq(categoryId));
         }
 
         if (teamId != null) {
@@ -40,7 +52,7 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
                             .from(mc)
                             .join(mc.manager, manager)
                             .where(
-                                    mc.category.eq(faq.category),
+                                    mc.category.eq(fc.category),
                                     manager.team.id.eq(teamId)
                             )
                             .exists()
@@ -59,6 +71,7 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
             }
         }
 
+        // 날짜
         if (startDate != null) {
             where.and(faq.updatedDate.goe(startDate));
         }
@@ -68,17 +81,21 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
         }
 
         List<Faq> contents = queryFactory
-                .selectFrom(faq)
-                .join(faq.category).fetchJoin()
+                .selectDistinct(faq)
+                .from(faq)
+                .join(faq.faqCategories, fc)
+                .join(fc.category, category).fetchJoin()
                 .where(where)
                 .orderBy(faq.updatedDate.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
+        // count 쿼리
         Long total = queryFactory
-                .select(faq.count())
+                .select(faq.countDistinct())
                 .from(faq)
+                .join(faq.faqCategories, fc)
                 .where(where)
                 .fetchOne();
 

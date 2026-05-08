@@ -46,8 +46,13 @@ public class FaqHistory {
     @Column(name = "edited_at", nullable = false)
     private LocalDate editedAt;  // 수정된 날짜
 
-    @Column(name = "category_name", length = 100, nullable = false)
-    private String categoryName;  // 분류명
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "faq_history_categories",
+            joinColumns = @JoinColumn(name = "faq_history_id")
+    )
+    @Column(name = "category_name")
+    private List<String> categoryNames; // 분류명
 
     @OneToMany(mappedBy = "faqHistory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FaqHistoryImage> images = new ArrayList<>();
@@ -67,6 +72,7 @@ public class FaqHistory {
 
     public static FaqHistory create(Faq faq) {
         FaqHistory history = new FaqHistory();
+
         history.faq = faq;
         history.title = faq.getTitle();
         history.complainantName = faq.getComplainantName();
@@ -74,15 +80,22 @@ public class FaqHistory {
         history.answer = faq.getAnswer();
         history.etc = faq.getEtc();
         history.writerName = faq.getWriter().getName();
-        history.managers = faq.getCategory().getManagers()
+
+        history.managers = faq.getFaqCategories()
                 .stream()
+                .flatMap(fc -> fc.getCategory().getManagers().stream())
                 .map(mc -> new FaqHistoryManager(
                         mc.getManager().getName(),
                         mc.getManager().getTeam().getName(),
                         mc.getCategory().getName()
                 ))
                 .toList();
-        history.categoryName = faq.getCategory().getName();
+
+        history.categoryNames = faq.getFaqCategories()
+                .stream()
+                .map(fc -> fc.getCategory().getName())
+                .toList();
+
         history.images = faq.getImages().stream()
                 .map(img -> FaqHistoryImage.create(
                         img.getUrl(),
