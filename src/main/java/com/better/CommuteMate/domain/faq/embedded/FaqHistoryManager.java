@@ -15,8 +15,8 @@ public class FaqHistoryManager {
     @Column(name = "manager_name", length = 30, nullable = false)
     private String managerName;
 
-    @Column(name = "team_name", length = 30, nullable = false)
-    private String teamName;
+    @Column(name = "organization_name", length = 30, nullable = false)
+    private String organizationName;
 
     @Column(name = "category_name", length = 100, nullable = false)
     private String categoryName;

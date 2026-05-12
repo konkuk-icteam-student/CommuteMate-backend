@@ -165,10 +165,10 @@ public class FaqService {
     }
 
     @Transactional(readOnly = true)
-    public GetFaqListWrapper getFaqList(Long teamId, Long categoryId, String keyword, FaqSearchScope searchScope, LocalDate startDate, LocalDate endDate, int page) {
+    public GetFaqListWrapper getFaqList(Long organizationId, Long categoryId, String keyword, FaqSearchScope searchScope, LocalDate startDate, LocalDate endDate, int page) {
         Pageable pageable = PageRequest.of(page, 10);
 
-        Page<Faq> faqPage = faqRepository.searchFaqs(teamId, categoryId, keyword, searchScope, startDate, endDate, pageable);
+        Page<Faq> faqPage = faqRepository.searchFaqs(organizationId, categoryId, keyword, searchScope, startDate, endDate, pageable);
 
         List<GetFaqListResponse> faqs = faqPage.getContent().stream()
                 .map(GetFaqListResponse::new)

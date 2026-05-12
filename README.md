@@ -61,7 +61,6 @@ schedule/
 #### `domain/` - 도메인 엔티티 및 리포지토리
 각 도메인은 `entity/` + `repository/` 구조:
 - `code/` - 코드 마스터 (CodeMajor, CodeSub, Code)
-- `organization/` - 조직 관리
 - `user/` - 사용자
 - `schedule/` - 근무 일정 (WorkSchedule, MonthlyScheduleLimit)
 - `workchangerequest/` - 근무 변경 요청
@@ -69,7 +68,7 @@ schedule/
 - `faq/` - faq (Faq, FaqHistory)
 - `category/` - faq 분류 (Category, ManagerCategory)
 - `manager/` - 담당자 
-- `team/` - 소속
+- `organization/` - 조직
 
 #### `global/` - 전역 설정 및 공통 코드
 ```
@@ -113,8 +112,8 @@ global/
 ### 주요 기능
 - **faq 등록/수정/삭제**: faq을 생성 및 수정하고 삭제 시 소프트 삭제 처리로 삭제 이후에도 정보 보존
 - **수정 이력 관리**: FaqHistory로 모든 수정 사항을 기록하여 조회 시 과거 수정 내역 조회 가능
-- **검색 필터링**: 날짜, 분류, 소속 기준으로 FAQ 목록 필터링 가능하며 키워드 기반 검색 기능도 지원 
-- **담당자/소속/분류 관리** : 소속 및 분류 등록/조회/삭제 가능, 담당자 등록/조회/수정/삭제 가능
+- **검색 필터링**: 날짜, 분류, 조직 기준으로 FAQ 목록 필터링 가능하며 키워드 기반 검색 기능도 지원 
+- **담당자/조직/분류 관리** : 조직 및 분류 등록/조회/삭제 가능, 담당자 등록/조회/수정/삭제 가능
 
 ## 데이터베이스 엔티티 목록
 
@@ -125,7 +124,6 @@ https://dbdiagram.io/d/ku_ict-68db5736d2b621e422822757
 | code              | CodeMajor            | code_major             | 코드 대분류        |
 | code              | CodeSub              | code_sub               | 코드 소분류        |
 | code              | Code                 | code                   | 코드 마스터        |
-| organization      | Organization         | organization           | 조직            |
 | user              | User                 | user                   | 사용자           |
 | schedule          | WorkSchedule         | work_schedule          | 근무 일정         |
 | schedule          | MonthlyScheduleLimit | monthly_schedule_limit | 월별 일정 제한      |
@@ -136,7 +134,6 @@ https://dbdiagram.io/d/ku_ict-68db5736d2b621e422822757
 | **category**      | **Category**         | **category**           | **FAQ 분류**    |
 | **category**      | **ManagerCategory**  | **manager_category**   | **분류 담당자 매핑** |
 | **manager**       | **Manager**          | **manager**            | **담당자**       |
-| **team**          | **Team**             | **team**               | **소속**        |
 
 
 ## 📚 문서

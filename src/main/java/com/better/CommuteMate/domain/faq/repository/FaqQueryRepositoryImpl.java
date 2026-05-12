@@ -25,7 +25,7 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
 
     @Override
     public Page<Faq> searchFaqs(
-            Long teamId,
+            Long organizationId,
             Long categoryId,
             String keyword,
             FaqSearchScope searchScope,
@@ -45,7 +45,7 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
             where.and(fc.category.id.eq(categoryId));
         }
 
-        if (teamId != null) {
+        if (organizationId != null) {
             where.and(
                     JPAExpressions
                             .selectOne()
@@ -53,7 +53,7 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
                             .join(mc.manager, manager)
                             .where(
                                     mc.category.eq(fc.category),
-                                    manager.team.id.eq(teamId)
+                                    manager.organization.id.eq(organizationId)
                             )
                             .exists()
             );

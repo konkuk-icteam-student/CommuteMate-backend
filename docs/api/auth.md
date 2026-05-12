@@ -150,7 +150,7 @@ POST /api/auth/register
 | password | String | ✅ | 비밀번호 (4자 이상 16자 이하, 영문/숫자만) |
 | name | String | ✅ | 사용자 이름 |
 | roleCode | String | ✅ | 역할 코드 (`RL01`: 학생/사원, `RL02`: 관리자) |
-| organizationId | Long | ✅ | 소속 조직 ID |
+| organizationId | Long | ✅ | 조직 조직 ID |
 
 **roleCode 값**
 - `RL01`: 학생/사원 (일반 사용자)

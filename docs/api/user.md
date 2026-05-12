@@ -95,8 +95,8 @@ curl -X GET http://localhost:8080/api/users/me \
 | email | String | 로그인 이메일 주소 |
 | userName | String | 사용자 이름 |
 | roleCode | String | 사용자 역할 코드 (RL01: 학생, RL02: 관리자) |
-| organizationId | Long | 소속 조직 ID |
-| organizationName | String | 소속 조직 이름 |
+| organizationId | Long | 조직 조직 ID |
+| organizationName | String | 조직 조직 이름 |
 | createdAt | DateTime | 계정 생성 일시 |
 | updatedAt | DateTime | 계정 마지막 수정 일시 |
 
