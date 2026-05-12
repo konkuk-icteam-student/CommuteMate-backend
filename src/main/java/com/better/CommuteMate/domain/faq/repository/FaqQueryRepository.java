@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 public interface FaqQueryRepository {
     Page<Faq> searchFaqs(
-            Long teamId,
+            Long organizationId,
             Long categoryId,
             String keyword,
             FaqSearchScope searchScope,

@@ -86,7 +86,7 @@ public class FaqHistory {
                 .flatMap(fc -> fc.getCategory().getManagers().stream())
                 .map(mc -> new FaqHistoryManager(
                         mc.getManager().getName(),
-                        mc.getManager().getTeam().getName(),
+                        mc.getManager().getOrganization().getName(),
                         mc.getCategory().getName()
                 ))
                 .toList();

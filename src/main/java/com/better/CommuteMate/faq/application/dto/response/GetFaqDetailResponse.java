@@ -90,7 +90,7 @@ public class GetFaqDetailResponse extends ResponseDetail {
                 .stream()
                 .map(snapshot -> new FaqHistoryManager(
                         snapshot.getManagerName(),
-                        snapshot.getTeamName(),
+                        snapshot.getOrganizationName(),
                         snapshot.getCategoryName()
                 ))
                 .toList();
@@ -100,7 +100,7 @@ public class GetFaqDetailResponse extends ResponseDetail {
                 .flatMap(fc -> fc.getCategory().getManagers().stream())
                 .map(mc -> new FaqHistoryManager(
                         mc.getManager().getName(),
-                        mc.getManager().getTeam().getName(),
+                        mc.getManager().getOrganization().getName(),
                         mc.getCategory().getName()
                 ))
                 .toList();

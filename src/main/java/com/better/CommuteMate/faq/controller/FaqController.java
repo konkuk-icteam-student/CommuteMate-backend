@@ -129,7 +129,7 @@ public class FaqController {
             summary = "FAQ 목록 조회",
             description = """
                     필터 조건에 따라 FAQ 목록을 조회하는 API입니다.
-                    필터 옵션에는 소속, 분류, 검색 범위(제목+내용, 제목, 내용, 작성자), 날짜가 있습니다.
+                    필터 옵션에는 조직, 분류, 검색 범위(제목+내용, 제목, 내용, 작성자), 날짜가 있습니다.
                     기본적으로 최신순 정렬입니다.
                     페이지 단위로 조회하고 페이지당 10개씩 조회됩니다.
                     """
@@ -141,7 +141,7 @@ public class FaqController {
     })
     @GetMapping
     public ResponseEntity<Response> getFaqList(
-            @RequestParam(required = false) Long teamId,
+            @RequestParam(required = false) Long organizationId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) FaqSearchScope searchScope,
@@ -149,7 +149,7 @@ public class FaqController {
             @RequestParam(required = false) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page
     ) {
-        return ResponseEntity.ok(new Response(true, "FAQ 목록 조회 성공", faqService.getFaqList(teamId, categoryId, keyword, searchScope, startDate, endDate, page)));
+        return ResponseEntity.ok(new Response(true, "FAQ 목록 조회 성공", faqService.getFaqList(organizationId, categoryId, keyword, searchScope, startDate, endDate, page)));
     }
 
     @Operation(
