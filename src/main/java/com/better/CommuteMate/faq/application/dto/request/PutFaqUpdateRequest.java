@@ -30,9 +30,6 @@ public record PutFaqUpdateRequest(
         @Schema(description = "내용", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
         String content,
 
-        @Schema(description = "이미지 url 리스트")
-        List<String> imageUrls,
-
-        @Schema(description = "파일 url 리스트")
+        @Schema(description = "첨부 파일 url 리스트", example = "[\"https://kusd.konkuk.ac.kr/uploads/prod/faq/files/3f1c2a9b-1234-4abc-9def-123456789abc.pdf\"]")
         List<String> fileUrls
 ) {}
