@@ -7,7 +7,7 @@ import lombok.Getter;
 @Schema(description = "FAQ 이미지 업로드 응답 DTO")
 @Getter
 public class PostFaqImageResponse extends ResponseDetail {
-    @Schema(description = "업로드 된 이미지 Url", example = "https://kusd.konkuk.ac.kr/faq/images/3f1c2a9b-1234-4abc-9def-123456789abc.png")
+    @Schema(description = "업로드 된 이미지 Url", example = "https://kusd.konkuk.ac.kr/uploads/prod/faq/images/3f1c2a9b-1234-4abc-9def-123456789abc.png")
     private final String imageUrl;
 
     public PostFaqImageResponse(String imageUrl) {
