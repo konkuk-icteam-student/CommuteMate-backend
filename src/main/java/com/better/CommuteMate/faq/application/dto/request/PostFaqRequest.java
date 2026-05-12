@@ -19,7 +19,7 @@ public record PostFaqRequest(
         String complainantName,
 
         @NotBlank(message = "답변은 필수 입력값입니다.")
-        @Schema(description = "답변", example = "핸드폰 앱에서 실행 안되고 ...")
+        @Schema(description = "답변 (HTML)", example = "<p>앱 재등록 후 다시 로그인해주세요.</p><img src=\"https://example.com/uploads/faq/images/sample-image.png\">")
         String answer,
 
         @Schema(description = "비고", example = "버튼 위치 변경됨")
@@ -30,12 +30,9 @@ public record PostFaqRequest(
         @Schema(description = "분류 id 목록 (최대 3개)", example = "[1, 2, 3]")
         List<Long> categoryIds,
 
-        @Schema(description = "내용", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
+        @Schema(description = "내용 (HTML)", example = "<p>학정시 로그인 중 OTP 오류가 발생합니다.</p><img src=\"https://example.com/uploads/faq/images/sample-image.png\">")
         String content,
 
-        @Schema(description = "이미지 url 리스트", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
-        List<String> imageUrls,
-
-        @Schema(description = "파일 url 리스트", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
+        @Schema(description = "첨부 파일 url 리스트", example = "[\"https://example.com/uploads/faq/files/abc.pdf\"]")
         List<String> fileUrls
         ) {}
