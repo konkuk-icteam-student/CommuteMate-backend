@@ -62,5 +62,5 @@ jwt:
   algorithm: ${JWT_ALGORITHM:HmacSHA256}
 
 storage:
-  path: ${STORAGE_PATH}
-  url: ${STORAGE_URL}
+  path: ${STORAGE_PATH:uploads}
+  url: ${STORAGE_URL:http://localhost/uploads}
