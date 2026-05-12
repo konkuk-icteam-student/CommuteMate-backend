@@ -2,19 +2,19 @@ package com.better.CommuteMate.faq.application;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
+import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.faq.entity.FaqFile;
+import com.better.CommuteMate.domain.faq.entity.FaqHistory;
 import com.better.CommuteMate.domain.faq.entity.FaqImage;
 import com.better.CommuteMate.domain.faq.repository.FaqFileRepository;
-import com.better.CommuteMate.domain.faq.repository.FaqImageRepository;
-import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
-import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
-import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
-import com.better.CommuteMate.domain.faq.entity.Faq;
-import com.better.CommuteMate.domain.faq.entity.FaqHistory;
 import com.better.CommuteMate.domain.faq.repository.FaqHistoryRepository;
+import com.better.CommuteMate.domain.faq.repository.FaqImageRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
+import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
+import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
+import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
@@ -29,16 +29,22 @@ import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.global.storage.FileStorageService;
 import com.better.CommuteMate.global.storage.FileUploadResult;
 import lombok.RequiredArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import org.springframework.web.multipart.MultipartFile;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -80,16 +86,16 @@ public class FaqService {
 
         faqRepository.save(faq);
 
-        if (request.imageUrls() != null) {
-            List<FaqImage> images = faqImageRepository.findByUrlIn(request.imageUrls());
+        List<String> imageUrls = extractImageUrls(request.content(), request.answer());
+        if (!imageUrls.isEmpty()) {
+            List<FaqImage> images = faqImageRepository.findByUrlIn(imageUrls);
             images.forEach(faq::addImage);
         }
 
-        if (request.fileUrls() != null) {
+        if (request.fileUrls() != null && !request.fileUrls().isEmpty()) {
             List<FaqFile> files = faqFileRepository.findByUrlIn(request.fileUrls());
             files.forEach(faq::addFile);
         }
-
 
         FaqHistory faqhistory = FaqHistory.create(faq);
 
@@ -137,15 +143,14 @@ public class FaqService {
         faq.getImages().forEach(FaqImage::detachFaq);
         faq.getFiles().forEach(FaqFile::detachFaq);
 
-        if (request.imageUrls() != null) {
-            List<FaqImage> images = faqImageRepository.findByUrlIn(request.imageUrls());
-
+        List<String> imageUrls = extractImageUrls(request.content(), request.answer());
+        if (!imageUrls.isEmpty()) {
+            List<FaqImage> images = faqImageRepository.findByUrlIn(imageUrls);
             images.forEach(faq::addImage);
         }
 
-        if (request.fileUrls() != null) {
+        if (request.fileUrls() != null && !request.fileUrls().isEmpty()) {
             List<FaqFile> files = faqFileRepository.findByUrlIn(request.fileUrls());
-
             files.forEach(faq::addFile);
         }
 
@@ -230,5 +235,30 @@ public class FaqService {
                 fileUploadResult.url(),
                 file.getOriginalFilename()
         );
+    }
+
+    private List<String> extractImageUrls(String content, String answer) {
+
+        Set<String> urls = new LinkedHashSet<>();
+
+        extractImageUrlsFromHtml(content, urls);
+        extractImageUrlsFromHtml(answer, urls);
+
+        return new ArrayList<>(urls);
+    }
+
+    private void extractImageUrlsFromHtml(String html, Set<String> urls) {
+
+        if (html == null || html.isBlank()) {
+            return;
+        }
+
+        Document document = Jsoup.parse(html);
+
+        Elements images = document.select("img[src]");
+
+        for (Element image : images) {
+            urls.add(image.attr("src"));
+        }
     }
 }
