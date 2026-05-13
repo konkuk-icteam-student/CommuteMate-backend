@@ -3,6 +3,7 @@ package com.better.CommuteMate.faq.application.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 
 import java.util.List;
 
@@ -27,5 +28,8 @@ public record PutFaqUpdateRequest(
         List<Long> categoryIds,
 
         @Schema(description = "내용", example = "학정시 로그인을 하려는데 OTP 관련 메시지가 뜸")
-        String content
+        String content,
+
+        @Schema(description = "첨부 파일 url 리스트", example = "[\"https://kusd.konkuk.ac.kr/uploads/prod/faq/files/3f1c2a9b-1234-4abc-9def-123456789abc.pdf\"]")
+        List<String> fileUrls
 ) {}

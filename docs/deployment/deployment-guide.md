@@ -96,7 +96,7 @@ GitHub Actions 트리거
 | `SERVER_HOST` | 운영 서버 IP 또는 도메인 | `123.456.78.90` |
 | `SERVER_USER` | SSH 사용자 이름 | `deploy` |
 | `SERVER_SSH_KEY` | SSH Private Key | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
-| `FRONTEND_IMAGE_NAME` | 프론트엔드 Docker 이미지 이름 | `konkuk-icteam-student/commutemate-frontend` |
+| `FRONTEND_IMAGE_NAME` | 프론트엔드 Docker 이미지 이름 | `konkuk-icorganization-student/commutemate-frontend` |
 
 **SSH Key 생성**:
 ```bash
@@ -240,12 +240,12 @@ nano .env
 ```bash
 # Docker 이미지 - 백엔드
 DOCKER_REGISTRY=ghcr.io
-DOCKER_IMAGE_NAME=konkuk-icteam-student/commutemate-server
+DOCKER_IMAGE_NAME=konkuk-icorganization-student/commutemate-server
 IMAGE_TAG=latest
 
 # Docker 이미지 - 프론트엔드
 FRONTEND_DOCKER_REGISTRY=ghcr.io
-FRONTEND_DOCKER_IMAGE_NAME=konkuk-icteam-student/commutemate-frontend
+FRONTEND_DOCKER_IMAGE_NAME=konkuk-icorganization-student/commutemate-frontend
 FRONTEND_IMAGE_TAG=latest
 
 # 데이터베이스
@@ -680,8 +680,8 @@ docker-compose -f fe_cicd/docker-compose.yaml up -d frontend
 
 ```bash
 # GHCR에서 사용 가능한 이미지 태그 확인
-# 백엔드: https://github.com/orgs/konkuk-icteam-student/packages/container/commutemate-server/versions
-# 프론트엔드: https://github.com/orgs/konkuk-icteam-student/packages/container/commutemate-frontend/versions
+# 백엔드: https://github.com/orgs/konkuk-icorganization-student/packages/container/commutemate-server/versions
+# 프론트엔드: https://github.com/orgs/konkuk-icorganization-student/packages/container/commutemate-frontend/versions
 ```
 
 ### 데이터베이스 복구

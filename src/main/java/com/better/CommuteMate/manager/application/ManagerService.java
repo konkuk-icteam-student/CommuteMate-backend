@@ -6,12 +6,12 @@ import com.better.CommuteMate.domain.category.repository.CategoryRepository;
 import com.better.CommuteMate.domain.category.repository.ManagerCategoryRepository;
 import com.better.CommuteMate.domain.manager.entity.Manager;
 import com.better.CommuteMate.domain.manager.repository.ManagerRepository;
-import com.better.CommuteMate.domain.team.entity.Team;
-import com.better.CommuteMate.domain.team.repository.TeamRepository;
+import com.better.CommuteMate.domain.organization.entity.Organization;
+import com.better.CommuteMate.domain.organization.repository.OrganizationRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.ManagerErrorCode;
-import com.better.CommuteMate.global.exceptions.error.TeamErrorCode;
+import com.better.CommuteMate.global.exceptions.error.OrganizationErrorCode;
 import com.better.CommuteMate.manager.application.dto.request.PostManagerRequest;
 import com.better.CommuteMate.manager.application.dto.response.GetManagerListResponse;
 import com.better.CommuteMate.manager.application.dto.response.GetManagerListWrapper;
@@ -31,18 +31,18 @@ public class ManagerService {
     private final ManagerRepository managerRepository;
     private final CategoryRepository categoryRepository;
     private final ManagerCategoryRepository managerCategoryRepository;
-    private final TeamRepository teamRepository;
+    private final OrganizationRepository organizationRepository;
 
     public PostManagerResponse registerManager(PostManagerRequest request) {
 
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new CustomException(CategoryErrorCode.CATEGORY_NOT_FOUND));
 
-        Team team = teamRepository.findById(request.teamId())
-                .orElseThrow(() -> new CustomException(TeamErrorCode.TEAM_NOT_FOUND));
+        Organization organization = organizationRepository.findById(request.organizationId())
+                .orElseThrow(() -> new CustomException(OrganizationErrorCode.ORGANIZATION_NOT_FOUND));
 
-        Manager manager = managerRepository.findByNameAndTeamAndPhonenum(request.name(), team, request.phonenum())
-                .orElseGet(() -> managerRepository.save(new Manager(request.name(), team, request.phonenum())));
+        Manager manager = managerRepository.findByNameAndOrganizationAndPhonenum(request.name(), organization, request.phonenum())
+                .orElseGet(() -> managerRepository.save(new Manager(request.name(), organization, request.phonenum())));
 
         if (managerCategoryRepository.existsByManagerIdAndCategoryId(manager.getId(), request.categoryId())) {
             throw new CustomException(ManagerErrorCode.MANAGER_CATEGORY_ALREADY_EXISTS);
@@ -56,15 +56,15 @@ public class ManagerService {
     }
 
     @Transactional(readOnly = true)
-    public GetManagerListWrapper getManagerList(Long categoryId, Long teamId, boolean favoriteOnly, String searchName) {
-        Team team = null;
+    public GetManagerListWrapper getManagerList(Long categoryId, Long organizationId, boolean favoriteOnly, String searchName) {
+        Organization organization = null;
 
-        if (teamId != null) {
-            team = teamRepository.findById(teamId)
-                    .orElseThrow(() -> new CustomException(TeamErrorCode.TEAM_NOT_FOUND));
+        if (organizationId != null) {
+            organization = organizationRepository.findById(organizationId)
+                    .orElseThrow(() -> new CustomException(OrganizationErrorCode.ORGANIZATION_NOT_FOUND));
         }
 
-        List<ManagerCategory> managerCategories = managerCategoryRepository.getManagers(categoryId, team, favoriteOnly, searchName);
+        List<ManagerCategory> managerCategories = managerCategoryRepository.getManagers(categoryId, organization, favoriteOnly, searchName);
 
         List<GetManagerListResponse> result = managerCategories.stream()
                 .map(GetManagerListResponse::new)

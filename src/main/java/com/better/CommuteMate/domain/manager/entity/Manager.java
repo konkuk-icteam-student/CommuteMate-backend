@@ -1,6 +1,6 @@
 package com.better.CommuteMate.domain.manager.entity;
 
-import com.better.CommuteMate.domain.team.entity.Team;
+import com.better.CommuteMate.domain.organization.entity.Organization;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -27,15 +27,15 @@ public class Manager {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id", nullable = false)
-    private Team team;
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
 
     @Column(length = 30)
     private String phonenum;
 
-    public Manager(String name, Team team, String phonenum) {
+    public Manager(String name, Organization organization, String phonenum) {
         this.name = name;
-        this.team = team;
+        this.organization = organization;
         this.phonenum = phonenum;
     }
 }

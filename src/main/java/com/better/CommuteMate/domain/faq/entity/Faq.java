@@ -5,6 +5,8 @@ import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -52,6 +54,12 @@ public class Faq {
 
     @Column(name = "deleted_at")
     private LocalDate deletedAt;
+
+    @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqFile> files = new ArrayList<>();
 
     public void addCategory(Category category) {
         if (this.faqCategories.size() >= 3) {
@@ -125,4 +133,13 @@ public class Faq {
         this.deletedAt = LocalDate.now();
     }
 
+    public void addImage(FaqImage image) {
+        this.images.add(image);
+        image.assignFaq(this);
+    }
+
+    public void addFile(FaqFile file) {
+        this.files.add(file);
+        file.assignFaq(this);
+    }
 }

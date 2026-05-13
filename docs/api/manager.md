@@ -33,8 +33,8 @@
 
 동작 방식은 다음과 같습니다:\
 •	전달된 categoryId가 존재하는지 확인합니다.\
-•	전달된 teamId가 존재하는지 확인합니다.\
-•	같은 이름 + 같은 소속 + 같은 전화번호를 가진 담당자가 이미 존재하면 해당 담당자를 재사용합니다.\
+•	전달된 organizationId가 존재하는지 확인합니다.\
+•	같은 이름 + 같은 조직 + 같은 전화번호를 가진 담당자가 이미 존재하면 해당 담당자를 재사용합니다.\
 •	존재하지 않으면 새로운 담당자를 생성합니다.\
 •	해당 담당자가 이미 해당 카테고리에 등록되어 있다면 등록할 수 없습니다.\
 •	중복이 아닐 경우 담당자-카테고리 매핑(ManagerCategory)을 생성합니다.
@@ -44,7 +44,7 @@
 ```json
 {
     "name": "홍길동",
-    "teamId": 1,
+    "organizationId": 1,
     "categoryId": 1,
     "phonenum": "01012345678"
 }
@@ -78,7 +78,7 @@ POST /api/manager
 
 다음 조건으로 필터링할 수 있습니다:\
 •	카테고리(categoryId)\
-•	소속(teamId)\
+•	조직(organizationId)\
 •	즐겨찾기 여부(favoriteOnly)\
 •	담당자 이름 검색(searchName)\
 
@@ -87,12 +87,12 @@ POST /api/manager
 ### Query Parameters:
 (***key	/ 설명	/ 타입	/ 필수 여부 /	예시***)\
 categoryId	/ 카테고리 / ID /	Long /	X /	1\
-teamId / 소속 / ID /	Long /	X /	2\
+organizationId / 조직 / ID /	Long /	X /	2\
 favoriteOnly /	즐겨찾기한 담당자만 조회 여부 / boolean / X (default=false) / true\
 searchName / 담당자 이름 검색 / String / X / 홍길동
 
 ### Request Example:
-GET /api/manager?categoryId=1&teamId=2&favoriteOnly=true&searchName=홍길동
+GET /api/manager?categoryId=1&organizationId=2&favoriteOnly=true&searchName=홍길동
 
 또는 전체 조회:\
 GET /api/manager
@@ -111,8 +111,8 @@ GET /api/manager
                 "managerId": 1,
                 "managerName": "홍길동",
                 "managerFavorite": true,
-                "teamId": 2,
-                "teamName": "정보운영팀",
+                "organizationId": 2,
+                "organizationName": "정보운영팀",
                 "phonenum": "01012345678"
             },
             {
@@ -121,8 +121,8 @@ GET /api/manager
                 "managerId": 2,
                 "managerName": "김철수",
                 "managerFavorite": false,
-                "teamId": 2,
-                "teamName": "정보운영팀",
+                "organizationId": 2,
+                "organizationName": "정보운영팀",
                 "phonenum": "01098765432"
             }
         ]
@@ -365,7 +365,7 @@ curl -X POST http://localhost:8080/api/manager \
 #!/bin/bash
 
 curl -X GET "http://localhost:8080/api/manager" \
-  -H "Content-Type: application/json" | jq '.details.managers[] | {managerId, managerName, team, categories}'
+  -H "Content-Type: application/json" | jq '.details.managers[] | {managerId, managerName, organization, categories}'
 ```
 
 **예상 응답**:
@@ -374,7 +374,7 @@ curl -X GET "http://localhost:8080/api/manager" \
 {
   "managerId": 1,
   "managerName": "이순신",
-  "team": "IT부서",
+  "organization": "IT부서",
   "categories": [
     {
       "categoryId": 1,
@@ -382,17 +382,7 @@ curl -X GET "http://localhost:8080/api/manager" \
     }
   ]
 }
-{
-  "managerId": 2,
-  "managerName": "김유신",
-  "team": "인프라팀",
-  "categories": [
-    {
-      "categoryId": 3,
-      "categoryName": "기숙사시스템"
-    }
-  ]
-}
+
 ```
 
 ---
@@ -418,7 +408,7 @@ curl -X GET "http://localhost:8080/api/manager?categoryId=1" \
       "managerId": 1,
       "managerName": "이순신",
       "email": "lee@example.com",
-      "team": "IT부서",
+      "organization": "IT부서",
       "categories": [
         {
           "categoryId": 1,
@@ -430,7 +420,7 @@ curl -X GET "http://localhost:8080/api/manager?categoryId=1" \
       "managerId": 5,
       "managerName": "장보고",
       "email": "jang@example.com",
-      "team": "IT부서",
+      "organization": "IT부서",
       "categories": [
         {
           "categoryId": 1,
@@ -461,11 +451,6 @@ curl -X GET "http://localhost:8080/api/manager?favoriteOnly=true" \
 {
   "managerName": "이순신",
   "email": "lee@example.com",
-  "isFavorite": true
-}
-{
-  "managerName": "장보고",
-  "email": "jang@example.com",
   "isFavorite": true
 }
 ```
@@ -504,13 +489,13 @@ async function registerManager(request: PostManagerRequest): Promise<any> {
 
 async function getManagerList(
   categoryId?: number,
-  team?: string,
+  organization?: string,
   favoriteOnly: boolean = false
 ): Promise<any[]> {
   const params = new URLSearchParams();
 
   if (categoryId) params.append('categoryId', categoryId.toString());
-  if (team) params.append('team', team);
+  if (organization) params.append('organization', organization);
   params.append('favoriteOnly', favoriteOnly.toString());
 
   const response = await fetch(

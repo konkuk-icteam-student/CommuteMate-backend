@@ -45,7 +45,7 @@ public class ManagerController {
 
     @Operation(
             summary = "담당자 목록 조회",
-            description = "담당자 목록을 조회합니다. 소속, 분류, 즐겨찾기 여부로 필터링할 수 있습니다."
+            description = "담당자 목록을 조회합니다. 조직, 분류, 즐겨찾기 여부로 필터링할 수 있습니다."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "담당자 목록 조회 성공", content = @Content(schema = @Schema(implementation = GetManagerListWrapper.class))),
@@ -55,11 +55,11 @@ public class ManagerController {
     @GetMapping
     public ResponseEntity<Response> getManagerList(
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) Long teamId,
+            @RequestParam(required = false) Long organizationId,
             @RequestParam(defaultValue = "false") boolean favoriteOnly,
             @RequestParam(required = false) String searchName
     ) {
-        return ResponseEntity.ok(new Response(true, "카테고리 담당자 목록 조회 성공", managerService.getManagerList(categoryId, teamId, favoriteOnly, searchName)));
+        return ResponseEntity.ok(new Response(true, "카테고리 담당자 목록 조회 성공", managerService.getManagerList(categoryId, organizationId, favoriteOnly, searchName)));
     }
 
 

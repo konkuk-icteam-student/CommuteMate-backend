@@ -159,14 +159,14 @@ Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만
         "pastManagers": [
             {
             "managerName": "김철수",
-            "teamName": "인사팀",
+            "organizationName": "인사팀",
             "categoryName": "로그인"
             }
         ],
         "currentManagers": [
             {
             "managerName": "이영희",
-            "teamName": "고객지원팀",
+            "organizationName": "고객지원팀",
             "categoryName": "로그인"
             }
         ],
@@ -191,7 +191,7 @@ Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만
 필터 조건에 따라 FAQ 목록을 조회하는 API입니다.
 
 다음과 같은 조건으로 필터링할 수 있습니다:\
-•	소속(teamId)\
+•	조직(organizationId)\
 •	분류(categoryId)\
 •	검색어(keyword)\
 •	검색 범위(searchScope)\
@@ -202,7 +202,7 @@ Soft Delete는 데이터를 물리적으로 삭제하지 않고 삭제 여부만
 페이지 번호는 0부터 시작합니다.
 
 ### Request Example:
-**GET /api/faq?teamId=1&categoryId=3&keyword=로그인&searchScope=TITLE&page=0**
+**GET /api/faq?organizationId=1&categoryId=3&keyword=로그인&searchScope=TITLE&page=0**
 
 ### Response (200 OK):
 ```json
