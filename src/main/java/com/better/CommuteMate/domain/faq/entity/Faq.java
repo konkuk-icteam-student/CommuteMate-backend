@@ -55,6 +55,10 @@ public class Faq {
     @Column(name = "deleted_at")
     private LocalDate deletedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FaqStatus status;
+
     @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FaqImage> images = new ArrayList<>();
 
