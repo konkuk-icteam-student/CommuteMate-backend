@@ -103,7 +103,7 @@ public class Faq {
         this.updatedDate = LocalDate.now();
     }
 
-    public static Faq create(
+    public static Faq create( // Todo FaqStatus 추가하기
             String title,
             String complainantName,
             String content,
@@ -127,7 +127,7 @@ public class Faq {
         return faq;
     }
 
-    public void update(
+    public void update( // Todo FaqStatus 추가하기
             String title,
             String complainantName,
             String content,
