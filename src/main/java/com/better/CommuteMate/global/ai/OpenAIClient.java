@@ -1,6 +1,5 @@
 package com.better.CommuteMate.global.ai;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -13,20 +12,22 @@ import java.util.Map;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class OpenAIClient {
 
-    @Value("${openai.api-key}")
-    private String apiKey;
+    private final WebClient webClient;
 
-    @Value("${openai.url}")
-    private String url;
-
-    private final WebClient.Builder webClientBuilder;
+    public OpenAIClient(
+            WebClient.Builder builder,
+            @Value("${openai.api-key}") String apiKey,
+            @Value("${openai.url}") String url
+    ) {
+        this.webClient = builder
+                .baseUrl(url)
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .build();
+    }
 
     public String call(String prompt) {
-
-        WebClient webClient = webClientBuilder.build();
 
         Map<String, Object> requestBody = Map.of(
                 "model", "gpt-4o-mini",
@@ -37,13 +38,11 @@ public class OpenAIClient {
                 )
         );
 
-        Map response = webClient.post()
-                .uri(url)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+        OpenAICategoryResponse response = webClient.post()
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)
                 .retrieve()
-                .bodyToMono(Map.class)
+                .bodyToMono(OpenAICategoryResponse.class)
                 .block();
 
         log.info("GPT response = {}", response);
@@ -51,13 +50,11 @@ public class OpenAIClient {
         return extractContent(response);
     }
 
-    private String extractContent(Map response) {
+    private String extractContent(OpenAICategoryResponse response) {
         try {
-            List choices = (List) response.get("choices");
-            Map firstChoice = (Map) choices.get(0);
-            Map message = (Map) firstChoice.get("message");
-            return (String) message.get("content");
+            return response.choices().get(0).message().content();
         } catch (Exception e) {
+            log.warn("GPT 카테고리 추천 응답 파싱 실패: {}", e.getMessage());
             return "[]"; // fallback
         }
     }

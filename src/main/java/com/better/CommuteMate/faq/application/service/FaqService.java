@@ -1,4 +1,4 @@
-package com.better.CommuteMate.faq.application;
+package com.better.CommuteMate.faq.application.service;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
