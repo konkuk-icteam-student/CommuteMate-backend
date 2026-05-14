@@ -64,3 +64,7 @@ jwt:
 storage:
   path: ${STORAGE_PATH:uploads}
   url: ${STORAGE_URL:http://localhost/uploads}
+
+openai:
+  api-key: ${OPENAI_API_KEY:your-api-key}
+  url: https://api.openai.com/v1/chat/completions

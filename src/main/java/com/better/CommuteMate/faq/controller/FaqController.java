@@ -1,11 +1,10 @@
 package com.better.CommuteMate.faq.controller;
 
 import com.better.CommuteMate.auth.application.CustomUserDetails;
-import com.better.CommuteMate.category.application.dto.response.GetCategoryListWrapper;
 import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
 import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
 import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
-import com.better.CommuteMate.faq.application.FaqService;
+import com.better.CommuteMate.faq.application.service.FaqService;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
 import com.better.CommuteMate.global.controller.dtos.Response;
