@@ -155,7 +155,8 @@ public class FaqService {
                 request.answer(),
                 request.etc(),
                 categories,
-                modifier
+                modifier,
+                FaqStatus.PUBLISHED
         );
 
         faq.getImages().forEach(FaqImage::detachFaq);

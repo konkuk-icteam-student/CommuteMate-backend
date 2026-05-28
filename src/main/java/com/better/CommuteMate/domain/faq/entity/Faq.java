@@ -136,7 +136,8 @@ public class Faq {
             String answer,
             String etc,
             List<Category> categories,
-            User writer
+            User writer,
+            FaqStatus status
     ) {
         this.title = title;
         this.complainantName = complainantName;
@@ -144,6 +145,7 @@ public class Faq {
         this.answer = answer;
         this.etc = etc;
         this.writer = writer;
+        this.status = status;
 
         this.faqCategories.clear();
 
