@@ -103,14 +103,15 @@ public class Faq {
         this.updatedDate = LocalDate.now();
     }
 
-    public static Faq create( // Todo FaqStatus 추가하기
+    public static Faq create(
             String title,
             String complainantName,
             String content,
             String answer,
             String etc,
             List<Category> categories,
-            User writer
+            User writer,
+            FaqStatus status
     ) {
         Faq faq = new Faq();
         faq.title = title;
@@ -119,6 +120,7 @@ public class Faq {
         faq.answer = answer;
         faq.etc = etc;
         faq.writer = writer;
+        faq.status = status;
 
         for (Category category : categories) {
             faq.addCategory(category);

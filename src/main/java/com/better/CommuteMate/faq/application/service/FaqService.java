@@ -2,10 +2,7 @@ package com.better.CommuteMate.faq.application.service;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
-import com.better.CommuteMate.domain.faq.entity.Faq;
-import com.better.CommuteMate.domain.faq.entity.FaqFile;
-import com.better.CommuteMate.domain.faq.entity.FaqHistory;
-import com.better.CommuteMate.domain.faq.entity.FaqImage;
+import com.better.CommuteMate.domain.faq.entity.*;
 import com.better.CommuteMate.domain.faq.repository.FaqFileRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqHistoryRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqImageRepository;
@@ -65,6 +62,7 @@ public class FaqService {
     private final OpenAIEmbeddingClient embeddingClient;
     private final FaqRelationRepository faqRelationRepository;
 
+    // 생성 후 Publish
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
 
         User writer = userRepository.findById(userId)
@@ -87,7 +85,8 @@ public class FaqService {
                 request.answer(),
                 request.etc(),
                 categories,
-                writer
+                writer,
+                FaqStatus.PUBLISHED
         );
 
         faqRepository.save(faq);
@@ -122,6 +121,7 @@ public class FaqService {
         return new PostFaqResponse(faq.getId());
     }
 
+    // 수정 후 Publish
     public PutFaqUpdateResponse updateFaq(Long userId, Long faqId, PutFaqUpdateRequest request) {
         User modifier = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
