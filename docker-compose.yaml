@@ -2,7 +2,7 @@ services:
   # PostgreSQL 데이터베이스, Port:5432
   postgres:
     network_mode: "host"
-    image: postgres:18
+    image: pgvector/pgvector:pg17
     container_name: commutemate-postgres
     restart: unless-stopped
     environment:

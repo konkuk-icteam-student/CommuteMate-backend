@@ -1,4 +1,4 @@
-package com.better.CommuteMate.faq.application;
+package com.better.CommuteMate.faq.application.service;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
@@ -26,9 +26,11 @@ import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
+import com.better.CommuteMate.global.ai.OpenAIEmbeddingClient;
 import com.better.CommuteMate.global.storage.FileStorageService;
 import com.better.CommuteMate.global.storage.FileUploadResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -46,6 +48,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -58,6 +61,7 @@ public class FaqService {
     private final FaqImageRepository faqImageRepository;
     private final FaqFileRepository faqFileRepository;
     private final FileStorageService fileStorageService;
+    private final OpenAIEmbeddingClient embeddingClient;
 
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
 
@@ -100,6 +104,8 @@ public class FaqService {
         FaqHistory faqhistory = FaqHistory.create(faq);
 
         faqHistoryRepository.save(faqhistory);
+
+        computeAndSaveEmbedding(faq);
 
         return new PostFaqResponse(faq.getId());
     }
@@ -160,6 +166,8 @@ public class FaqService {
 
         FaqHistory faqhistory = FaqHistory.create(faq);
         faqHistoryRepository.save(faqhistory);
+
+        computeAndSaveEmbedding(faq);
 
         return new PutFaqUpdateResponse(faqId);
     }
@@ -235,6 +243,20 @@ public class FaqService {
                 fileUploadResult.url(),
                 file.getOriginalFilename()
         );
+    }
+
+    private void computeAndSaveEmbedding(Faq faq) {
+        try {
+            String plainContent = Jsoup.parse(faq.getContent()).text();
+
+            String text = faq.getTitle() + " " + plainContent;
+
+            float[] embedding = embeddingClient.embed(text);
+
+            faq.updateEmbedding(embedding);
+        } catch (Exception e) {
+            log.warn("FAQ {} 임베딩 생성 실패: {}", faq.getId(), e.getMessage());
+        }
     }
 
     private List<String> extractImageUrls(String content, String answer) {

@@ -55,6 +55,12 @@ dependencies {
 
     //Jsoup
     implementation 'org.jsoup:jsoup:1.17.2'
+
+
+    // pgvector (PostgreSQL vector similarity search)
+    implementation 'com.pgvector:pgvector:0.1.6'
+    // Hibernate vector 지원
+    implementation 'org.hibernate.orm:hibernate-vector:6.5.3.Final'
 }
 
 tasks.named('test') {
