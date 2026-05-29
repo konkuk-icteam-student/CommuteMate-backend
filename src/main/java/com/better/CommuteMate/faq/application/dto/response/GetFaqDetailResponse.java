@@ -25,6 +25,12 @@ class FileInfo {
     }
 }
 
+record RelatedFaqInfo(
+        @Schema(description = "관련 FAQ id") Long faqId,
+        @Schema(description = "관련 FAQ 제목") String title,
+        @Schema(description = "관련 FAQ 최신 수정일") LocalDate updatedDate
+) {}
+
 @Schema(description = "FAQ 상세 조회 응답 DTO")
 @Getter
 public class GetFaqDetailResponse extends ResponseDetail {
@@ -71,7 +77,10 @@ public class GetFaqDetailResponse extends ResponseDetail {
     @Schema(description = "삭제 일자", nullable = true, example = "2026-01-01")
     private final LocalDate deletedAt;
 
-    public GetFaqDetailResponse(Faq faq, FaqHistory history, List<LocalDate> editedDates) {
+    @Schema(description = "관련 FAQ 목록")
+    private final List<RelatedFaqInfo> relatedFaqs;
+
+    public GetFaqDetailResponse(Faq faq, FaqHistory history, List<LocalDate> editedDates, List<Faq> relatedFaqs) {
         super();
         this.faqId = faq.getId();
         this.title = history.getTitle();
@@ -107,5 +116,8 @@ public class GetFaqDetailResponse extends ResponseDetail {
 
         this.editedDates = editedDates;
         this.deletedAt = faq.getDeletedAt();
+        this.relatedFaqs = relatedFaqs.stream()
+                .map(f -> new RelatedFaqInfo(f.getId(), f.getTitle(), f.getUpdatedDate()))
+                .toList();
     }
 }
