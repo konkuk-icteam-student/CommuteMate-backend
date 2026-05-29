@@ -34,5 +34,8 @@ public record PostFaqRequest(
         String content,
 
         @Schema(description = "첨부 파일 url 리스트", example = "[\"https://example.com/uploads/faq/files/abc.pdf\"]")
-        List<String> fileUrls
-        ) {}
+        List<String> fileUrls,
+
+        @Schema(description = "관련 FAQ id 목록", example = "[1, 2]", nullable = true)
+        List<Long> relatedFaqIds
+) {}

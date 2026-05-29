@@ -9,6 +9,7 @@ import com.better.CommuteMate.domain.faq.entity.FaqImage;
 import com.better.CommuteMate.domain.faq.repository.FaqFileRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqHistoryRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqImageRepository;
+import com.better.CommuteMate.domain.faq.repository.FaqRelationRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
@@ -62,6 +63,7 @@ public class FaqService {
     private final FaqFileRepository faqFileRepository;
     private final FileStorageService fileStorageService;
     private final OpenAIEmbeddingClient embeddingClient;
+    private final FaqRelationRepository faqRelationRepository;
 
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
 
@@ -99,6 +101,16 @@ public class FaqService {
         if (request.fileUrls() != null && !request.fileUrls().isEmpty()) {
             List<FaqFile> files = faqFileRepository.findByUrlIn(request.fileUrls());
             files.forEach(faq::addFile);
+        }
+
+        if (request.relatedFaqIds() != null && !request.relatedFaqIds().isEmpty()) {
+            List<Faq> relatedFaqs = faqRepository.findAllById(request.relatedFaqIds());
+
+            if (relatedFaqs.size() != request.relatedFaqIds().size()) {
+                throw CustomException.of(FaqErrorCode.RELATED_FAQ_NOT_FOUND);
+            }
+
+            faq.updateRelatedFaqRelations(relatedFaqs);
         }
 
         FaqHistory faqhistory = FaqHistory.create(faq);
@@ -160,6 +172,19 @@ public class FaqService {
             files.forEach(faq::addFile);
         }
 
+        List<Faq> relatedFaqs = List.of();
+
+        if (request.relatedFaqIds() != null && !request.relatedFaqIds().isEmpty()) {
+
+            relatedFaqs = faqRepository.findAllById(request.relatedFaqIds());
+
+            if (relatedFaqs.size() != request.relatedFaqIds().size()) {
+                throw CustomException.of(FaqErrorCode.RELATED_FAQ_NOT_FOUND);
+            }
+        }
+
+        faq.updateRelatedFaqRelations(relatedFaqs);
+
         faqRepository.save(faq);
 
         faqHistoryRepository.deleteByFaqIdAndEditedAt(faqId, LocalDate.now());
@@ -200,7 +225,13 @@ public class FaqService {
 
         List<LocalDate> editedDates = faqHistoryRepository.findAllEditedDatesByFaqId(faqId);
 
-        return new GetFaqDetailResponse(faq, history, editedDates);
+        List<Faq> relatedFaqs = history.getRelatedFaqIds().isEmpty()
+                ? List.of()
+                : faqRepository.findAllById(history.getRelatedFaqIds()).stream()
+                        .filter(f -> !f.getDeletedFlag())
+                        .toList();
+
+        return new GetFaqDetailResponse(faq, history, editedDates, relatedFaqs);
     }
 
     public void deleteFaq(Long faqId) {
@@ -213,6 +244,8 @@ public class FaqService {
 
         faq.getImages().forEach(FaqImage::detachFaq);
         faq.getFiles().forEach(FaqFile::detachFaq);
+
+        faqRelationRepository.deleteByRelatedFaqId(faqId);
 
         faq.delete();
     }

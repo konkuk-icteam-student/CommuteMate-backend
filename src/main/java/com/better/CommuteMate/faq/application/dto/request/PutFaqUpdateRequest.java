@@ -31,5 +31,8 @@ public record PutFaqUpdateRequest(
         String content,
 
         @Schema(description = "첨부 파일 url 리스트", example = "[\"https://kusd.konkuk.ac.kr/uploads/prod/faq/files/3f1c2a9b-1234-4abc-9def-123456789abc.pdf\"]")
-        List<String> fileUrls
+        List<String> fileUrls,
+
+        @Schema(description = "관련 FAQ id 목록", example = "[1, 2]")
+        List<Long> relatedFaqIds
 ) {}
