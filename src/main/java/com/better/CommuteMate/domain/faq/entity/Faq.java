@@ -10,9 +10,9 @@ import java.util.List;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 
 @Entity
 @Table(name = "faq")
@@ -60,6 +60,14 @@ public class Faq {
 
     @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FaqFile> files = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    @Column(columnDefinition = "vector(1536)")
+    private float[] embedding;
+
+    public void updateEmbedding(float[] embedding) {
+        this.embedding = embedding;
+    }
 
     public void addCategory(Category category) {
         if (this.faqCategories.size() >= 3) {
