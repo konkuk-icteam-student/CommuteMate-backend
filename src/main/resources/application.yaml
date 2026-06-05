@@ -60,3 +60,12 @@ jwt:
   access-expiration: ${JWT_ACCESS_EXPIRATION_MS:3600000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:604800000}
   algorithm: ${JWT_ALGORITHM:HmacSHA256}
+
+storage:
+  path: ${STORAGE_PATH:uploads}
+  url: ${STORAGE_URL:http://localhost/uploads}
+
+openai:
+  api-key: ${OPENAI_API_KEY:your-api-key}
+  url: https://api.openai.com/v1/chat/completions
+  embedding-url: https://api.openai.com/v1/embeddings

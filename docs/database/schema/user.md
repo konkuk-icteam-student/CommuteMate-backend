@@ -19,7 +19,7 @@ User 테이블은 CommuteMate 시스템의 모든 사용자 정보를 관리하�
 ### 주요 특징
 - **역할 기반 접근 제어**: CodeType.RL (Role) 코드로 사용자 역할 관리
 - **JWT 인증**: refreshToken 필드로 토큰 기반 인증 지원
-- **조직 소속**: `organizationId` 컬럼만 보유 (엔티티 연관관계 없음)
+- **조직 조직**: `organizationId` 컬럼만 보유 (엔티티 연관관계 없음)
 - **감사 추적**: 생성/수정 시간 및 작업자 추적
 
 ### 엔티티 위치
@@ -71,7 +71,7 @@ CREATE TABLE `user` (
 ### 기본 정보
 | 필드 | 타입 | 제약조건 | 설명 |
 |------|------|----------|------|
-| **organization_id** | INT | NOT NULL | 소속 조직 ID (역정규화: 단순 컬럼) |
+| **organization_id** | INT | NOT NULL | 조직 조직 ID (역정규화: 단순 컬럼) |
 | **email** | VARCHAR(100) | NOT NULL, UNIQUE | 로그인 이메일 (중복 불가) |
 | **password** | VARCHAR(255) | NOT NULL | 암호화된 비밀번호 (BCrypt) |
 | **name** | VARCHAR(50) | NOT NULL | 사용자 이름 |

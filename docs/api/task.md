@@ -26,7 +26,7 @@
 - 업무 템플릿 생성 및 적용
 - 관리자용 일괄 업무 관리
 
-**Base Path**: `/api/v1/tasks` (사용자), `/api/v1/task-templates` (템플릿)
+**Base Path**: `/api/tasks` (사용자), `/api/task-templates` (템플릿)
 
 **업무 타입**:
 | 코드 | 이름 | 설명 |
@@ -41,7 +41,7 @@
 모든 엔드포인트는 **JWT AccessToken**이 필요합니다. `Authorization` 헤더로 전달됩니다.
 
 **권한별 접근 제한**:
-- 인증 필요: `/api/v1/tasks/**`, `/api/v1/task-templates/**`
+- 인증 필요: `/api/tasks/**`, `/api/task-templates/**`
 - 관리자 전용(`@PreAuthorize("hasRole('RL02')")`):
   - 업무 삭제, 업무 일괄 저장
   - 템플릿 생성/수정/삭제/활성화/적용
@@ -53,7 +53,7 @@
 
 ### 1.1 일별 업무 목록 조회
 
-**Endpoint**: `GET /api/v1/tasks`
+**Endpoint**: `GET /api/tasks`
 
 **설명**: 특정 날짜의 업무 목록을 정기/비정기, 오전/오후로 구분하여 조회합니다.
 
@@ -71,7 +71,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 **Example**:
 ```
-GET /api/v1/tasks?date=2026-01-22
+GET /api/tasks?date=2026-01-22
 ```
 
 #### Response
@@ -149,7 +149,7 @@ GET /api/v1/tasks?date=2026-01-22
 
 ### 1.2 업무 단건 조회
 
-**Endpoint**: `GET /api/v1/tasks/{taskId}`
+**Endpoint**: `GET /api/tasks/{taskId}`
 
 **설명**: 특정 업무의 상세 정보를 조회합니다.
 
@@ -201,7 +201,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 2.1 업무 단건 생성
 
-**Endpoint**: `POST /api/v1/tasks`
+**Endpoint**: `POST /api/tasks`
 
 **설명**: 새로운 업무를 생성합니다. (인증 필요)
 
@@ -264,7 +264,7 @@ Content-Type: application/json
 
 ### 3.1 업무 정보 수정
 
-**Endpoint**: `PATCH /api/v1/tasks/{taskId}`
+**Endpoint**: `PATCH /api/tasks/{taskId}`
 
 **설명**: 기존 업무의 정보를 수정합니다.  
 ※ 현재 구현상 **본인 여부 검증이 없습니다** (인증된 사용자라면 수정 가능).
@@ -332,7 +332,7 @@ Content-Type: application/json
 
 ### 4.1 업무 완료 상태 토글
 
-**Endpoint**: `PATCH /api/v1/tasks/{taskId}/toggle-complete`
+**Endpoint**: `PATCH /api/tasks/{taskId}/toggle-complete`
 
 **설명**: 업무의 완료 상태를 토글합니다 (완료 ↔ 미완료).  
 ※ 현재 구현상 **본인 여부 검증이 없습니다** (인증된 사용자라면 변경 가능).
@@ -393,7 +393,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 4.2 업무 완료 상태 설정
 
-**Endpoint**: `PATCH /api/v1/tasks/{taskId}/complete`
+**Endpoint**: `PATCH /api/tasks/{taskId}/complete`
 
 **설명**: 업무의 완료 상태를 특정 값으로 설정합니다 (완료 또는 미완료).  
 ※ 현재 구현상 **본인 여부 검증이 없습니다** (인증된 사용자라면 변경 가능).
@@ -456,7 +456,7 @@ Content-Type: application/json
 
 ### 5.1 업무 삭제
 
-**Endpoint**: `DELETE /api/v1/tasks/{taskId}`
+**Endpoint**: `DELETE /api/tasks/{taskId}`
 
 **설명**: 업무를 삭제합니다. (관리자 전용)
 
@@ -496,7 +496,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 6.1 업무 일괄 생성/수정
 
-**Endpoint**: `PUT /api/v1/tasks/batch`
+**Endpoint**: `PUT /api/tasks/batch`
 
 **설명**: 여러 업무를 한 번에 생성하거나 수정합니다. (관리자 전용)
 - `taskId`가 있으면 수정
@@ -657,7 +657,7 @@ Content-Type: application/json
 
 ### 7.1 템플릿 목록 조회
 
-**Endpoint**: `GET /api/v1/task-templates`
+**Endpoint**: `GET /api/task-templates`
 
 **설명**: 등록된 업무 템플릿 목록을 조회합니다.
 
@@ -675,7 +675,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 **Example**:
 ```
-GET /api/v1/task-templates?activeOnly=true
+GET /api/task-templates?activeOnly=true
 ```
 
 #### Response
@@ -710,7 +710,7 @@ GET /api/v1/task-templates?activeOnly=true
 
 ### 7.2 템플릿 상세 조회
 
-**Endpoint**: `GET /api/v1/task-templates/{templateId}`
+**Endpoint**: `GET /api/task-templates/{templateId}`
 
 **설명**: 특정 템플릿의 상세 정보와 항목들을 조회합니다.
 
@@ -777,7 +777,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 7.3 템플릿 생성
 
-**Endpoint**: `POST /api/v1/task-templates`
+**Endpoint**: `POST /api/task-templates`
 
 **설명**: 새로운 업무 템플릿을 생성합니다. (관리자 전용)
 
@@ -876,7 +876,7 @@ Content-Type: application/json
 
 ### 7.4 템플릿 수정
 
-**Endpoint**: `PUT /api/v1/task-templates/{templateId}`
+**Endpoint**: `PUT /api/task-templates/{templateId}`
 
 **설명**: 기존 템플릿의 정보를 수정합니다. items가 제공되면 기존 항목을 교체합니다. (관리자 전용)
 
@@ -968,7 +968,7 @@ Content-Type: application/json
 
 ### 7.5 템플릿 삭제
 
-**Endpoint**: `DELETE /api/v1/task-templates/{templateId}`
+**Endpoint**: `DELETE /api/task-templates/{templateId}`
 
 **설명**: 템플릿을 삭제합니다. (관리자 전용)
 
@@ -1006,7 +1006,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 7.6 템플릿 활성화/비활성화
 
-**Endpoint**: `PATCH /api/v1/task-templates/{templateId}/active`
+**Endpoint**: `PATCH /api/task-templates/{templateId}/active`
 
 **설명**: 템플릿의 활성화 상태를 변경합니다. (관리자 전용)
 
@@ -1029,7 +1029,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 **Example**:
 ```
-PATCH /api/v1/task-templates/1/active?isActive=false
+PATCH /api/task-templates/1/active?isActive=false
 ```
 
 #### Response
@@ -1059,7 +1059,7 @@ PATCH /api/v1/task-templates/1/active?isActive=false
 
 ### 7.7 템플릿 적용
 
-**Endpoint**: `POST /api/v1/task-templates/{templateId}/apply`
+**Endpoint**: `POST /api/task-templates/{templateId}/apply`
 
 **설명**: 템플릿을 특정 날짜에 적용하여 업무를 일괄 생성합니다. (관리자 전용)
 
@@ -1189,17 +1189,17 @@ Content-Type: application/json
 
 ```bash
 # 1단계: 오늘 업무 목록 조회
-curl -X GET "http://localhost:8080/api/v1/tasks?date=2026-01-22" \
+curl -X GET "http://localhost:8080/api/tasks?date=2026-01-22" \
 
 # 2단계: 특정 업무의 완료 상태 토글
-curl -X PATCH "http://localhost:8080/api/v1/tasks/1/toggle-complete" \
+curl -X PATCH "http://localhost:8080/api/tasks/1/toggle-complete" \
 ```
 
 ### 예시 2: 템플릿 생성 및 적용
 
 ```bash
 # 1단계: 평일 기본 업무 템플릿 생성 (관리자)
-curl -X POST "http://localhost:8080/api/v1/task-templates" \
+curl -X POST "http://localhost:8080/api/task-templates" \
   -H "Content-Type: application/json" \
   -d '{
     "templateName": "평일 기본 업무",
@@ -1223,7 +1223,7 @@ curl -X POST "http://localhost:8080/api/v1/task-templates" \
   }'
 
 # 2단계: 내일(1월 23일)에 템플릿 적용
-curl -X POST "http://localhost:8080/api/v1/task-templates/1/apply" \
+curl -X POST "http://localhost:8080/api/task-templates/1/apply" \
   -H "Content-Type: application/json" \
   -d '{
     "targetDate": "2026-01-23",
@@ -1231,14 +1231,14 @@ curl -X POST "http://localhost:8080/api/v1/task-templates/1/apply" \
   }'
 
 # 3단계: 내일 업무 목록 확인
-curl -X GET "http://localhost:8080/api/v1/tasks?date=2026-01-23" \
+curl -X GET "http://localhost:8080/api/tasks?date=2026-01-23" \
 ```
 
 ### 예시 3: 일괄 업무 저장
 
 ```bash
 # 관리자가 여러 업무를 한 번에 생성/수정
-curl -X PUT "http://localhost:8080/api/v1/tasks/batch" \
+curl -X PUT "http://localhost:8080/api/tasks/batch" \
   -H "Content-Type: application/json" \
   -d '{
     "date": "2026-01-22",

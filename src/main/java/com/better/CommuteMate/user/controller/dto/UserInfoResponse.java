@@ -27,7 +27,7 @@ public class UserInfoResponse extends ResponseDetail {
     /** 사용자 역할 (학생/사원, 관리자 등) */
     private final CodeType role;
     
-    /** 소속 조직 ID */
+    /** 조직 조직 ID */
     private final Long organizationId;
 
     /**

@@ -45,3 +45,4 @@ postman/
 
 # Override .env.example (remove from tracking)
 .env.example
+docker-compose.override.yml

@@ -30,7 +30,7 @@ FAQ 시스템에서 **카테고리별 담당 매니저**를 관리하는 엔티�
 |------|------|------|------|
 | id | BIGINT | PK, AUTO_INCREMENT | 매니저 ID |
 | name | VARCHAR(30) | NOT NULL | 매니저 이름 |
-| team | VARCHAR(50) | | 소속 팀 |
+| organization | VARCHAR(50) | | 조직 팀 |
 | phonenum | VARCHAR(20) | | 연락처 |
 | created_at | DATETIME | NOT NULL | 생성 일시 |
 
@@ -74,7 +74,7 @@ private List<ManagerCategory> managerCategories = new ArrayList<>();
 ├─────────────────┤
 │ id (PK)         │
 │ name            │
-│ team            │
+│ organization            │
 │ phonenum        │
 │ created_at      │
 └─────────────────┘
@@ -120,7 +120,7 @@ private List<ManagerCategory> managerCategories = new ArrayList<>();
 - 책임자 추적 및 감사 로그
 
 ### 4. 팀/연락처 관리
-- 매니저 소속 팀 정보 관리
+- 매니저 조직 팀 정보 관리
 - 연락처 정보 저장 (선택 사항)
 
 ---
@@ -132,7 +132,7 @@ private List<ManagerCategory> managerCategories = new ArrayList<>();
 ```java
 Manager manager = Manager.builder()
     .name("홍길동")
-    .team("고객지원팀")
+    .organization("고객지원팀")
     .phonenum("010-1234-5678")
     .build();
 

@@ -78,7 +78,7 @@ CommuteMate 백엔드는 `GlobalExceptionHandler`를 통해 예외를 처리합�
 - `global/exceptions/error/CategoryErrorCode.java`
 - `global/exceptions/error/FaqErrorCode.java`
 - `global/exceptions/error/ManagerErrorCode.java`
-- - `global/exceptions/error/TeamErrorCode.java`
+- - `global/exceptions/error/organizationErrorCode.java`
 - `schedule/application/exceptions/ScheduleErrorCode.java`
 - `attendance/application/exception/AttendanceErrorCode.java`
 

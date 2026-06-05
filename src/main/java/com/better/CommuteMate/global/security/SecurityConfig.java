@@ -80,7 +80,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Task API만 인증 필요
-                        .requestMatchers("/api/v1/tasks/**", "/api/v1/task-templates/**").authenticated()
+                        .requestMatchers("/api/tasks/**", "/api/task-templates/**").authenticated()
                         // 나머지는 모두 허용
                         .anyRequest().permitAll()
                 )

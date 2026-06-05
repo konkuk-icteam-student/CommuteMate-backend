@@ -8,14 +8,13 @@ import com.better.CommuteMate.domain.task.repository.TaskTemplateItemRepository;
 import com.better.CommuteMate.domain.task.repository.TaskTemplateRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
-import com.better.CommuteMate.global.exceptions.TaskException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.TaskErrorCode;
 import com.better.CommuteMate.task.controller.dtos.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +59,7 @@ public class TaskTemplateService {
     public TemplateDetailResponse createTemplate(CreateTemplateRequest request, Long currentUserId) {
         // 이름 중복 확인
         if (templateRepository.existsByTemplateName(request.getTemplateName())) {
-            throw new TaskException(TaskErrorCode.TEMPLATE_NAME_ALREADY_EXISTS);
+            throw new CustomException(TaskErrorCode.TEMPLATE_NAME_ALREADY_EXISTS);
         }
 
         TaskTemplate template = TaskTemplate.create(
@@ -102,7 +101,7 @@ public class TaskTemplateService {
         // 이름 중복 확인 (자기 자신 제외)
         if (request.getTemplateName() != null &&
                 templateRepository.existsByTemplateNameAndNotId(request.getTemplateName(), templateId)) {
-            throw new TaskException(TaskErrorCode.TEMPLATE_NAME_ALREADY_EXISTS);
+            throw new CustomException(TaskErrorCode.TEMPLATE_NAME_ALREADY_EXISTS);
         }
 
         template.update(request.getTemplateName(), request.getDescription(), currentUserId);
@@ -159,7 +158,7 @@ public class TaskTemplateService {
         List<TaskTemplateItem> items = itemRepository.findByTemplateIdWithAssignee(templateId);
 
         if (items.isEmpty()) {
-            throw new TaskException(TaskErrorCode.TEMPLATE_HAS_NO_ITEMS);
+            throw new CustomException(TaskErrorCode.TEMPLATE_HAS_NO_ITEMS);
         }
 
         // 담당자 오버라이드 맵 생성
@@ -213,12 +212,12 @@ public class TaskTemplateService {
 
     private TaskTemplate findTemplateById(Long templateId) {
         return templateRepository.findById(templateId)
-                .orElseThrow(() -> new TaskException(TaskErrorCode.TEMPLATE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(TaskErrorCode.TEMPLATE_NOT_FOUND));
     }
 
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new TaskException(TaskErrorCode.ASSIGNEE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(TaskErrorCode.ASSIGNEE_NOT_FOUND));
     }
 
     private com.better.CommuteMate.global.code.CodeType validateAndGetTaskType(String taskTypeCode) {
@@ -230,11 +229,11 @@ public class TaskTemplateService {
                     .fromFullCode(taskTypeCode);
             if (taskType != com.better.CommuteMate.global.code.CodeType.TT01 &&
                     taskType != com.better.CommuteMate.global.code.CodeType.TT02) {
-                throw new TaskException(TaskErrorCode.INVALID_TASK_TYPE);
+                throw new CustomException(TaskErrorCode.INVALID_TASK_TYPE);
             }
             return taskType;
         } catch (IllegalArgumentException e) {
-            throw new TaskException(TaskErrorCode.INVALID_TASK_TYPE);
+            throw new CustomException(TaskErrorCode.INVALID_TASK_TYPE);
         }
     }
 }

@@ -28,7 +28,7 @@
 
 ### 1. 저장소 클론 (Clone Repository)
 ```bash
-git clone https://github.com/konkuk-icteam-student/CommuteMate-backend.git
+git clone https://github.com/konkuk-icorganization-student/CommuteMate-backend.git
 cd CommuteMate-backend
 ```
 

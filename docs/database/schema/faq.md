@@ -373,7 +373,7 @@ private Faq faq;
 │ title                   │                         │─────────────────────│
 │ complainant_name        │                         │ id (PK)             │
 │ content                 │                         │ name                │
-│ answer                  │                         │ team                │
+│ answer                  │                         │ organization                │
 │ etc                     │                         │ phonenum            │
 │ writer_name             │                         │ created_at          │
 │ edited_at               │                         └─────────────────────┘

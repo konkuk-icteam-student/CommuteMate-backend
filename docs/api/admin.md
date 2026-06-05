@@ -28,7 +28,7 @@
 
 관리자용 근무 일정 설정 및 변경 요청 처리 API입니다.
 
-**Base Path**: `/api/v1/admin/schedule`
+**Base Path**: `/api/admin/schedule`
 
 ---
 
@@ -61,7 +61,7 @@
 
 ### 1️⃣ 월별 제한 설정
 
-**Endpoint**: `POST /api/v1/admin/schedule/monthly-limit`
+**Endpoint**: `POST /api/admin/schedule/monthly-limit`
 
 **Headers**:
 ```
@@ -95,7 +95,7 @@ Content-Type: application/json
 
 ### 2️⃣ 신청 기간 설정
 
-**Endpoint**: `POST /api/v1/admin/schedule/set-apply-term`
+**Endpoint**: `POST /api/admin/schedule/set-apply-term`
 
 **Headers**:
 ```
@@ -132,7 +132,7 @@ Content-Type: application/json
 
 ### 3️⃣ 특정 월 제한 조회
 
-**Endpoint**: `GET /api/v1/admin/schedule/monthly-limit/{year}/{month}`
+**Endpoint**: `GET /api/admin/schedule/monthly-limit/{year}/{month}`
 
 **Response (200 OK)**:
 ```json
@@ -160,7 +160,7 @@ Content-Type: application/json
 
 ### 4️⃣ 모든 월별 제한 조회
 
-**Endpoint**: `GET /api/v1/admin/schedule/monthly-limits`
+**Endpoint**: `GET /api/admin/schedule/monthly-limits`
 
 **Response (200 OK)**:
 ```json
@@ -183,7 +183,7 @@ Content-Type: application/json
 
 ### 5️⃣ 사용자 근무 시간 조회
 
-**Endpoint**: `GET /api/v1/admin/schedule/work-time?userId=1&year=2025&month=12`
+**Endpoint**: `GET /api/admin/schedule/work-time?userId=1&year=2025&month=12`
 
 **Response (200 OK)**:
 ```json
@@ -201,7 +201,7 @@ Content-Type: application/json
 
 ### 6️⃣ 전체 근무 시간 통계
 
-**Endpoint**: `GET /api/v1/admin/schedule/work-time/summary?year=2025&month=12`
+**Endpoint**: `GET /api/admin/schedule/work-time/summary?year=2025&month=12`
 
 **Response (200 OK)**:
 ```json
@@ -229,7 +229,7 @@ Content-Type: application/json
 
 ### 7️⃣ 사용자 근무 이력 조회
 
-**Endpoint**: `GET /api/v1/admin/schedule/history?userId=1&year=2025&month=12`
+**Endpoint**: `GET /api/admin/schedule/history?userId=1&year=2025&month=12`
 
 **Response (200 OK)**:
 ```json
@@ -256,7 +256,7 @@ Content-Type: application/json
 
 ### 8️⃣ 전체 근무 이력 조회
 
-**Endpoint**: `GET /api/v1/admin/schedule/history/all?year=2025&month=12`
+**Endpoint**: `GET /api/admin/schedule/history/all?year=2025&month=12`
 
 **Response (200 OK)**:
 ```json
@@ -284,7 +284,7 @@ Content-Type: application/json
 
 ### 9️⃣ 변경 요청 처리
 
-**Endpoint**: `POST /api/v1/admin/schedule/process-change-request`
+**Endpoint**: `POST /api/admin/schedule/process-change-request`
 
 **Headers**:
 ```
@@ -313,7 +313,7 @@ Content-Type: application/json
 
 ### 🔟 승인 대기 신청 목록
 
-**Endpoint**: `GET /api/v1/admin/schedule/apply-requests`
+**Endpoint**: `GET /api/admin/schedule/apply-requests`
 
 **Response (200 OK)**:
 ```json
@@ -347,7 +347,7 @@ Content-Type: application/json
 **Step 1: 월별 제한 설정**
 
 ```bash
-curl -X POST "http://localhost:8080/api/v1/admin/schedule/monthly-limit" \
+curl -X POST "http://localhost:8080/api/admin/schedule/monthly-limit" \
   -H "Authorization: Bearer <JWT_ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -373,7 +373,7 @@ curl -X POST "http://localhost:8080/api/v1/admin/schedule/monthly-limit" \
 **Step 2: 신청 기간 설정**
 
 ```bash
-curl -X POST "http://localhost:8080/api/v1/admin/schedule/set-apply-term" \
+curl -X POST "http://localhost:8080/api/admin/schedule/set-apply-term" \
   -H "Authorization: Bearer <JWT_ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -402,7 +402,7 @@ curl -X POST "http://localhost:8080/api/v1/admin/schedule/set-apply-term" \
 
 ```bash
 # 특정 월 설정 확인
-curl -X GET "http://localhost:8080/api/v1/admin/schedule/monthly-limit/2025/12" \
+curl -X GET "http://localhost:8080/api/admin/schedule/monthly-limit/2025/12" \
   -H "Authorization: Bearer <JWT_ADMIN_TOKEN>"
 ```
 
@@ -427,7 +427,7 @@ async function setupMonthlySchedule(
 ): Promise<void> {
   try {
     // Step 1: Set monthly limit
-    const limitResponse = await fetch('/api/v1/admin/schedule/monthly-limit', {
+    const limitResponse = await fetch('/api/admin/schedule/monthly-limit', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${adminToken}`,
@@ -445,7 +445,7 @@ async function setupMonthlySchedule(
     }
 
     // Step 2: Set apply term
-    const termResponse = await fetch('/api/v1/admin/schedule/set-apply-term', {
+    const termResponse = await fetch('/api/admin/schedule/set-apply-term', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${adminToken}`,
@@ -466,7 +466,7 @@ async function setupMonthlySchedule(
 
     // Step 3: Verify configuration
     const verifyResponse = await fetch(
-      `/api/v1/admin/schedule/monthly-limit/${year}/${month}`,
+      `/api/admin/schedule/monthly-limit/${year}/${month}`,
       {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       }
@@ -495,7 +495,7 @@ async function setupMonthlySchedule(
 **Step 1: 승인 대기 목록 조회**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v1/admin/schedule/apply-requests" \
+curl -X GET "http://localhost:8080/api/admin/schedule/apply-requests" \
   -H "Authorization: Bearer <JWT_ADMIN_TOKEN>"
 ```
 
@@ -529,7 +529,7 @@ curl -X GET "http://localhost:8080/api/v1/admin/schedule/apply-requests" \
 
 ```bash
 # 요청 ID 123, 124를 승인 (CS02 = APPROVED)
-curl -X POST "http://localhost:8080/api/v1/admin/schedule/process-change-request" \
+curl -X POST "http://localhost:8080/api/admin/schedule/process-change-request" \
   -H "Authorization: Bearer <JWT_ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -551,7 +551,7 @@ curl -X POST "http://localhost:8080/api/v1/admin/schedule/process-change-request
 
 ```bash
 # 요청 ID 125를 거부 (CS03 = REJECTED)
-curl -X POST "http://localhost:8080/api/v1/admin/schedule/process-change-request" \
+curl -X POST "http://localhost:8080/api/admin/schedule/process-change-request" \
   -H "Authorization: Bearer <JWT_ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -578,7 +578,7 @@ async function processChangeRequests(
   const statusCode = decision === 'APPROVE' ? 'CS02' : 'CS03';
 
   try {
-    const response = await fetch('/api/v1/admin/schedule/process-change-request', {
+    const response = await fetch('/api/admin/schedule/process-change-request', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${adminToken}`,
@@ -614,7 +614,7 @@ async function processChangeRequests(
 **Step 1: 전체 근무 시간 통계 조회**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v1/admin/schedule/work-time/summary?year=2025&month=12" \
+curl -X GET "http://localhost:8080/api/admin/schedule/work-time/summary?year=2025&month=12" \
   -H "Authorization: Bearer <JWT_ADMIN_TOKEN>"
 ```
 
@@ -654,7 +654,7 @@ curl -X GET "http://localhost:8080/api/v1/admin/schedule/work-time/summary?year=
 
 ```bash
 # 사용자 ID 1의 12월 상세 이력
-curl -X GET "http://localhost:8080/api/v1/admin/schedule/history?userId=1&year=2025&month=12" \
+curl -X GET "http://localhost:8080/api/admin/schedule/history?userId=1&year=2025&month=12" \
   -H "Authorization: Bearer <JWT_ADMIN_TOKEN>"
 ```
 
@@ -703,7 +703,7 @@ async function analyzeMonthlyStatistics(year: number, month: number): Promise<vo
   try {
     // Get summary
     const summaryResponse = await fetch(
-      `/api/v1/admin/schedule/work-time/summary?year=${year}&month=${month}`,
+      `/api/admin/schedule/work-time/summary?year=${year}&month=${month}`,
       { headers: { 'Authorization': `Bearer ${adminToken}` } }
     );
 

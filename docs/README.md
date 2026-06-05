@@ -288,8 +288,8 @@ docs/
 
 ### 프로젝트 관련
 - **ERD**: [dbdiagram.io](https://dbdiagram.io/d/ku_ict-68db5736d2b621e422822757)
-- **저장소**: [GitHub](https://github.com/konkuk-icteam-student/CommuteMate-backend)
-- **이슈 트래커**: [GitHub Issues](https://github.com/konkuk-icteam-student/CommuteMate-backend/issues)
+- **저장소**: [GitHub](https://github.com/konkuk-icorganization-student/CommuteMate-backend)
+- **이슈 트래커**: [GitHub Issues](https://github.com/konkuk-icorganization-student/CommuteMate-backend/issues)
 
 ### 기술 스택 문서
 - **Spring Boot**: [공식 문서](https://spring.io/projects/spring-boot)

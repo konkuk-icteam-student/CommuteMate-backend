@@ -5,10 +5,7 @@ import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequest;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestRepository;
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleAllFailureException;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode;
-import com.better.CommuteMate.schedule.application.exceptions.SchedulePartialFailureException;
-import com.better.CommuteMate.schedule.application.exceptions.response.ScheduleResponseDetail;
+import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryResponse;
@@ -20,17 +17,14 @@ import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultComma
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.user.entity.User;
-import com.better.CommuteMate.global.exceptions.UserNotFoundException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
-import com.better.CommuteMate.global.exceptions.response.UserNotFoundResponseDetail;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.better.CommuteMate.global.exceptions.BasicException;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -58,7 +52,7 @@ public class ScheduleService {
      - 일부만 신청 성공 가능, SchedulePartialFailureException 반환
      - 전부 실패시 ScheduleAllFailureException 반환
      */
-    @Transactional(noRollbackFor = {ScheduleAllFailureException.class, SchedulePartialFailureException.class})
+    @Transactional
     public ApplyScheduleResultCommand applyWorkSchedules(List<WorkScheduleCommand> slots) {
         List<WorkScheduleDTO> success = new ArrayList<>();
         List<WorkScheduleDTO> failure = new ArrayList<>();
@@ -66,8 +60,6 @@ public class ScheduleService {
         //TODO: 근무 신청일이 안정해져있다면? 사실 무조건 있는게 맞지만, 없을때(현재)는 WS01(신청)으로 처리하는 중. 추후 로직 수정해야 할 수도 있음.
         //TODO: 컨트롤러에서 유저 정보를 감싸면서 for문 순회하며 WorkScheduleCommand에 유저정보를 넣어주는 것보단
         // 유저 정보를 개별 파라미터로 받아서 for문 돌면서 userID만 꺼내쓰는게 더 나을 것 같음.
-
-
 
         for (WorkScheduleCommand slot : slots) {
             try {
@@ -125,8 +117,7 @@ public class ScheduleService {
                             isCurrentlyInApplyTerm(slot.start()) ? CodeType.WS02 : CodeType.WS01;
 
                     User user = userRepository.findById(slot.userID())
-                            .orElseThrow(() -> UserNotFoundException.of(
-                                    GlobalErrorCode.USER_NOT_FOUND, UserNotFoundResponseDetail.of(slot.userID())));
+                            .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
                     workSchedulesRepository.save(WorkScheduleCommand.toEntity(slot, user, codeType));
                     success.add(WorkScheduleDTO.from(slot));
 
@@ -138,7 +129,7 @@ public class ScheduleService {
                 } else {
                     failure.add(WorkScheduleDTO.from(slot));
                 }
-            } catch (BasicException e) {
+            } catch (CustomException e) {
                 // 검증 실패 시 failure 리스트에 추가
                 failure.add(WorkScheduleDTO.from(slot));
             }
@@ -146,11 +137,9 @@ public class ScheduleService {
         ApplyScheduleResultCommand result = ApplyScheduleResultCommand.from(success, failure);
 
         if(success.isEmpty()){
-            throw ScheduleAllFailureException.of(
-                    ScheduleErrorCode.SCHEDULE_FAILURE, ScheduleResponseDetail.of(result));
+            throw CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE);
         }else if(!failure.isEmpty()){
-            throw SchedulePartialFailureException.of(
-                    ScheduleErrorCode.SCHEDULE_PARTIAL_FAILURE, ScheduleResponseDetail.of(result));
+            throw CustomException.of(ScheduleErrorCode.SCHEDULE_PARTIAL_FAILURE);
         }
         broadcastScheduleUpdate(changes);
         return result;
@@ -170,8 +159,7 @@ public class ScheduleService {
 
         // 사용자 조회
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> UserNotFoundException.of(
-                        GlobalErrorCode.USER_NOT_FOUND, UserNotFoundResponseDetail.of(userId)));
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         // 근무 시간 누적 변수
         Duration cancelTotalDuration = Duration.ZERO;
@@ -193,7 +181,7 @@ public class ScheduleService {
                 // 지난 달 일정 수정 불가 검증
                 LocalDate firstDayOfCurrentMonth = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
                 if (workschedule.getStartTime().toLocalDate().isBefore(firstDayOfCurrentMonth)) {
-                    throw BasicException.of(ScheduleErrorCode.PAST_MONTH_MODIFICATION_NOT_ALLOWED);
+                    throw CustomException.of(ScheduleErrorCode.PAST_MONTH_MODIFICATION_NOT_ALLOWED);
                 }
 
                 // 각 일정마다 바로수정가능한 일정인지, 아니면 변경요청을 보내야하는 일정인지 검증
@@ -223,10 +211,7 @@ public class ScheduleService {
                     changes.add(new ScheduleChange(false, workschedule.getStartTime(), workschedule.getEndTime()));
                 }
             }else{
-                throw ScheduleAllFailureException.of(
-                        ScheduleErrorCode.SCHEDULE_FAILURE,
-                        ScheduleResponseDetail.of(ApplyScheduleResultCommand
-                                .fromIds(List.of(), modifyWorkScheduleDTO.cancelScheduleIds())));
+                throw CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE);
             }
         }
 
@@ -238,7 +223,7 @@ public class ScheduleService {
             // 지난 달 일정 추가 불가 검증
             LocalDate firstDayOfCurrentMonth = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
             if (slot.start().toLocalDate().isBefore(firstDayOfCurrentMonth)) {
-                throw BasicException.of(ScheduleErrorCode.PAST_MONTH_MODIFICATION_NOT_ALLOWED);
+                throw CustomException.of(ScheduleErrorCode.PAST_MONTH_MODIFICATION_NOT_ALLOWED);
             }
 
             WorkScheduleCommand command = WorkScheduleCommand.from(slot, userId);
@@ -296,10 +281,7 @@ public class ScheduleService {
 
             // 4. 동시 근무자 수 검증
             if (!scheduleValidator.isScheduleInsertable(command)) {
-                throw ScheduleAllFailureException.of(
-                        ScheduleErrorCode.SCHEDULE_FAILURE,
-                        ScheduleResponseDetail.of(ApplyScheduleResultCommand
-                                .from(List.of(), modifyWorkScheduleDTO.applySlots())));
+                throw CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE);
             }
 
             // 추가할 일정의 근무 시간 누적
@@ -331,10 +313,7 @@ public class ScheduleService {
 
         // 마지막에 근무 시간 일치 검증 (불일치 시 트랜잭션 롤백)
         if (!cancelTotalDuration.equals(applyTotalDuration)) {
-            throw ScheduleAllFailureException.of(
-                    ScheduleErrorCode.WORK_DURATION_MISMATCH,
-                    ScheduleResponseDetail.of(ApplyScheduleResultCommand
-                            .from(List.of(), modifyWorkScheduleDTO.applySlots())));
+            throw CustomException.of(ScheduleErrorCode.WORK_DURATION_MISMATCH);
         }
         broadcastScheduleUpdate(changes);
 
@@ -400,11 +379,11 @@ public class ScheduleService {
     @Transactional(readOnly = true)
     public WorkScheduleResponse getWorkSchedule(Long userId, Long scheduleId) {
         WorkSchedule schedule = workSchedulesRepository.findById(scheduleId)
-                .orElseThrow(() -> BasicException.of(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         // 본인 일정인지 확인
         if (!schedule.getUser().getUserId().equals(userId)) {
-            throw BasicException.of(ScheduleErrorCode.UNAUTHORIZED_ACCESS);
+            throw CustomException.of(ScheduleErrorCode.UNAUTHORIZED_ACCESS);
         }
         return WorkScheduleResponse.from(schedule);
     }
@@ -416,21 +395,20 @@ public class ScheduleService {
     public void deleteWorkSchedule(Long userId, Long scheduleId) {
         List<ScheduleChange> changes = new ArrayList<>();
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> UserNotFoundException.of(
-                        GlobalErrorCode.USER_NOT_FOUND, UserNotFoundResponseDetail.of(userId)));
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         WorkSchedule schedule = workSchedulesRepository.findById(scheduleId)
-                .orElseThrow(() -> BasicException.of(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         // 본인 일정인지 확인
         if (!schedule.getUser().getUserId().equals(userId)) {
-            throw BasicException.of(ScheduleErrorCode.UNAUTHORIZED_ACCESS);
+            throw CustomException.of(ScheduleErrorCode.UNAUTHORIZED_ACCESS);
         }
 
         // 지난 달 일정 삭제 불가 검증
         LocalDate firstDayOfCurrentMonth = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth());
         if (schedule.getStartTime().toLocalDate().isBefore(firstDayOfCurrentMonth)) {
-            throw BasicException.of(ScheduleErrorCode.PAST_MONTH_MODIFICATION_NOT_ALLOWED);
+            throw CustomException.of(ScheduleErrorCode.PAST_MONTH_MODIFICATION_NOT_ALLOWED);
         }
 
         // 신청 기간 내 삭제는 즉시 취소(WS02 -> WS04), 그 외는 삭제 요청(CS01)

@@ -1,5 +1,7 @@
 package com.better.CommuteMate.schedule.application;
 
+import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
@@ -87,8 +89,8 @@ public class ScheduleValidator {
     public void validateMinWorkTime(WorkScheduleCommand slot) {
         long minutes = java.time.Duration.between(slot.start(), slot.end()).toMinutes();
         if (minutes < MIN_SESSION_MINUTES) {
-            throw com.better.CommuteMate.global.exceptions.BasicException.of(
-                com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode.MIN_WORK_TIME_NOT_MET
+            throw CustomException.of(
+                ScheduleErrorCode.MIN_WORK_TIME_NOT_MET
             );
         }
     }
@@ -98,8 +100,8 @@ public class ScheduleValidator {
      */
     public void validateTotalWorkTime(long currentMinutes, long newMinutes) {
         if (currentMinutes + newMinutes > MAX_MONTHLY_MINUTES) {
-            throw com.better.CommuteMate.global.exceptions.BasicException.of(
-                com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode.TOTAL_WORK_TIME_EXCEEDED
+            throw CustomException.of(
+                ScheduleErrorCode.TOTAL_WORK_TIME_EXCEEDED
             );
         }
     }
@@ -109,8 +111,8 @@ public class ScheduleValidator {
      */
     public void validateWeeklyWorkTime(long currentMinutes, long newMinutes) {
         if (currentMinutes + newMinutes > MAX_WEEKLY_MINUTES) {
-            throw com.better.CommuteMate.global.exceptions.BasicException.of(
-                com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode.WEEKLY_WORK_TIME_EXCEEDED
+            throw CustomException.of(
+                ScheduleErrorCode.WEEKLY_WORK_TIME_EXCEEDED
             );
         }
     }
