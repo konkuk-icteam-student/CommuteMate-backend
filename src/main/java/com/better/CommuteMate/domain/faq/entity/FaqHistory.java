@@ -60,6 +60,14 @@ public class FaqHistory {
     @OneToMany(mappedBy = "faqHistory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FaqHistoryFile> files = new ArrayList<>();
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "faq_history_related_faqs",
+            joinColumns = @JoinColumn(name = "faq_history_id")
+    )
+    @Column(name = "related_faq_id")
+    private List<Long> relatedFaqIds = new ArrayList<>();
+
     // FK: faq_id → faq(id)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "faq_id", nullable = false)
@@ -112,6 +120,11 @@ public class FaqHistory {
                         history
                 ))
                 .toList();
+
+        history.relatedFaqIds = faq.getRelatedFaqRelations().stream()
+                .map(fr -> fr.getRelatedFaq().getId())
+                .toList();
+
         return history;
     }
 
