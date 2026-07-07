@@ -17,7 +17,7 @@
 사용자의 근무 일정을 관리하는 API입니다. 일정 신청, 수정, 조회, 취소 기능을 제공하며,
 복잡한 비즈니스 검증 로직(시간 제한, 동시 인원 제한 등)을 포함합니다.
 
-**Base Path**: `/api/v1/work-schedules`
+**Base Path**: `/api/work-schedules`
 
 **주요 기능**:
 - 근무 일정 일괄 신청 (부분 성공/실패 지원)
@@ -39,7 +39,7 @@
 **범위 제한**:
 - 본인의 일정만 조회/수정 가능
 - 타인의 일정은 접근 불가능 (컨트롤러에서 userId 검증)
-- 관리자 API(`/api/v1/admin/*`)를 통해서만 전체 일정 조회/관리 가능
+- 관리자 API(`/api/admin/*`)를 통해서만 전체 일정 조회/관리 가능
 
 ---
 
@@ -47,7 +47,7 @@
 
 ### 2.1 근무 일정 일괄 신청
 
-**Endpoint**: `POST /api/v1/work-schedules/apply`
+**Endpoint**: `POST /api/work-schedules/apply`
 
 **설명**: 여러 근무 시간대를 일괄 신청합니다. 신청 기간 내라면 자동 승인(`WS02`)되며, 기간 외라면 승인 대기 상태(`WS01`)로 등록됩니다.
 
@@ -169,7 +169,7 @@ Content-Type: application/json
 
 ### 3.1 근무 일정 수정
 
-**Endpoint**: `PATCH /api/v1/work-schedules/modify`
+**Endpoint**: `PATCH /api/work-schedules/modify`
 
 **설명**: 기존 일정을 취소하고 새로운 일정을 추가합니다. **"근무 시간 보존의 법칙"** - 취소하는 총 시간과 추가하는 총 시간이 동일해야 합니다.
 
@@ -240,7 +240,7 @@ Content-Type: application/json
 
 ### 4.1 월별 일정 조회
 
-**Endpoint**: `GET /api/v1/work-schedules`
+**Endpoint**: `GET /api/work-schedules`
 
 **설명**: 특정 월의 나의 근무 일정 목록을 조회합니다.
 
@@ -259,7 +259,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 **Example**:
 ```
-GET /api/v1/work-schedules?year=2026&month=1
+GET /api/work-schedules?year=2026&month=1
 ```
 
 #### Response
@@ -292,7 +292,7 @@ GET /api/v1/work-schedules?year=2026&month=1
 
 ### 4.2 근무 이력 조회
 
-**Endpoint**: `GET /api/v1/work-schedules/history`
+**Endpoint**: `GET /api/work-schedules/history`
 
 **설명**: 특정 월의 근무 일정과 실제 출퇴근 기록을 함께 조회합니다. (실근무 시간 포함)
 
@@ -311,7 +311,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 **Example**:
 ```
-GET /api/v1/work-schedules/history?year=2026&month=1
+GET /api/work-schedules/history?year=2026&month=1
 ```
 
 #### Response
@@ -350,7 +350,7 @@ GET /api/v1/work-schedules/history?year=2026&month=1
 
 ### 4.3 특정 일정 상세 조회
 
-**Endpoint**: `GET /api/v1/work-schedules/{scheduleId}`
+**Endpoint**: `GET /api/work-schedules/{scheduleId}`
 
 **설명**: 특정 일정의 상세 정보를 조회합니다.
 
@@ -388,7 +388,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 5.1 일정 취소/삭제
 
-**Endpoint**: `DELETE /api/v1/work-schedules/{scheduleId}`
+**Endpoint**: `DELETE /api/work-schedules/{scheduleId}`
 
 **설명**: 특정 일정을 취소합니다. 신청 기간 내라면 즉시 취소(`WS04`)되며, 기간 외라면 취소 요청(`CR02`)으로 등록됩니다.
 
@@ -467,7 +467,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 **1️⃣ 신청 기간 확인**
 ```bash
-curl -X GET "http://localhost:8080/api/v1/admin/schedule/monthly-limit/2026/01" \
+curl -X GET "http://localhost:8080/api/admin/schedule/monthly-limit/2026/01" \
   -H "Authorization: Bearer <ADMIN_TOKEN>" \
   -H "Content-Type: application/json"
 
@@ -477,7 +477,7 @@ curl -X GET "http://localhost:8080/api/v1/admin/schedule/monthly-limit/2026/01" 
 
 **2️⃣ 일정 신청**
 ```bash
-curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
+curl -X POST "http://localhost:8080/api/work-schedules/apply" \
   -H "Authorization: Bearer <USER_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -532,7 +532,7 @@ interface ApplyResponse {
 }
 
 async function applyWorkSchedule(slots: Slot[]) {
-  const response = await fetch('/api/v1/work-schedules/apply', {
+  const response = await fetch('/api/work-schedules/apply', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
@@ -566,7 +566,7 @@ async function applyWorkSchedule(slots: Slot[]) {
 
 **❌ 에러 1: 최소 근무 시간 미충족 (2시간 미만)**
 ```bash
-curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
+curl -X POST "http://localhost:8080/api/work-schedules/apply" \
   -H "Authorization: Bearer <USER_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -598,7 +598,7 @@ curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
 **❌ 에러 2: 월간 최대 시간 초과 (27시간)**
 ```bash
 # 사용자가 이미 25시간 신청한 상태에서 4시간 추가 시도
-curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
+curl -X POST "http://localhost:8080/api/work-schedules/apply" \
   -H "Authorization: Bearer <USER_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -626,7 +626,7 @@ curl -X POST "http://localhost:8080/api/v1/work-schedules/apply" \
 
 **❌ 에러 3: 권한 없음 (타인의 일정 취소 시도)**
 ```bash
-curl -X DELETE "http://localhost:8080/api/v1/work-schedules/123" \
+curl -X DELETE "http://localhost:8080/api/work-schedules/123" \
   -H "Authorization: Bearer <USER_A_TOKEN>"
 
 # 응답 403 (123번 일정이 USER_B의 일정)
@@ -644,7 +644,7 @@ curl -X DELETE "http://localhost:8080/api/v1/work-schedules/123" \
 **상황**: 기존 2시간 일정을 삭제하고, 다른 시간에 2시간 추가
 
 ```bash
-curl -X PATCH "http://localhost:8080/api/v1/work-schedules/modify" \
+curl -X PATCH "http://localhost:8080/api/work-schedules/modify" \
   -H "Authorization: Bearer <USER_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{

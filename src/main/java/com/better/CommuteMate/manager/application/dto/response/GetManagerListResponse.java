@@ -25,11 +25,11 @@ public class GetManagerListResponse{
     @Schema(description = "담당자 즐겨찾기 여부", example = "true")
     private final boolean managerFavorite;
 
-    @Schema(description = "소속 ID", example = "1")
-    private final Long teamId;
+    @Schema(description = "조직 ID", example = "1")
+    private final Long organizationId;
 
-    @Schema(description = "소속 이름", example = "정보운영팀")
-    private final String teamName;
+    @Schema(description = "조직 이름", example = "정보운영팀")
+    private final String organizationName;
 
     @Schema(description = "전화번호", example = "01012345678")
     private final String phonenum;
@@ -43,8 +43,8 @@ public class GetManagerListResponse{
         this.managerId = manager.getId();
         this.managerName = manager.getName();
         this.managerFavorite = mc.isFavorite();
-        this.teamId = manager.getTeam().getId();
-        this.teamName = manager.getTeam().getName();
+        this.organizationId = manager.getOrganization().getId();
+        this.organizationName = manager.getOrganization().getName();
         this.phonenum = manager.getPhonenum();
     }
 }

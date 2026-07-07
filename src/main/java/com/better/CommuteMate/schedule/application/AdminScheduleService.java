@@ -5,10 +5,9 @@ import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository
 import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequest;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestRepository;
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleAllFailureException;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode;
+import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestResponse;
-import com.better.CommuteMate.schedule.controller.dtos.NotificationMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import com.better.CommuteMate.schedule.controller.dtos.ScheduleUpdateMessage;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.domain.user.entity.User;
@@ -25,9 +23,6 @@ import com.better.CommuteMate.schedule.controller.admin.dtos.AdminUserWorkTimeRe
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryResponse;
 import com.better.CommuteMate.user.controller.dto.UserInfoResponse;
 import com.better.CommuteMate.user.controller.dto.UserWorkTimeResponse;
-import com.better.CommuteMate.global.exceptions.UserNotFoundException;
-import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
-import com.better.CommuteMate.global.exceptions.response.UserNotFoundResponseDetail;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -56,13 +51,9 @@ public class AdminScheduleService {
         // 변경 요청 조회
         for (Long id : requestIds) {
             WorkChangeRequest request = workChangeRequestRepository.findById(id)
-                    .orElseThrow(() -> ScheduleAllFailureException.of(
-                            ScheduleErrorCode.SCHEDULE_FAILURE,
-                            null));
+                    .orElseThrow(() -> CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE));
             if (!request.getStatusCode().equals(CodeType.CS01)) { // CS01: 대기 상태가 아니라면 오류 반환
-                throw ScheduleAllFailureException.of(
-                        ScheduleErrorCode.SCHEDULE_FAILURE,
-                        null);
+                throw CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE);
             }
             // 요청 상태 업데이트
             request.setStatusCode(statusCode);

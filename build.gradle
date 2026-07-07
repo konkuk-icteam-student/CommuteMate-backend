@@ -34,6 +34,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
     //PostgreSQL 드라이버
     implementation 'org.postgresql:postgresql'
     compileOnly 'org.projectlombok:lombok'
@@ -51,6 +52,15 @@ dependencies {
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
     annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+
+    //Jsoup
+    implementation 'org.jsoup:jsoup:1.17.2'
+
+
+    // pgvector (PostgreSQL vector similarity search)
+    implementation 'com.pgvector:pgvector:0.1.6'
+    // Hibernate vector 지원
+    implementation 'org.hibernate.orm:hibernate-vector:6.5.3.Final'
 }
 
 tasks.named('test') {

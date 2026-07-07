@@ -217,7 +217,7 @@ environment:
 
 ### 2. app (백엔드 애플리케이션)
 
-**이미지**: `ghcr.io/konkuk-icteam-student/commutemate-server:latest`
+**이미지**: `ghcr.io/konkuk-icorganization-student/commutemate-server:latest`
 
 **포트**: `8080` (Host Network Mode)
 
@@ -298,14 +298,14 @@ volumes:
 # Docker 이미지 설정 - 백엔드
 # ================================
 DOCKER_REGISTRY=ghcr.io
-DOCKER_IMAGE_NAME=konkuk-icteam-student/commutemate-server
+DOCKER_IMAGE_NAME=konkuk-icorganization-student/commutemate-server
 IMAGE_TAG=latest
 
 # ================================
 # Docker 이미지 설정 - 프론트엔드
 # ================================
 FRONTEND_DOCKER_REGISTRY=ghcr.io
-FRONTEND_DOCKER_IMAGE_NAME=konkuk-icteam-student/commutemate-frontend
+FRONTEND_DOCKER_IMAGE_NAME=konkuk-icorganization-student/commutemate-frontend
 FRONTEND_IMAGE_TAG=latest
 
 # ================================

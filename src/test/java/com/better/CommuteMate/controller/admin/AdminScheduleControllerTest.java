@@ -69,7 +69,7 @@ class AdminScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/admin/schedule/monthly-limit - 신규 월별 제한 설정 성공")
+    @DisplayName("POST /api/admin/schedule/monthly-limit - 신규 월별 제한 설정 성공")
     void setMonthlyLimit_NewLimit_Success() throws Exception {
         // Given
         SetMonthlyLimitRequest request = new SetMonthlyLimitRequest(2025, 10, 6);
@@ -87,7 +87,7 @@ class AdminScheduleControllerTest {
                 .thenReturn(savedLimit);
 
         // When & Then
-        mockMvc.perform(post("/api/v1/admin/schedule/monthly-limit")
+        mockMvc.perform(post("/api/admin/schedule/monthly-limit")
                         .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -103,7 +103,7 @@ class AdminScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/admin/schedule/monthly-limit - 기존 월별 제한 업데이트 성공")
+    @DisplayName("POST /api/admin/schedule/monthly-limit - 기존 월별 제한 업데이트 성공")
     void setMonthlyLimit_UpdateExisting_Success() throws Exception {
         // Given
         SetMonthlyLimitRequest request = new SetMonthlyLimitRequest(2025, 10, 8);
@@ -121,7 +121,7 @@ class AdminScheduleControllerTest {
                 .thenReturn(updatedLimit);
 
         // When & Then
-        mockMvc.perform(post("/api/v1/admin/schedule/monthly-limit")
+        mockMvc.perform(post("/api/admin/schedule/monthly-limit")
                         .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -135,7 +135,7 @@ class AdminScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/admin/schedule/monthly-limit/{year}/{month} - 데이터 존재 시 200 OK")
+    @DisplayName("GET /api/admin/schedule/monthly-limit/{year}/{month} - 데이터 존재 시 200 OK")
     void getMonthlyLimit_DataExists_Returns200() throws Exception {
         // Given
         Integer year = 2025;
@@ -154,7 +154,7 @@ class AdminScheduleControllerTest {
                 .thenReturn(Optional.of(limit));
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limit/{year}/{month}", year, month)
+        mockMvc.perform(get("/api/admin/schedule/monthly-limit/{year}/{month}", year, month)
                         .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
@@ -167,7 +167,7 @@ class AdminScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/admin/schedule/monthly-limit/{year}/{month} - 데이터 없을 시 404 NOT_FOUND")
+    @DisplayName("GET /api/admin/schedule/monthly-limit/{year}/{month} - 데이터 없을 시 404 NOT_FOUND")
     void getMonthlyLimit_DataNotExists_Returns404() throws Exception {
         // Given
         Integer year = 2025;
@@ -177,7 +177,7 @@ class AdminScheduleControllerTest {
                 .thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limit/{year}/{month}", year, month)
+        mockMvc.perform(get("/api/admin/schedule/monthly-limit/{year}/{month}", year, month)
                         .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.isSuccess").value(false))
@@ -188,7 +188,7 @@ class AdminScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/admin/schedule/monthly-limits - 모든 데이터 조회 성공")
+    @DisplayName("GET /api/admin/schedule/monthly-limits - 모든 데이터 조회 성공")
     void getAllMonthlyLimits_Success() throws Exception {
         // Given
         MonthlyScheduleConfig limit1 = MonthlyScheduleConfig.builder()
@@ -213,7 +213,7 @@ class AdminScheduleControllerTest {
         when(monthlyScheduleConfigService.getAllMonthlyLimits()).thenReturn(limits);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limits")
+        mockMvc.perform(get("/api/admin/schedule/monthly-limits")
                         .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
@@ -231,13 +231,13 @@ class AdminScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/admin/schedule/monthly-limits - 빈 리스트 반환")
+    @DisplayName("GET /api/admin/schedule/monthly-limits - 빈 리스트 반환")
     void getAllMonthlyLimits_EmptyList() throws Exception {
         // Given
         when(monthlyScheduleConfigService.getAllMonthlyLimits()).thenReturn(List.of());
 
         // When & Then
-        mockMvc.perform(get("/api/v1/admin/schedule/monthly-limits")
+        mockMvc.perform(get("/api/admin/schedule/monthly-limits")
                         .with(user(createMockUserDetails(1L))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
@@ -249,7 +249,7 @@ class AdminScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/admin/schedule/set-apply-term - 신청 기간 설정 성공 (신규 생성)")
+    @DisplayName("POST /api/admin/schedule/set-apply-term - 신청 기간 설정 성공 (신규 생성)")
     void setApplyTerm_NewConfig_Success() throws Exception {
         // Given
         LocalDateTime startTime = LocalDateTime.of(2025, 11, 1, 9, 0, 0);
@@ -271,7 +271,7 @@ class AdminScheduleControllerTest {
                 .thenReturn(savedConfig);
 
         // When & Then
-        mockMvc.perform(post("/api/v1/admin/schedule/set-apply-term")
+        mockMvc.perform(post("/api/admin/schedule/set-apply-term")
                         .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -288,7 +288,7 @@ class AdminScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/admin/schedule/set-apply-term - 신청 기간 업데이트 성공")
+    @DisplayName("POST /api/admin/schedule/set-apply-term - 신청 기간 업데이트 성공")
     void setApplyTerm_UpdateExisting_Success() throws Exception {
         // Given
         LocalDateTime startTime = LocalDateTime.of(2025, 11, 5, 10, 0, 0);
@@ -310,7 +310,7 @@ class AdminScheduleControllerTest {
                 .thenReturn(updatedConfig);
 
         // When & Then
-        mockMvc.perform(post("/api/v1/admin/schedule/set-apply-term")
+        mockMvc.perform(post("/api/admin/schedule/set-apply-term")
                         .with(user(createMockUserDetails(1L)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

@@ -1,10 +1,7 @@
 package com.better.CommuteMate.attendance.application;
 
-import com.better.CommuteMate.attendance.application.QrTokenManager;
-import com.better.CommuteMate.attendance.application.WorkAttendanceService;
-import com.better.CommuteMate.attendance.application.exception.AttendanceErrorCode;
-import com.better.CommuteMate.attendance.application.exception.AttendanceException;
-import com.better.CommuteMate.attendance.controller.dto.AttendanceHistoryResponse;
+import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.global.exceptions.error.AttendanceErrorCode;
 import com.better.CommuteMate.attendance.controller.dto.QrTokenResponse;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
@@ -21,11 +18,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +27,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -118,7 +111,7 @@ class AttendanceIntegrationTest {
         workAttendanceService.generateQrToken();
         
         assertThatThrownBy(() -> workAttendanceService.checkIn(1L, "fake-token"))
-                .isInstanceOf(AttendanceException.class)
+                .isInstanceOf(CustomException.class)
                 .hasMessage(AttendanceErrorCode.INVALID_QR_TOKEN.getMessage());
         
         verify(workAttendanceRepository, never()).save(any());

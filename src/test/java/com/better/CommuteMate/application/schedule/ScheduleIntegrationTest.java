@@ -1,5 +1,6 @@
 package com.better.CommuteMate.application.schedule;
 
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.schedule.application.ScheduleService;
 import com.better.CommuteMate.schedule.application.ScheduleValidator;
 import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
@@ -7,9 +8,6 @@ import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
 import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ModifyWorkScheduleDTO;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleAllFailureException;
-import com.better.CommuteMate.schedule.application.exceptions.SchedulePartialFailureException;
-import com.better.CommuteMate.schedule.application.exceptions.ScheduleErrorCode;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
@@ -19,7 +17,6 @@ import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequ
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.exceptions.BasicException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,7 +33,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -132,7 +128,7 @@ class ScheduleIntegrationTest {
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
-                    .isInstanceOf(ScheduleAllFailureException.class);
+                    .isInstanceOf(CustomException.class);
         }
 
         @Test
@@ -214,7 +210,7 @@ class ScheduleIntegrationTest {
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
-                    .isInstanceOf(ScheduleAllFailureException.class);
+                    .isInstanceOf(CustomException.class);
         }
 
         @Test
@@ -295,7 +291,7 @@ class ScheduleIntegrationTest {
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
-                    .isInstanceOf(ScheduleAllFailureException.class);
+                    .isInstanceOf(CustomException.class);
         }
 
         @Test
@@ -323,7 +319,7 @@ class ScheduleIntegrationTest {
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
-                    .isInstanceOf(ScheduleAllFailureException.class);
+                    .isInstanceOf(CustomException.class);
         }
 
         @Test
@@ -349,7 +345,7 @@ class ScheduleIntegrationTest {
 
             // When & Then: 월별 제한이 먼저 검증되므로 예외 발생
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
-                    .isInstanceOf(ScheduleAllFailureException.class);
+                    .isInstanceOf(CustomException.class);
         }
     }
 
@@ -408,9 +404,9 @@ class ScheduleIntegrationTest {
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(schedule1, schedule2, schedule3)))
-                    .isInstanceOf(SchedulePartialFailureException.class)
+                    .isInstanceOf(CustomException.class)
                     .satisfies(ex -> {
-                        SchedulePartialFailureException e = (SchedulePartialFailureException) ex;
+                        CustomException e = (CustomException) ex;
                         // 부분 성공 확인은 예외 메시지 또는 details에서 확인 가능
                     });
         }
@@ -447,7 +443,7 @@ class ScheduleIntegrationTest {
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(schedule1, schedule2)))
-                    .isInstanceOf(ScheduleAllFailureException.class);
+                    .isInstanceOf(CustomException.class);
         }
 
         @Test
@@ -519,7 +515,7 @@ class ScheduleIntegrationTest {
 
             // When & Then: 첫 번째는 성공 (11+2=13), 두 번째는 실패 (13+2=15>13)
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(schedule1, schedule2)))
-                    .isInstanceOf(SchedulePartialFailureException.class);
+                    .isInstanceOf(CustomException.class);
         }
     }
 
@@ -556,7 +552,7 @@ class ScheduleIntegrationTest {
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
-                    .isInstanceOf(ScheduleAllFailureException.class);
+                    .isInstanceOf(CustomException.class);
         }
 
         @Test
@@ -656,7 +652,7 @@ class ScheduleIntegrationTest {
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(shortSchedule)))
-                    .isInstanceOf(ScheduleAllFailureException.class);
+                    .isInstanceOf(CustomException.class);
         }
 
         @Test
@@ -776,12 +772,16 @@ class ScheduleIntegrationTest {
         @DisplayName("수정 시 취소/추가 시간이 일치해야 성공")
         void modify_MatchingDuration_ShouldSucceed() {
             // Given: 4시간 취소, 4시간 추가
-            WorkSchedule existingSchedule = createWorkScheduleWithId(1L, LocalDate.of(2026, 1, 2), 9, 0, 13, 0);
+            LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+            LocalDate cancelDate = thisMonth.plusDays(1);
+            LocalDate addDate = thisMonth.plusDays(2);
+
+            WorkSchedule existingSchedule = createWorkScheduleWithId(1L, cancelDate, 9, 0, 13, 0);
             ReflectionTestUtils.setField(existingSchedule, "user", testUser);
 
             WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                    LocalDateTime.of(2026, 1, 3, 9, 0),
-                    LocalDateTime.of(2026, 1, 3, 13, 0)  // 4시간
+                    addDate.atTime(9, 0),
+                    addDate.atTime(13, 0)  // 4시간
             );
 
             ModifyWorkScheduleDTO request = new ModifyWorkScheduleDTO(
@@ -800,7 +800,7 @@ class ScheduleIntegrationTest {
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule newSchedule = createWorkScheduleWithId(2L, LocalDate.of(2026, 1, 3), 9, 0, 13, 0);
+            WorkSchedule newSchedule = createWorkScheduleWithId(2L, addDate, 9, 0, 13, 0);
             when(workSchedulesRepository.save(any())).thenReturn(newSchedule);
             when(workChangeRequestRepository.save(any())).thenReturn(mock(WorkChangeRequest.class));
 
@@ -817,12 +817,16 @@ class ScheduleIntegrationTest {
         @DisplayName("수정 시 취소/추가 시간 불일치 시 실패")
         void modify_MismatchedDuration_ShouldFail() {
             // Given: 4시간 취소, 2시간 추가 (불일치)
-            WorkSchedule existingSchedule = createWorkScheduleWithId(1L, LocalDate.of(2026, 1, 2), 9, 0, 13, 0);
+            LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+            LocalDate cancelDate = thisMonth.plusDays(1);
+            LocalDate addDate = thisMonth.plusDays(2);
+
+            WorkSchedule existingSchedule = createWorkScheduleWithId(1L, cancelDate, 9, 0, 13, 0);
             ReflectionTestUtils.setField(existingSchedule, "user", testUser);
 
             WorkScheduleDTO addSlot = new WorkScheduleDTO(
-                    LocalDateTime.of(2026, 1, 3, 9, 0),
-                    LocalDateTime.of(2026, 1, 3, 11, 0)  // 2시간 (4시간과 불일치)
+                    addDate.atTime(9, 0),
+                    addDate.atTime(11, 0)  // 2시간 (4시간과 불일치)
             );
 
             ModifyWorkScheduleDTO request = new ModifyWorkScheduleDTO(
@@ -841,13 +845,13 @@ class ScheduleIntegrationTest {
                     .thenReturn(Optional.empty());
             when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
-            WorkSchedule newSchedule = createWorkScheduleWithId(2L, LocalDate.of(2026, 1, 3), 9, 0, 11, 0);
+            WorkSchedule newSchedule = createWorkScheduleWithId(2L, addDate, 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(newSchedule);
             when(workChangeRequestRepository.save(any())).thenReturn(mock(WorkChangeRequest.class));
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(request, 1L))
-                    .isInstanceOf(ScheduleAllFailureException.class);
+                    .isInstanceOf(CustomException.class);
         }
     }
 

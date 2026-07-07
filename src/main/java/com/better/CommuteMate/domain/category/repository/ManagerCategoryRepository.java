@@ -2,7 +2,7 @@ package com.better.CommuteMate.domain.category.repository;
 
 import com.better.CommuteMate.domain.category.entity.ManagerCategory;
 import com.better.CommuteMate.domain.manager.entity.Manager;
-import com.better.CommuteMate.domain.team.entity.Team;
+import com.better.CommuteMate.domain.organization.entity.Organization;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,12 +22,18 @@ public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory
     select mc
     from ManagerCategory mc
     where (:categoryId is null or mc.category.id = :categoryId)
-      and (:team is null or mc.manager.team = :team)
+      and (:organization is null or mc.manager.organization = :organization)
       and (:favoriteOnly = false or mc.favorite = true)
+      and (
+          :searchName is null\s
+          or length(trim(:searchName)) = 0
+          or lower(mc.manager.name) like lower(concat('%', :searchName, '%'))
+      )
     """)
     List<ManagerCategory> getManagers(
             @Param("categoryId") Long categoryId,
-            @Param("team") Team team,
-            @Param("favoriteOnly") boolean favoriteOnly
+            @Param("organization") Organization organization,
+            @Param("favoriteOnly") boolean favoriteOnly,
+            @Param("searchName") String searchName
     );
 }

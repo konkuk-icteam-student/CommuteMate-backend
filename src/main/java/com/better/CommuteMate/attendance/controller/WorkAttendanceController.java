@@ -22,7 +22,7 @@ import java.util.List;
 
 @Tag(name = "출퇴근 인증", description = "QR 출퇴근 인증 및 이력 조회 API")
 @RestController
-@RequestMapping("api/v1/attendance")
+@RequestMapping("/api/attendance")
 @RequiredArgsConstructor
 public class WorkAttendanceController {
 

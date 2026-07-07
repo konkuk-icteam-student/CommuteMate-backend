@@ -45,6 +45,8 @@ app:
   # 프론트엔드 URL (이메일 인증 링크에 사용)
   frontend:
     url: ${FRONTEND_URL:http://localhost:3000}
+  cors:
+    additional-origins: ${CORS_ADDITIONAL_ORIGINS:}
   schedule:
     concurrent:
       max: ${SCHEDULE_CONCURRENT_MAX:5}
@@ -58,3 +60,12 @@ jwt:
   access-expiration: ${JWT_ACCESS_EXPIRATION_MS:3600000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:604800000}
   algorithm: ${JWT_ALGORITHM:HmacSHA256}
+
+storage:
+  path: ${STORAGE_PATH:uploads}
+  url: ${STORAGE_URL:http://localhost/uploads}
+
+openai:
+  api-key: ${OPENAI_API_KEY:your-api-key}
+  url: https://api.openai.com/v1/chat/completions
+  embedding-url: https://api.openai.com/v1/embeddings

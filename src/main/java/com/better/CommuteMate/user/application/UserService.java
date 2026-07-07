@@ -7,7 +7,7 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.exceptions.BasicException;
+import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.user.controller.dto.UserInfoResponse;
 import com.better.CommuteMate.user.controller.dto.UserWorkTimeResponse;
@@ -36,13 +36,13 @@ public class UserService {
      *
      * @param userId 조회할 사용자 ID
      * @return 사용자 정보 응답 (ID, 이메일, 이름, 역할, 조직 ID)
-     * @throws BasicException 사용자가 존재하지 않을 경우 USER_NOT_FOUND 에러 발생
+     * @throws CustomException 사용자가 존재하지 않을 경우 USER_NOT_FOUND 에러 발생
      */
     @Transactional(readOnly = true)
     public UserInfoResponse getUserInfo(Long userId) {
         // 사용자 조회 (없으면 예외 발생)
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> BasicException.of(GlobalErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
         return new UserInfoResponse(user);
     }
 

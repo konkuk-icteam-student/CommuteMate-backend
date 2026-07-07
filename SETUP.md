@@ -71,7 +71,7 @@ cd /home/deploy/commutemate
 ```bash
 # .env.example을 복사하여 .env 파일 생성
 # (GitHub에서 .env.example 다운로드)
-wget https://raw.githubusercontent.com/konkuk-icteam-student/CommuteMate-backend/main/.env.example -O .env
+wget https://raw.githubusercontent.com/konkuk-icorganization-student/CommuteMate-backend/main/.env.example -O .env
 
 # .env 파일 편집
 nano .env
@@ -81,7 +81,7 @@ nano .env
 ```bash
 # Docker 이미지
 DOCKER_REGISTRY=ghcr.io
-DOCKER_IMAGE_NAME=konkuk-icteam-student/commutemate-server
+DOCKER_IMAGE_NAME=konkuk-icorganization-student/commutemate-server
 IMAGE_TAG=sha-initial  # CI/CD에서 자동으로 업데이트됨
 
 # PostgreSQL 데이터베이스
