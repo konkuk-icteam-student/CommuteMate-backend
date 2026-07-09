@@ -24,24 +24,24 @@ public class Faq {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 30, nullable = false)
-    private String title;
+    @Column(length = 30)
+    private String title; // Todo nullable=true로 수정 완료
 
     @Column(name = "complainant_name", length = 50)
     private String complainantName;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String content;
+    @Column(columnDefinition = "TEXT")
+    private String content; // Todo nullable=true로 수정 완료
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String answer;
+    @Column(columnDefinition = "TEXT")
+    private String answer; // Todo nullable=true로 수정 완료
 
     @Column(columnDefinition = "TEXT")
     private String etc;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "writer_id", nullable = false)
-    private User writer;
+    @JoinColumn(name = "writer_id")
+    private User writer; // Todo nullable=true로 수정 완료
 
     @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FaqCategory> faqCategories = new ArrayList<>();
