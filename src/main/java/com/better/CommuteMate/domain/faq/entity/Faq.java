@@ -129,7 +129,7 @@ public class Faq {
         return faq;
     }
 
-    public void update( // Todo FaqStatus 추가하기
+    public void update(
             String title,
             String complainantName,
             String content,
