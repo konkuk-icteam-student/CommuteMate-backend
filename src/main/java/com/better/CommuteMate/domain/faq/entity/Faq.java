@@ -40,8 +40,8 @@ public class Faq {
     private String etc;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "writer_id")
-    private User writer; // Todo nullable=true로 수정 완료
+    @JoinColumn(name = "writer_id", nullable = false)
+    private User writer;
 
     @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FaqCategory> faqCategories = new ArrayList<>();
