@@ -2,6 +2,7 @@ package com.better.CommuteMate.faq.controller;
 
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
+import com.better.CommuteMate.faq.application.dto.request.PostDraftFaqRequest;
 import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
 import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.faq.application.service.FaqService;
@@ -75,6 +76,30 @@ public class FaqController {
             @RequestBody PutFaqUpdateRequest request
     ) {
         return ResponseEntity.ok(new Response(true, "FAQ 수정 성공", faqService.updateFaq(userDetails.getUserId(), faqId, request)));
+    }
+
+    @Operation(
+            summary = "FAQ 최초 임시저장",
+            description = "FAQ 객체를 생성하고, 임시저장하는 API입니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "FAQ 임시저장 성공"),
+            @ApiResponse(responseCode = "400", description = "요청 값 오류"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PostMapping("/draft")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> createDraftFaq(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody PostDraftFaqRequest request
+    ) {
+        return ResponseEntity.ok(
+                new Response(
+                        true,
+                        "FAQ 최초 임시저장 성공",
+                        faqService.createDraftFaq(userDetails.getUserId(), request)
+                )
+        );
     }
 
     @Operation(
