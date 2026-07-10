@@ -196,6 +196,7 @@ public class FaqService {
         return new PutFaqUpdateResponse(faqId, faq.getStatus());
     }
 
+    // faq 최초 임시저장, faq 객체 생성, set status = Draft
     public PostFaqResponse createDraftFaq(Long userId, PostDraftFaqRequest request) {
 
         User writer = userRepository.findById(userId)
@@ -243,6 +244,7 @@ public class FaqService {
         );
     }
 
+    // faq 임시저장 이후 수정 그리고 또 다시 임시저장, set status = Draft
     public PutFaqUpdateResponse updateDraftFaq(Long userId, Long faqId, PutDraftFaqUpdateRequest request) {
 
         User modifier = userRepository.findById(userId)
