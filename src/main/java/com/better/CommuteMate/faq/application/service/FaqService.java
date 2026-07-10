@@ -11,6 +11,7 @@ import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
+import com.better.CommuteMate.faq.application.dto.request.PostDraftFaqRequest;
 import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
 import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
@@ -62,7 +63,7 @@ public class FaqService {
     private final OpenAIEmbeddingClient embeddingClient;
     private final FaqRelationRepository faqRelationRepository;
 
-    // 생성 후 Publish
+    // faq 객체 생성, set status = Publish
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
 
         User writer = userRepository.findById(userId)
@@ -121,7 +122,7 @@ public class FaqService {
         return new PostFaqResponse(faq.getId());
     }
 
-    // 수정 후 Publish
+    // faq 수정 후 발행, set status = Publish
     public PutFaqUpdateResponse updateFaq(Long userId, Long faqId, PutFaqUpdateRequest request) {
         User modifier = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
@@ -196,6 +197,59 @@ public class FaqService {
         computeAndSaveEmbedding(faq);
 
         return new PutFaqUpdateResponse(faqId);
+    }
+
+    public PostFaqResponse createDraftFaq(Long userId, PostDraftFaqRequest request) {
+
+        User writer = userRepository.findById(userId)
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
+
+        List<Category> categories = new ArrayList<>();
+
+        // 카테고리가 넘어온 경우에만 검증
+        if (request.categoryIds() != null && !request.categoryIds().isEmpty()) {
+
+            if (request.categoryIds().size() > 3) {
+                throw CustomException.of(FaqErrorCode.CATEGORY_LIMIT_EXCEEDED);
+            }
+
+            categories = categoryRepository.findAllById(request.categoryIds());
+
+            if (categories.size() != request.categoryIds().size()) {
+                throw CustomException.of(CategoryErrorCode.CATEGORY_NOT_FOUND);
+            }
+        }
+
+        Faq faq = Faq.create(
+                request.title(),
+                request.complainantName(),
+                request.content(),
+                request.answer(),
+                request.etc(),
+                categories,
+                writer,
+                FaqStatus.DRAFT
+        );
+
+        faqRepository.save(faq);
+
+        List<String> imageUrls = extractImageUrls(request.content(), request.answer());
+
+        if (!imageUrls.isEmpty()) {
+            List<FaqImage> images = faqImageRepository.findByUrlIn(imageUrls);
+            images.forEach(faq::addImage);
+        }
+
+        return new PostFaqResponse(
+                faq.getId()
+                // Todo status 정보 추가하기
+        );
+    }
+
+    public void updateDraftFaq(Long userId, Long faqId) {
+        // Todo draft faq 수정 함수
+        // Todo dto 추가
+        // Todo set status = draft
     }
 
     @Transactional(readOnly = true)
