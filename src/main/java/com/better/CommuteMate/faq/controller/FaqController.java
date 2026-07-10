@@ -1,10 +1,7 @@
 package com.better.CommuteMate.faq.controller;
 
 import com.better.CommuteMate.auth.application.CustomUserDetails;
-import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
-import com.better.CommuteMate.faq.application.dto.request.PostDraftFaqRequest;
-import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
-import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
+import com.better.CommuteMate.faq.application.dto.request.*;
 import com.better.CommuteMate.faq.application.service.FaqService;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
@@ -98,6 +95,31 @@ public class FaqController {
                         true,
                         "FAQ 최초 임시저장 성공",
                         faqService.createDraftFaq(userDetails.getUserId(), request)
+                )
+        );
+    }
+
+    @Operation(
+            summary = "FAQ 임시저장 수정",
+            description = "임시저장된 FAQ를 수정하기 위한 API입니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "FAQ 임시저장 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "요청 값 오류"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PutMapping("/draft/{faqId}")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> updateDraftFaq(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long faqId,
+            @RequestBody PutDraftFaqUpdateRequest request
+    ) {
+        return ResponseEntity.ok(
+                new Response(
+                        true,
+                        "FAQ 임시저장 수정 성공",
+                        faqService.updateDraftFaq(userDetails.getUserId(), faqId, request)
                 )
         );
     }
