@@ -10,10 +10,7 @@ import com.better.CommuteMate.domain.faq.repository.FaqRelationRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
-import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
-import com.better.CommuteMate.faq.application.dto.request.PostDraftFaqRequest;
-import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
-import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
+import com.better.CommuteMate.faq.application.dto.request.*;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
@@ -246,10 +243,59 @@ public class FaqService {
         );
     }
 
-    public void updateDraftFaq(Long userId, Long faqId) {
-        // Todo draft faq 수정 함수
-        // Todo dto 추가
-        // Todo set status = draft
+    public PutFaqUpdateResponse updateDraftFaq(Long userId, Long faqId, PutDraftFaqUpdateRequest request) {
+
+        User modifier = userRepository.findById(userId)
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
+
+        Faq faq = faqRepository.findById(faqId)
+                .orElseThrow(() -> CustomException.of(FaqErrorCode.FAQ_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(faq.getDeletedFlag())) {
+            throw CustomException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
+        }
+
+        if (faq.getStatus() != FaqStatus.DRAFT) {
+            throw CustomException.of(FaqErrorCode.INVALID_FAQ_STATUS);
+        }
+
+        List<Category> categories = new ArrayList<>();
+
+        // 카테고리가 넘어온 경우에만 검증
+        if (request.categoryIds() != null && !request.categoryIds().isEmpty()) {
+
+            if (request.categoryIds().size() > 3) {
+                throw CustomException.of(FaqErrorCode.CATEGORY_LIMIT_EXCEEDED);
+            }
+
+            categories = categoryRepository.findAllById(request.categoryIds());
+
+            if (categories.size() != request.categoryIds().size()) {
+                throw CustomException.of(CategoryErrorCode.CATEGORY_NOT_FOUND);
+            }
+        }
+
+        faq.update(
+                request.title(),
+                request.complainantName(),
+                request.content(),
+                request.answer(),
+                request.etc(),
+                categories,
+                modifier,
+                FaqStatus.DRAFT // 드래프트 유지
+        );
+
+        List<String> imageUrls = extractImageUrls(request.content(), request.answer());
+
+        faq.getImages().clear();
+
+        if (!imageUrls.isEmpty()) {
+            List<FaqImage> images = faqImageRepository.findByUrlIn(imageUrls);
+            images.forEach(faq::addImage);
+        }
+
+        return new PutFaqUpdateResponse(faq.getId());
     }
 
     @Transactional(readOnly = true)
