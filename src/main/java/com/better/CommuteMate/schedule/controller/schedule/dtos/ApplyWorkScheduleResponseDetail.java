@@ -1,6 +1,5 @@
 package com.better.CommuteMate.schedule.controller.schedule.dtos;
 
-import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,7 +20,7 @@ public class ApplyWorkScheduleResponseDetail extends ResponseDetail {
                 .fail(fail)
                 .build();
     }
-    public static ApplyWorkScheduleResponseDetail from(ApplyScheduleResultCommand applyScheduleResultCommand) {
+    /*public static ApplyWorkScheduleResponseDetail from(ApplyScheduleResultCommand applyScheduleResultCommand) {
         return applyWorkScheduleResponseDetail(applyScheduleResultCommand.success(), applyScheduleResultCommand.fail());
-    }
+    }*/
 }

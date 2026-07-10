@@ -9,7 +9,7 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     MONTHLY_SCHEDULE_CONFIG_NOT_FOUND("해당 연월의 스케줄 설정을 찾을 수 없습니다.", "[Error] : 월별 스케줄 설정 미존재", HttpStatus.NOT_FOUND),
     WORK_DURATION_MISMATCH("삭제하는 일정의 총 근무 시간과 추가하는 일정의 총 근무 시간이 일치하지 않습니다.", "[Error] : 근무 시간 불일치", HttpStatus.BAD_REQUEST),
     INVALID_REQUEST_IDS_COUNT("변경 요청 ID 개수는 반드시 짝수여야 합니다.", "[Error] : 변경 요청 ID 개수가 홀수", HttpStatus.BAD_REQUEST),
-    TOTAL_WORK_TIME_EXCEEDED("월 최대 근무 시간(27시간)을 초과하였습니다.", "[Error] : 월 근무 시간 초과", HttpStatus.BAD_REQUEST),
+    TOTAL_WORK_TIME_EXCEEDED("월 최대 근무 시간을 초과하였습니다.", "[Error] : 월 근무 시간 초과", HttpStatus.UNPROCESSABLE_ENTITY),
     WEEKLY_WORK_TIME_EXCEEDED("주 최대 근무 시간(13시간)을 초과하였습니다.", "[Error] : 주 근무 시간 초과", HttpStatus.BAD_REQUEST),
     MIN_WORK_TIME_NOT_MET("1회 최소 근무 시간(2시간)을 충족하지 못했습니다.", "[Error] : 최소 근무 시간 미충족", HttpStatus.BAD_REQUEST),
     PAST_MONTH_MODIFICATION_NOT_ALLOWED("지난 달의 근무 일정은 수정할 수 없습니다.", "[Error] : 지난 달 근무 수정 시도", HttpStatus.BAD_REQUEST),
