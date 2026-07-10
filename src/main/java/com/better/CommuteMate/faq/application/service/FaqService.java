@@ -193,7 +193,7 @@ public class FaqService {
 
         computeAndSaveEmbedding(faq);
 
-        return new PutFaqUpdateResponse(faqId);
+        return new PutFaqUpdateResponse(faqId, faq.getStatus());
     }
 
     public PostFaqResponse createDraftFaq(Long userId, PostDraftFaqRequest request) {
@@ -295,7 +295,7 @@ public class FaqService {
             images.forEach(faq::addImage);
         }
 
-        return new PutFaqUpdateResponse(faq.getId());
+        return new PutFaqUpdateResponse(faq.getId(), faq.getStatus());
     }
 
     @Transactional(readOnly = true)
