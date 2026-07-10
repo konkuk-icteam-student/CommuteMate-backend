@@ -119,7 +119,7 @@ public class FaqService {
 
         computeAndSaveEmbedding(faq);
 
-        return new PostFaqResponse(faq.getId());
+        return new PostFaqResponse(faq.getId(), faq.getStatus());
     }
 
     // faq 수정 후 발행, set status = Publish
@@ -241,8 +241,8 @@ public class FaqService {
         }
 
         return new PostFaqResponse(
-                faq.getId()
-                // Todo status 정보 추가하기
+                faq.getId(),
+                faq.getStatus()
         );
     }
 
