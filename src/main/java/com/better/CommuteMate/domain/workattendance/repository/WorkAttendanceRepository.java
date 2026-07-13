@@ -10,6 +10,6 @@ import java.util.List;
 @Repository
 public interface WorkAttendanceRepository extends JpaRepository<WorkAttendance, Integer> {
     List<WorkAttendance> findByUser_UserIdAndCheckTime(Long userId, LocalDateTime checkTime);
-    List<WorkAttendance> findBySchedule_ScheduleId(Long scheduleId);
+    List<WorkAttendance> findBySchedule_ScheduleId(String scheduleId);
     List<WorkAttendance> findByUser_UserIdAndCheckTimeBetween(Long userId, LocalDateTime start, LocalDateTime end);
 }

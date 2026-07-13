@@ -2,9 +2,7 @@ package com.better.CommuteMate.application.schedule;
 
 import com.better.CommuteMate.schedule.application.ScheduleService;
 import com.better.CommuteMate.schedule.application.ScheduleValidator;
-import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
-import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
-import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
+import com.better.CommuteMate.schedule.application.WorkScheduleSettingService;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ModifyWorkScheduleDTO;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
@@ -46,7 +44,7 @@ class ScheduleServiceTest {
     private ScheduleValidator scheduleValidator;
 
     @Mock
-    private MonthlyScheduleConfigService monthlyScheduleConfigService;
+    private WorkScheduleSettingService workScheduleSettingService;
 
     @Mock
     private WorkChangeRequestRepository workChangeRequestRepository;
@@ -429,7 +427,7 @@ class ScheduleServiceTest {
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.findById(100L)).thenReturn(Optional.of(existingSchedule));
-        when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
+        when(workScheduleSettingService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
         when(workChangeRequestRepository.save(any())).thenReturn(null);
@@ -474,7 +472,7 @@ class ScheduleServiceTest {
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.findById(100L)).thenReturn(Optional.of(existingSchedule));
-        when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
+        when(workScheduleSettingService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
         when(workChangeRequestRepository.save(any())).thenReturn(null);
@@ -516,7 +514,7 @@ class ScheduleServiceTest {
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.findById(100L)).thenReturn(Optional.of(existingSchedule));
-        when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
+        when(workScheduleSettingService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
         doThrow(CustomException.of(ScheduleErrorCode.MIN_WORK_TIME_NOT_MET)).when(scheduleValidator).validateMinWorkTime(any());
 
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1L))
@@ -556,7 +554,7 @@ class ScheduleServiceTest {
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.findById(100L)).thenReturn(Optional.of(existingSchedule));
-        when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
+        when(workScheduleSettingService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
         doThrow(CustomException.of(ScheduleErrorCode.TOTAL_WORK_TIME_EXCEEDED)).when(scheduleValidator).validateTotalWorkTime(anyLong(), anyLong());
 
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1L))
@@ -596,7 +594,7 @@ class ScheduleServiceTest {
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.findById(100L)).thenReturn(Optional.of(existingSchedule));
-        when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
+        when(workScheduleSettingService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
         doThrow(CustomException.of(ScheduleErrorCode.WEEKLY_WORK_TIME_EXCEEDED)).when(scheduleValidator).validateWeeklyWorkTime(anyLong(), anyLong());
 
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1L))
@@ -636,7 +634,7 @@ class ScheduleServiceTest {
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.findById(100L)).thenReturn(Optional.of(existingSchedule));
-        when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
+        when(workScheduleSettingService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(false);
 
         assertThatThrownBy(() -> scheduleService.modifyWorkSchedules(modifyRequest, 1L))
@@ -722,7 +720,7 @@ class ScheduleServiceTest {
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(mockUser));
         when(workSchedulesRepository.findById(100L)).thenReturn(Optional.of(schedule1));
         when(workSchedulesRepository.findById(101L)).thenReturn(Optional.of(schedule2));
-        when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
+        when(workScheduleSettingService.isCurrentlyInApplyTerm(any(LocalDateTime.class))).thenReturn(true);
         when(scheduleValidator.isScheduleInsertable(any())).thenReturn(true);
         when(workSchedulesRepository.save(any(WorkSchedule.class))).thenReturn(null);
         when(workChangeRequestRepository.save(any())).thenReturn(null);

@@ -3,15 +3,12 @@ package com.better.CommuteMate.application.schedule;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.schedule.application.ScheduleService;
 import com.better.CommuteMate.schedule.application.ScheduleValidator;
-import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
-import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
-import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
+import com.better.CommuteMate.schedule.application.WorkScheduleSettingService;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ModifyWorkScheduleDTO;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
-import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleConfigRepository;
 import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequest;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestRepository;
 import com.better.CommuteMate.domain.user.entity.User;
@@ -60,7 +57,7 @@ class ScheduleIntegrationTest {
     private MonthlyScheduleConfigRepository monthlyScheduleConfigRepository;
 
     @Mock
-    private MonthlyScheduleConfigService monthlyScheduleConfigService;
+    private WorkScheduleSettingService workScheduleSettingService;
 
     @Mock
     private WorkChangeRequestRepository workChangeRequestRepository;
@@ -96,7 +93,7 @@ class ScheduleIntegrationTest {
 
         // ScheduleService에 의존성 주입
         ReflectionTestUtils.setField(scheduleService, "scheduleValidator", scheduleValidator);
-        ReflectionTestUtils.setField(scheduleService, "monthlyScheduleConfigService", monthlyScheduleConfigService);
+        ReflectionTestUtils.setField(scheduleService, "monthlyScheduleConfigService", workScheduleSettingService);
     }
 
     // ========== 월별 제한 테스트 ==========
@@ -124,7 +121,7 @@ class ScheduleIntegrationTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(existingMonthlySchedules);
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
@@ -165,7 +162,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             WorkSchedule savedSchedule = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 15), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(savedSchedule);
@@ -206,7 +203,7 @@ class ScheduleIntegrationTest {
             // 월별 조회 시에도 같은 스케줄 반환 (같은 월)
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(existingWeeklySchedules);
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
@@ -235,7 +232,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             WorkSchedule savedSchedule = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 5), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(savedSchedule);
@@ -287,7 +284,7 @@ class ScheduleIntegrationTest {
                         // 그 외는 주별 (빈 리스트)
                         return weeklySchedules;
                     });
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
@@ -315,7 +312,7 @@ class ScheduleIntegrationTest {
             // 월별/주별 모두 같은 스케줄 반환 (해당 주가 11월 초)
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(weeklySchedules);
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
@@ -341,7 +338,7 @@ class ScheduleIntegrationTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(eq(1L), any(), any()))
                     .thenReturn(schedules);
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             // When & Then: 월별 제한이 먼저 검증되므로 예외 발생
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
@@ -387,7 +384,7 @@ class ScheduleIntegrationTest {
                     .thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             // findByDate: 11/2에만 꽉 참
             when(workSchedulesRepository.findByDate(any(), any())).thenAnswer(invocation -> {
@@ -438,7 +435,7 @@ class ScheduleIntegrationTest {
                     .thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(overlappingSchedules);
 
             // When & Then
@@ -467,7 +464,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             WorkSchedule saved1 = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
             WorkSchedule saved2 = createWorkScheduleWithId(2L, LocalDate.of(2025, 11, 2), 9, 0, 11, 0);
@@ -508,7 +505,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             WorkSchedule saved1 = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 5), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(saved1);
@@ -548,7 +545,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(overlappingSchedules);
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(newSchedule)))
@@ -576,7 +573,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(overlappingSchedules);
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             WorkSchedule savedSchedule = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(savedSchedule);
@@ -618,7 +615,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(overlappingSchedules);
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(2025, 11))
                     .thenReturn(Optional.of(config));
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             WorkSchedule savedSchedule = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(savedSchedule);
@@ -648,7 +645,7 @@ class ScheduleIntegrationTest {
             );
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             // When & Then
             assertThatThrownBy(() -> scheduleService.applyWorkSchedules(List.of(shortSchedule)))
@@ -671,7 +668,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             WorkSchedule saved = createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 1), 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(saved);
@@ -705,7 +702,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             when(workSchedulesRepository.save(any())).thenReturn(
                     createWorkScheduleWithId(1L, LocalDate.of(2025, 10, 31), 9, 0, 11, 0),
@@ -744,7 +741,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             when(workSchedulesRepository.save(any())).thenReturn(
                     createWorkScheduleWithId(1L, LocalDate.of(2025, 11, 9), 9, 0, 21, 0),
@@ -798,7 +795,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             WorkSchedule newSchedule = createWorkScheduleWithId(2L, addDate, 9, 0, 13, 0);
             when(workSchedulesRepository.save(any())).thenReturn(newSchedule);
@@ -843,7 +840,7 @@ class ScheduleIntegrationTest {
             when(workSchedulesRepository.findByDate(any(), any())).thenReturn(List.of());
             when(monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(anyInt(), anyInt()))
                     .thenReturn(Optional.empty());
-            when(monthlyScheduleConfigService.isCurrentlyInApplyTerm(any())).thenReturn(true);
+            when(workScheduleSettingService.isCurrentlyInApplyTerm(any())).thenReturn(true);
 
             WorkSchedule newSchedule = createWorkScheduleWithId(2L, addDate, 9, 0, 11, 0);
             when(workSchedulesRepository.save(any())).thenReturn(newSchedule);

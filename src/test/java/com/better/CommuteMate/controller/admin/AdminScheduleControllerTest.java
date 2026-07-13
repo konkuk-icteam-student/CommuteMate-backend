@@ -3,10 +3,9 @@ package com.better.CommuteMate.controller.admin;
 import com.better.CommuteMate.auth.application.CustomUserDetailsService;
 import com.better.CommuteMate.auth.application.TokenBlacklistService;
 import com.better.CommuteMate.global.security.jwt.JwtTokenProvider;
-import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
+import com.better.CommuteMate.schedule.application.WorkScheduleSettingService;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
-import com.better.CommuteMate.schedule.controller.admin.AdminScheduleController;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SetMonthlyLimitRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SetApplyTermRequest;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
@@ -46,7 +45,7 @@ class AdminScheduleControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private MonthlyScheduleConfigService monthlyScheduleConfigService;
+    private WorkScheduleSettingService workScheduleSettingService;
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
@@ -83,7 +82,7 @@ class AdminScheduleControllerTest {
                 .updatedBy(1L)
                 .build();
 
-        when(monthlyScheduleConfigService.setMonthlyLimit(any(MonthlyScheduleConfigCommand.class)))
+        when(workScheduleSettingService.setMonthlyLimit(any(MonthlyScheduleConfigCommand.class)))
                 .thenReturn(savedLimit);
 
         // When & Then
@@ -98,7 +97,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.details.scheduleMonth").value(10))
                 .andExpect(jsonPath("$.details.maxConcurrent").value(6));
 
-        verify(monthlyScheduleConfigService, times(1))
+        verify(workScheduleSettingService, times(1))
                 .setMonthlyLimit(any(MonthlyScheduleConfigCommand.class));
     }
 
@@ -117,7 +116,7 @@ class AdminScheduleControllerTest {
                 .updatedBy(1L)
                 .build();
 
-        when(monthlyScheduleConfigService.setMonthlyLimit(any(MonthlyScheduleConfigCommand.class)))
+        when(workScheduleSettingService.setMonthlyLimit(any(MonthlyScheduleConfigCommand.class)))
                 .thenReturn(updatedLimit);
 
         // When & Then
@@ -130,7 +129,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.message").value("월별 스케줄 제한이 설정되었습니다."))
                 .andExpect(jsonPath("$.details.maxConcurrent").value(8));
 
-        verify(monthlyScheduleConfigService, times(1))
+        verify(workScheduleSettingService, times(1))
                 .setMonthlyLimit(any(MonthlyScheduleConfigCommand.class));
     }
 
@@ -150,7 +149,7 @@ class AdminScheduleControllerTest {
                 .updatedBy(1L)
                 .build();
 
-        when(monthlyScheduleConfigService.getMonthlyLimit(year, month))
+        when(workScheduleSettingService.getMonthlyLimit(year, month))
                 .thenReturn(Optional.of(limit));
 
         // When & Then
@@ -163,7 +162,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.details.scheduleMonth").value(10))
                 .andExpect(jsonPath("$.details.maxConcurrent").value(6));
 
-        verify(monthlyScheduleConfigService, times(1)).getMonthlyLimit(year, month);
+        verify(workScheduleSettingService, times(1)).getMonthlyLimit(year, month);
     }
 
     @Test
@@ -173,7 +172,7 @@ class AdminScheduleControllerTest {
         Integer year = 2025;
         Integer month = 11;
 
-        when(monthlyScheduleConfigService.getMonthlyLimit(year, month))
+        when(workScheduleSettingService.getMonthlyLimit(year, month))
                 .thenReturn(Optional.empty());
 
         // When & Then
@@ -184,7 +183,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.message").value("해당 월의 스케줄 제한 설정을 찾을 수 없습니다."))
                 .andExpect(jsonPath("$.details").isEmpty());
 
-        verify(monthlyScheduleConfigService, times(1)).getMonthlyLimit(year, month);
+        verify(workScheduleSettingService, times(1)).getMonthlyLimit(year, month);
     }
 
     @Test
@@ -210,7 +209,7 @@ class AdminScheduleControllerTest {
                 .build();
 
         List<MonthlyScheduleConfig> limits = List.of(limit1, limit2);
-        when(monthlyScheduleConfigService.getAllMonthlyLimits()).thenReturn(limits);
+        when(workScheduleSettingService.getAllMonthlyLimits()).thenReturn(limits);
 
         // When & Then
         mockMvc.perform(get("/api/admin/schedule/monthly-limits")
@@ -227,14 +226,14 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.details.limits[1].month").value(11))
                 .andExpect(jsonPath("$.details.limits[1].maxConcurrent").value(5));
 
-        verify(monthlyScheduleConfigService, times(1)).getAllMonthlyLimits();
+        verify(workScheduleSettingService, times(1)).getAllMonthlyLimits();
     }
 
     @Test
     @DisplayName("GET /api/admin/schedule/monthly-limits - 빈 리스트 반환")
     void getAllMonthlyLimits_EmptyList() throws Exception {
         // Given
-        when(monthlyScheduleConfigService.getAllMonthlyLimits()).thenReturn(List.of());
+        when(workScheduleSettingService.getAllMonthlyLimits()).thenReturn(List.of());
 
         // When & Then
         mockMvc.perform(get("/api/admin/schedule/monthly-limits")
@@ -245,7 +244,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.details.limits").isArray())
                 .andExpect(jsonPath("$.details.limits.length()").value(0));
 
-        verify(monthlyScheduleConfigService, times(1)).getAllMonthlyLimits();
+        verify(workScheduleSettingService, times(1)).getAllMonthlyLimits();
     }
 
     @Test
@@ -267,7 +266,7 @@ class AdminScheduleControllerTest {
                 .updatedBy(1L)
                 .build();
 
-        when(monthlyScheduleConfigService.setApplyTerm(any(SetApplyTermCommand.class)))
+        when(workScheduleSettingService.setApplyTerm(any(SetApplyTermCommand.class)))
                 .thenReturn(savedConfig);
 
         // When & Then
@@ -283,7 +282,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.details.applyStartTime").exists())
                 .andExpect(jsonPath("$.details.applyEndTime").exists());
 
-        verify(monthlyScheduleConfigService, times(1))
+        verify(workScheduleSettingService, times(1))
                 .setApplyTerm(any(SetApplyTermCommand.class));
     }
 
@@ -306,7 +305,7 @@ class AdminScheduleControllerTest {
                 .updatedBy(1L)
                 .build();
 
-        when(monthlyScheduleConfigService.setApplyTerm(any(SetApplyTermCommand.class)))
+        when(workScheduleSettingService.setApplyTerm(any(SetApplyTermCommand.class)))
                 .thenReturn(updatedConfig);
 
         // When & Then
@@ -318,7 +317,7 @@ class AdminScheduleControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.message").value("신청 기간이 설정되었습니다."));
 
-        verify(monthlyScheduleConfigService, times(1))
+        verify(workScheduleSettingService, times(1))
                 .setApplyTerm(any(SetApplyTermCommand.class));
     }
 }

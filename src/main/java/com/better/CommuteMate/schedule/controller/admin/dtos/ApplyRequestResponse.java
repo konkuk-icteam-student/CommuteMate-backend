@@ -1,20 +1,24 @@
 package com.better.CommuteMate.schedule.controller.admin.dtos;
 
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
-import java.time.LocalDateTime;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 public record ApplyRequestResponse(
-        Long scheduleId,
+        String scheduleId,
         Long userId,
         String userName,
-        LocalDateTime startTime,
-        LocalDateTime endTime
+        LocalDate date,
+        LocalTime startTime,
+        LocalTime endTime
 ) {
     public static ApplyRequestResponse from(WorkSchedule schedule) {
         return new ApplyRequestResponse(
                 schedule.getScheduleId(),
                 schedule.getUser().getUserId(),
-                schedule.getUser().getName(), // Assuming User has getName()
+                schedule.getUser().getName(),
+                schedule.getDate(),
                 schedule.getStartTime(),
                 schedule.getEndTime()
         );
