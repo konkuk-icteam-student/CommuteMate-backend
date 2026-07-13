@@ -1,11 +1,10 @@
 package com.better.CommuteMate.application.schedule;
 
 import com.better.CommuteMate.global.exceptions.CustomException;
-import com.better.CommuteMate.schedule.application.MonthlyScheduleConfigService;
+import com.better.CommuteMate.schedule.application.WorkScheduleSettingService;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
 import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
-import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleConfigRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,18 +24,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class MonthlyScheduleConfigServiceTest {
+class WorkScheduleSettingServiceTest {
 
     @Mock
     private MonthlyScheduleConfigRepository monthlyScheduleConfigRepository;
 
     @InjectMocks
-    private MonthlyScheduleConfigService monthlyScheduleConfigService;
+    private WorkScheduleSettingService workScheduleSettingService;
 
     @BeforeEach
     void setUp() {
         // DEFAULT_MAX_CONCURRENT_SCHEDULES 기본값 설정
-        ReflectionTestUtils.setField(monthlyScheduleConfigService, "DEFAULT_MAX_CONCURRENT_SCHEDULES", 10);
+        ReflectionTestUtils.setField(workScheduleSettingService, "DEFAULT_MAX_CONCURRENT_SCHEDULES", 10);
     }
 
     // ========== setMonthlyLimit 테스트 ==========
@@ -66,7 +65,7 @@ class MonthlyScheduleConfigServiceTest {
                 .thenReturn(savedConfig);
 
         // When
-        MonthlyScheduleConfig result = monthlyScheduleConfigService.setMonthlyLimit(command);
+        MonthlyScheduleConfig result = workScheduleSettingService.setMonthlyLimit(command);
 
         // Then
         assertThat(result.getScheduleYear()).isEqualTo(2025);
@@ -100,7 +99,7 @@ class MonthlyScheduleConfigServiceTest {
                 .thenReturn(existingConfig);
 
         // When
-        MonthlyScheduleConfig result = monthlyScheduleConfigService.setMonthlyLimit(command);
+        MonthlyScheduleConfig result = workScheduleSettingService.setMonthlyLimit(command);
 
         // Then
         assertThat(result.getMaxConcurrent()).isEqualTo(20);
@@ -125,7 +124,7 @@ class MonthlyScheduleConfigServiceTest {
                 .thenReturn(Optional.of(config));
 
         // When
-        Optional<MonthlyScheduleConfig> result = monthlyScheduleConfigService.getMonthlyLimit(2025, 11);
+        Optional<MonthlyScheduleConfig> result = workScheduleSettingService.getMonthlyLimit(2025, 11);
 
         // Then
         assertThat(result).isPresent();
@@ -141,7 +140,7 @@ class MonthlyScheduleConfigServiceTest {
                 .thenReturn(Optional.empty());
 
         // When
-        Optional<MonthlyScheduleConfig> result = monthlyScheduleConfigService.getMonthlyLimit(2025, 12);
+        Optional<MonthlyScheduleConfig> result = workScheduleSettingService.getMonthlyLimit(2025, 12);
 
         // Then
         assertThat(result).isEmpty();
@@ -173,7 +172,7 @@ class MonthlyScheduleConfigServiceTest {
                 .thenReturn(List.of(config1, config2));
 
         // When
-        List<MonthlyScheduleConfig> result = monthlyScheduleConfigService.getAllMonthlyLimits();
+        List<MonthlyScheduleConfig> result = workScheduleSettingService.getAllMonthlyLimits();
 
         // Then
         assertThat(result).hasSize(2);
@@ -189,7 +188,7 @@ class MonthlyScheduleConfigServiceTest {
                 .thenReturn(List.of());
 
         // When
-        List<MonthlyScheduleConfig> result = monthlyScheduleConfigService.getAllMonthlyLimits();
+        List<MonthlyScheduleConfig> result = workScheduleSettingService.getAllMonthlyLimits();
 
         // Then
         assertThat(result).isEmpty();
@@ -207,7 +206,7 @@ class MonthlyScheduleConfigServiceTest {
                 .thenReturn(Optional.empty());
 
         // When
-        boolean result = monthlyScheduleConfigService.isCurrentlyInApplyTerm(startTime);
+        boolean result = workScheduleSettingService.isCurrentlyInApplyTerm(startTime);
 
         // Then
         assertThat(result).isFalse();
@@ -243,7 +242,7 @@ class MonthlyScheduleConfigServiceTest {
                 .thenReturn(savedConfig);
 
         // When
-        MonthlyScheduleConfig result = monthlyScheduleConfigService.setApplyTerm(command);
+        MonthlyScheduleConfig result = workScheduleSettingService.setApplyTerm(command);
 
         // Then
         assertThat(result.getScheduleYear()).isEqualTo(2025);
@@ -282,7 +281,7 @@ class MonthlyScheduleConfigServiceTest {
                 .thenReturn(existingConfig);
 
         // When
-        MonthlyScheduleConfig result = monthlyScheduleConfigService.setApplyTerm(command);
+        MonthlyScheduleConfig result = workScheduleSettingService.setApplyTerm(command);
 
         // Then
         assertThat(result.getApplyStartTime()).isEqualTo(command.applyStartTime());
@@ -302,7 +301,7 @@ class MonthlyScheduleConfigServiceTest {
         );
 
         // When & Then
-        assertThatThrownBy(() -> monthlyScheduleConfigService.setApplyTerm(command))
+        assertThatThrownBy(() -> workScheduleSettingService.setApplyTerm(command))
                 .isInstanceOf(CustomException.class);
 
         verify(monthlyScheduleConfigRepository, never()).save(any(MonthlyScheduleConfig.class));
@@ -321,7 +320,7 @@ class MonthlyScheduleConfigServiceTest {
         );
 
         // When & Then
-        assertThatThrownBy(() -> monthlyScheduleConfigService.setApplyTerm(command))
+        assertThatThrownBy(() -> workScheduleSettingService.setApplyTerm(command))
                 .isInstanceOf(CustomException.class);
 
         verify(monthlyScheduleConfigRepository, never()).save(any(MonthlyScheduleConfig.class));

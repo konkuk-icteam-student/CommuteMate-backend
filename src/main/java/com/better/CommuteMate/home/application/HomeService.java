@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
@@ -32,33 +33,36 @@ public class HomeService {
     private final WorkAttendanceRepository workAttendanceRepository;
     private final UserRepository userRepository;
 
+    private static final List<CodeType> VALID_STATUS_CODES = List.of(
+            CodeType.WS01,
+            CodeType.WS02
+    );
+
     /**
      * 오늘의 총 근무 시간(분 단위)과 예정된 스케줄 개수를 조회합니다.
-     * <p>
-     * - 현재 사용자의 오늘(00:00 ~ 23:59) 유효한 근무 일정을 조회합니다.
-     * - 각 스케줄에 연결된 출퇴근 기록(WorkAttendance)을 기반으로 실제 근무 시간을 계산합니다.
-     * </p>
-     *
-     * @param userId 조회를 요청한 사용자의 ID
-     * @return {@link HomeWorkTimeResponse} (총 근무 분, 스케줄 개수)
-     * @throws CustomException 사용자를 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
     public HomeWorkTimeResponse getTodayWorkTime(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
+        LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
 
-        List<WorkSchedule> schedules = workSchedulesRepository.findValidSchedulesByUserAndDateRange(
-                userId, startOfDay, endOfDay);
+        List<WorkSchedule> schedules = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                        userId,
+                        today,
+                        today,
+                        VALID_STATUS_CODES
+                );
 
         long totalMinutes = 0;
 
         for (WorkSchedule schedule : schedules) {
-            List<WorkAttendance> attendances = workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+            List<WorkAttendance> attendances =
+                    workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+
             totalMinutes += calculateWorkMinutes(schedule, attendances, now);
         }
 
@@ -70,29 +74,22 @@ public class HomeService {
 
     /**
      * 현재 시각 기준 사용자의 출퇴근 상태를 판별합니다.
-     * <p>
-     * - 오늘 예정된 근무가 없으면 {@code NO_SCHEDULE}을 반환합니다.
-     * - 현재 시각과 가장 연관성 있는 스케줄을 찾아 상태를 결정합니다.
-     *   - 근무 시작 10분 전: {@code CAN_CHECK_IN}
-     *   - 근무 종료 5분 전 ~ 1시간 후: {@code CAN_CHECK_OUT}
-     *   - 지각 여부 등도 판별합니다.
-     * </p>
-     *
-     * @param userId 상태를 조회할 사용자의 ID
-     * @return {@link HomeAttendanceStatusResponse} (상태 코드, 메시지, 스케줄 정보)
-     * @throws CustomException 사용자를 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
     public HomeAttendanceStatusResponse getAttendanceStatus(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
+        LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
 
-        List<WorkSchedule> schedules = workSchedulesRepository.findValidSchedulesByUserAndDateRange(
-                userId, startOfDay, endOfDay);
+        List<WorkSchedule> schedules = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                        userId,
+                        today,
+                        today,
+                        VALID_STATUS_CODES
+                );
 
         if (schedules.isEmpty()) {
             return HomeAttendanceStatusResponse.builder()
@@ -102,21 +99,72 @@ public class HomeService {
         }
 
         WorkSchedule targetSchedule = findRelevantSchedule(schedules, now);
-        
+
         if (targetSchedule == null) {
+            schedules.sort(Comparator.comparing(WorkSchedule::getStartTime));
             targetSchedule = schedules.get(schedules.size() - 1);
-            if (now.isAfter(targetSchedule.getEndTime().plusHours(1))) {
-                 return HomeAttendanceStatusResponse.builder()
-                    .status(AttendanceStatus.COMPLETED)
-                    .message("오늘의 모든 근무가 종료되었습니다.")
-                    .build();
+
+            LocalDateTime targetEndTime = toDateTime(targetSchedule, targetSchedule.getEndTime());
+
+            if (now.isAfter(targetEndTime.plusHours(1))) {
+                return HomeAttendanceStatusResponse.builder()
+                        .status(AttendanceStatus.COMPLETED)
+                        .message("오늘의 모든 근무가 종료되었습니다.")
+                        .build();
             }
         }
 
         return determineStatus(targetSchedule, now);
     }
 
-    private long calculateWorkMinutes(WorkSchedule schedule, List<WorkAttendance> attendances, LocalDateTime now) {
+    /**
+     * 이번 주 및 이번 달 근무 시간 요약 정보를 조회합니다.
+     */
+    @Transactional(readOnly = true)
+    public WeeklyWorkSummaryResponse getWorkSummary(Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
+
+        LocalDate today = LocalDate.now();
+
+        LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+
+        LocalDate monthStart = today.with(TemporalAdjusters.firstDayOfMonth());
+        LocalDate monthEnd = today.with(TemporalAdjusters.lastDayOfMonth());
+
+        List<WorkSchedule> weeklySchedules = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                        userId,
+                        weekStart,
+                        weekEnd,
+                        VALID_STATUS_CODES
+                );
+
+        List<WorkSchedule> monthlySchedules = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                        userId,
+                        monthStart,
+                        monthEnd,
+                        VALID_STATUS_CODES
+                );
+
+        double totalWeeklyHours = calculateTotalHours(weeklySchedules);
+        double completedWeeklyHours = calculateCompletedHours(weeklySchedules);
+        double completedMonthlyHours = calculateCompletedHours(monthlySchedules);
+
+        return WeeklyWorkSummaryResponse.builder()
+                .totalWeeklyHours(totalWeeklyHours)
+                .completedWeeklyHours(completedWeeklyHours)
+                .completedMonthlyHours(completedMonthlyHours)
+                .build();
+    }
+
+    private long calculateWorkMinutes(
+            WorkSchedule schedule,
+            List<WorkAttendance> attendances,
+            LocalDateTime now
+    ) {
         Optional<LocalDateTime> checkInTime = attendances.stream()
                 .filter(a -> a.getCheckTypeCode() == CodeType.CT01)
                 .map(WorkAttendance::getCheckTime)
@@ -131,14 +179,18 @@ public class HomeService {
             return 0;
         }
 
+        LocalDateTime scheduleStartTime = toDateTime(schedule, schedule.getStartTime());
+        LocalDateTime scheduleEndTime = toDateTime(schedule, schedule.getEndTime());
+
         LocalDateTime start = checkInTime.get();
         LocalDateTime end = checkOutTime.orElse(now);
 
-        if (start.isBefore(schedule.getStartTime())) {
-            start = schedule.getStartTime();
+        if (start.isBefore(scheduleStartTime)) {
+            start = scheduleStartTime;
         }
-        if (end.isAfter(schedule.getEndTime())) {
-            end = schedule.getEndTime();
+
+        if (end.isAfter(scheduleEndTime)) {
+            end = scheduleEndTime;
         }
 
         if (start.isAfter(end)) {
@@ -152,8 +204,8 @@ public class HomeService {
         schedules.sort(Comparator.comparing(WorkSchedule::getStartTime));
 
         for (WorkSchedule schedule : schedules) {
-            LocalDateTime start = schedule.getStartTime();
-            LocalDateTime end = schedule.getEndTime();
+            LocalDateTime start = toDateTime(schedule, schedule.getStartTime());
+            LocalDateTime end = toDateTime(schedule, schedule.getEndTime());
 
             if (now.isAfter(start.minusMinutes(10)) && now.isBefore(end.plusHours(1))) {
                 return schedule;
@@ -161,7 +213,9 @@ public class HomeService {
         }
 
         for (WorkSchedule schedule : schedules) {
-            if (now.isBefore(schedule.getStartTime())) {
+            LocalDateTime start = toDateTime(schedule, schedule.getStartTime());
+
+            if (now.isBefore(start)) {
                 return schedule;
             }
         }
@@ -170,9 +224,17 @@ public class HomeService {
     }
 
     private HomeAttendanceStatusResponse determineStatus(WorkSchedule schedule, LocalDateTime now) {
-        List<WorkAttendance> attendances = workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
-        boolean hasCheckIn = attendances.stream().anyMatch(a -> a.getCheckTypeCode() == CodeType.CT01);
-        boolean hasCheckOut = attendances.stream().anyMatch(a -> a.getCheckTypeCode() == CodeType.CT02);
+        List<WorkAttendance> attendances =
+                workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+
+        boolean hasCheckIn = attendances.stream()
+                .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT01);
+
+        boolean hasCheckOut = attendances.stream()
+                .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT02);
+
+        LocalDateTime scheduleStartTime = toDateTime(schedule, schedule.getStartTime());
+        LocalDateTime scheduleEndTime = toDateTime(schedule, schedule.getEndTime());
 
         AttendanceStatus status;
         String message;
@@ -181,7 +243,7 @@ public class HomeService {
             status = AttendanceStatus.COMPLETED;
             message = "근무가 종료되었습니다.";
         } else if (hasCheckIn) {
-            if (now.isAfter(schedule.getEndTime().minusMinutes(5))) {
+            if (now.isAfter(scheduleEndTime.minusMinutes(5))) {
                 status = AttendanceStatus.CAN_CHECK_OUT;
                 message = "퇴근 체크가 가능합니다.";
             } else {
@@ -189,10 +251,10 @@ public class HomeService {
                 message = "근무 중입니다.";
             }
         } else {
-            if (now.isAfter(schedule.getStartTime())) {
+            if (now.isAfter(scheduleStartTime)) {
                 status = AttendanceStatus.LATE_CHECK_IN;
                 message = "지각입니다. 서둘러 출근하세요!";
-            } else if (now.isAfter(schedule.getStartTime().minusMinutes(10))) {
+            } else if (now.isAfter(scheduleStartTime.minusMinutes(10))) {
                 status = AttendanceStatus.CAN_CHECK_IN;
                 message = "출근 체크가 가능합니다.";
             } else {
@@ -211,75 +273,29 @@ public class HomeService {
     }
 
     /**
-     * 이번 주 및 이번 달 근무 시간 요약 정보를 조회합니다.
-     * <p>
-     * - 이번 주: 월요일 00:00 ~ 일요일 23:59
-     * - 이번 달: 1일 00:00 ~ 말일 23:59
-     * - 완료 여부: 퇴근 체크(CT02) 기록이 있는 스케줄만 완료로 간주
-     * - 시간 단위: 0.5 = 30분 (예: 3.0, 3.5, 4.0)
-     * </p>
-     *
-     * @param userId 조회를 요청한 사용자의 ID
-     * @return {@link WeeklyWorkSummaryResponse} (주간 전체/완료, 월간 완료 시간)
-     * @throws CustomException 사용자를 찾을 수 없는 경우
-     */
-    @Transactional(readOnly = true)
-    public WeeklyWorkSummaryResponse getWorkSummary(Long userId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
-
-        LocalDateTime now = LocalDateTime.now();
-
-        // 이번 주 기간 계산 (월요일 00:00 ~ 일요일 23:59)
-        LocalDateTime weekStart = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toLocalDate().atStartOfDay();
-        LocalDateTime weekEnd = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).toLocalDate().atTime(23, 59, 59);
-
-        // 이번 달 기간 계산 (1일 00:00 ~ 말일 23:59)
-        LocalDateTime monthStart = now.with(TemporalAdjusters.firstDayOfMonth()).toLocalDate().atStartOfDay();
-        LocalDateTime monthEnd = now.with(TemporalAdjusters.lastDayOfMonth()).toLocalDate().atTime(23, 59, 59);
-
-        // 이번 주 전체 스케줄 조회 (승인된 것만)
-        List<WorkSchedule> weeklySchedules = workSchedulesRepository.findValidSchedulesByUserAndDateRange(
-                userId, weekStart, weekEnd.plusSeconds(1));
-
-        // 이번 달 전체 스케줄 조회 (승인된 것만)
-        List<WorkSchedule> monthlySchedules = workSchedulesRepository.findValidSchedulesByUserAndDateRange(
-                userId, monthStart, monthEnd.plusSeconds(1));
-
-        // 이번 주 전체 근무 시간 계산
-        double totalWeeklyHours = calculateTotalHours(weeklySchedules);
-
-        // 이번 주 완료된 근무 시간 계산 (퇴근 체크된 것만)
-        double completedWeeklyHours = calculateCompletedHours(weeklySchedules);
-
-        // 이번 달 완료된 근무 시간 계산 (퇴근 체크된 것만)
-        double completedMonthlyHours = calculateCompletedHours(monthlySchedules);
-
-        return WeeklyWorkSummaryResponse.builder()
-                .totalWeeklyHours(totalWeeklyHours)
-                .completedWeeklyHours(completedWeeklyHours)
-                .completedMonthlyHours(completedMonthlyHours)
-                .build();
-    }
-
-    /**
-     * 스케줄 리스트의 전체 근무 시간을 계산합니다 (시간 단위).
+     * 스케줄 리스트의 전체 근무 시간을 계산합니다.
      */
     private double calculateTotalHours(List<WorkSchedule> schedules) {
         long totalMinutes = schedules.stream()
-                .mapToLong(schedule -> Duration.between(schedule.getStartTime(), schedule.getEndTime()).toMinutes())
+                .mapToLong(schedule -> Duration.between(
+                        schedule.getStartTime(),
+                        schedule.getEndTime()
+                ).toMinutes())
                 .sum();
 
         return totalMinutes / 60.0;
     }
 
     /**
-     * 스케줄 리스트 중 퇴근 체크가 완료된 것만의 근무 시간을 계산합니다 (시간 단위).
+     * 스케줄 리스트 중 퇴근 체크가 완료된 것만의 근무 시간을 계산합니다.
      */
     private double calculateCompletedHours(List<WorkSchedule> schedules) {
         long totalMinutes = schedules.stream()
                 .filter(this::hasCheckOut)
-                .mapToLong(schedule -> Duration.between(schedule.getStartTime(), schedule.getEndTime()).toMinutes())
+                .mapToLong(schedule -> Duration.between(
+                        schedule.getStartTime(),
+                        schedule.getEndTime()
+                ).toMinutes())
                 .sum();
 
         return totalMinutes / 60.0;
@@ -289,8 +305,14 @@ public class HomeService {
      * 해당 스케줄에 퇴근 체크 기록이 있는지 확인합니다.
      */
     private boolean hasCheckOut(WorkSchedule schedule) {
-        List<WorkAttendance> attendances = workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+        List<WorkAttendance> attendances =
+                workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+
         return attendances.stream()
                 .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT02);
+    }
+
+    private LocalDateTime toDateTime(WorkSchedule schedule, java.time.LocalTime time) {
+        return LocalDateTime.of(schedule.getDate(), time);
     }
 }

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Getter
 @Builder
@@ -16,7 +17,7 @@ public class AttendanceHistoryResponse {
     private Long attendanceId;
     private LocalDateTime checkTime;
     private CodeType checkType;
-    private Long scheduleId;
-    private LocalDateTime scheduleStartTime;
-    private LocalDateTime scheduleEndTime;
+    private String scheduleId;
+    private LocalTime scheduleStartTime;
+    private LocalTime scheduleEndTime;
 }

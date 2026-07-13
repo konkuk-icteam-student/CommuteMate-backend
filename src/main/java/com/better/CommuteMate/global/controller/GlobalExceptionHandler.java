@@ -2,6 +2,8 @@ package com.better.CommuteMate.global.controller;
 
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.global.exceptions.MonthlyWorkTimeExceededException;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.MonthlyLimitExceededResponseDetail;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -66,5 +68,19 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(MonthlyWorkTimeExceededException.class)
+    public ResponseEntity<Response> handleMonthlyWorkTimeExceeded(
+            MonthlyWorkTimeExceededException e
+    ) {
+        return ResponseEntity.unprocessableEntity().body(Response.of(
+                false,
+                "월 최대 근무 시간을 초과하였습니다.",
+                MonthlyLimitExceededResponseDetail.of(
+                        e.getLimitHours(),
+                        e.getRequestedHours()
+                )
+        ));
     }
 }

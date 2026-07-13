@@ -1,18 +1,17 @@
 package com.better.CommuteMate.schedule.application;
 
+import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
+import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
+import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
+import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
-import com.better.CommuteMate.schedule.application.dtos.WorkScheduleCommand;
-import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
-import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
-import com.better.CommuteMate.domain.schedule.repository.MonthlyScheduleConfigRepository;
-import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
+import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -21,99 +20,97 @@ import java.util.List;
 public class ScheduleValidator {
 
     private final WorkSchedulesRepository workSchedulesRepository;
-    private final MonthlyScheduleConfigRepository monthlyScheduleConfigRepository;
-
-    @Value("${app.schedule.concurrent.max}")
-    private int DEFAULT_MAX_CONCURRENT_SCHEDULES;
-
-    // 근무 시간 관련 상수 (분 단위)
-    private static final long MAX_MONTHLY_MINUTES = 27 * 60; // 월 최대 27시간
-    private static final long MAX_WEEKLY_MINUTES = 13 * 60;  // 주 최대 13시간
-    private static final long MIN_SESSION_MINUTES = 2 * 60;  // 1회 최소 2시간
 
     /**
-     * 해당 스케줄이 동시 근무 제한을 초과하지 않고 삽입 가능한지 검증합니다.
-     * <p>
-     * - 해당 날짜의 기존 스케줄들을 조회합니다.
-     * - 15분 단위 체크포인트마다 겹치는 스케줄 수를 계산합니다.
-     * - 설정된 최대 동시 근무 인원을 초과하면 false를 반환합니다.
-     * </p>
-     *
-     * @param slot 검증할 스케줄 정보 (시작/종료 시간)
-     * @return 삽입 가능 여부 (true: 가능, false: 불가능)
+     * 변경사항 API의 슬롯 기준으로 동시 근무 제한을 검증합니다.
+     * addSlots 처리 시 사용합니다.
      */
-    // 입력 일정의 분 단위가 00분, 30분 만 존재한다고 가정
-    public boolean isScheduleInsertable(WorkScheduleCommand slot) {
-        LocalDate date = slot.start().toLocalDate();  // 찾고 싶은 날짜
-        LocalDateTime startOfDay = date.atStartOfDay();  // 찾고 싶은 날짜
-        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();   // 찾고 싶은 날짜 + 1일
+    public boolean isScheduleInsertable(
+            WorkScheduleSlotCommand slot,
+            WorkScheduleSetting setting
+    ) {
+        return isScheduleInsertable(
+                slot.date(),
+                slot.start(),
+                slot.end(),
+                setting.getMaxConcurrentWorkers()
+        );
+    }
 
-        // 월별 최대 동시 스케줄 수 조회
-        int maxConcurrentSchedules = getMaxConcurrentSchedules(date.getYear(), date.getMonthValue());
-
-        List<WorkSchedule> daySchedules = workSchedulesRepository.findByDate(startOfDay,endOfDay);
-
-        LocalTime startTime = slot.start().toLocalTime();
-        LocalTime endTime = slot.end().toLocalTime();
+    /**
+     * 해당 날짜, 시작 시간, 종료 시간을 기준으로 동시 근무 제한을 검증합니다.
+     */
+    private boolean isScheduleInsertable(
+            LocalDate date,
+            LocalTime startTime,
+            LocalTime endTime,
+            int maxConcurrentWorkers
+    ) {
+        List<WorkSchedule> daySchedules = workSchedulesRepository.findAllByDate(date);
 
         LocalTime currentCheckPoint = startTime.plusMinutes(15);
-        // isDeleted가 false인 스케줄들 중에서, 15분 단위로 겹치는 스케줄이 최대 동시 스케줄 수를 초과하는지 확인
+
         while (currentCheckPoint.isBefore(endTime)) {
             LocalTime finalCheckPoint = currentCheckPoint;
 
             long overlappingCount = daySchedules.stream()
-                .filter(schedule -> !schedule.getIsDeleted()) // 삭제된 스케줄 제외
-                .filter(schedule ->
-                    schedule.getStartTime().toLocalTime().isBefore(finalCheckPoint) && // 15분 시점이 스케줄 범위에 포함되는지
-                    schedule.getEndTime().toLocalTime().isAfter(finalCheckPoint))
-                .count();
+                    .filter(schedule -> !schedule.getStatusCode().equals(CodeType.WS04))
+                    .filter(schedule ->
+                            schedule.getStatusCode().equals(CodeType.WS01)
+                                    || schedule.getStatusCode().equals(CodeType.WS02)
+                    )
+                    .filter(schedule ->
+                            schedule.getStartTime().isBefore(finalCheckPoint)
+                                    && schedule.getEndTime().isAfter(finalCheckPoint)
+                    )
+                    .count();
 
-            if (overlappingCount >= maxConcurrentSchedules) {
+            if (overlappingCount >= maxConcurrentWorkers) {
                 return false;
             }
 
             currentCheckPoint = currentCheckPoint.plusMinutes(30);
         }
+
         return true;
     }
 
-    private int getMaxConcurrentSchedules(int scheduleYear, int scheduleMonth) {
-        return monthlyScheduleConfigRepository.findByScheduleYearAndScheduleMonth(scheduleYear, scheduleMonth)
-                .map(MonthlyScheduleConfig::getMaxConcurrent)
-                .orElse(DEFAULT_MAX_CONCURRENT_SCHEDULES); // 존재하지 않을 경우, 기본값 반환
-    }
-
     /**
-     * 1회 최소 근무 시간(2시간) 검증
+     * 1회 최소 근무 시간 1시간 검증
      */
-    public void validateMinWorkTime(WorkScheduleCommand slot) {
-        long minutes = java.time.Duration.between(slot.start(), slot.end()).toMinutes();
-        if (minutes < MIN_SESSION_MINUTES) {
-            throw CustomException.of(
-                ScheduleErrorCode.MIN_WORK_TIME_NOT_MET
-            );
+    public void validateMinWorkTime(WorkScheduleSlotCommand slot) {
+        long minutes = Duration.between(slot.start(), slot.end()).toMinutes();
+
+        if (minutes < 60) {
+            throw CustomException.of(ScheduleErrorCode.MIN_WORK_TIME_NOT_MET);
         }
     }
 
     /**
-     * 월 총 근무 시간(27시간) 초과 여부 검증
+     * 월 총 근무 시간 초과 여부 검증
      */
-    public void validateTotalWorkTime(long currentMinutes, long newMinutes) {
-        if (currentMinutes + newMinutes > MAX_MONTHLY_MINUTES) {
-            throw CustomException.of(
-                ScheduleErrorCode.TOTAL_WORK_TIME_EXCEEDED
-            );
+    public void validateMonthlyWorkTime(
+            long currentMinutes,
+            long newMinutes,
+            WorkScheduleSetting setting
+    ) {
+        if (currentMinutes + newMinutes > setting.getMonthlyRequiredMinutes()) {
+            throw CustomException.of(ScheduleErrorCode.TOTAL_WORK_TIME_EXCEEDED);
         }
     }
 
     /**
-     * 주 최대 근무 시간(13시간) 초과 여부 검증
+     * 주 최대 근무 시간 초과 여부 검증
      */
-    public void validateWeeklyWorkTime(long currentMinutes, long newMinutes) {
-        if (currentMinutes + newMinutes > MAX_WEEKLY_MINUTES) {
-            throw CustomException.of(
-                ScheduleErrorCode.WEEKLY_WORK_TIME_EXCEEDED
-            );
+    public void validateWeeklyWorkTime(
+            long currentMinutes,
+            long newMinutes,
+            WorkScheduleSetting setting
+    ) {
+        Integer weeklyMaxMinutes = setting.getWeeklyMaxMinutes();
+
+        if (weeklyMaxMinutes != null && currentMinutes + newMinutes > weeklyMaxMinutes) {
+            throw CustomException.of(ScheduleErrorCode.WEEKLY_WORK_TIME_EXCEEDED);
         }
     }
 }

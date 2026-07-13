@@ -1,9 +1,7 @@
 package com.better.CommuteMate.application.schedule;
 
 import com.better.CommuteMate.schedule.application.ScheduleService;
-import com.better.CommuteMate.schedule.application.dtos.ApplyScheduleResultCommand;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleDTO;
-import com.better.CommuteMate.schedule.controller.schedule.WorkScheduleController;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ApplyWorkSchedule;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.ModifyWorkScheduleDTO;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleResponse;
