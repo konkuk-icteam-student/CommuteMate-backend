@@ -5,6 +5,7 @@ import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.schedule.application.ScheduleService;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResultCommand;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeRequest;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeResponseDetail;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryListResponse;
@@ -137,5 +138,27 @@ public class WorkScheduleController {
                 "근무 일정 상세 조회 성공",
                 scheduleService.getWorkSchedule(userId, scheduleId)
         ));
+    }
+
+    /**
+     * 월별 근무 시간표 조회 API
+     */
+    @Operation(
+            summary = "근무 시간표 월별 조회",
+            description = "특정 연/월의 전체 근무 시간표를 30분 단위 슬롯으로 조회합니다."
+    )
+    @GetMapping("/{year}/{month}")
+    public ResponseEntity<Response> getMonthlyScheduleView(
+            @PathVariable Integer year,
+            @PathVariable Integer month,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails.getUser().getUserId();
+        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+
+        WorkMonthlyScheduleResponse response =
+                scheduleService.getMonthlyScheduleView(userId, organizationId, year, month);
+
+        return ResponseEntity.ok(Response.of(true, "근로 시간표를 조회했습니다.", response));
     }
 }
