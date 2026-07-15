@@ -7,6 +7,7 @@ import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeComman
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResultCommand;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeRequest;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleMonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeResponseDetail;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryListResponse;
@@ -141,6 +142,24 @@ public class WorkScheduleController {
                 true,
                 "근무 일정 상세 조회 성공",
                 scheduleService.getWorkSchedule(userId, scheduleId)
+        ));
+    }
+
+    /**
+     * 월별 스케줄 동시 근무 제한 조회 API
+     */
+    @Operation(summary = "월별 스케줄 동시 근무 제한 조회", description = "특정 연/월의 최대 동시 근무자 수를 조회합니다.")
+    @GetMapping("/monthly-limit/{year}/{month}")
+    public ResponseEntity<Response> getMonthlyLimit(
+            @PathVariable Integer year,
+            @PathVariable Integer month,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+        return ResponseEntity.ok(Response.of(
+                true,
+                "월별 스케줄 제한을 조회했습니다.",
+                scheduleService.getMonthlyLimit(organizationId, year, month)
         ));
     }
 

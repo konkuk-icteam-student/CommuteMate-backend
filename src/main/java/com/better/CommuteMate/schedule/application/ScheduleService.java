@@ -23,6 +23,7 @@ import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResult
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
 import com.better.CommuteMate.schedule.controller.dtos.ScheduleUpdateMessage;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleMonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeResponseDetail;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryResponse;
@@ -466,6 +467,24 @@ public class ScheduleService {
                 .build();
 
         messagingTemplate.convertAndSend("/topic/schedule-updates", message);
+    }
+
+    @Transactional(readOnly = true)
+    public WorkScheduleMonthlyLimitResponse getMonthlyLimit(
+            String organizationId,
+            Integer year,
+            Integer month
+    ) {
+        validateYearMonth(year, month);
+        WorkScheduleSetting setting = workScheduleSettingService.getRequiredSetting(organizationId, year, month);
+        Integer maxConcurrent = setting.getMaxConcurrentWorkers() != null
+                ? setting.getMaxConcurrentWorkers()
+                : DEFAULT_SETTING_MAX_CONCURRENT;
+        return WorkScheduleMonthlyLimitResponse.builder()
+                .scheduleYear(year)
+                .scheduleMonth(month)
+                .maxConcurrentWorkers(maxConcurrent)
+                .build();
     }
 
     @Transactional(readOnly = true)
