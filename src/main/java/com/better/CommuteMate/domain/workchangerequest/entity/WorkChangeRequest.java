@@ -2,7 +2,6 @@ package com.better.CommuteMate.domain.workchangerequest.entity;
 
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.domain.user.entity.User;
-import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,8 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "work_change_request", indexes = {
-    @Index(name = "idx_wcr_user", columnList = "user_id"),
-    @Index(name = "idx_wcr_schedule", columnList = "schedule_id")
+    @Index(name = "idx_wcr_user", columnList = "user_id")
 })
 @Getter
 @Setter
@@ -29,15 +27,6 @@ public class WorkChangeRequest {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "schedule_id", nullable = false)
-    private WorkSchedule schedule;
-
-    // 요청 유형 코드 (CR01: 수정 요청, CR02: 삭제 요청 - 현재는 CR01만 사용)
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type_code", columnDefinition = "CHAR(4)", nullable = false)
-    private CodeType typeCode;
-
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;
 
@@ -45,6 +34,15 @@ public class WorkChangeRequest {
     @Enumerated(EnumType.STRING)
     @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType statusCode;
+
+    @Column(name = "processed_at")
+    private LocalDateTime processedAt;
+
+    @Column(name = "processed_by")
+    private Long processedBy;
+
+    @Column(name = "reject_reason", columnDefinition = "TEXT")
+    private String rejectReason;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

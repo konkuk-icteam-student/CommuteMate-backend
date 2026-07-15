@@ -7,6 +7,8 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequest;
+import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequestItem;
+import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestItemRepository;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestRepository;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
@@ -35,6 +37,7 @@ import java.util.Optional;
 public class AdminScheduleService {
 
     private final WorkChangeRequestRepository workChangeRequestRepository;
+    private final WorkChangeRequestItemRepository workChangeRequestItemRepository;
     private final WorkSchedulesRepository workSchedulesRepository;
     private final WorkAttendanceRepository workAttendanceRepository;
     private final UserRepository userRepository;
@@ -62,8 +65,12 @@ public class AdminScheduleService {
             request.setUpdatedBy(adminId);
 
             if (statusCode.equals(CodeType.CS02)) {
-                WorkSchedule schedule = request.getSchedule();
-                schedule.approveChangeRequest(String.valueOf(adminId), request.getTypeCode());
+                List<WorkChangeRequestItem> items =
+                        workChangeRequestItemRepository.findAllByRequest_RequestId(id);
+                for (WorkChangeRequestItem item : items) {
+                    // TODO: CR01(ADD) 아이템 처리 - 새 WorkSchedule 생성 후 item.schedule 연결
+                    // TODO: CR02(DELETE) 아이템 처리 - 연결된 WorkSchedule 취소(cancel) 처리
+                }
             }
         }
     }

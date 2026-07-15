@@ -3,9 +3,11 @@ package com.better.CommuteMate.schedule.application;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
+import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
+import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestItemRepository;
 import com.better.CommuteMate.domain.workplace.entity.Workplace;
 import com.better.CommuteMate.domain.workplace.repository.WorkplaceRepository;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeCommand;
@@ -40,6 +42,10 @@ class ScheduleServiceTest {
     @Mock
     private WorkAttendanceRepository workAttendanceRepository;
     @Mock
+    private WorkChangeRequestItemRepository workChangeRequestItemRepository;
+    @Mock
+    private WorkUnavailableTimeRepository workUnavailableTimeRepository;
+    @Mock
     private UserRepository userRepository;
     @Mock
     private WorkplaceRepository workplaceRepository;
@@ -58,6 +64,8 @@ class ScheduleServiceTest {
         scheduleService = new ScheduleService(
                 workSchedulesRepository,
                 workAttendanceRepository,
+                workChangeRequestItemRepository,
+                workUnavailableTimeRepository,
                 userRepository,
                 workplaceRepository,
                 scheduleValidator,

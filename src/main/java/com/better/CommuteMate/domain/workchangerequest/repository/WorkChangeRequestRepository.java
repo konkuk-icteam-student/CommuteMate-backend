@@ -10,7 +10,4 @@ import java.util.List;
 @Repository
 public interface WorkChangeRequestRepository extends JpaRepository<WorkChangeRequest, Long> {
     List<WorkChangeRequest> findByUser_UserId(Long userId);
-    List<WorkChangeRequest> findBySchedule_ScheduleId(String scheduleId);
-    List<WorkChangeRequest> findByUser_UserIdAndStatusCodeAndTypeCode(
-            Long userId, CodeType statusCode, CodeType typeCode);
 }

@@ -22,4 +22,6 @@ public interface WorkChangeRequestItemRepository extends JpaRepository<WorkChang
             LocalDate startDate,
             LocalDate endDate
     );
+
+    List<WorkChangeRequestItem> findAllByRequest_RequestId(Long requestId);
 }
