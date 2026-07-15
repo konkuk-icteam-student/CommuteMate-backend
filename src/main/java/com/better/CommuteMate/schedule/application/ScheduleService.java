@@ -23,6 +23,7 @@ import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResult
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
 import com.better.CommuteMate.schedule.controller.dtos.ScheduleUpdateMessage;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeResponseDetail;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleResponse;
@@ -63,6 +64,8 @@ public class ScheduleService {
 
     private static final int MONTHLY_LIMIT_HOURS = 27;
     private static final int MONTHLY_LIMIT_MINUTES = MONTHLY_LIMIT_HOURS * 60;
+    private static final List<CodeType> ACTIVE_STATUSES = List.of(CodeType.WS01, CodeType.WS02);
+    private static final int DEFAULT_SETTING_MAX_CONCURRENT = 4;
 
     /**
      * 근무 일정 변경사항을 반영합니다.
@@ -465,13 +468,6 @@ public class ScheduleService {
         messagingTemplate.convertAndSend("/topic/schedule-updates", message);
     }
 
-    /**
-     * 월별 근무 시간표 조회 (슬롯 단위 뷰)
-     *
-     * PENDING_ADD/PENDING_DELETE는 work_change_request_item 기준으로 판단.
-     * item의 change_type_code: CR01=추가(ADD), CR02=삭제(DELETE).
-     * UNAVAILABLE은 work_unavailable_time 기준.
-     */
     @Transactional(readOnly = true)
     public WorkMonthlyScheduleResponse getMonthlyScheduleView(
             Long userId,
@@ -480,90 +476,54 @@ public class ScheduleService {
             Integer month
     ) {
         validateYearMonth(year, month);
-
-        WorkScheduleSetting setting =
-                workScheduleSettingService.getRequiredSetting(organizationId, year, month);
-
+        WorkScheduleSetting setting = workScheduleSettingService.getRequiredSetting(organizationId, year, month);
         YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDate startDate = yearMonth.atDay(1);
-        LocalDate endDate = yearMonth.atEndOfMonth();
+        LocalDate monthStart = yearMonth.atDay(1);
+        LocalDate monthEnd = yearMonth.atEndOfMonth();
 
-        List<CodeType> activeStatuses = List.of(CodeType.WS01, CodeType.WS02);
-
-        // 슬롯별 전체 인원 수 집계 (취소되지 않은 전체 사용자 일정)
-        List<WorkSchedule> allSchedules =
-                workSchedulesRepository.findAllByDateBetweenAndStatusCodeIn(startDate, endDate, activeStatuses);
-        Map<SlotKey, Integer> currentCountMap = new HashMap<>();
-        for (WorkSchedule schedule : allSchedules) {
-            for (SlotKey key : expandToSlots(schedule.getDate(), schedule.getStartTime(), schedule.getEndTime())) {
-                currentCountMap.merge(key, 1, Integer::sum);
-            }
-        }
-
-        // 본인의 MY_SCHEDULE 슬롯
-        List<WorkSchedule> userSchedules =
-                workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
-                        userId, startDate, endDate, activeStatuses);
-        Set<SlotKey> myScheduleSlots = new HashSet<>();
-        for (WorkSchedule schedule : userSchedules) {
-            myScheduleSlots.addAll(expandToSlots(schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()));
-        }
-
-        // 본인의 PENDING_DELETE 슬롯 — work_change_request_item.change_type_code=CR02(삭제)
-        Set<SlotKey> pendingDeleteSlots = buildItemSlots(userId, CodeType.CR02, startDate, endDate);
-
-        // 본인의 PENDING_ADD 슬롯 — work_change_request_item.change_type_code=CR01(추가)
-        Set<SlotKey> pendingAddSlots = buildItemSlots(userId, CodeType.CR01, startDate, endDate);
-
-        // UNAVAILABLE 슬롯 — work_unavailable_time (setting_id 기준)
-        Set<SlotKey> unavailableSlots = new HashSet<>();
-        List<WorkUnavailableTime> unavailableTimes =
-                workUnavailableTimeRepository.findBySettingAndDateBetween(setting, startDate, endDate);
-        for (WorkUnavailableTime unavailable : unavailableTimes) {
-            unavailableSlots.addAll(
-                    expandToSlots(unavailable.getDate(), unavailable.getStartTime(), unavailable.getEndTime()));
-        }
-
-        // 사용 시간 계산 (분 → 시간, 버림)
-        long usedMinutes = userSchedules.stream()
-                .mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes())
-                .sum();
-        int usedHours = (int) (usedMinutes / 60);
-
-        // 노출할 슬롯 키 집합: currentCount가 있거나 UNAVAILABLE/PENDING_ADD인 슬롯
-        Set<SlotKey> visibleSlots = new HashSet<>(currentCountMap.keySet());
-        visibleSlots.addAll(unavailableSlots);
-        visibleSlots.addAll(pendingAddSlots);
-
-        // 날짜별 슬롯 목록 구성
-        List<WorkMonthlyScheduleResponse.DaySchedule> days = new ArrayList<>();
-        for (int day = 1; day <= yearMonth.lengthOfMonth(); day++) {
-            LocalDate date = yearMonth.atDay(day);
-
-            List<WorkMonthlyScheduleResponse.SlotInfo> slots = visibleSlots.stream()
-                    .filter(key -> key.date().equals(date))
-                    .sorted(Comparator.comparing(SlotKey::startTime))
-                    .map(key -> WorkMonthlyScheduleResponse.SlotInfo.builder()
-                            .start(key.startTime())
-                            .end(key.endTime())
-                            .status(resolveSlotStatus(
-                                    key, myScheduleSlots, pendingDeleteSlots, pendingAddSlots, unavailableSlots))
-                            .currentCount(currentCountMap.getOrDefault(key, 0))
-                            .build())
-                    .toList();
-
-            days.add(WorkMonthlyScheduleResponse.DaySchedule.builder()
-                    .date(date)
-                    .slots(slots)
-                    .build());
-        }
+        SlotViewContext ctx = buildSlotViewContext(userId, setting, monthStart, monthEnd, monthStart, monthEnd);
+        Set<SlotKey> visibleSlots = buildVisibleSlots(ctx);
+        List<WorkMonthlyScheduleResponse.DaySchedule> days = buildDaySlotList(monthStart, monthEnd, visibleSlots, ctx);
 
         return WorkMonthlyScheduleResponse.builder()
                 .year(year)
                 .month(month)
                 .maxConcurrentWorkers(setting.getMaxConcurrentWorkers())
                 .totalLimitHours(setting.getMonthlyRequiredMinutes() / 60)
-                .usedHours(usedHours)
+                .usedHours(ctx.usedHours())
+                .days(days)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public WorkScheduleRangeResponse getScheduleRangeView(
+            Long userId,
+            String organizationId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        validateDateRange(startDate, endDate);
+        WorkScheduleSetting setting = workScheduleSettingService
+                .getSetting(organizationId, startDate.getYear(), startDate.getMonthValue())
+                .orElse(null);
+
+        YearMonth yearMonth = YearMonth.from(startDate);
+        LocalDate monthStart = yearMonth.atDay(1);
+        LocalDate monthEnd = yearMonth.atEndOfMonth();
+
+        SlotViewContext ctx = buildSlotViewContext(userId, setting, startDate, endDate, monthStart, monthEnd);
+        Set<SlotKey> visibleSlots = buildVisibleSlots(ctx);
+        List<WorkMonthlyScheduleResponse.DaySchedule> days = buildDaySlotList(startDate, endDate, visibleSlots, ctx);
+
+        Integer maxConcurrent = setting != null ? setting.getMaxConcurrentWorkers() : DEFAULT_SETTING_MAX_CONCURRENT;
+        Integer totalLimitHours = setting != null ? setting.getMonthlyRequiredMinutes() / 60 : null;
+
+        return WorkScheduleRangeResponse.builder()
+                .startDate(startDate)
+                .endDate(endDate)
+                .maxConcurrentWorkers(maxConcurrent)
+                .totalLimitHours(totalLimitHours)
+                .usedHours(ctx.usedHours())
                 .days(days)
                 .build();
     }
@@ -585,6 +545,83 @@ public class ScheduleService {
         if (year == null || month == null || year < 1900 || year > 9999 || month < 1 || month > 12) {
             throw CustomException.of(ScheduleErrorCode.INVALID_YEAR_MONTH);
         }
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw CustomException.of(ScheduleErrorCode.INVALID_DATE_RANGE);
+        }
+        if (!YearMonth.from(startDate).equals(YearMonth.from(endDate))) {
+            throw CustomException.of(ScheduleErrorCode.CROSS_MONTH_RANGE_NOT_ALLOWED);
+        }
+    }
+
+    private SlotViewContext buildSlotViewContext(
+            Long userId,
+            WorkScheduleSetting setting,
+            LocalDate queryStart,
+            LocalDate queryEnd,
+            LocalDate monthStart,
+            LocalDate monthEnd
+    ) {
+        Map<SlotKey, Integer> currentCountMap = new HashMap<>();
+        for (WorkSchedule s : workSchedulesRepository.findAllByDateBetweenAndStatusCodeIn(queryStart, queryEnd, ACTIVE_STATUSES)) {
+            for (SlotKey k : expandToSlots(s.getDate(), s.getStartTime(), s.getEndTime()))
+                currentCountMap.merge(k, 1, Integer::sum);
+        }
+
+        Set<SlotKey> myScheduleSlots = new HashSet<>();
+        for (WorkSchedule s : workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                userId, queryStart, queryEnd, ACTIVE_STATUSES))
+            myScheduleSlots.addAll(expandToSlots(s.getDate(), s.getStartTime(), s.getEndTime()));
+
+        Set<SlotKey> pendingDeleteSlots = buildItemSlots(userId, CodeType.CR02, queryStart, queryEnd);
+        Set<SlotKey> pendingAddSlots = buildItemSlots(userId, CodeType.CR01, queryStart, queryEnd);
+
+        Set<SlotKey> unavailableSlots = new HashSet<>();
+        if (setting != null) {
+            for (WorkUnavailableTime u : workUnavailableTimeRepository.findBySettingAndDateBetween(setting, queryStart, queryEnd))
+                unavailableSlots.addAll(expandToSlots(u.getDate(), u.getStartTime(), u.getEndTime()));
+        }
+
+        long usedMinutes = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(userId, monthStart, monthEnd, ACTIVE_STATUSES)
+                .stream().mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes()).sum();
+
+        return new SlotViewContext(currentCountMap, myScheduleSlots, pendingDeleteSlots, pendingAddSlots,
+                unavailableSlots, (int) (usedMinutes / 60));
+    }
+
+    private Set<SlotKey> buildVisibleSlots(SlotViewContext ctx) {
+        Set<SlotKey> visibleSlots = new HashSet<>(ctx.currentCountMap().keySet());
+        visibleSlots.addAll(ctx.unavailableSlots());
+        visibleSlots.addAll(ctx.pendingAddSlots());
+        return visibleSlots;
+    }
+
+    private List<WorkMonthlyScheduleResponse.DaySchedule> buildDaySlotList(
+            LocalDate startDate,
+            LocalDate endDate,
+            Set<SlotKey> visibleSlots,
+            SlotViewContext ctx
+    ) {
+        List<WorkMonthlyScheduleResponse.DaySchedule> days = new ArrayList<>();
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            LocalDate d = date;
+            List<WorkMonthlyScheduleResponse.SlotInfo> slots = visibleSlots.stream()
+                    .filter(k -> k.date().equals(d))
+                    .sorted(Comparator.comparing(SlotKey::startTime))
+                    .map(k -> WorkMonthlyScheduleResponse.SlotInfo.builder()
+                            .start(k.startTime())
+                            .end(k.endTime())
+                            .status(resolveSlotStatus(k, ctx.myScheduleSlots(), ctx.pendingDeleteSlots(),
+                                    ctx.pendingAddSlots(), ctx.unavailableSlots()))
+                            .currentCount(ctx.currentCountMap().getOrDefault(k, 0))
+                            .build())
+                    .toList();
+            days.add(WorkMonthlyScheduleResponse.DaySchedule.builder().date(d).slots(slots).build());
+        }
+        return days;
     }
 
     private String resolveSlotStatus(
@@ -611,6 +648,15 @@ public class ScheduleService {
         }
         return slots;
     }
+
+    private record SlotViewContext(
+            Map<SlotKey, Integer> currentCountMap,
+            Set<SlotKey> myScheduleSlots,
+            Set<SlotKey> pendingDeleteSlots,
+            Set<SlotKey> pendingAddSlots,
+            Set<SlotKey> unavailableSlots,
+            int usedHours
+    ) {}
 
     private record SlotKey(LocalDate date, LocalTime startTime, LocalTime endTime) {}
 

@@ -7,15 +7,19 @@ import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeComman
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResultCommand;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeRequest;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeResponseDetail;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryListResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleListResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @Tag(name = "사용자 근무 일정", description = "사용자 근무 일정 신청 및 조회 API")
 @RestController
@@ -158,6 +162,28 @@ public class WorkScheduleController {
 
         WorkMonthlyScheduleResponse response =
                 scheduleService.getMonthlyScheduleView(userId, organizationId, year, month);
+
+        return ResponseEntity.ok(Response.of(true, "근로 시간표를 조회했습니다.", response));
+    }
+
+    /**
+     * 날짜 범위 근무 시간표 조회 API (같은 달 이내)
+     */
+    @Operation(
+            summary = "근무 시간표 기간별 조회",
+            description = "startDate ~ endDate 범위(같은 달 이내)의 근무 시간표를 30분 단위 슬롯으로 조회합니다."
+    )
+    @GetMapping(params = {"startDate", "endDate"})
+    public ResponseEntity<Response> getScheduleRangeView(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails.getUser().getUserId();
+        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+
+        WorkScheduleRangeResponse response =
+                scheduleService.getScheduleRangeView(userId, organizationId, startDate, endDate);
 
         return ResponseEntity.ok(Response.of(true, "근로 시간표를 조회했습니다.", response));
     }
