@@ -25,10 +25,12 @@ import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResult
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
 import com.better.CommuteMate.schedule.controller.dtos.ScheduleUpdateMessage;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
+import com.better.CommuteMate.global.util.WorkWeekUtils;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditRequest;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleMonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleSummaryResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeResponseDetail;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleResponse;
@@ -619,6 +621,58 @@ public class ScheduleService {
     }
 
     @Transactional(readOnly = true)
+    public WorkScheduleSummaryResponse getScheduleSummary(
+            Long userId,
+            String organizationId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        validateSummaryDateRange(startDate, endDate);
+
+        Optional<WorkScheduleSetting> settingOpt =
+                workScheduleSettingService.getSetting(organizationId, startDate.getYear(), startDate.getMonthValue());
+
+        // 조회 기간(startDate~endDate) 근무 시간 합산 — week.usedHours
+        long weekUsedMinutes = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(userId, startDate, endDate, ACTIVE_STATUSES)
+                .stream().mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes()).sum();
+
+        // 해당 월 전체 근무 시간 합산 — month.usedHours
+        YearMonth yearMonth = YearMonth.from(startDate);
+        LocalDate monthStart = yearMonth.atDay(1);
+        LocalDate monthEnd = yearMonth.atEndOfMonth();
+        long monthUsedMinutes = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(userId, monthStart, monthEnd, ACTIVE_STATUSES)
+                .stream().mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes()).sum();
+
+        // 한도: setting 없으면 0
+        int weekLimitHours = settingOpt
+                .map(s -> s.getWeeklyMaxMinutes() != null ? s.getWeeklyMaxMinutes() / 60 : 0)
+                .orElse(0);
+        // monthly_required_minutes → limitHours (컬럼명은 'required'지만 진행률 표시 통일을 위해 limitHours로 응답)
+        int monthLimitHours = settingOpt
+                .map(s -> s.getMonthlyRequiredMinutes() / 60)
+                .orElse(0);
+
+        int weekNumber = WorkWeekUtils.weekOfMonth(startDate);
+
+        return WorkScheduleSummaryResponse.builder()
+                .startDate(startDate)
+                .endDate(endDate)
+                .week(WorkScheduleSummaryResponse.PeriodSummary.builder()
+                        .label(weekNumber + "주차")
+                        .usedHours((int) (weekUsedMinutes / 60))
+                        .limitHours(weekLimitHours)
+                        .build())
+                .month(WorkScheduleSummaryResponse.PeriodSummary.builder()
+                        .label(startDate.getMonthValue() + "월 전체")
+                        .usedHours((int) (monthUsedMinutes / 60))
+                        .limitHours(monthLimitHours)
+                        .build())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
     public WorkScheduleRangeResponse getScheduleRangeView(
             Long userId,
             String organizationId,
@@ -676,6 +730,18 @@ public class ScheduleService {
         }
         if (!YearMonth.from(startDate).equals(YearMonth.from(endDate))) {
             throw CustomException.of(ScheduleErrorCode.CROSS_MONTH_RANGE_NOT_ALLOWED);
+        }
+    }
+
+    private void validateSummaryDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw CustomException.of(ScheduleErrorCode.INVALID_DATE_RANGE);
+        }
+        if (!YearMonth.from(startDate).equals(YearMonth.from(endDate))) {
+            throw CustomException.of(ScheduleErrorCode.CROSS_MONTH_RANGE_NOT_ALLOWED);
+        }
+        if (!WorkWeekUtils.isSameWeek(startDate, endDate)) {
+            throw CustomException.of(ScheduleErrorCode.CROSS_WEEK_RANGE_NOT_ALLOWED);
         }
     }
 

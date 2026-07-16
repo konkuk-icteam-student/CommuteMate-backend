@@ -11,6 +11,7 @@ import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEdit
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleMonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleSummaryResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeResponseDetail;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryListResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleListResponse;
@@ -145,6 +146,26 @@ public class WorkScheduleController {
                 "근무 일정 상세 조회 성공",
                 scheduleService.getWorkSchedule(userId, scheduleId)
         ));
+    }
+
+    /**
+     * 근로시간 요약 조회 API (주/월 진행률 위젯용)
+     */
+    @Operation(
+            summary = "근로시간 요약 조회",
+            description = "특정 주간 범위의 주간·월간 근로시간 요약을 조회합니다. startDate와 endDate는 같은 달, 같은 주 이내여야 합니다."
+    )
+    @GetMapping("/summary")
+    public ResponseEntity<Response> getScheduleSummary(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails.getUser().getUserId();
+        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+        WorkScheduleSummaryResponse response =
+                scheduleService.getScheduleSummary(userId, organizationId, startDate, endDate);
+        return ResponseEntity.ok(Response.of(true, "근로시간 요약을 조회했습니다.", response));
     }
 
     /**
