@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import com.better.CommuteMate.domain.faq.entity.FaqStatus;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -53,6 +54,7 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
         BooleanBuilder where = new BooleanBuilder();
 
         where.and(faq.deletedFlag.isFalse());
+        where.and(faq.status.eq(FaqStatus.PUBLISHED));
 
         if (categoryId != null) {
             where.and(fc.category.id.eq(categoryId));
@@ -153,6 +155,7 @@ public class FaqQueryRepositoryImpl implements FaqQueryRepository {
             FROM faq f
             LEFT JOIN faq_category fc ON f.id = fc.faq_id
             WHERE f.deleted_flag = false
+                AND f.status = 'PUBLISHED'
         """);
 
         if (categoryId != null) sql.append(" AND fc.category_id = :categoryId");
