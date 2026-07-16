@@ -17,7 +17,10 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     UNAUTHORIZED_ACCESS("해당 근무 일정에 대한 권한이 없습니다.", "[Error] : 근무 일정 접근 권한 없음", HttpStatus.FORBIDDEN),
     INVALID_YEAR_MONTH("유효하지 않은 연도 또는 월 값입니다.", "[Error] : 유효하지 않은 연도/월", HttpStatus.BAD_REQUEST),
     INVALID_DATE_RANGE("시작 날짜는 종료 날짜보다 늦을 수 없습니다.", "[Error] : 시작 날짜 > 종료 날짜", HttpStatus.BAD_REQUEST),
-    CROSS_MONTH_RANGE_NOT_ALLOWED("조회 기간은 같은 달 이내여야 합니다.", "[Error] : 다른 달에 걸친 조회 범위", HttpStatus.BAD_REQUEST);
+    CROSS_MONTH_RANGE_NOT_ALLOWED("조회 기간은 같은 달 이내여야 합니다.", "[Error] : 다른 달에 걸친 조회 범위", HttpStatus.BAD_REQUEST),
+    EDIT_REQUEST_EMPTY("수정 요청 항목이 없습니다.", "[Error] : 수정 요청 항목 없음", HttpStatus.BAD_REQUEST),
+    EDIT_REQUEST_REASON_REQUIRED("수정 요청 사유를 입력해야 합니다.", "[Error] : 수정 요청 사유 미입력", HttpStatus.BAD_REQUEST),
+    DELETE_SCHEDULE_NOT_FOUND("삭제 요청한 스케줄을 찾을 수 없습니다.", "[Error] : 삭제 요청 스케줄 미존재", HttpStatus.NOT_FOUND);
 
 
     private final String message;

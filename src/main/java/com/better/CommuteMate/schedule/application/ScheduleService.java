@@ -9,8 +9,10 @@ import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
+import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequest;
 import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequestItem;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestItemRepository;
+import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestRepository;
 import com.better.CommuteMate.domain.workplace.entity.Workplace;
 import com.better.CommuteMate.domain.workplace.repository.WorkplaceRepository;
 import com.better.CommuteMate.global.code.CodeType;
@@ -23,6 +25,8 @@ import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResult
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
 import com.better.CommuteMate.schedule.controller.dtos.ScheduleUpdateMessage;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditRequest;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleMonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeResponseDetail;
@@ -56,6 +60,7 @@ public class ScheduleService {
     private final WorkSchedulesRepository workSchedulesRepository;
     private final WorkAttendanceRepository workAttendanceRepository;
     private final WorkChangeRequestItemRepository workChangeRequestItemRepository;
+    private final WorkChangeRequestRepository workChangeRequestRepository;
     private final WorkUnavailableTimeRepository workUnavailableTimeRepository;
     private final UserRepository userRepository;
     private final WorkplaceRepository workplaceRepository;
@@ -485,6 +490,105 @@ public class ScheduleService {
                 .scheduleMonth(month)
                 .maxConcurrentWorkers(maxConcurrent)
                 .build();
+    }
+
+    @Transactional
+    public WorkScheduleEditResponse submitEditRequest(Long userId, WorkScheduleEditRequest request) {
+        List<WorkScheduleEditRequest.Slot> deleteSlots = request.deleteSlotsOrEmpty();
+        List<WorkScheduleEditRequest.Slot> addSlots = request.addSlotsOrEmpty();
+
+        if (deleteSlots.isEmpty() && addSlots.isEmpty()) {
+            throw CustomException.of(ScheduleErrorCode.EDIT_REQUEST_EMPTY);
+        }
+        if (request.reason() == null || request.reason().isBlank()) {
+            throw CustomException.of(ScheduleErrorCode.EDIT_REQUEST_REASON_REQUIRED);
+        }
+
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
+
+        validateMonthlyLimitForEdit(userId, String.valueOf(user.getOrganizationId()), addSlots, deleteSlots);
+
+        WorkChangeRequest changeRequest = WorkChangeRequest.builder()
+                .user(user)
+                .reason(request.reason())
+                .statusCode(CodeType.CS01)
+                .createdBy(userId)
+                .updatedBy(userId)
+                .build();
+        workChangeRequestRepository.save(changeRequest);
+
+        for (WorkScheduleEditRequest.Slot slot : deleteSlots) {
+            WorkSchedule schedule = workSchedulesRepository
+                    .findByUser_UserIdAndDateAndStartTimeAndEndTime(userId, slot.date(), slot.start(), slot.end())
+                    .filter(s -> !s.getStatusCode().equals(CodeType.WS04))
+                    .orElseThrow(() -> CustomException.of(ScheduleErrorCode.DELETE_SCHEDULE_NOT_FOUND));
+
+            workChangeRequestItemRepository.save(WorkChangeRequestItem.builder()
+                    .request(changeRequest)
+                    .changeTypeCode(CodeType.CR02)
+                    .schedule(schedule)
+                    .date(slot.date())
+                    .startTime(slot.start())
+                    .endTime(slot.end())
+                    .build());
+        }
+
+        for (WorkScheduleEditRequest.Slot slot : addSlots) {
+            workChangeRequestItemRepository.save(WorkChangeRequestItem.builder()
+                    .request(changeRequest)
+                    .changeTypeCode(CodeType.CR01)
+                    .schedule(null)
+                    .date(slot.date())
+                    .startTime(slot.start())
+                    .endTime(slot.end())
+                    .build());
+        }
+
+        return WorkScheduleEditResponse.builder()
+                .requestId(changeRequest.getRequestId())
+                .status(CodeType.CS01.getCodeName())
+                .build();
+    }
+
+    private void validateMonthlyLimitForEdit(
+            Long userId,
+            String organizationId,
+            List<WorkScheduleEditRequest.Slot> addSlots,
+            List<WorkScheduleEditRequest.Slot> deleteSlots
+    ) {
+        if (addSlots.isEmpty()) return;
+
+        YearMonth targetMonth = YearMonth.from(addSlots.get(0).date());
+        Optional<WorkScheduleSetting> settingOpt = workScheduleSettingService
+                .getSetting(organizationId, targetMonth.getYear(), targetMonth.getMonthValue());
+        if (settingOpt.isEmpty()) return;
+
+        WorkScheduleSetting setting = settingOpt.get();
+        LocalDate monthStart = targetMonth.atDay(1);
+        LocalDate monthEnd = targetMonth.atEndOfMonth();
+
+        long currentMinutes = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(userId, monthStart, monthEnd, CodeType.WS04)
+                .stream().mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes()).sum();
+
+        long deleteMinutes = deleteSlots.stream()
+                .filter(s -> YearMonth.from(s.date()).equals(targetMonth))
+                .mapToLong(s -> Duration.between(s.start(), s.end()).toMinutes()).sum();
+
+        long addMinutes = addSlots.stream()
+                .filter(s -> YearMonth.from(s.date()).equals(targetMonth))
+                .mapToLong(s -> Duration.between(s.start(), s.end()).toMinutes()).sum();
+
+        long requestedMinutes = currentMinutes - deleteMinutes + addMinutes;
+        int limitMinutes = setting.getMonthlyRequiredMinutes();
+
+        if (requestedMinutes > limitMinutes) {
+            throw new MonthlyWorkTimeExceededException(
+                    limitMinutes / 60,
+                    (int) Math.ceil(requestedMinutes / 60.0)
+            );
+        }
     }
 
     @Transactional(readOnly = true)

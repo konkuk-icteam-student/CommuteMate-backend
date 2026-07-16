@@ -7,6 +7,8 @@ import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeComman
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResultCommand;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeRequest;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditRequest;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleMonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeResponseDetail;
@@ -143,6 +145,23 @@ public class WorkScheduleController {
                 "근무 일정 상세 조회 성공",
                 scheduleService.getWorkSchedule(userId, scheduleId)
         ));
+    }
+
+    /**
+     * 근무 시간표 수정 요청 API
+     */
+    @Operation(
+            summary = "근무 시간표 수정 요청",
+            description = "초기 신청 기간 이후 근무 시간표 수정을 요청합니다. 관리자 승인 후 시간표에 반영됩니다."
+    )
+    @PostMapping("/edit")
+    public ResponseEntity<Response> submitEditRequest(
+            @RequestBody WorkScheduleEditRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails.getUser().getUserId();
+        WorkScheduleEditResponse response = scheduleService.submitEditRequest(userId, request);
+        return ResponseEntity.ok(Response.of(true, "수정 요청이 제출되었습니다. 승인 후 시간표에 반영됩니다.", response));
     }
 
     /**
