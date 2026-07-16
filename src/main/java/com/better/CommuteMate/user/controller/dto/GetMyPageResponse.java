@@ -1,26 +1,34 @@
 package com.better.CommuteMate.user.controller.dto;
 
+import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
 
 @Schema(description = "마이페이지 조회 응답 DTO")
-public record GetMyPageResponse(
+@Getter
+public class GetMyPageResponse extends ResponseDetail {
 
-        @Schema(description = "사용자 이름", example = "김담당")
-        String name,
+    private final String name;
+    private final String email;
+    private final Long organizationId;
+    private final String organizationName;
+    private final long publishedCount;
+    private final long draftCount;
 
-        @Schema(description = "이메일", example = "1234@konkuk.ac.kr")
-        String email,
-
-        @Schema(description = "소속 조직 ID", example = "1")
-        Long organizationId,
-
-        @Schema(description = "소속 조직명", example = "정보운영팀")
-        String organizationName,
-
-        @Schema(description = "작성 완료 업무일지 개수", example = "24")
-        long publishedCount,
-
-        @Schema(description = "임시저장 업무일지 개수", example = "4")
-        long draftCount
-) {
+    public GetMyPageResponse(
+            String name,
+            String email,
+            Long organizationId,
+            String organizationName,
+            long publishedCount,
+            long draftCount
+    ) {
+        super();
+        this.name = name;
+        this.email = email;
+        this.organizationId = organizationId;
+        this.organizationName = organizationName;
+        this.publishedCount = publishedCount;
+        this.draftCount = draftCount;
+    }
 }
