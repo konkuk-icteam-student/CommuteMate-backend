@@ -24,17 +24,17 @@ public class Faq {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 30, nullable = false)
-    private String title;
+    @Column(length = 30)
+    private String title; // Todo nullable=true로 수정 완료
 
     @Column(name = "complainant_name", length = 50)
     private String complainantName;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String content;
+    @Column(columnDefinition = "TEXT")
+    private String content; // Todo nullable=true로 수정 완료
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String answer;
+    @Column(columnDefinition = "TEXT")
+    private String answer; // Todo nullable=true로 수정 완료
 
     @Column(columnDefinition = "TEXT")
     private String etc;
@@ -54,6 +54,10 @@ public class Faq {
 
     @Column(name = "deleted_at")
     private LocalDate deletedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FaqStatus status;
 
     @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FaqImage> images = new ArrayList<>();
@@ -106,7 +110,8 @@ public class Faq {
             String answer,
             String etc,
             List<Category> categories,
-            User writer
+            User writer,
+            FaqStatus status
     ) {
         Faq faq = new Faq();
         faq.title = title;
@@ -115,6 +120,7 @@ public class Faq {
         faq.answer = answer;
         faq.etc = etc;
         faq.writer = writer;
+        faq.status = status;
 
         for (Category category : categories) {
             faq.addCategory(category);
@@ -130,7 +136,8 @@ public class Faq {
             String answer,
             String etc,
             List<Category> categories,
-            User writer
+            User writer,
+            FaqStatus status
     ) {
         this.title = title;
         this.complainantName = complainantName;
@@ -138,6 +145,7 @@ public class Faq {
         this.answer = answer;
         this.etc = etc;
         this.writer = writer;
+        this.status = status;
 
         this.faqCategories.clear();
 

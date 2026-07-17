@@ -2,10 +2,7 @@ package com.better.CommuteMate.faq.application.service;
 
 import com.better.CommuteMate.domain.category.entity.Category;
 import com.better.CommuteMate.domain.category.repository.CategoryRepository;
-import com.better.CommuteMate.domain.faq.entity.Faq;
-import com.better.CommuteMate.domain.faq.entity.FaqFile;
-import com.better.CommuteMate.domain.faq.entity.FaqHistory;
-import com.better.CommuteMate.domain.faq.entity.FaqImage;
+import com.better.CommuteMate.domain.faq.entity.*;
 import com.better.CommuteMate.domain.faq.repository.FaqFileRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqHistoryRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqImageRepository;
@@ -13,9 +10,7 @@ import com.better.CommuteMate.domain.faq.repository.FaqRelationRepository;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
-import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
-import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
-import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
+import com.better.CommuteMate.faq.application.dto.request.*;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
@@ -65,6 +60,7 @@ public class FaqService {
     private final OpenAIEmbeddingClient embeddingClient;
     private final FaqRelationRepository faqRelationRepository;
 
+    // faq 객체 생성, set status = Publish
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
 
         User writer = userRepository.findById(userId)
@@ -87,7 +83,8 @@ public class FaqService {
                 request.answer(),
                 request.etc(),
                 categories,
-                writer
+                writer,
+                FaqStatus.PUBLISHED
         );
 
         faqRepository.save(faq);
@@ -119,9 +116,10 @@ public class FaqService {
 
         computeAndSaveEmbedding(faq);
 
-        return new PostFaqResponse(faq.getId());
+        return new PostFaqResponse(faq.getId(), faq.getStatus());
     }
 
+    // faq 수정 후 발행, set status = Publish
     public PutFaqUpdateResponse updateFaq(Long userId, Long faqId, PutFaqUpdateRequest request) {
         User modifier = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
@@ -155,7 +153,8 @@ public class FaqService {
                 request.answer(),
                 request.etc(),
                 categories,
-                modifier
+                modifier,
+                FaqStatus.PUBLISHED
         );
 
         faq.getImages().forEach(FaqImage::detachFaq);
@@ -194,7 +193,111 @@ public class FaqService {
 
         computeAndSaveEmbedding(faq);
 
-        return new PutFaqUpdateResponse(faqId);
+        return new PutFaqUpdateResponse(faqId, faq.getStatus());
+    }
+
+    // faq 최초 임시저장, faq 객체 생성, set status = Draft
+    public PostFaqResponse createDraftFaq(Long userId, PostDraftFaqRequest request) {
+
+        User writer = userRepository.findById(userId)
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
+
+        List<Category> categories = new ArrayList<>();
+
+        // 카테고리가 넘어온 경우에만 검증
+        if (request.categoryIds() != null && !request.categoryIds().isEmpty()) {
+
+            if (request.categoryIds().size() > 3) {
+                throw CustomException.of(FaqErrorCode.CATEGORY_LIMIT_EXCEEDED);
+            }
+
+            categories = categoryRepository.findAllById(request.categoryIds());
+
+            if (categories.size() != request.categoryIds().size()) {
+                throw CustomException.of(CategoryErrorCode.CATEGORY_NOT_FOUND);
+            }
+        }
+
+        Faq faq = Faq.create(
+                request.title(),
+                request.complainantName(),
+                request.content(),
+                request.answer(),
+                request.etc(),
+                categories,
+                writer,
+                FaqStatus.DRAFT
+        );
+
+        faqRepository.save(faq);
+
+        List<String> imageUrls = extractImageUrls(request.content(), request.answer());
+
+        if (!imageUrls.isEmpty()) {
+            List<FaqImage> images = faqImageRepository.findByUrlIn(imageUrls);
+            images.forEach(faq::addImage);
+        }
+
+        return new PostFaqResponse(
+                faq.getId(),
+                faq.getStatus()
+        );
+    }
+
+    // faq 임시저장 이후 수정 그리고 또 다시 임시저장, set status = Draft
+    public PutFaqUpdateResponse updateDraftFaq(Long userId, Long faqId, PutDraftFaqUpdateRequest request) {
+
+        User modifier = userRepository.findById(userId)
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
+
+        Faq faq = faqRepository.findById(faqId)
+                .orElseThrow(() -> CustomException.of(FaqErrorCode.FAQ_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(faq.getDeletedFlag())) {
+            throw CustomException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
+        }
+
+        if (faq.getStatus() != FaqStatus.DRAFT) {
+            throw CustomException.of(FaqErrorCode.INVALID_FAQ_STATUS);
+        }
+
+        List<Category> categories = new ArrayList<>();
+
+        // 카테고리가 넘어온 경우에만 검증
+        if (request.categoryIds() != null && !request.categoryIds().isEmpty()) {
+
+            if (request.categoryIds().size() > 3) {
+                throw CustomException.of(FaqErrorCode.CATEGORY_LIMIT_EXCEEDED);
+            }
+
+            categories = categoryRepository.findAllById(request.categoryIds());
+
+            if (categories.size() != request.categoryIds().size()) {
+                throw CustomException.of(CategoryErrorCode.CATEGORY_NOT_FOUND);
+            }
+        }
+
+        faq.update(
+                request.title(),
+                request.complainantName(),
+                request.content(),
+                request.answer(),
+                request.etc(),
+                categories,
+                modifier,
+                FaqStatus.DRAFT // 드래프트 유지
+        );
+
+        List<String> imageUrls = extractImageUrls(request.content(), request.answer());
+
+        faq.getImages().clear();
+
+        if (!imageUrls.isEmpty()) {
+            List<FaqImage> images = faqImageRepository.findByUrlIn(imageUrls);
+            images.forEach(faq::addImage);
+        }
+
+        return new PutFaqUpdateResponse(faq.getId(), faq.getStatus());
     }
 
     @Transactional(readOnly = true)
