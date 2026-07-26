@@ -6,9 +6,6 @@ public record WorkScheduleDTO(
         LocalDateTime start,
         LocalDateTime end
 ) {
-    /*public static WorkScheduleDTO from(WorkScheduleCommand workScheduleCommand) {
-        return new WorkScheduleDTO(workScheduleCommand.start(), workScheduleCommand.end());
-    }*/
     public static WorkScheduleDTO from(LocalDateTime start, LocalDateTime end) {
         return new WorkScheduleDTO(start,end);
 

@@ -3,6 +3,8 @@ package com.better.CommuteMate.global.exceptions.error;
 import org.springframework.http.HttpStatus;
 
 public enum ScheduleErrorCode implements CustomErrorCode {
+    ADMIN_SCHEDULE_QUERY_INVALID("조회 연도 또는 월 값이 올바르지 않습니다.", "[Error] : invalid admin schedule query range", HttpStatus.BAD_REQUEST),
+    ADMIN_SCHEDULE_SETTING_NOT_FOUND("해당 월의 스케줄 설정을 찾을 수 없습니다.", "[Error] : admin schedule setting not found", HttpStatus.NOT_FOUND),
     INVALID_SCHEDULE_SETTING_REQUEST("요청 값이 올바르지 않습니다.", "[Error] : invalid schedule setting request", HttpStatus.BAD_REQUEST),
     INVALID_SETTING_APPLY_DATE("근로신청 시작일은 마감일보다 이전이어야 합니다.", "[Error] : apply start date is after apply end date", HttpStatus.BAD_REQUEST),
     INVALID_SETTING_MIN_MAX("최소 근무시간은 최대 근무시간보다 작아야 합니다.", "[Error] : minimum work minutes exceed maximum work minutes", HttpStatus.BAD_REQUEST),

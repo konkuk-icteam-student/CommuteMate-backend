@@ -94,4 +94,11 @@ public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Str
             WorkScheduleSetting setting,
             List<CodeType> statusCodes
     );
+
+    List<WorkSchedule> findAllBySettingAndDateBetweenAndStatusCodeIn(
+            WorkScheduleSetting setting,
+            LocalDate startDate,
+            LocalDate endDate,
+            List<CodeType> statusCodes
+    );
 }

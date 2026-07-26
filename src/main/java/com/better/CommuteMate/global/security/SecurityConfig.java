@@ -79,7 +79,7 @@ public class SecurityConfig {
                         .frameOptions(frame -> frame.sameOrigin())
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/admin/**").hasRole("RL02")
+                        .requestMatchers("/api/admin/**", "/api/v1/admin/**").hasRole("RL02")
                         // Task API만 인증 필요
                         .requestMatchers("/api/tasks/**", "/api/task-templates/**").authenticated()
                         // 나머지는 모두 허용
