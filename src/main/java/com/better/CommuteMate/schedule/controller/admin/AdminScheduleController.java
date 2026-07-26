@@ -4,6 +4,7 @@ import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.schedule.application.AdminScheduleService;
 import com.better.CommuteMate.schedule.application.WorkScheduleSettingService;
+import com.better.CommuteMate.schedule.application.MonthlyScheduleSettingService;
 import com.better.CommuteMate.schedule.application.dtos.MonthlyScheduleConfigCommand;
 import com.better.CommuteMate.schedule.application.dtos.SetApplyTermCommand;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
@@ -13,15 +14,19 @@ import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessChangeReques
 import com.better.CommuteMate.schedule.controller.admin.dtos.SetMonthlyLimitRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyTermResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SetApplyTermRequest;
+import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingRequest;
+import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingResponse;
 //import com.better.CommuteMate.domain.schedule.entity.MonthlyScheduleConfig;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkTimeSummaryResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryListResponse;
@@ -36,12 +41,34 @@ import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestListRes
 
 @Tag(name = "관리자 근무 일정 관리", description = "관리자 전용 근무 일정 설정 및 변경 요청 처리 API")
 @RestController
-@RequestMapping("/api/admin/schedule")
+@RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
 public class AdminScheduleController {
 
     private final WorkScheduleSettingService workScheduleSettingService;
     private final AdminScheduleService adminScheduleService;
+    private final MonthlyScheduleSettingService monthlyScheduleSettingService;
+
+    @PutMapping("/work-application-settings/{year}/{month}")
+    @Operation(summary = "월별 근로신청 설정 저장", description = "설정을 생성 또는 수정하고 새 규칙에 맞지 않는 기존 신청을 취소합니다.")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> saveScheduleSetting(
+            @PathVariable int year,
+            @PathVariable int month,
+            @Valid @RequestBody SaveScheduleSettingRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+        String adminId = String.valueOf(userDetails.getUserId());
+        SaveScheduleSettingResponse result = monthlyScheduleSettingService.save(
+                organizationId, year, month, request, adminId
+        );
+        return ResponseEntity.ok(Response.of(
+                true,
+                "근로신청 설정을 저장했습니다.",
+                result
+        ));
+    }
 
     /**
      * 특정 연도/월의 최대 동시 근무 인원수를 설정합니다.

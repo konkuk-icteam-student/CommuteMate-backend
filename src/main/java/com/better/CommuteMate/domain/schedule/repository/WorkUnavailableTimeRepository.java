@@ -19,4 +19,6 @@ public interface WorkUnavailableTimeRepository extends JpaRepository<WorkUnavail
             LocalDate startDate,
             LocalDate endDate
     );
+
+    void deleteAllBySetting(WorkScheduleSetting setting);
 }

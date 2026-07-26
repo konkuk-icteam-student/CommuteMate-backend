@@ -3,6 +3,9 @@ package com.better.CommuteMate.global.exceptions.error;
 import org.springframework.http.HttpStatus;
 
 public enum ScheduleErrorCode implements CustomErrorCode {
+    INVALID_SCHEDULE_SETTING_REQUEST("요청 값이 올바르지 않습니다.", "[Error] : invalid schedule setting request", HttpStatus.BAD_REQUEST),
+    INVALID_SETTING_APPLY_DATE("근로신청 시작일은 마감일보다 이전이어야 합니다.", "[Error] : apply start date is after apply end date", HttpStatus.BAD_REQUEST),
+    INVALID_SETTING_MIN_MAX("최소 근무시간은 최대 근무시간보다 작아야 합니다.", "[Error] : minimum work minutes exceed maximum work minutes", HttpStatus.BAD_REQUEST),
     SCHEDULE_PARTIAL_FAILURE("신청하신 일정 중 실패한 일정이 존재합니다.", "[Error] : 신청하신 일정 중 실패한 일정이 존재합니다.", HttpStatus.MULTI_STATUS),
     SCHEDULE_FAILURE("신청하신 일정이 모두 실패하였습니다.", "[Error] : 신청하신 일정이 모두 실패하였습니다.", HttpStatus.UNPROCESSABLE_ENTITY),
     INVALID_APPLY_TERM("신청 기간이 유효하지 않습니다. 시작 시간이 종료 시간보다 이전이어야 합니다.", "[Error] : 신청 기간 유효성 검증 실패", HttpStatus.BAD_REQUEST),

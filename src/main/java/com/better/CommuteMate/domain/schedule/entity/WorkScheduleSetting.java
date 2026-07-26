@@ -66,6 +66,12 @@ public class WorkScheduleSetting {
     @Column(name = "monthly_required_minutes", nullable = false)
     private Integer monthlyRequiredMinutes;
 
+    @Column(name = "monthly_min_minutes")
+    private Integer monthlyMinMinutes;
+
+    @Column(name = "monthly_max_minutes")
+    private Integer monthlyMaxMinutes;
+
     @Column(name = "weekly_min_minutes")
     private Integer weeklyMinMinutes;
 
@@ -121,6 +127,30 @@ public class WorkScheduleSetting {
         this.monthlyRequiredMinutes = monthlyRequiredMinutes;
         this.weeklyMinMinutes = weeklyMinMinutes;
         this.weeklyMaxMinutes = weeklyMaxMinutes;
+        this.updatedBy = updatedBy;
+    }
+
+    public void updateMonthlySetting(
+            LocalDateTime applyStartAt,
+            LocalDateTime applyEndAt,
+            Integer maxConcurrentWorkers,
+            Integer minWorkUnitMinutes,
+            Integer weeklyMinMinutes,
+            Integer weeklyMaxMinutes,
+            Integer monthlyMinMinutes,
+            Integer monthlyMaxMinutes,
+            String updatedBy
+    ) {
+        this.applyStartAt = applyStartAt;
+        this.applyEndAt = applyEndAt;
+        this.maxConcurrentWorkers = maxConcurrentWorkers;
+        this.minWorkUnitMinutes = minWorkUnitMinutes;
+        this.weeklyMinMinutes = weeklyMinMinutes;
+        this.weeklyMaxMinutes = weeklyMaxMinutes;
+        this.monthlyMinMinutes = monthlyMinMinutes;
+        this.monthlyMaxMinutes = monthlyMaxMinutes;
+        // Keep the legacy limit used by the student schedule APIs in sync.
+        this.monthlyRequiredMinutes = monthlyMaxMinutes;
         this.updatedBy = updatedBy;
     }
 
