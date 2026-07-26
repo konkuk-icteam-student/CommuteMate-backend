@@ -68,7 +68,7 @@ class WorkAttendanceServiceTest {
     void checkIn_NoSchedule() {
         when(qrTokenManager.validateToken("valid")).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().userId(1L).build()));
-        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyLong(), any(), any()))
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(Collections.emptyList());
 
         assertThatThrownBy(() -> workAttendanceService.checkIn(1L, "valid"))
@@ -82,14 +82,16 @@ class WorkAttendanceServiceTest {
         // Given
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId(1L)
-                .startTime(now.plusHours(1)) // 1 hour later
-                .endTime(now.plusHours(4))
+                .scheduleId("1")
+                .date(now.toLocalDate())
+                .startTime(now.plusHours(1).toLocalTime()) // 1 hour later
+                .endTime(now.plusHours(4).toLocalTime())
+                .statusCode(CodeType.WS02)
                 .build();
 
         when(qrTokenManager.validateToken("valid")).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().userId(1L).build()));
-        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyLong(), any(), any()))
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(schedule));
 
         // When & Then
@@ -104,9 +106,11 @@ class WorkAttendanceServiceTest {
         // Given
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId(1L)
-                .startTime(now.minusMinutes(5)) // Started 5 mins ago
-                .endTime(now.plusHours(3))
+                .scheduleId("1")
+                .date(now.toLocalDate())
+                .startTime(now.minusMinutes(5).toLocalTime()) // Started 5 mins ago
+                .endTime(now.plusHours(3).toLocalTime())
+                .statusCode(CodeType.WS02)
                 .build();
         
         WorkAttendance existing = WorkAttendance.builder()
@@ -115,9 +119,9 @@ class WorkAttendanceServiceTest {
 
         when(qrTokenManager.validateToken("valid")).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().userId(1L).build()));
-        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyLong(), any(), any()))
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(schedule));
-        when(workAttendanceRepository.findBySchedule_ScheduleId(1L)).thenReturn(List.of(existing));
+        when(workAttendanceRepository.findBySchedule_ScheduleId("1")).thenReturn(List.of(existing));
 
         // When & Then
         assertThatThrownBy(() -> workAttendanceService.checkIn(1L, "valid"))
@@ -131,16 +135,18 @@ class WorkAttendanceServiceTest {
         // Given
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId(1L)
-                .startTime(now.minusMinutes(5))
-                .endTime(now.plusHours(3))
+                .scheduleId("1")
+                .date(now.toLocalDate())
+                .startTime(now.minusMinutes(5).toLocalTime())
+                .endTime(now.plusHours(3).toLocalTime())
+                .statusCode(CodeType.WS02)
                 .build();
 
         when(qrTokenManager.validateToken("valid")).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().userId(1L).build()));
-        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyLong(), any(), any()))
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(schedule));
-        when(workAttendanceRepository.findBySchedule_ScheduleId(1L)).thenReturn(Collections.emptyList());
+        when(workAttendanceRepository.findBySchedule_ScheduleId("1")).thenReturn(Collections.emptyList());
 
         // When
         workAttendanceService.checkIn(1L, "valid");
@@ -155,17 +161,19 @@ class WorkAttendanceServiceTest {
         // Given
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId(1L)
-                .startTime(now.minusHours(3))
-                .endTime(now.plusMinutes(5)) // Ends in 5 mins
+                .scheduleId("1")
+                .date(now.toLocalDate())
+                .startTime(now.minusHours(3).toLocalTime())
+                .endTime(now.minusMinutes(1).toLocalTime())
+                .statusCode(CodeType.WS02)
                 .build();
 
         when(qrTokenManager.validateToken("valid")).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().userId(1L).build()));
-        when(workSchedulesRepository.findValidSchedulesByUserAndDateRange(anyLong(), any(), any()))
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(schedule));
         // No attendance records
-        when(workAttendanceRepository.findBySchedule_ScheduleId(1L)).thenReturn(Collections.emptyList());
+        when(workAttendanceRepository.findBySchedule_ScheduleId("1")).thenReturn(Collections.emptyList());
 
         // When & Then
         assertThatThrownBy(() -> workAttendanceService.checkOut(1L, "valid"))
