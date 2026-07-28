@@ -3,6 +3,9 @@ package com.better.CommuteMate.schedule.controller.admin;
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.schedule.application.AdminWorkChangeRequestQueryService;
+import com.better.CommuteMate.schedule.application.AdminWorkChangeRequestProcessService;
+import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeRequest;
+import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.WorkChangeRequestListResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminWorkChangeRequestController {
 
     private final AdminWorkChangeRequestQueryService queryService;
+    private final AdminWorkChangeRequestProcessService processService;
 
     @GetMapping
     @Operation(summary = "근로시간 수정 요청 목록 조회")
@@ -113,6 +120,110 @@ public class AdminWorkChangeRequestController {
         ));
     }
 
+    @PatchMapping("/{requestId}")
+    @Operation(summary = "근로시간 수정 요청 승인/거절")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "승인 또는 거절 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(name = "승인 성공", value = APPROVE_EXAMPLE),
+                                    @ExampleObject(name = "거절 성공", value = REJECT_EXAMPLE)
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "처리 요청이 올바르지 않음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "처리 상태 오류",
+                                            value = """
+                                                    {"isSuccess":false,"message":"올바르지 않은 처리 상태입니다.","details":null}
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "거절 사유 누락",
+                                            value = """
+                                                    {"isSuccess":false,"message":"거절 사유를 입력해야 합니다.","details":null}
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "이미 처리된 요청",
+                                            value = """
+                                                    {"isSuccess":false,"message":"이미 처리된 요청입니다.","details":null}
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "수정 요청을 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {"isSuccess":false,"message":"근로시간 수정 요청을 찾을 수 없습니다.","details":null}
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "승인 시 최대 근무 인원 초과",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {"isSuccess":false,"message":"해당 시간대의 최대 근무 인원을 초과했습니다.","details":null}
+                                    """)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> processRequest(
+            @Parameter(description = "처리할 근로시간 수정 요청 ID", example = "1", required = true)
+            @PathVariable Long requestId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "CS02 승인 또는 CS03 거절",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "승인",
+                                            value = """
+                                                    {"statusCode":"CS02","rejectReason":null}
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "거절",
+                                            value = """
+                                                    {"statusCode":"CS03","rejectReason":"해당 시간대 정원이 초과되었습니다."}
+                                                    """
+                                    )
+                            }
+                    )
+            )
+            @RequestBody ProcessWorkChangeRequest command,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        ProcessWorkChangeResponse details = processService.process(
+                requestId,
+                command,
+                userDetails.getUserId(),
+                userDetails.getUser().getOrganizationId()
+        );
+        String message = "CS02".equals(details.statusCode)
+                ? "근로시간 수정 요청을 승인했습니다."
+                : "근로시간 수정 요청을 거절했습니다.";
+        return ResponseEntity.ok(Response.of(true, message, details));
+    }
+
     private static final String SUCCESS_EXAMPLE = """
             {
               "isSuccess": true,
@@ -176,6 +287,45 @@ public class AdminWorkChangeRequestController {
                 "size": 10,
                 "totalElements": 0,
                 "totalPages": 0
+              }
+            }
+            """;
+
+    private static final String APPROVE_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "근로시간 수정 요청을 승인했습니다.",
+              "details": {
+                "requestId": "1",
+                "statusCode": "CS02",
+                "processedAt": "2026-06-13T14:30:00",
+                "deleteSchedules": [{
+                  "scheduleId": "uuid",
+                  "date": "2026-06-15",
+                  "start": "09:00",
+                  "end": "11:00",
+                  "statusCode": "WS04"
+                }],
+                "addSchedules": [{
+                  "scheduleId": "uuid",
+                  "date": "2026-06-17",
+                  "start": "13:00",
+                  "end": "15:00",
+                  "statusCode": "WS02"
+                }]
+              }
+            }
+            """;
+
+    private static final String REJECT_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "근로시간 수정 요청을 거절했습니다.",
+              "details": {
+                "requestId": "1",
+                "statusCode": "CS03",
+                "processedAt": "2026-06-13T14:30:00",
+                "rejectReason": "해당 시간대 정원이 초과되었습니다."
               }
             }
             """;

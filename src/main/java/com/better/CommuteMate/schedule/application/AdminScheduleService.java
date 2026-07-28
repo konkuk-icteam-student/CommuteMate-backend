@@ -6,20 +6,13 @@ import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
-import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequest;
-import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequestItem;
-import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestItemRepository;
-import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestRepository;
 import com.better.CommuteMate.global.code.CodeType;
-import com.better.CommuteMate.global.exceptions.CustomException;
-import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminUserWorkTimeResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ApplyRequestResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleHistoryResponse;
 import com.better.CommuteMate.user.controller.dto.UserInfoResponse;
 import com.better.CommuteMate.user.controller.dto.UserWorkTimeResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,48 +29,15 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AdminScheduleService {
 
-    private final WorkChangeRequestRepository workChangeRequestRepository;
-    private final WorkChangeRequestItemRepository workChangeRequestItemRepository;
     private final WorkSchedulesRepository workSchedulesRepository;
     private final WorkAttendanceRepository workAttendanceRepository;
     private final UserRepository userRepository;
-    private final SimpMessagingTemplate messagingTemplate;
 
     private static final List<CodeType> VALID_STATUS_CODES = List.of(
             CodeType.WS01,
             CodeType.WS02
     );
 
-    /**
-     * 변경 요청 처리 (승인/거부)
-     */
-    @Transactional
-    public void processChangeRequest(List<Long> requestIds, CodeType statusCode, Long adminId) {
-        for (Long id : requestIds) {
-            WorkChangeRequest request = workChangeRequestRepository.findById(id)
-                    .orElseThrow(() -> CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE));
-
-            if (!request.getStatusCode().equals(CodeType.CS01)) {
-                throw CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE);
-            }
-
-            request.setStatusCode(statusCode);
-            request.setUpdatedBy(adminId);
-
-            if (statusCode.equals(CodeType.CS02)) {
-                List<WorkChangeRequestItem> items =
-                        workChangeRequestItemRepository.findAllByRequest_RequestId(id);
-                for (WorkChangeRequestItem item : items) {
-                    // TODO: CR01(ADD) 아이템 처리 - 새 WorkSchedule 생성 후 item.schedule 연결
-                    // TODO: CR02(DELETE) 아이템 처리 - 연결된 WorkSchedule 취소(cancel) 처리
-                }
-            }
-        }
-    }
-
-    /**
-     * 근무 신청 요청 목록 조회
-     */
     @Transactional(readOnly = true)
     public List<ApplyRequestResponse> getApplyRequests() {
         return workSchedulesRepository.findAllByStatusCode(CodeType.WS01).stream()
@@ -85,9 +45,6 @@ public class AdminScheduleService {
                 .toList();
     }
 
-    /**
-     * 특정 사용자의 근무 시간 조회
-     */
     @Transactional(readOnly = true)
     public UserWorkTimeResponse getUserWorkTime(Long userId, Integer year, Integer month) {
         LocalDate start = LocalDate.of(year, month, 1);
@@ -98,9 +55,6 @@ public class AdminScheduleService {
         return new UserWorkTimeResponse(totalMinutes, "MONTHLY");
     }
 
-    /**
-     * 전체 사용자의 근무 시간 통계 조회
-     */
     @Transactional(readOnly = true)
     public List<AdminUserWorkTimeResponse> getWorkTimeSummary(Integer year, Integer month) {
         LocalDate start = LocalDate.of(year, month, 1);
@@ -121,9 +75,6 @@ public class AdminScheduleService {
         return summaryList;
     }
 
-    /**
-     * 특정 사용자의 근무 이력 조회
-     */
     @Transactional(readOnly = true)
     public List<WorkScheduleHistoryResponse> getUserWorkHistory(Long userId, Integer year, Integer month) {
         LocalDate start = LocalDate.of(year, month, 1);
@@ -132,9 +83,6 @@ public class AdminScheduleService {
         return getHistoryList(userId, start, end);
     }
 
-    /**
-     * 전체 사용자의 근무 이력 조회
-     */
     @Transactional(readOnly = true)
     public List<WorkScheduleHistoryResponse> getAllWorkHistory(Integer year, Integer month) {
         LocalDate start = LocalDate.of(year, month, 1);

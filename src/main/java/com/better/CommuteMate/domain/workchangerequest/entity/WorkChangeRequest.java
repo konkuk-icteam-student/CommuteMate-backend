@@ -30,7 +30,6 @@ public class WorkChangeRequest {
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;
 
-    // WorkChangeRequest 상태 코드(CS01: 대기, CS02: 승인, CS03: 거부)
     @Enumerated(EnumType.STRING)
     @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType statusCode;

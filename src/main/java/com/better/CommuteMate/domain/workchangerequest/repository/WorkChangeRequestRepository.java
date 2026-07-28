@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
 import java.util.List;
 import java.time.LocalDate;
@@ -15,6 +17,17 @@ import java.time.LocalDate;
 @Repository
 public interface WorkChangeRequestRepository extends JpaRepository<WorkChangeRequest, Long> {
     List<WorkChangeRequest> findByUser_UserId(Long userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select request
+            from WorkChangeRequest request
+            join fetch request.user
+            where request.requestId = :requestId
+            """)
+    java.util.Optional<WorkChangeRequest> findForProcessing(
+            @Param("requestId") Long requestId
+    );
 
     @Query(
             value = """
