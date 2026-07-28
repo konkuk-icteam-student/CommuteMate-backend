@@ -3,6 +3,7 @@ package com.better.CommuteMate.global.exceptions.error;
 import org.springframework.http.HttpStatus;
 
 public enum ScheduleErrorCode implements CustomErrorCode {
+    INVALID_CHANGE_REQUEST_IDS("요청 ID 목록이 올바르지 않습니다.", "[Error] : invalid change request ids", HttpStatus.BAD_REQUEST),
     INVALID_CHANGE_REQUEST_PROCESS_STATUS("올바르지 않은 처리 상태입니다.", "[Error] : invalid change request process status", HttpStatus.BAD_REQUEST),
     CHANGE_REQUEST_REJECT_REASON_REQUIRED("거절 사유를 입력해야 합니다.", "[Error] : change request reject reason required", HttpStatus.BAD_REQUEST),
     CHANGE_REQUEST_ALREADY_PROCESSED("이미 처리된 요청입니다.", "[Error] : change request already processed", HttpStatus.BAD_REQUEST),

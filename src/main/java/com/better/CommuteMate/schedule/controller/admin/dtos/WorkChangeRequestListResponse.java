@@ -57,8 +57,8 @@ public class WorkChangeRequestListResponse extends ResponseDetail {
     }
 
     public record RequestItem(
-            String requestId,
-            String userId,
+            Long requestId,
+            Long userId,
             String userName,
             String statusCode,
             @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime requestedAt,

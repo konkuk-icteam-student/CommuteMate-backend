@@ -4,6 +4,9 @@ import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.schedule.application.AdminWorkChangeRequestQueryService;
 import com.better.CommuteMate.schedule.application.AdminWorkChangeRequestProcessService;
+import com.better.CommuteMate.schedule.application.AdminWorkChangeRequestBulkService;
+import com.better.CommuteMate.schedule.controller.admin.dtos.BulkApproveWorkChangeRequest;
+import com.better.CommuteMate.schedule.controller.admin.dtos.BulkApproveWorkChangeResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.WorkChangeRequestListResponse;
@@ -34,6 +37,7 @@ public class AdminWorkChangeRequestController {
 
     private final AdminWorkChangeRequestQueryService queryService;
     private final AdminWorkChangeRequestProcessService processService;
+    private final AdminWorkChangeRequestBulkService bulkService;
 
     @GetMapping
     @Operation(summary = "근로시간 수정 요청 목록 조회")
@@ -224,6 +228,61 @@ public class AdminWorkChangeRequestController {
         return ResponseEntity.ok(Response.of(true, message, details));
     }
 
+    @PatchMapping("/bulk")
+    @Operation(summary = "근로시간 수정 요청 일괄 승인")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "일괄 승인 처리 완료",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = BULK_APPROVE_EXAMPLE)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "요청 ID 목록이 올바르지 않음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "isSuccess": false,
+                                      "message": "요청 ID 목록이 올바르지 않습니다.",
+                                      "details": null
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> bulkApprove(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "승인할 근로시간 수정 요청 ID 목록",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {"requestIds":[1,2,3]}
+                                    """)
+                    )
+            )
+            @RequestBody BulkApproveWorkChangeRequest command,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        BulkApproveWorkChangeResponse details = bulkService.approve(
+                command,
+                userDetails.getUserId(),
+                userDetails.getUser().getOrganizationId()
+        );
+        return ResponseEntity.ok(Response.of(
+                true,
+                "근로시간 수정 요청을 일괄 승인했습니다.",
+                details
+        ));
+    }
+
     private static final String SUCCESS_EXAMPLE = """
             {
               "isSuccess": true,
@@ -239,8 +298,8 @@ public class AdminWorkChangeRequestController {
                   "rejectedCount": 1
                 },
                 "requests": [{
-                  "requestId": "1",
-                  "userId": "2",
+                  "requestId": 1,
+                  "userId": 2,
                   "userName": "김길동",
                   "statusCode": "CS01",
                   "requestedAt": "2026-06-13T10:20:00",
@@ -296,7 +355,7 @@ public class AdminWorkChangeRequestController {
               "isSuccess": true,
               "message": "근로시간 수정 요청을 승인했습니다.",
               "details": {
-                "requestId": "1",
+                "requestId": 1,
                 "statusCode": "CS02",
                 "processedAt": "2026-06-13T14:30:00",
                 "deleteSchedules": [{
@@ -322,10 +381,41 @@ public class AdminWorkChangeRequestController {
               "isSuccess": true,
               "message": "근로시간 수정 요청을 거절했습니다.",
               "details": {
-                "requestId": "1",
+                "requestId": 1,
                 "statusCode": "CS03",
                 "processedAt": "2026-06-13T14:30:00",
                 "rejectReason": "해당 시간대 정원이 초과되었습니다."
+              }
+            }
+            """;
+
+    private static final String BULK_APPROVE_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "근로시간 수정 요청을 일괄 승인했습니다.",
+              "details": {
+                "summary": {
+                  "totalCount": 3,
+                  "successCount": 2,
+                  "failCount": 1
+                },
+                "results": [
+                  {
+                    "requestId": 1,
+                    "resultCode": "SUCCESS",
+                    "processedAt": "2026-06-13T14:30:00"
+                  },
+                  {
+                    "requestId": 2,
+                    "resultCode": "SUCCESS",
+                    "processedAt": "2026-06-13T14:30:00"
+                  },
+                  {
+                    "requestId": 3,
+                    "resultCode": "CAPACITY_EXCEEDED",
+                    "processedAt": null
+                  }
+                ]
               }
             }
             """;

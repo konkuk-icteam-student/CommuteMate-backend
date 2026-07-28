@@ -67,7 +67,7 @@ public class AdminWorkChangeRequestProcessService {
             request.setRejectReason(rejectReason);
             sendNotification(request, false);
             return new ProcessWorkChangeResponse(
-                    String.valueOf(requestId), targetStatus.name(), processedAt,
+                    requestId, targetStatus.name(), processedAt,
                     rejectReason, null, null
             );
         }
@@ -144,7 +144,7 @@ public class AdminWorkChangeRequestProcessService {
 
         sendNotification(request, true);
         return new ProcessWorkChangeResponse(
-                String.valueOf(requestId), targetStatus.name(), processedAt,
+                requestId, targetStatus.name(), processedAt,
                 null, deleted, added
         );
     }

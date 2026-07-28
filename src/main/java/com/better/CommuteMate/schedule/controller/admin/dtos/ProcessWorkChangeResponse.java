@@ -12,7 +12,7 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProcessWorkChangeResponse extends ResponseDetail {
-    public final String requestId;
+    public final Long requestId;
     public final String statusCode;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     public final LocalDateTime processedAt;
@@ -21,7 +21,7 @@ public class ProcessWorkChangeResponse extends ResponseDetail {
     public final List<ScheduleResult> addSchedules;
 
     public ProcessWorkChangeResponse(
-            String requestId,
+            Long requestId,
             String statusCode,
             LocalDateTime processedAt,
             String rejectReason,

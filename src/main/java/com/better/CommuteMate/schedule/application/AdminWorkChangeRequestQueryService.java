@@ -152,8 +152,8 @@ public class AdminWorkChangeRequestQueryService {
                         .toList();
 
         return new WorkChangeRequestListResponse.RequestItem(
-                String.valueOf(request.getRequestId()),
-                String.valueOf(request.getUser().getUserId()),
+                request.getRequestId(),
+                request.getUser().getUserId(),
                 request.getUser().getName(),
                 request.getStatusCode().name(),
                 request.getCreatedAt(),
