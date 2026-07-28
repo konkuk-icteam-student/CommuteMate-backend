@@ -3,6 +3,9 @@ package com.better.CommuteMate.global.exceptions.error;
 import org.springframework.http.HttpStatus;
 
 public enum ScheduleErrorCode implements CustomErrorCode {
+    INVALID_CHANGE_REQUEST_STATUS("올바르지 않은 변경 요청 상태입니다.", "[Error] : invalid change request status", HttpStatus.BAD_REQUEST),
+    INVALID_CHANGE_REQUEST_PAGE("페이지 요청 값이 올바르지 않습니다.", "[Error] : invalid change request page", HttpStatus.BAD_REQUEST),
+    INVALID_CHANGE_REQUEST_YEAR_MONTH("조회 연도 또는 월 값이 올바르지 않습니다.", "[Error] : invalid change request year or month", HttpStatus.BAD_REQUEST),
     ADMIN_SCHEDULE_QUERY_INVALID("조회 연도 또는 월 값이 올바르지 않습니다.", "[Error] : invalid admin schedule query range", HttpStatus.BAD_REQUEST),
     ADMIN_SCHEDULE_SETTING_NOT_FOUND("해당 월의 스케줄 설정을 찾을 수 없습니다.", "[Error] : admin schedule setting not found", HttpStatus.NOT_FOUND),
     INVALID_SCHEDULE_SETTING_REQUEST("요청 값이 올바르지 않습니다.", "[Error] : invalid schedule setting request", HttpStatus.BAD_REQUEST),

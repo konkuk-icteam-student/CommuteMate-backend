@@ -24,4 +24,6 @@ public interface WorkChangeRequestItemRepository extends JpaRepository<WorkChang
     );
 
     List<WorkChangeRequestItem> findAllByRequest_RequestId(Long requestId);
+
+    List<WorkChangeRequestItem> findAllByRequest_RequestIdIn(List<Long> requestIds);
 }
