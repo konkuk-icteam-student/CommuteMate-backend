@@ -65,7 +65,7 @@ storage:
   path: ${STORAGE_PATH:uploads}
   url: ${STORAGE_URL:http://localhost/uploads}
 
-openai:
-  api-key: ${OPENAI_API_KEY:your-api-key}
-  url: https://api.openai.com/v1/chat/completions
-  embedding-url: https://api.openai.com/v1/embeddings
+rag-service:
+  url: ${RAG_SERVICE_URL:http://localhost:8000}
+  timeout-ms: ${RAG_SERVICE_TIMEOUT_MS:10000}
+  llm-timeout-ms: ${RAG_SERVICE_LLM_TIMEOUT_MS:120000}

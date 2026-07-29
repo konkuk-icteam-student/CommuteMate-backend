@@ -10,8 +10,6 @@ import java.util.List;
 import lombok.*;
 
 import java.time.LocalDate;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 
 @Entity
@@ -63,14 +61,6 @@ public class Faq {
 
     @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FaqRelation> relatedFaqRelations = new ArrayList<>();
-
-    @JdbcTypeCode(SqlTypes.VECTOR)
-    @Column(columnDefinition = "vector(1536)")
-    private float[] embedding;
-
-    public void updateEmbedding(float[] embedding) {
-        this.embedding = embedding;
-    }
 
     public void updateRelatedFaqRelations(List<Faq> faqs) {
         this.relatedFaqRelations.clear();

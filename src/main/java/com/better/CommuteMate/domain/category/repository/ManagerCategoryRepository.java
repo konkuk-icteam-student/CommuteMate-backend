@@ -19,6 +19,13 @@ public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory
     Optional<ManagerCategory>  findByManagerIdAndCategoryId(Long managerId, Long categoryId);
 
     @Query("""
+    select distinct mc.category.id
+    from ManagerCategory mc
+    where mc.manager.organization.id = :organizationId
+    """)
+    List<Long> findCategoryIdsByOrganizationId(@Param("organizationId") Long organizationId);
+
+    @Query("""
     select mc
     from ManagerCategory mc
     where (:categoryId is null or mc.category.id = :categoryId)

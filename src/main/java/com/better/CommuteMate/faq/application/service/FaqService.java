@@ -27,7 +27,8 @@ import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
-import com.better.CommuteMate.global.ai.OpenAIEmbeddingClient;
+import com.better.CommuteMate.faq.application.event.FaqDeleteEvent;
+import com.better.CommuteMate.faq.application.event.FaqIndexEvent;
 import com.better.CommuteMate.global.storage.FileStorageService;
 import com.better.CommuteMate.global.storage.FileUploadResult;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -62,7 +64,7 @@ public class FaqService {
     private final FaqImageRepository faqImageRepository;
     private final FaqFileRepository faqFileRepository;
     private final FileStorageService fileStorageService;
-    private final OpenAIEmbeddingClient embeddingClient;
+    private final ApplicationEventPublisher eventPublisher;
     private final FaqRelationRepository faqRelationRepository;
 
     public PostFaqResponse createFaq(Long userId, PostFaqRequest request) {
@@ -117,7 +119,7 @@ public class FaqService {
 
         faqHistoryRepository.save(faqhistory);
 
-        computeAndSaveEmbedding(faq);
+        eventPublisher.publishEvent(new FaqIndexEvent(faq.getId()));
 
         return new PostFaqResponse(faq.getId());
     }
@@ -192,7 +194,7 @@ public class FaqService {
         FaqHistory faqhistory = FaqHistory.create(faq);
         faqHistoryRepository.save(faqhistory);
 
-        computeAndSaveEmbedding(faq);
+        eventPublisher.publishEvent(new FaqIndexEvent(faq.getId()));
 
         return new PutFaqUpdateResponse(faqId);
     }
@@ -248,6 +250,8 @@ public class FaqService {
         faqRelationRepository.deleteByRelatedFaqId(faqId);
 
         faq.delete();
+
+        eventPublisher.publishEvent(new FaqDeleteEvent(faqId));
     }
 
     public PostFaqImageResponse uploadFaqImage(MultipartFile imageFile) {
@@ -276,20 +280,6 @@ public class FaqService {
                 fileUploadResult.url(),
                 file.getOriginalFilename()
         );
-    }
-
-    private void computeAndSaveEmbedding(Faq faq) {
-        try {
-            String plainContent = Jsoup.parse(faq.getContent()).text();
-
-            String text = faq.getTitle() + " " + plainContent;
-
-            float[] embedding = embeddingClient.embed(text);
-
-            faq.updateEmbedding(embedding);
-        } catch (Exception e) {
-            log.warn("FAQ {} 임베딩 생성 실패: {}", faq.getId(), e.getMessage());
-        }
     }
 
     private List<String> extractImageUrls(String content, String answer) {
