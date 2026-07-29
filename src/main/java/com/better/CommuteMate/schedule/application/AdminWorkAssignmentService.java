@@ -74,17 +74,38 @@ public class AdminWorkAssignmentService {
             throw CustomException.of(ScheduleErrorCode.ADMIN_WORK_ASSIGNMENT_DUPLICATED);
         }
 
-        WorkSchedule schedule = scheduleRepository.saveAndFlush(WorkSchedule.builder()
-                .user(user)
-                .setting(setting)
-                .workplace(workplace)
-                .date(parsed.date())
-                .startTime(parsed.startTime())
-                .endTime(parsed.endTime())
-                .statusCode(CodeType.WS02)
-                .createdBy(String.valueOf(adminId))
-                .updatedBy(String.valueOf(adminId))
-                .build());
+        WorkSchedule schedule = scheduleRepository
+                .findFirstByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeOrderByUpdatedAtDesc(
+                        user.getUserId(),
+                        parsed.date(),
+                        parsed.startTime(),
+                        parsed.endTime(),
+                        CodeType.WS04
+                )
+                .map(cancelled -> {
+                    cancelled.updateSchedule(
+                            setting,
+                            workplace,
+                            parsed.date(),
+                            parsed.startTime(),
+                            parsed.endTime(),
+                            String.valueOf(adminId)
+                    );
+                    cancelled.updateStatus(CodeType.WS02, String.valueOf(adminId));
+                    return cancelled;
+                })
+                .orElseGet(() -> WorkSchedule.builder()
+                        .user(user)
+                        .setting(setting)
+                        .workplace(workplace)
+                        .date(parsed.date())
+                        .startTime(parsed.startTime())
+                        .endTime(parsed.endTime())
+                        .statusCode(CodeType.WS02)
+                        .createdBy(String.valueOf(adminId))
+                        .updatedBy(String.valueOf(adminId))
+                        .build());
+        schedule = scheduleRepository.saveAndFlush(schedule);
 
         long currentCount = scheduleRepository
                 .countBySettingAndDateAndStartTimeAndEndTimeAndStatusCode(
