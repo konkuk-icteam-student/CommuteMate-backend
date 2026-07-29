@@ -79,6 +79,22 @@ public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Lon
             CodeType statusCode
     );
 
+    boolean existsByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeIn(
+            Long userId,
+            LocalDate date,
+            LocalTime startTime,
+            LocalTime endTime,
+            List<CodeType> statusCodes
+    );
+
+    long countBySettingAndDateAndStartTimeAndEndTimeAndStatusCode(
+            WorkScheduleSetting setting,
+            LocalDate date,
+            LocalTime startTime,
+            LocalTime endTime,
+            CodeType statusCode
+    );
+
     /**
      * 특정 사용자와 특정 날짜, 시작 시간을 기준으로 근무 일정을 조회
      */

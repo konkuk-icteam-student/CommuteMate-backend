@@ -2,7 +2,10 @@ package com.better.CommuteMate.schedule.controller.admin;
 
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.global.controller.dtos.Response;
+import com.better.CommuteMate.schedule.application.AdminWorkAssignmentService;
 import com.better.CommuteMate.schedule.application.AdminWorkScheduleQueryService;
+import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkAssignmentRequest;
+import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkAssignmentResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminScheduleRangeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,9 +16,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +33,153 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminWorkScheduleController {
 
     private final AdminWorkScheduleQueryService queryService;
+    private final AdminWorkAssignmentService assignmentService;
+
+    @PostMapping
+    @Operation(
+            summary = "근로 시간표 직접 배치",
+            description = """
+                    관리자가 소속 조직의 사용자를 30분 근로 슬롯에 직접 배치합니다.
+                    생성된 일정은 승인 절차 없이 WS02(승인) 상태가 되며,
+                    현재 인원이 최대 동시 근무 인원을 초과하더라도 배치할 수 있습니다.
+                    """,
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "근로 시간표 배치 요청",
+                                    value = """
+                                            {
+                                              "userId": "1",
+                                              "date": "2026-09-08",
+                                              "startTime": "09:00",
+                                              "endTime": "09:30"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "근로 시간표 추가 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "배치 성공",
+                                    value = """
+                                            {
+                                              "isSuccess": true,
+                                              "message": "근로 시간표가 추가되었습니다.",
+                                              "details": {
+                                                "scheduleId": "9f36a98d-1377-4f44-86bb-f87ff47e39ac",
+                                                "userId": "1",
+                                                "userName": "홍길동",
+                                                "date": "2026-09-08",
+                                                "startTime": "09:00",
+                                                "endTime": "09:30",
+                                                "currentCount": 3,
+                                                "maxConcurrentWorkers": 4
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "시간 형식 오류 또는 사용자를 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "30분 단위가 아닌 시간",
+                                            value = """
+                                                    {
+                                                      "isSuccess": false,
+                                                      "message": "근로 시간은 30분 단위로만 지정할 수 있습니다.",
+                                                      "details": null
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "사용자 없음 또는 다른 조직 소속",
+                                            value = """
+                                                    {
+                                                      "isSuccess": false,
+                                                      "message": "사용자를 찾을 수 없습니다.",
+                                                      "details": null
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "사용자가 해당 슬롯에 이미 배치됨",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "중복 배치",
+                                    value = """
+                                            {
+                                              "isSuccess": false,
+                                              "message": "이미 해당 시간에 배치된 사용자입니다.",
+                                              "details": null
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "해당 월의 스케줄 설정 또는 조직의 근무지를 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "월별 스케줄 설정 없음",
+                                            value = """
+                                                    {
+                                                      "isSuccess": false,
+                                                      "message": "해당 월의 스케줄 설정을 찾을 수 없습니다.",
+                                                      "details": null
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "조직 근무지 없음",
+                                            value = """
+                                                    {
+                                                      "isSuccess": false,
+                                                      "message": "조직의 근무지를 찾을 수 없습니다.",
+                                                      "details": null
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> assignSchedule(
+            @Valid @RequestBody AdminWorkAssignmentRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long organizationId = userDetails.getUser().getOrganizationId();
+        Long adminId = userDetails.getUser().getUserId();
+        AdminWorkAssignmentResponse details = assignmentService.assign(
+                request, organizationId, adminId
+        );
+        return ResponseEntity.ok(Response.of(
+                true, "근로 시간표가 추가되었습니다.", details
+        ));
+    }
 
     @GetMapping
     @Operation(summary = "근로시간표 조회", description = "같은 달 안의 근로시간표를 30분 슬롯 단위로 조회합니다.")
