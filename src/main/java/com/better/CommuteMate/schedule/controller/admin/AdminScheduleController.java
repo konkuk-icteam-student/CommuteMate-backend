@@ -34,7 +34,35 @@ public class AdminScheduleController {
     @PutMapping("/work-application-settings/{year}/{month}")
     @Operation(
             summary = "월별 근로신청 설정 저장",
-            description = "설정을 생성 또는 수정하고 새 규칙에 맞지 않는 기존 신청을 취소합니다."
+            description = "설정을 생성 또는 수정하고 새 규칙에 맞지 않는 기존 신청을 취소합니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "월별 근로신청 설정",
+                                    value = """
+                                            {
+                                              "applyStartDate": "2026-04-01",
+                                              "applyEndDate": "2026-04-10",
+                                              "unavailableDates": ["2026-04-19"],
+                                              "unavailableTimeRanges": [
+                                                {
+                                                  "start": "11:00",
+                                                  "end": "13:00"
+                                                }
+                                              ],
+                                              "maxConcurrentWorkers": 4,
+                                              "minWorkUnitMinutes": 120,
+                                              "weeklyMinMinutes": 300,
+                                              "weeklyMaxMinutes": 540,
+                                              "monthlyMinMinutes": 1200,
+                                              "monthlyMaxMinutes": 1620
+                                            }
+                                            """
+                            )
+                    )
+            )
     )
     @ApiResponses({
             @ApiResponse(
