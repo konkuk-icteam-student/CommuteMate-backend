@@ -18,6 +18,7 @@ import java.time.LocalDate;
 public interface WorkChangeRequestRepository extends JpaRepository<WorkChangeRequest, Long> {
     List<WorkChangeRequest> findByUser_UserId(Long userId);
 
+    // 같은 요청이 동시에 승인·거절되는 것을 막기 위해 처리 완료 시점까지 행 잠금을 유지합니다.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select request

@@ -6,6 +6,7 @@ import com.better.CommuteMate.schedule.controller.admin.dtos.BulkApproveWorkChan
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -33,6 +34,7 @@ class AdminWorkChangeRequestBulkServiceTest {
     }
 
     @Test
+    @DisplayName("일괄 승인 - 요청별 성공 및 실패 결과를 독립적으로 반환한다")
     void returnsIndependentResultForEveryRequest() {
         LocalDateTime processedAt = LocalDateTime.of(2026, 6, 13, 14, 30);
         when(processService.process(
@@ -78,6 +80,7 @@ class AdminWorkChangeRequestBulkServiceTest {
     }
 
     @Test
+    @DisplayName("일괄 승인 - 요청 ID 목록이 비어 있으면 실패한다")
     void rejectsEmptyRequestIds() {
         assertThatThrownBy(() -> service.approve(
                 new BulkApproveWorkChangeRequest(List.of()), 99L, 10L
@@ -87,6 +90,7 @@ class AdminWorkChangeRequestBulkServiceTest {
     }
 
     @Test
+    @DisplayName("일괄 승인 - 요청 ID 목록에 null이 포함되면 실패한다")
     void rejectsNullRequestId() {
         assertThatThrownBy(() -> service.approve(
                 new BulkApproveWorkChangeRequest(

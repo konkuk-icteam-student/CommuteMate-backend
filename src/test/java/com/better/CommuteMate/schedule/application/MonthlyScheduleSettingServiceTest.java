@@ -10,6 +10,7 @@ import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -44,6 +45,7 @@ class MonthlyScheduleSettingServiceTest {
     }
 
     @Test
+    @DisplayName("근로신청 설정 저장 - 변경된 규칙과 충돌하는 기존 스케줄을 취소한다")
     void saveCancelsSchedulesConflictingWithNewRule() {
         WorkScheduleSetting setting = WorkScheduleSetting.builder()
                 .settingId("setting-1")
@@ -87,6 +89,7 @@ class MonthlyScheduleSettingServiceTest {
     }
 
     @Test
+    @DisplayName("근로신청 설정 저장 - 최소 시간이 최대 시간보다 크면 실패한다")
     void saveRejectsMinimumGreaterThanMaximum() {
         SaveScheduleSettingRequest invalid = new SaveScheduleSettingRequest(
                 LocalDate.of(2026, 4, 1),

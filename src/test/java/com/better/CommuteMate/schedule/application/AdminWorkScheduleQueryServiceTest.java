@@ -10,6 +10,7 @@ import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -42,6 +43,7 @@ class AdminWorkScheduleQueryServiceTest {
     }
 
     @Test
+    @DisplayName("관리자 근로시간표 조회 - 30분 슬롯별 근무자와 신청 불가 상태를 반환한다")
     void returnsThirtyMinuteSlotsWithWorkersAndUnavailableStatus() {
         LocalDate date = LocalDate.of(2026, 4, 15);
         WorkScheduleSetting setting = setting();
@@ -82,6 +84,7 @@ class AdminWorkScheduleQueryServiceTest {
     }
 
     @Test
+    @DisplayName("관리자 근로시간표 조회 - 조회 기간이 서로 다른 월이면 실패한다")
     void rejectsCrossMonthRange() {
         assertThatThrownBy(() -> service.getSchedules(
                 "10", "2026-04-30", "2026-05-01", null
@@ -91,6 +94,7 @@ class AdminWorkScheduleQueryServiceTest {
     }
 
     @Test
+    @DisplayName("관리자 근로시간표 조회 - 해당 월 설정이 없으면 실패한다")
     void throwsNotFoundWhenMonthlySettingDoesNotExist() {
         when(settingRepository.findByOrganizationIdAndYearAndMonth("10", 2026, 4))
                 .thenReturn(Optional.empty());

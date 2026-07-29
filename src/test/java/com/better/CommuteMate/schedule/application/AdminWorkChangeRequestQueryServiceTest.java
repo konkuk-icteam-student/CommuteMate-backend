@@ -8,6 +8,7 @@ import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequ
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -39,6 +40,7 @@ class AdminWorkChangeRequestQueryServiceTest {
     }
 
     @Test
+    @DisplayName("수정 요청 목록 조회 - 상태별 요약과 추가·삭제 항목을 구분해 반환한다")
     void returnsFilteredRequestsWithSeparatedChangeItemsAndSummary() {
         User user = User.builder().userId(2L).organizationId(10L).name("김길동").build();
         WorkChangeRequest request = WorkChangeRequest.builder()
@@ -82,6 +84,7 @@ class AdminWorkChangeRequestQueryServiceTest {
     }
 
     @Test
+    @DisplayName("수정 요청 목록 조회 - 올바르지 않은 상태 코드면 실패한다")
     void rejectsInvalidStatus() {
         assertThatThrownBy(() -> service.getRequests(10L, 2026, 6, "CS99", 0, 10))
                 .isInstanceOf(CustomException.class)
@@ -89,6 +92,7 @@ class AdminWorkChangeRequestQueryServiceTest {
     }
 
     @Test
+    @DisplayName("수정 요청 목록 조회 - 페이지 값이 올바르지 않으면 실패한다")
     void rejectsInvalidPage() {
         assertThatThrownBy(() -> service.getRequests(10L, 2026, 6, "ALL", -1, 10))
                 .isInstanceOf(CustomException.class)
@@ -96,6 +100,7 @@ class AdminWorkChangeRequestQueryServiceTest {
     }
 
     @Test
+    @DisplayName("수정 요청 목록 조회 - 연도 또는 월이 올바르지 않으면 실패한다")
     void rejectsInvalidYearOrMonth() {
         assertThatThrownBy(() -> service.getRequests(10L, 2026, 13, "ALL", 0, 10))
                 .isInstanceOf(CustomException.class)

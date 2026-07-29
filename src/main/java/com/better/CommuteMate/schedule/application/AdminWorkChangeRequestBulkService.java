@@ -31,6 +31,7 @@ public class AdminWorkChangeRequestBulkService {
         List<BulkApproveWorkChangeResponse.Result> results = new ArrayList<>();
         int successCount = 0;
 
+        // 단건 서비스의 트랜잭션을 요청마다 분리해 일부 실패가 다른 승인 결과를 롤백하지 않게 합니다.
         for (Long requestId : command.requestIds()) {
             try {
                 ProcessWorkChangeResponse response = processService.process(

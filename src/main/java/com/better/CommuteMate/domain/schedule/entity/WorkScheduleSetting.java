@@ -149,7 +149,7 @@ public class WorkScheduleSetting {
         this.weeklyMaxMinutes = weeklyMaxMinutes;
         this.monthlyMinMinutes = monthlyMinMinutes;
         this.monthlyMaxMinutes = monthlyMaxMinutes;
-        // Keep the legacy limit used by the student schedule APIs in sync.
+        // 기존 학생 스케줄 검증 로직이 사용하는 월 한도 필드도 같은 값으로 유지합니다.
         this.monthlyRequiredMinutes = monthlyMaxMinutes;
         this.updatedBy = updatedBy;
     }

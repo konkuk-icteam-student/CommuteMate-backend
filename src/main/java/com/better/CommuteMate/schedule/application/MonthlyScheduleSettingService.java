@@ -161,7 +161,7 @@ public class MonthlyScheduleSettingService {
                 schedules, affected, schedule -> schedule.getUser().getUserId(),
                 request.monthlyMinMinutes(), request.monthlyMaxMinutes()
         );
-        // A monthly cancellation can make a week fall below its new minimum.
+        // 최대 시간 초과 건을 제외한 뒤 남은 스케줄이 최소 시간을 충족하는지 다시 확인합니다.
         applyMinimumLimit(schedules, affected, this::weekStart, request.weeklyMinMinutes());
         applyMinimumLimit(
                 schedules, affected, schedule -> schedule.getUser().getUserId(),
@@ -181,6 +181,7 @@ public class MonthlyScheduleSettingService {
                 .thenComparing(WorkSchedule::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
                 .thenComparing(WorkSchedule::getScheduleId, Comparator.nullsFirst(Comparator.naturalOrder()));
         List<WorkSchedule> kept = new ArrayList<>();
+        // 먼저 신청된 스케줄을 우선 유지해 정원 축소 시 취소 대상이 항상 동일하게 결정되도록 합니다.
         schedules.stream().filter(schedule -> !affected.contains(schedule)).sorted(order).forEach(schedule -> {
             if (wouldExceedConcurrentLimit(schedule, kept, limit)) {
                 affected.add(schedule);
@@ -309,6 +310,7 @@ public class MonthlyScheduleSettingService {
                 .endTime(LocalTime.MAX)
                 .build()));
 
+        // 시간대 제한은 특정 날짜가 아닌 월의 모든 신청 가능 날짜에 동일하게 적용합니다.
         for (int day = 1; day <= target.lengthOfMonth(); day++) {
             LocalDate date = target.atDay(day);
             if (fullDates.contains(date)) {

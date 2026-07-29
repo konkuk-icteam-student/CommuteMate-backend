@@ -16,6 +16,7 @@ import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -60,6 +61,7 @@ class AdminWorkChangeRequestProcessServiceTest {
     }
 
     @Test
+    @DisplayName("수정 요청 승인 - 삭제 스케줄은 취소하고 추가 스케줄은 승인 상태로 생성한다")
     void approvesRequestByCancellingDeleteAndCreatingApprovedAdd() {
         WorkChangeRequest request = pendingRequest();
         WorkSchedule deletedSchedule = WorkSchedule.builder()
@@ -116,6 +118,7 @@ class AdminWorkChangeRequestProcessServiceTest {
     }
 
     @Test
+    @DisplayName("수정 요청 거절 - 스케줄을 변경하지 않고 거절 사유를 저장한다")
     void rejectsWithoutChangingSchedules() {
         WorkChangeRequest request = pendingRequest();
         when(requestRepository.findForProcessing(1L)).thenReturn(Optional.of(request));
@@ -134,6 +137,7 @@ class AdminWorkChangeRequestProcessServiceTest {
     }
 
     @Test
+    @DisplayName("수정 요청 처리 - 이미 처리된 요청이면 실패한다")
     void rejectsAlreadyProcessedRequest() {
         WorkChangeRequest request = pendingRequest();
         request.setStatusCode(CodeType.CS02);
@@ -147,6 +151,7 @@ class AdminWorkChangeRequestProcessServiceTest {
     }
 
     @Test
+    @DisplayName("수정 요청 거절 - 거절 사유가 없으면 실패한다")
     void requiresRejectReason() {
         assertThatThrownBy(() -> service.process(
                 1L, new ProcessWorkChangeRequest("CS03", " "), 99L, 10L
@@ -156,6 +161,7 @@ class AdminWorkChangeRequestProcessServiceTest {
     }
 
     @Test
+    @DisplayName("수정 요청 승인 - 최대 동시 근무 인원을 초과하면 실패한다")
     void rejectsCapacityExceededApproval() {
         WorkChangeRequest request = pendingRequest();
         WorkChangeRequestItem addItem = item(

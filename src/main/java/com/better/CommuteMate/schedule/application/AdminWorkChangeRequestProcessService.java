@@ -78,6 +78,7 @@ public class AdminWorkChangeRequestProcessService {
         List<ProcessWorkChangeResponse.ScheduleResult> deleted = new ArrayList<>();
         List<ProcessWorkChangeResponse.ScheduleResult> added = new ArrayList<>();
 
+        // 교체 대상 스케줄을 먼저 취소해야 같은 시간대의 신규 스케줄 정원을 정확히 계산할 수 있습니다.
         for (WorkChangeRequestItem item : items) {
             if (item.getChangeTypeCode() != CodeType.CR02) {
                 continue;
@@ -99,6 +100,7 @@ public class AdminWorkChangeRequestProcessService {
             schedule.cancel(String.valueOf(adminId));
             deleted.add(toResult(schedule));
         }
+        // 이후 정원 조회 쿼리가 취소 상태를 반영하도록 영속성 컨텍스트를 DB에 동기화합니다.
         scheduleRepository.flush();
 
         Workplace workplace = workplaceRepository
@@ -137,6 +139,7 @@ public class AdminWorkChangeRequestProcessService {
                     .createdBy(String.valueOf(adminId))
                     .updatedBy(String.valueOf(adminId))
                     .build();
+            // 다음 추가 항목의 정원 검사에 현재 생성 건도 포함되도록 즉시 반영합니다.
             scheduleRepository.saveAndFlush(schedule);
             item.linkSchedule(schedule);
             added.add(toResult(schedule));
