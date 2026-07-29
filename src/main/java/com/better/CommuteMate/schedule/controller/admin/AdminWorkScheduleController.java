@@ -3,10 +3,12 @@ package com.better.CommuteMate.schedule.controller.admin;
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.schedule.application.AdminWorkAssignmentService;
+import com.better.CommuteMate.schedule.application.AdminWorkScheduleDeletionService;
 import com.better.CommuteMate.schedule.application.AdminWorkScheduleQueryService;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkAssignmentRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkAssignmentResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminScheduleRangeResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkScheduleDeleteResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,6 +22,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +38,7 @@ public class AdminWorkScheduleController {
 
     private final AdminWorkScheduleQueryService queryService;
     private final AdminWorkAssignmentService assignmentService;
+    private final AdminWorkScheduleDeletionService deletionService;
 
     @PostMapping
     @Operation(
@@ -178,6 +183,105 @@ public class AdminWorkScheduleController {
         );
         return ResponseEntity.ok(Response.of(
                 true, "근로 시간표가 추가되었습니다.", details
+        ));
+    }
+
+    @DeleteMapping("/{scheduleId}")
+    @Operation(
+            summary = "근로 시간표 삭제",
+            description = """
+                    관리자가 소속 조직의 근로 시간표를 삭제합니다.
+                    실제 행은 삭제하지 않고 상태를 WS04(취소)로 변경합니다.
+                    출퇴근 기록이 있는 스케줄은 삭제할 수 없습니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "근로 시간표 삭제 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "삭제 성공",
+                                    value = """
+                                            {
+                                              "isSuccess": true,
+                                              "message": "근로 시간표가 삭제되었습니다.",
+                                              "details": {
+                                                "scheduleId": "e5f6a7b8-1f2c-4d3e-9a5b-6c7d8e9f0123",
+                                                "date": "2026-09-08",
+                                                "startTime": "09:00",
+                                                "endTime": "09:30",
+                                                "currentCount": 2,
+                                                "maxConcurrentWorkers": 4
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "스케줄 또는 해당 월의 설정을 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "근로 시간표 없음",
+                                            value = """
+                                                    {
+                                                      "isSuccess": false,
+                                                      "message": "근로 시간표를 찾을 수 없습니다.",
+                                                      "details": null
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "월별 스케줄 설정 없음",
+                                            value = """
+                                                    {
+                                                      "isSuccess": false,
+                                                      "message": "해당 월의 스케줄 설정을 찾을 수 없습니다.",
+                                                      "details": null
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 출퇴근 기록이 있는 스케줄",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "출퇴근 기록 존재",
+                                    value = """
+                                            {
+                                              "isSuccess": false,
+                                              "message": "출퇴근 기록이 있어 삭제할 수 없습니다.",
+                                              "details": null
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> deleteSchedule(
+            @Parameter(description = "삭제할 스케줄 ID", example = "e5f6a7b8-1f2c-4d3e-9a5b-6c7d8e9f0123", required = true)
+            @PathVariable String scheduleId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        AdminWorkScheduleDeleteResponse details = deletionService.delete(
+                scheduleId,
+                userDetails.getUser().getOrganizationId(),
+                userDetails.getUser().getUserId()
+        );
+        return ResponseEntity.ok(Response.of(
+                true, "근로 시간표가 삭제되었습니다.", details
         ));
     }
 

@@ -170,6 +170,64 @@ class AdminWorkAssignmentServiceTest {
                 .hasMessage("조직의 근무지를 찾을 수 없습니다.");
     }
 
+    @Test
+    @DisplayName("관리자 직접 배치 - 취소된 동일 슬롯이 있으면 기존 스케줄을 WS02로 복구한다")
+    void restoresCancelledScheduleInsteadOfCreatingAnotherRow() {
+        LocalDate date = LocalDate.of(2026, 9, 8);
+        LocalTime start = LocalTime.of(9, 0);
+        LocalTime end = LocalTime.of(9, 30);
+        User user = User.builder()
+                .userId(1L)
+                .organizationId(10L)
+                .name("김송은")
+                .build();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId("10")
+                .year(2026)
+                .month(9)
+                .maxConcurrentWorkers(4)
+                .build();
+        Workplace workplace = Workplace.builder().build();
+        WorkSchedule cancelled = WorkSchedule.builder()
+                .scheduleId("cancelled-id")
+                .user(user)
+                .setting(setting)
+                .workplace(workplace)
+                .date(date)
+                .startTime(start)
+                .endTime(end)
+                .statusCode(CodeType.WS04)
+                .build();
+
+        when(userRepository.findByUserIdAndOrganizationId(1L, 10L))
+                .thenReturn(Optional.of(user));
+        when(settingRepository.findForUpdate("10", 2026, 9))
+                .thenReturn(Optional.of(setting));
+        when(workplaceRepository.findFirstByOrganizationId("10"))
+                .thenReturn(Optional.of(workplace));
+        when(scheduleRepository
+                .existsByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeIn(
+                        1L, date, start, end, List.of(CodeType.WS01, CodeType.WS02)
+                ))
+                .thenReturn(false);
+        when(scheduleRepository
+                .findFirstByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeOrderByUpdatedAtDesc(
+                        1L, date, start, end, CodeType.WS04
+                ))
+                .thenReturn(Optional.of(cancelled));
+        when(scheduleRepository.saveAndFlush(cancelled)).thenReturn(cancelled);
+        when(scheduleRepository.countBySettingAndDateAndStartTimeAndEndTimeAndStatusCode(
+                setting, date, start, end, CodeType.WS02
+        )).thenReturn(1L);
+
+        var response = service.assign(request("09:00", "09:30"), 10L, 99L);
+
+        assertThat(response.getScheduleId()).isEqualTo("cancelled-id");
+        assertThat(cancelled.getStatusCode()).isEqualTo(CodeType.WS02);
+        assertThat(cancelled.getUpdatedBy()).isEqualTo("99");
+        verify(scheduleRepository).saveAndFlush(cancelled);
+    }
+
     private AdminWorkAssignmentRequest request(String startTime, String endTime) {
         return new AdminWorkAssignmentRequest(
                 "1", "2026-09-08", startTime, endTime

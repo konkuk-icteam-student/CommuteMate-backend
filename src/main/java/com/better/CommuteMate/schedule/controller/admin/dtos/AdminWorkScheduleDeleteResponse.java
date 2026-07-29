@@ -10,11 +10,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Getter
-public class AdminWorkAssignmentResponse extends ResponseDetail {
+public class AdminWorkScheduleDeleteResponse extends ResponseDetail {
 
     private final String scheduleId;
-    private final String userId;
-    private final String userName;
     private final LocalDate date;
     @JsonFormat(pattern = "HH:mm")
     private final LocalTime startTime;
@@ -23,10 +21,8 @@ public class AdminWorkAssignmentResponse extends ResponseDetail {
     private final long currentCount;
     private final int maxConcurrentWorkers;
 
-    public AdminWorkAssignmentResponse(
+    public AdminWorkScheduleDeleteResponse(
             String scheduleId,
-            String userId,
-            String userName,
             LocalDate date,
             LocalTime startTime,
             LocalTime endTime,
@@ -34,8 +30,6 @@ public class AdminWorkAssignmentResponse extends ResponseDetail {
             int maxConcurrentWorkers
     ) {
         this.scheduleId = scheduleId;
-        this.userId = userId;
-        this.userName = userName;
         this.date = date;
         this.startTime = startTime;
         this.endTime = endTime;

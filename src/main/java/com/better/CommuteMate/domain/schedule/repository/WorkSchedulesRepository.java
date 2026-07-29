@@ -15,6 +15,20 @@ import java.util.Optional;
 @Repository
 public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, String> {
 
+    Optional<WorkSchedule> findByScheduleIdAndUser_OrganizationIdAndStatusCodeIn(
+            String scheduleId,
+            Long organizationId,
+            List<CodeType> statusCodes
+    );
+
+    Optional<WorkSchedule> findFirstByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeOrderByUpdatedAtDesc(
+            Long userId,
+            LocalDate date,
+            LocalTime startTime,
+            LocalTime endTime,
+            CodeType statusCode
+    );
+
     /**
      * 특정 날짜의 근무 일정 목록을 조회
      */
