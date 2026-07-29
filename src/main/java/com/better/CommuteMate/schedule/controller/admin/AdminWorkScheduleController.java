@@ -4,11 +4,13 @@ import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.schedule.application.AdminWorkAssignmentService;
 import com.better.CommuteMate.schedule.application.AdminWorkScheduleDeletionService;
+import com.better.CommuteMate.schedule.application.AdminWorkScheduleQuickSearchService;
 import com.better.CommuteMate.schedule.application.AdminWorkScheduleQueryService;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkAssignmentRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkAssignmentResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminScheduleRangeResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkScheduleDeleteResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkScheduleQuickSearchResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -39,6 +41,7 @@ public class AdminWorkScheduleController {
     private final AdminWorkScheduleQueryService queryService;
     private final AdminWorkAssignmentService assignmentService;
     private final AdminWorkScheduleDeletionService deletionService;
+    private final AdminWorkScheduleQuickSearchService quickSearchService;
 
     @PostMapping
     @Operation(
@@ -282,6 +285,105 @@ public class AdminWorkScheduleController {
         );
         return ResponseEntity.ok(Response.of(
                 true, "근로 시간표가 삭제되었습니다.", details
+        ));
+    }
+
+    @GetMapping("/quick-search")
+    @Operation(
+            summary = "사용자 근로 시간표 빠른 조회",
+            description = """
+                    같은 조직 사용자의 승인(WS02) 근로 시간표를 기간 내에서 조회합니다.
+                    연속되거나 겹치는 슬롯은 하나의 구간으로 병합하며,
+                    배치가 없는 날짜는 응답에서 제외합니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "근로 시간표 빠른 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "조회 성공",
+                                    value = """
+                                            {
+                                              "isSuccess": true,
+                                              "message": "요청에 성공하였습니다.",
+                                              "details": {
+                                                "userId": "2",
+                                                "userName": "박영희",
+                                                "days": [
+                                                  {
+                                                    "date": "2026-09-10",
+                                                    "dayOfWeek": "목",
+                                                    "slots": [
+                                                      {"start": "09:30", "end": "11:30"}
+                                                    ]
+                                                  },
+                                                  {
+                                                    "date": "2026-09-11",
+                                                    "dayOfWeek": "금",
+                                                    "slots": [
+                                                      {"start": "16:30", "end": "18:30"}
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "사용자를 찾을 수 없거나 조회 기간이 올바르지 않음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "사용자 없음 또는 다른 조직 소속",
+                                            value = """
+                                                    {
+                                                      "isSuccess": false,
+                                                      "message": "사용자를 찾을 수 없습니다.",
+                                                      "details": null
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "조회 기간 오류",
+                                            value = """
+                                                    {
+                                                      "isSuccess": false,
+                                                      "message": "조회 기간이 올바르지 않습니다.",
+                                                      "details": null
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> quickSearch(
+            @Parameter(description = "조회할 사용자 ID", example = "2", required = true)
+            @RequestParam(required = false) String userId,
+            @Parameter(description = "조회 시작일 (YYYY-MM-DD)", example = "2026-09-07", required = true)
+            @RequestParam(required = false) String startDate,
+            @Parameter(description = "조회 종료일 (YYYY-MM-DD)", example = "2026-09-11", required = true)
+            @RequestParam(required = false) String endDate,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        AdminWorkScheduleQuickSearchResponse details = quickSearchService.search(
+                userId,
+                startDate,
+                endDate,
+                userDetails.getUser().getOrganizationId()
+        );
+        return ResponseEntity.ok(Response.of(
+                true, "요청에 성공하였습니다.", details
         ));
     }
 
