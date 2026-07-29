@@ -9,6 +9,8 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     ADMIN_WORK_ASSIGNMENT_WORKPLACE_NOT_FOUND("조직의 근무지를 찾을 수 없습니다.", "[Error] : admin work assignment workplace not found", HttpStatus.NOT_FOUND),
     ADMIN_WORK_SCHEDULE_NOT_FOUND("근로 시간표를 찾을 수 없습니다.", "[Error] : admin work schedule not found", HttpStatus.NOT_FOUND),
     ADMIN_WORK_SCHEDULE_HAS_ATTENDANCE("출퇴근 기록이 있어 삭제할 수 없습니다.", "[Error] : admin work schedule has attendance", HttpStatus.CONFLICT),
+    ADMIN_WORK_SCHEDULE_USER_NOT_FOUND("사용자를 찾을 수 없습니다.", "[Error] : admin work schedule user not found", HttpStatus.BAD_REQUEST),
+    ADMIN_WORK_SCHEDULE_INVALID_RANGE("조회 기간이 올바르지 않습니다.", "[Error] : invalid admin work schedule range", HttpStatus.BAD_REQUEST),
     INVALID_CHANGE_REQUEST_IDS("요청 ID 목록이 올바르지 않습니다.", "[Error] : invalid change request ids", HttpStatus.BAD_REQUEST),
     INVALID_CHANGE_REQUEST_PROCESS_STATUS("올바르지 않은 처리 상태입니다.", "[Error] : invalid change request process status", HttpStatus.BAD_REQUEST),
     CHANGE_REQUEST_REJECT_REASON_REQUIRED("거절 사유를 입력해야 합니다.", "[Error] : change request reject reason required", HttpStatus.BAD_REQUEST),
