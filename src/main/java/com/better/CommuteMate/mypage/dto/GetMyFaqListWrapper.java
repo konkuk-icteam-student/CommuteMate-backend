@@ -1,4 +1,4 @@
-package com.better.CommuteMate.user.controller.dto;
+package com.better.CommuteMate.mypage.dto;
 
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import io.swagger.v3.oas.annotations.media.Schema;

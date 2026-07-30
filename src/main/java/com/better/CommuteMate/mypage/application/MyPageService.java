@@ -1,4 +1,4 @@
-package com.better.CommuteMate.user.application;
+package com.better.CommuteMate.mypage.application;
 
 import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.faq.entity.FaqStatus;
@@ -10,9 +10,9 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.global.exceptions.error.OrganizationErrorCode;
-import com.better.CommuteMate.user.controller.dto.GetMyFaqListResponse;
-import com.better.CommuteMate.user.controller.dto.GetMyFaqListWrapper;
-import com.better.CommuteMate.user.controller.dto.GetMyPageResponse;
+import com.better.CommuteMate.mypage.dto.GetMyFaqListResponse;
+import com.better.CommuteMate.mypage.dto.GetMyFaqListWrapper;
+import com.better.CommuteMate.mypage.dto.GetMyPageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
