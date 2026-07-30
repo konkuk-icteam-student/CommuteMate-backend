@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Schema(description = "내 업무일지 목록 항목 DTO")
@@ -12,7 +13,7 @@ public class GetMyFaqListResponse {
 
     private final Long faqId;
     private final String title;
-    private final LocalDate updatedDate;
+    private final LocalDateTime updatedDate;
 
     public GetMyFaqListResponse(Faq faq) {
         this.faqId = faq.getId();
