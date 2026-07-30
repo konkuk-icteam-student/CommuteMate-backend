@@ -1,5 +1,6 @@
 package com.better.CommuteMate.user.application;
 
+import com.better.CommuteMate.domain.faq.entity.Faq;
 import com.better.CommuteMate.domain.faq.entity.FaqStatus;
 import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.organization.entity.Organization;
@@ -9,10 +10,18 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.global.exceptions.error.OrganizationErrorCode;
+import com.better.CommuteMate.user.controller.dto.GetMyFaqListResponse;
+import com.better.CommuteMate.user.controller.dto.GetMyFaqListWrapper;
 import com.better.CommuteMate.user.controller.dto.GetMyPageResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -57,19 +66,65 @@ public class MyPageService {
         );
     }
 
-    public Object getMyPublishedFaqs(
+    @Transactional(readOnly = true)
+    public GetMyFaqListWrapper getMyPublishedFaqs(
             Long userId,
             int page
     ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                10,
+                Sort.by(Sort.Direction.DESC, "updatedDate")
+        );
 
-        return null;
+        Page<Faq> faqPage =
+                faqRepository.findByWriter_UserIdAndStatusAndDeletedFlagFalse(
+                        userId,
+                        FaqStatus.PUBLISHED,
+                        pageable
+                );
+
+        List<GetMyFaqListResponse> faqs = faqPage.getContent()
+                .stream()
+                .map(GetMyFaqListResponse::new)
+                .toList();
+
+        return new GetMyFaqListWrapper(
+                faqs,
+                faqPage.getNumber(),
+                faqPage.getTotalPages(),
+                faqPage.getTotalElements()
+        );
     }
 
-    public Object getMyDraftFaqs(
+    @Transactional(readOnly = true)
+    public GetMyFaqListWrapper getMyDraftFaqs(
             Long userId,
             int page
     ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                10,
+                Sort.by(Sort.Direction.DESC, "updatedDate")
+        );
 
-        return null;
+        Page<Faq> faqPage =
+                faqRepository.findByWriter_UserIdAndStatusAndDeletedFlagFalse(
+                        userId,
+                        FaqStatus.DRAFT,
+                        pageable
+                );
+
+        List<GetMyFaqListResponse> faqs = faqPage.getContent()
+                .stream()
+                .map(GetMyFaqListResponse::new)
+                .toList();
+
+        return new GetMyFaqListWrapper(
+                faqs,
+                faqPage.getNumber(),
+                faqPage.getTotalPages(),
+                faqPage.getTotalElements()
+        );
     }
 }
