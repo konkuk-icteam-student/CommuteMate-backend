@@ -1,6 +1,7 @@
 package com.better.CommuteMate.domain.schedule.repository;
 
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
+import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.code.CodeType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -84,6 +85,18 @@ public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Str
      * 신청(WS01), 승인(WS02) 상태만 포함
      */
     List<WorkSchedule> findAllByDateBetweenAndStatusCodeIn(
+            LocalDate startDate,
+            LocalDate endDate,
+            List<CodeType> statusCodes
+    );
+
+    List<WorkSchedule> findAllBySettingAndStatusCodeIn(
+            WorkScheduleSetting setting,
+            List<CodeType> statusCodes
+    );
+
+    List<WorkSchedule> findAllBySettingAndDateBetweenAndStatusCodeIn(
+            WorkScheduleSetting setting,
             LocalDate startDate,
             LocalDate endDate,
             List<CodeType> statusCodes

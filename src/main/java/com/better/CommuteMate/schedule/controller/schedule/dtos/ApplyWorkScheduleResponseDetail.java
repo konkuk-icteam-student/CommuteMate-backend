@@ -20,7 +20,4 @@ public class ApplyWorkScheduleResponseDetail extends ResponseDetail {
                 .fail(fail)
                 .build();
     }
-    /*public static ApplyWorkScheduleResponseDetail from(ApplyScheduleResultCommand applyScheduleResultCommand) {
-        return applyWorkScheduleResponseDetail(applyScheduleResultCommand.success(), applyScheduleResultCommand.fail());
-    }*/
 }
