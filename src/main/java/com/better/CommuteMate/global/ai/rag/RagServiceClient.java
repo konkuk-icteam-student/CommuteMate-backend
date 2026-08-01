@@ -91,6 +91,17 @@ public class RagServiceClient {
                 .block();
     }
 
+    public RagChatQueryResponse chatQuery(String query) {
+        return webClient.post()
+                .uri("/api/v1/chat/query")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new ChatQueryRequest(query))
+                .retrieve()
+                .bodyToMono(RagChatQueryResponse.class)
+                .timeout(llmTimeout)
+                .block();
+    }
+
     public String recommendCategory(String prompt) {
         RagCategoryRecommendResponse response = webClient.post()
                 .uri("/api/v1/category/recommend")
@@ -110,4 +121,6 @@ public class RagServiceClient {
     }
 
     private record CategoryRecommendRequest(String prompt) { }
+
+    private record ChatQueryRequest(String query) { }
 }

@@ -255,6 +255,17 @@ FAQ 관리 API (일부 엔드포인트는 구현 진행 중)
 
 ---
 
+### 💬 [챗봇 API](./chat.md) (`/api/chat`)
+규정/FAQ에 대해 질문하면 RAG 기반 챗봇이 답변하는 API (내부적으로 `regulation-rag` 서비스 호출)
+
+| 엔드포인트 | 메서드 | 설명 |
+|----------|--------|------|
+| `/query` | POST | 챗봇 질의 (규정+FAQ RAG 답변, LLM 호출로 최대 ~120초 소요) |
+
+**바로가기**: [챗봇 API 상세 →](./chat.md)
+
+---
+
 ### 👤 [담당자 API](./manager.md) (`/api/manager`)
 담당자 등록 및 목록 관리 API
 
@@ -346,5 +357,6 @@ API에서 사용하는 코드 값들:
   - [업무 관리 API](./task.md)
   - [카테고리 API](./category.md)
   - [FAQ API](./faq.md)
+  - [챗봇 API](./chat.md)
   - [매니저 API](./manager.md)
   - [관리자 API](./admin.md)
