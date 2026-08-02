@@ -4,6 +4,7 @@ import com.better.CommuteMate.domain.notification.entity.Notification;
 import com.better.CommuteMate.domain.notification.entity.NotificationCheckState;
 import com.better.CommuteMate.domain.notification.repository.NotificationCheckStateRepository;
 import com.better.CommuteMate.domain.notification.repository.NotificationRepository;
+import com.better.CommuteMate.notification.controller.dtos.NewNotificationResponse;
 import com.better.CommuteMate.notification.controller.dtos.NotificationListResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,15 +25,27 @@ public class NotificationService {
         List<Notification> notifications = notificationRepository
                 .findByUserIdOrderByCreatedAtDesc(userId);
 
-        LocalDateTime lastCheckedAt = checkStateRepository.findById(userId)
-                .map(NotificationCheckState::getLastCheckedAt)
-                .orElse(null);
+        LocalDateTime lastCheckedAt = resolveLastCheckedAt(userId);
 
         List<NotificationListResponse.NotificationItem> items = notifications.stream()
                 .map(n -> toItem(n, lastCheckedAt))
                 .toList();
 
         return new NotificationListResponse(items);
+    }
+
+    public NewNotificationResponse getNewNotificationStatus(Long userId) {
+        LocalDateTime lastCheckedAt = resolveLastCheckedAt(userId);
+        long count = lastCheckedAt == null
+                ? notificationRepository.countByUserId(userId)
+                : notificationRepository.countByUserIdAndCreatedAtAfter(userId, lastCheckedAt);
+        return new NewNotificationResponse(count);
+    }
+
+    private LocalDateTime resolveLastCheckedAt(Long userId) {
+        return checkStateRepository.findById(userId)
+                .map(NotificationCheckState::getLastCheckedAt)
+                .orElse(null);
     }
 
     private NotificationListResponse.NotificationItem toItem(

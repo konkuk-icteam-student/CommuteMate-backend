@@ -3,6 +3,7 @@ package com.better.CommuteMate.notification.controller;
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.notification.application.NotificationService;
+import com.better.CommuteMate.notification.controller.dtos.NewNotificationResponse;
 import com.better.CommuteMate.notification.controller.dtos.NotificationListResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -60,6 +61,63 @@ public class NotificationController {
                 details
         ));
     }
+
+    @GetMapping("/new")
+    @Operation(
+            summary = "새 알림 여부 조회",
+            description = "마지막 알림함 확인 시각 이후 생성된 알림의 존재 여부와 개수를 반환합니다. " +
+                    "알림 목록 전체를 조회하지 않고 count 쿼리로만 처리하며, " +
+                    "확인 이력이 없는 경우 사용자의 모든 알림을 새 알림으로 계산합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "새 알림 여부 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(name = "새 알림 있음", value = NEW_NOTIFICATION_EXAMPLE),
+                                    @ExampleObject(name = "새 알림 없음", value = NO_NEW_NOTIFICATION_EXAMPLE)
+                            }
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content)
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> getNewNotificationStatus(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        NewNotificationResponse details = notificationService.getNewNotificationStatus(
+                userDetails.getUserId()
+        );
+        return ResponseEntity.ok(Response.of(
+                true,
+                "새 알림 여부를 조회했습니다.",
+                details
+        ));
+    }
+
+    private static final String NEW_NOTIFICATION_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "새 알림 여부를 조회했습니다.",
+              "details": {
+                "hasNewNotification": true,
+                "newNotificationCount": 3
+              }
+            }
+            """;
+
+    private static final String NO_NEW_NOTIFICATION_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "새 알림 여부를 조회했습니다.",
+              "details": {
+                "hasNewNotification": false,
+                "newNotificationCount": 0
+              }
+            }
+            """;
 
     private static final String SUCCESS_EXAMPLE = """
             {
