@@ -33,7 +33,12 @@ public enum CodeType {
 
     // RL: 사용자 역할 (Role)
     RL01("RL", "01", "STUDENT", "학생"),
-    RL02("RL", "02", "ADMIN", "관리자");
+    RL02("RL", "02", "ADMIN", "관리자"),
+
+    // NT: 알림 유형 (Notification Type)
+    NT01("NT", "01", "WORK_CHANGE_APPROVED", "근무 변경 요청 승인"),
+    NT02("NT", "02", "WORK_CHANGE_REJECTED", "근무 변경 요청 거절"),
+    NT03("NT", "03", "WORK_SCHEDULE_OPEN", "근무 신청 시작");
 
     private final String majorCode;
     private final String subCode;
