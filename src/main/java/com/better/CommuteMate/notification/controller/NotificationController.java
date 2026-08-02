@@ -3,6 +3,7 @@ package com.better.CommuteMate.notification.controller;
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.notification.application.NotificationService;
+import com.better.CommuteMate.notification.controller.dtos.CheckNotificationResponse;
 import com.better.CommuteMate.notification.controller.dtos.NewNotificationResponse;
 import com.better.CommuteMate.notification.controller.dtos.NotificationListResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -96,6 +98,48 @@ public class NotificationController {
                 details
         ));
     }
+
+    @PatchMapping("/check")
+    @Operation(
+            summary = "알림 확인 시각 갱신",
+            description = "사용자가 알림함에 진입한 시점의 서버 시각을 마지막 알림함 확인 시각으로 저장합니다. " +
+                    "기존 확인 상태 데이터가 없으면 새로 생성하며, " +
+                    "이후 새 알림 여부(GET /api/v1/notifications/new)는 갱신된 시각을 기준으로 계산됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "알림 확인 시각 갱신 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = CHECK_EXAMPLE)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content)
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> checkNotification(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        CheckNotificationResponse details = notificationService.checkNotification(
+                userDetails.getUserId()
+        );
+        return ResponseEntity.ok(Response.of(
+                true,
+                "알림 확인 시간이 갱신되었습니다.",
+                details
+        ));
+    }
+
+    private static final String CHECK_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "알림 확인 시간이 갱신되었습니다.",
+              "details": {
+                "lastCheckedAt": "2026-04-10T14:00:00"
+              }
+            }
+            """;
 
     private static final String NEW_NOTIFICATION_EXAMPLE = """
             {

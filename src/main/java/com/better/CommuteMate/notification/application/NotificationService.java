@@ -4,6 +4,7 @@ import com.better.CommuteMate.domain.notification.entity.Notification;
 import com.better.CommuteMate.domain.notification.entity.NotificationCheckState;
 import com.better.CommuteMate.domain.notification.repository.NotificationCheckStateRepository;
 import com.better.CommuteMate.domain.notification.repository.NotificationRepository;
+import com.better.CommuteMate.notification.controller.dtos.CheckNotificationResponse;
 import com.better.CommuteMate.notification.controller.dtos.NewNotificationResponse;
 import com.better.CommuteMate.notification.controller.dtos.NotificationListResponse;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,24 @@ public class NotificationService {
                 ? notificationRepository.countByUserId(userId)
                 : notificationRepository.countByUserIdAndCreatedAtAfter(userId, lastCheckedAt);
         return new NewNotificationResponse(count);
+    }
+
+    @Transactional
+    public CheckNotificationResponse checkNotification(Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+        NotificationCheckState state = checkStateRepository.findById(userId)
+                .orElse(null);
+
+        if (state == null) {
+            state = NotificationCheckState.builder()
+                    .userId(userId)
+                    .lastCheckedAt(now)
+                    .build();
+        } else {
+            state.updateLastCheckedAt(now);
+        }
+        checkStateRepository.save(state);
+        return new CheckNotificationResponse(now);
     }
 
     private LocalDateTime resolveLastCheckedAt(Long userId) {

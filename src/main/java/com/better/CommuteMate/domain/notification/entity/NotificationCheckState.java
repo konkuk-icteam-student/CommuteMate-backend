@@ -26,6 +26,10 @@ public class NotificationCheckState {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    public void updateLastCheckedAt(LocalDateTime now) {
+        this.lastCheckedAt = now;
+    }
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {
