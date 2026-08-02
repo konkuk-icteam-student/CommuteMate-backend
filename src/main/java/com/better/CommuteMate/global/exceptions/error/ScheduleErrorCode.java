@@ -10,6 +10,7 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     CHANGE_REQUEST_NOT_FOUND("근로시간 수정 요청을 찾을 수 없습니다.", "[Error] : change request not found", HttpStatus.NOT_FOUND),
     CHANGE_REQUEST_CAPACITY_EXCEEDED("해당 시간대의 최대 근무 인원을 초과했습니다.", "[Error] : change request capacity exceeded", HttpStatus.CONFLICT),
     INVALID_CHANGE_REQUEST_STATUS("올바르지 않은 변경 요청 상태입니다.", "[Error] : invalid change request status", HttpStatus.BAD_REQUEST),
+    INVALID_CHANGE_REQUEST_HISTORY_STATUS("올바르지 않은 신청기록 상태입니다.", "[Error] : invalid change request history status", HttpStatus.BAD_REQUEST),
     INVALID_CHANGE_REQUEST_PAGE("페이지 요청 값이 올바르지 않습니다.", "[Error] : invalid change request page", HttpStatus.BAD_REQUEST),
     INVALID_CHANGE_REQUEST_YEAR_MONTH("조회 연도 또는 월 값이 올바르지 않습니다.", "[Error] : invalid change request year or month", HttpStatus.BAD_REQUEST),
     ADMIN_SCHEDULE_QUERY_INVALID("조회 연도 또는 월 값이 올바르지 않습니다.", "[Error] : invalid admin schedule query range", HttpStatus.BAD_REQUEST),
