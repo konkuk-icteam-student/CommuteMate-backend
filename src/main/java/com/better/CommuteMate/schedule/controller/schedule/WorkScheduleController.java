@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -131,8 +132,9 @@ public class WorkScheduleController {
     /**
      * 나의 근무 일정 조회 API (월별)
      */
+    @Hidden
     @Operation(summary = "나의 근무 일정 조회", description = "특정 연/월의 나의 근무 일정을 조회합니다.")
-    @GetMapping
+    @GetMapping(params = {"year", "month"})
     public ResponseEntity<Response> getWorkSchedules(
             @RequestParam Integer year,
             @RequestParam Integer month,
