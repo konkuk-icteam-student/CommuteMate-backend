@@ -1,6 +1,7 @@
 package com.better.CommuteMate.schedule.controller.admin.dtos;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -31,9 +32,11 @@ public record SaveScheduleSettingRequest(
 
     public record UnavailableTimeRange(
             @NotNull(message = "요청 값이 올바르지 않습니다.")
-            @JsonFormat(pattern = "HH:mm") LocalTime start,
+            @JsonFormat(pattern = "HH:mm")
+            @Schema(type = "string", format = "time", example = "11:00") LocalTime start,
             @NotNull(message = "요청 값이 올바르지 않습니다.")
-            @JsonFormat(pattern = "HH:mm") LocalTime end
+            @JsonFormat(pattern = "HH:mm")
+            @Schema(type = "string", format = "time", example = "13:00") LocalTime end
     ) {
     }
 }
