@@ -15,17 +15,23 @@ public class AdminScheduleRangeResponse extends ResponseDetail {
     @JsonFormat(pattern = "yyyy-MM-dd")
     public final LocalDate endDate;
     public final int maxConcurrentWorkers;
+    public final boolean hasPrev;
+    public final boolean hasNext;
     public final List<Day> days;
 
     public AdminScheduleRangeResponse(
             LocalDate startDate,
             LocalDate endDate,
             int maxConcurrentWorkers,
+            boolean hasPrev,
+            boolean hasNext,
             List<Day> days
     ) {
         this.startDate = startDate;
         this.endDate = endDate;
         this.maxConcurrentWorkers = maxConcurrentWorkers;
+        this.hasPrev = hasPrev;
+        this.hasNext = hasNext;
         this.days = days;
     }
 

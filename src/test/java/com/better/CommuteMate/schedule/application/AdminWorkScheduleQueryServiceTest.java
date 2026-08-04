@@ -74,6 +74,8 @@ class AdminWorkScheduleQueryServiceTest {
         var response = service.getSchedules("10", "2026-04-15", "2026-04-15", null);
 
         assertThat(response.maxConcurrentWorkers).isEqualTo(4);
+        assertThat(response.hasPrev).isFalse();
+        assertThat(response.hasNext).isFalse();
         assertThat(response.days).hasSize(1);
         assertThat(response.days.get(0).slots()).hasSize(3);
         assertThat(response.days.get(0).slots().get(0).status()).isEqualTo("AVAILABLE");
@@ -94,16 +96,21 @@ class AdminWorkScheduleQueryServiceTest {
     }
 
     @Test
-    @DisplayName("관리자 근로시간표 조회 - 해당 월 설정이 없으면 실패한다")
-    void throwsNotFoundWhenMonthlySettingDoesNotExist() {
+    @DisplayName("관리자 근로시간표 조회 - 해당 월 설정이 없으면 빈 배열과 이전·다음 설정 여부를 반환한다")
+    void returnsEmptyDaysWhenMonthlySettingDoesNotExist() {
         when(settingRepository.findByOrganizationIdAndYearAndMonth("10", 2026, 4))
                 .thenReturn(Optional.empty());
+        when(settingRepository.existsByOrganizationIdAndYearAndMonth("10", 2026, 3))
+                .thenReturn(true);
+        when(settingRepository.existsByOrganizationIdAndYearAndMonth("10", 2026, 5))
+                .thenReturn(false);
 
-        assertThatThrownBy(() -> service.getSchedules(
-                "10", "2026-04-15", "2026-04-15", null
-        ))
-                .isInstanceOf(CustomException.class)
-                .hasMessage("해당 월의 스케줄 설정을 찾을 수 없습니다.");
+        var response = service.getSchedules("10", "2026-04-15", "2026-04-15", null);
+
+        assertThat(response.maxConcurrentWorkers).isEqualTo(4);
+        assertThat(response.hasPrev).isTrue();
+        assertThat(response.hasNext).isFalse();
+        assertThat(response.days).isEmpty();
     }
 
     private WorkScheduleSetting setting() {
