@@ -83,4 +83,57 @@ public interface WorkChangeRequestRepository extends JpaRepository<WorkChangeReq
             @Param("endDate") LocalDate endDate,
             @Param("statusCode") CodeType statusCode
     );
+
+    @Query(
+            value = """
+                    select request
+                    from WorkChangeRequest request
+                    where request.user.userId = :userId
+                      and (:startDate is null or exists (
+                        select item.itemId
+                        from WorkChangeRequestItem item
+                        where item.request = request
+                          and item.date between :startDate and :endDate
+                      ))
+                      and (:statusCode is null or request.statusCode = :statusCode)
+                    """,
+            countQuery = """
+                    select count(request.requestId)
+                    from WorkChangeRequest request
+                    where request.user.userId = :userId
+                      and (:startDate is null or exists (
+                        select item.itemId
+                        from WorkChangeRequestItem item
+                        where item.request = request
+                          and item.date between :startDate and :endDate
+                      ))
+                      and (:statusCode is null or request.statusCode = :statusCode)
+                    """
+    )
+    Page<WorkChangeRequest> findUserRequests(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statusCode") CodeType statusCode,
+            Pageable pageable
+    );
+
+    @Query("""
+            select count(request.requestId)
+            from WorkChangeRequest request
+            where request.user.userId = :userId
+              and (:startDate is null or exists (
+                select item.itemId
+                from WorkChangeRequestItem item
+                where item.request = request
+                  and item.date between :startDate and :endDate
+              ))
+              and (:statusCode is null or request.statusCode = :statusCode)
+            """)
+    long countUserRequests(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statusCode") CodeType statusCode
+    );
 }
