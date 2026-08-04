@@ -28,6 +28,7 @@ public class AdminWorkScheduleQueryService {
 
     private static final List<CodeType> ACTIVE_STATUSES = List.of(CodeType.WS01, CodeType.WS02);
     private static final int SLOT_MINUTES = 30;
+    private static final int DEFAULT_MAX_CONCURRENT_WORKERS = 4;
 
     private final WorkScheduleSettingRepository settingRepository;
     private final WorkSchedulesRepository scheduleRepository;
@@ -43,13 +44,27 @@ public class AdminWorkScheduleQueryService {
         LocalDate endDate = parseDate(endDateValue);
         validateRange(startDate, endDate);
 
-        WorkScheduleSetting setting = settingRepository
+        YearMonth targetMonth = YearMonth.from(startDate);
+        YearMonth previousMonth = targetMonth.minusMonths(1);
+        YearMonth nextMonth = targetMonth.plusMonths(1);
+        boolean hasPrev = hasSetting(organizationId, previousMonth);
+        boolean hasNext = hasSetting(organizationId, nextMonth);
+
+        Optional<WorkScheduleSetting> settingOptional = settingRepository
                 .findByOrganizationIdAndYearAndMonth(
                         organizationId, startDate.getYear(), startDate.getMonthValue()
-                )
-                .orElseThrow(() -> CustomException.of(
-                        ScheduleErrorCode.ADMIN_SCHEDULE_SETTING_NOT_FOUND
-                ));
+                );
+        if (settingOptional.isEmpty()) {
+            return new AdminScheduleRangeResponse(
+                    startDate,
+                    endDate,
+                    DEFAULT_MAX_CONCURRENT_WORKERS,
+                    hasPrev,
+                    hasNext,
+                    List.of()
+            );
+        }
+        WorkScheduleSetting setting = settingOptional.get();
 
         List<WorkSchedule> schedules =
                 scheduleRepository.findAllBySettingAndDateBetweenAndStatusCodeIn(
@@ -81,7 +96,20 @@ public class AdminWorkScheduleQueryService {
         }
 
         return new AdminScheduleRangeResponse(
-                startDate, endDate, setting.getMaxConcurrentWorkers(), days
+                startDate,
+                endDate,
+                setting.getMaxConcurrentWorkers(),
+                hasPrev,
+                hasNext,
+                days
+        );
+    }
+
+    private boolean hasSetting(String organizationId, YearMonth yearMonth) {
+        return settingRepository.existsByOrganizationIdAndYearAndMonth(
+                organizationId,
+                yearMonth.getYear(),
+                yearMonth.getMonthValue()
         );
     }
 

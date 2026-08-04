@@ -22,6 +22,12 @@ public interface WorkScheduleSettingRepository extends JpaRepository<WorkSchedul
             Integer month
     );
 
+    boolean existsByOrganizationIdAndYearAndMonth(
+            String organizationId,
+            Integer year,
+            Integer month
+    );
+
     // 동일 월의 동시 승인 요청이 같은 정원 값을 보고 모두 통과하지 않도록 설정 행을 잠급니다.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
