@@ -5,6 +5,8 @@ import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
@@ -47,7 +49,7 @@ public class Faq {
     private List<FaqCategory> faqCategories = new ArrayList<>();
 
     @Column(name = "updated_date", nullable = false)
-    private LocalDate updatedDate;
+    private LocalDateTime updatedDate;
 
     @Column(name = "deleted_flag", nullable = false)
     private Boolean deletedFlag;
@@ -94,13 +96,13 @@ public class Faq {
 
     @PrePersist
     protected void onCreate() {
-        this.updatedDate = LocalDate.now();
+        this.updatedDate = LocalDateTime.now();
         this.deletedFlag = false;
     }
 
     @PreUpdate
     void onUpdate() {
-        this.updatedDate = LocalDate.now();
+        this.updatedDate = LocalDateTime.now();
     }
 
     public static Faq create(

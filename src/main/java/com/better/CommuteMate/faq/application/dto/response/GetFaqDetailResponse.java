@@ -117,7 +117,7 @@ public class GetFaqDetailResponse extends ResponseDetail {
         this.editedDates = editedDates;
         this.deletedAt = faq.getDeletedAt();
         this.relatedFaqs = relatedFaqs.stream()
-                .map(f -> new RelatedFaqInfo(f.getId(), f.getTitle(), f.getUpdatedDate()))
+                .map(f -> new RelatedFaqInfo(f.getId(), f.getTitle(), f.getUpdatedDate().toLocalDate()))
                 .toList();
     }
 }
