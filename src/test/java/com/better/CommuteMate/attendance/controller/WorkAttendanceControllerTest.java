@@ -47,6 +47,8 @@ class WorkAttendanceControllerTest {
     private com.better.CommuteMate.auth.application.CustomUserDetailsService customUserDetailsService;
     @MockBean
     private com.better.CommuteMate.auth.application.TokenBlacklistService tokenBlacklistService;
+    @MockBean
+    private com.better.CommuteMate.global.security.JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Test
     @DisplayName("QR 토큰 발급 API - 성공")

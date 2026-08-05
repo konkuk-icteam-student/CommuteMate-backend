@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @Tag(name = "사용자 근무 일정", description = "사용자 근무 일정 신청 및 조회 API")
+@SecurityRequirement(name = "JWT")
 @RestController
 @RequestMapping("/api/v1/work-schedules")
 @RequiredArgsConstructor
