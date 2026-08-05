@@ -93,6 +93,10 @@ public class WorkAttendanceService {
                 .build();
 
         workAttendanceRepository.save(attendance);
+        targetSchedule.markWorking(
+                now.isAfter(toDateTime(targetSchedule, targetSchedule.getStartTime()).plusMinutes(10)),
+                String.valueOf(userId)
+        );
     }
 
     /**
@@ -143,6 +147,7 @@ public class WorkAttendanceService {
                 .build();
 
         workAttendanceRepository.save(attendance);
+        targetSchedule.markCompleted(String.valueOf(userId));
     }
 
     /**

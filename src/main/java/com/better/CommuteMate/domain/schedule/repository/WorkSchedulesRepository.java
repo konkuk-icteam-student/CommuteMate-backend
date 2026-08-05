@@ -26,6 +26,13 @@ public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Str
             CodeType statusCode
     );
 
+    List<WorkSchedule> findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+            List<Long> userIds,
+            LocalDate startDate,
+            LocalDate endDate,
+            CodeType statusCode
+    );
+
     /**
      * 특정 사용자의 특정 기간 내 유효한 근무 일정 목록을 조회
      * 신청(WS01), 승인(WS02) 상태만 포함

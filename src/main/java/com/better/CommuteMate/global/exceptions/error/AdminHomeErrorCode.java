@@ -7,6 +7,11 @@ public enum AdminHomeErrorCode implements CustomErrorCode {
             "조회 날짜 값이 올바르지 않습니다.",
             "[Error] : invalid admin home attendance summary date",
             HttpStatus.BAD_REQUEST
+    ),
+    INVALID_PAGE(
+            "페이지 요청 값이 올바르지 않습니다.",
+            "[Error] : invalid admin home attendance page",
+            HttpStatus.BAD_REQUEST
     );
 
     private final String message;
