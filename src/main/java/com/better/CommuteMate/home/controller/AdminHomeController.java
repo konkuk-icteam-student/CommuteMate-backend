@@ -90,7 +90,7 @@ public class AdminHomeController {
                     example = "2026-04-15",
                     required = true
             )
-            @RequestParam(required = false) String date,
+            @RequestParam String date,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long organizationId = userDetails.getUser().getOrganizationId();
