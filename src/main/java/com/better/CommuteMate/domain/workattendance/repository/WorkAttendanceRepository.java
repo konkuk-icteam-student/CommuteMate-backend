@@ -1,6 +1,7 @@
 package com.better.CommuteMate.domain.workattendance.repository;
 
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
+import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +13,5 @@ public interface WorkAttendanceRepository extends JpaRepository<WorkAttendance, 
     List<WorkAttendance> findByUser_UserIdAndCheckTime(Long userId, LocalDateTime checkTime);
     List<WorkAttendance> findBySchedule_ScheduleId(String scheduleId);
     List<WorkAttendance> findByUser_UserIdAndCheckTimeBetween(Long userId, LocalDateTime start, LocalDateTime end);
+    List<WorkAttendance> findAllByScheduleIn(List<WorkSchedule> schedules);
 }
