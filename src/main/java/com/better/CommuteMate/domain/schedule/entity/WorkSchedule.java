@@ -48,6 +48,15 @@ public class WorkSchedule {
     @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType statusCode;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "work_status_code", columnDefinition = "CHAR(4)")
+    private CodeType workStatusCode = CodeType.WK01;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attendance_status_code", columnDefinition = "CHAR(4)")
+    private CodeType attendanceStatusCode;
+
     @Column(name = "created_request_id", length = 36)
     private String createdRequestId;
 
@@ -96,6 +105,23 @@ public class WorkSchedule {
 
     public void cancel(String updatedBy) {
         this.statusCode = CodeType.WS04;
+        this.updatedBy = updatedBy;
+    }
+
+    public void markWorking(boolean late, String updatedBy) {
+        this.workStatusCode = CodeType.WK02;
+        this.attendanceStatusCode = late ? CodeType.AT02 : CodeType.AT01;
+        this.updatedBy = updatedBy;
+    }
+
+    public void markCompleted(String updatedBy) {
+        this.workStatusCode = CodeType.WK03;
+        this.updatedBy = updatedBy;
+    }
+
+    public void markNoShow(boolean absent, String updatedBy) {
+        this.workStatusCode = CodeType.WK04;
+        this.attendanceStatusCode = absent ? CodeType.AT03 : null;
         this.updatedBy = updatedBy;
     }
 

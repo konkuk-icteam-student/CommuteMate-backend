@@ -14,6 +14,17 @@ public enum CodeType {
     WS03("WS", "03", "REJECTED", "반려"),
     WS04("WS", "04", "CANCELLED", "취소"),
 
+    // WK: 실제 근무 상태 (Work State)
+    WK01("WK", "01", "SCHEDULED", "근무 예정"),
+    WK02("WK", "02", "WORKING", "근무 중"),
+    WK03("WK", "03", "COMPLETED", "근무 완료"),
+    WK04("WK", "04", "NO_SHOW", "미출근"),
+
+    // AT: 근태 상태 (Attendance State)
+    AT01("AT", "01", "NORMAL", "정상"),
+    AT02("AT", "02", "LATE", "지각"),
+    AT03("AT", "03", "ABSENT", "결근"),
+
     // CR: 요청 유형 (Change Request Type)
     CR01("CR", "01", "EDIT", "수정 요청"),
     CR02("CR", "02", "DELETE", "삭제 요청"),
