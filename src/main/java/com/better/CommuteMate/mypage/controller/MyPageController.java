@@ -3,6 +3,7 @@ package com.better.CommuteMate.mypage.controller;
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.mypage.application.MyPageService;
 import com.better.CommuteMate.global.controller.dtos.Response;
+import com.better.CommuteMate.mypage.dto.GetMyFaqListResponseWrapper;
 import com.better.CommuteMate.mypage.dto.GetMyPageResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -56,8 +57,20 @@ public class MyPageController {
             description = "작성 완료(PUBLISHED) 상태의 업무일지 목록을 조회하는 API입니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "업무일지 목록 조회 성공"),
-            @ApiResponse(responseCode = "500", description = "서버 오류")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "업무일지 목록 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = GetMyFaqListResponseWrapper.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류"
+            )
     })
     @GetMapping("/faqs")
     @SecurityRequirement(name = "JWT")
