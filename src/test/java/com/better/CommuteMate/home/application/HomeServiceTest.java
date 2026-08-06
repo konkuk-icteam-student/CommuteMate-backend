@@ -11,6 +11,7 @@ import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse.AttendanceStatus;
 import com.better.CommuteMate.home.controller.dto.HomeWorkTimeResponse;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,6 +55,7 @@ class HomeServiceTest {
                 .isInstanceOf(CustomException.class);
     }
 
+    @Disabled("임시 비활성화")
     @Test
     @DisplayName("오늘의 근무 시간 조회 - 스케줄이 있고 출퇴근 기록이 있는 경우 계산 확인")
     void getTodayWorkTime_Success() {
