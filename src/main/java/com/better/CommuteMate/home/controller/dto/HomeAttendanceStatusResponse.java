@@ -6,21 +6,22 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Getter
 @NoArgsConstructor
 public class HomeAttendanceStatusResponse extends ResponseDetail {
     private AttendanceStatus status;
     private String message;
-    private Long currentScheduleId;
-    private LocalDateTime scheduleStartTime;
-    private LocalDateTime scheduleEndTime;
+    private String currentScheduleId;
+    private LocalTime scheduleStartTime;
+    private LocalTime scheduleEndTime;
 
     @Builder
-    public HomeAttendanceStatusResponse(AttendanceStatus status, String message, 
-                                        Long currentScheduleId,
-                                        LocalDateTime scheduleStartTime, 
-                                        LocalDateTime scheduleEndTime) {
+    public HomeAttendanceStatusResponse(AttendanceStatus status, String message,
+                                        String currentScheduleId,
+                                        LocalTime scheduleStartTime,
+                                        LocalTime scheduleEndTime) {
         super();
         this.status = status;
         this.message = message;

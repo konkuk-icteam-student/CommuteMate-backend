@@ -25,8 +25,7 @@ public interface ManagerCategoryRepository extends JpaRepository<ManagerCategory
       and (:organization is null or mc.manager.organization = :organization)
       and (:favoriteOnly = false or mc.favorite = true)
       and (
-          :searchName is null\s
-          or length(trim(:searchName)) = 0
+          :searchName = ''
           or lower(mc.manager.name) like lower(concat('%', :searchName, '%'))
       )
     """)

@@ -1,5 +1,6 @@
 package com.better.CommuteMate.faq.application.dto.response;
 
+import com.better.CommuteMate.domain.faq.entity.FaqStatus;
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -9,9 +10,11 @@ import lombok.Getter;
 public class PostFaqResponse extends ResponseDetail {
     @Schema(description = "등록된 FAQ ID", example = "1")
     Long faqId;
+    FaqStatus status;
 
-    public PostFaqResponse(Long faqId) {
+    public PostFaqResponse(Long faqId,  FaqStatus status) {
         super();
         this.faqId = faqId;
+        this.status = status;
     }
 }

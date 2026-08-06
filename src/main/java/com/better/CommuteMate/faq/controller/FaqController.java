@@ -1,9 +1,7 @@
 package com.better.CommuteMate.faq.controller;
 
 import com.better.CommuteMate.auth.application.CustomUserDetails;
-import com.better.CommuteMate.faq.application.dto.request.FaqSearchScope;
-import com.better.CommuteMate.faq.application.dto.request.PostFaqRequest;
-import com.better.CommuteMate.faq.application.dto.request.PutFaqUpdateRequest;
+import com.better.CommuteMate.faq.application.dto.request.*;
 import com.better.CommuteMate.faq.application.service.FaqService;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
@@ -35,8 +33,8 @@ public class FaqController {
     private final FaqService faqService;
 
     @Operation(
-            summary = "FAQ 작성",
-            description = "FAQ 작성을 위한 API입니다."
+            summary = "FAQ 작성 후 발행",
+            description = "FAQ 작성 후 바로 발행 버튼을 눌렀을 때를 위한 API입니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "FAQ 작성 성공"),
@@ -53,7 +51,7 @@ public class FaqController {
     }
 
     @Operation(
-            summary = "FAQ 수정",
+            summary = "FAQ 수정 후 발행",
             description = """
                     특정 FAQ를 수정하는 API입니다.
                     수정 시 기존 내용은 faq_history 테이블에 기록되고,
@@ -75,6 +73,55 @@ public class FaqController {
             @RequestBody PutFaqUpdateRequest request
     ) {
         return ResponseEntity.ok(new Response(true, "FAQ 수정 성공", faqService.updateFaq(userDetails.getUserId(), faqId, request)));
+    }
+
+    @Operation(
+            summary = "FAQ 최초 임시저장",
+            description = "FAQ 객체를 생성하고, 임시저장하는 API입니다. 즉, 처음으로 임시저장을 누를 때 사용됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "FAQ 임시저장 성공"),
+            @ApiResponse(responseCode = "400", description = "요청 값 오류"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PostMapping("/draft")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> createDraftFaq(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody PostDraftFaqRequest request
+    ) {
+        return ResponseEntity.ok(
+                new Response(
+                        true,
+                        "FAQ 최초 임시저장 성공",
+                        faqService.createDraftFaq(userDetails.getUserId(), request)
+                )
+        );
+    }
+
+    @Operation(
+            summary = "FAQ 수정 후 임시저장",
+            description = "임시저장된 FAQ를 수정한 이후, 또 임시저장할 때 사용하는 API입니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "FAQ 임시저장 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "요청 값 오류"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PutMapping("/draft/{faqId}")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> updateDraftFaq(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long faqId,
+            @RequestBody PutDraftFaqUpdateRequest request
+    ) {
+        return ResponseEntity.ok(
+                new Response(
+                        true,
+                        "FAQ 임시저장 수정 성공",
+                        faqService.updateDraftFaq(userDetails.getUserId(), faqId, request)
+                )
+        );
     }
 
     @Operation(

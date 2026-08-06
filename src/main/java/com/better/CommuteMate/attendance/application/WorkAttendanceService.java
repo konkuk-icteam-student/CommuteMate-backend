@@ -1,6 +1,5 @@
 package com.better.CommuteMate.attendance.application;
 
-import com.better.CommuteMate.global.exceptions.error.AttendanceErrorCode;
 import com.better.CommuteMate.attendance.controller.dto.AttendanceHistoryResponse;
 import com.better.CommuteMate.attendance.controller.dto.QrTokenResponse;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
@@ -11,6 +10,7 @@ import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.global.exceptions.error.AttendanceErrorCode;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,11 +31,17 @@ public class WorkAttendanceService {
     private final UserRepository userRepository;
     private final QrTokenManager qrTokenManager;
 
+    private static final List<CodeType> VALID_STATUS_CODES = List.of(
+            CodeType.WS01,
+            CodeType.WS02
+    );
+
     /**
      * 관리자용: 출근 인증 QR 토큰 발급
      */
     public QrTokenResponse generateQrToken() {
         String token = qrTokenManager.generateToken();
+
         return QrTokenResponse.builder()
                 .token(token)
                 .expiresAt(LocalDateTime.now().plusSeconds(60))
@@ -55,11 +62,15 @@ public class WorkAttendanceService {
                 .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        LocalDate today = now.toLocalDate();
 
-        List<WorkSchedule> schedules = workSchedulesRepository.findValidSchedulesByUserAndDateRange(
-                userId, startOfDay, endOfDay);
+        List<WorkSchedule> schedules = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                        userId,
+                        today,
+                        today,
+                        VALID_STATUS_CODES
+                );
 
         if (schedules.isEmpty()) {
             throw new CustomException(AttendanceErrorCode.NO_SCHEDULE_FOUND);
@@ -82,6 +93,10 @@ public class WorkAttendanceService {
                 .build();
 
         workAttendanceRepository.save(attendance);
+        targetSchedule.markWorking(
+                now.isAfter(toDateTime(targetSchedule, targetSchedule.getStartTime()).plusMinutes(10)),
+                String.valueOf(userId)
+        );
     }
 
     /**
@@ -97,11 +112,15 @@ public class WorkAttendanceService {
                 .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        LocalDate today = now.toLocalDate();
 
-        List<WorkSchedule> schedules = workSchedulesRepository.findValidSchedulesByUserAndDateRange(
-                userId, startOfDay, endOfDay);
+        List<WorkSchedule> schedules = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                        userId,
+                        today,
+                        today,
+                        VALID_STATUS_CODES
+                );
 
         if (schedules.isEmpty()) {
             throw new CustomException(AttendanceErrorCode.NO_SCHEDULE_FOUND);
@@ -116,7 +135,7 @@ public class WorkAttendanceService {
         if (!hasCheckedIn(targetSchedule)) {
             throw new CustomException(AttendanceErrorCode.CHECK_IN_REQUIRED);
         }
-        
+
         checkIfAlreadyCheckedOut(targetSchedule);
 
         WorkAttendance attendance = WorkAttendance.builder()
@@ -128,6 +147,7 @@ public class WorkAttendanceService {
                 .build();
 
         workAttendanceRepository.save(attendance);
+        targetSchedule.markCompleted(String.valueOf(userId));
     }
 
     /**
@@ -138,7 +158,8 @@ public class WorkAttendanceService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = start.plusDays(1);
 
-        List<WorkAttendance> attendances = workAttendanceRepository.findByUser_UserIdAndCheckTimeBetween(userId, start, end);
+        List<WorkAttendance> attendances =
+                workAttendanceRepository.findByUser_UserIdAndCheckTimeBetween(userId, start, end);
 
         return attendances.stream()
                 .map(this::toHistoryResponse)
@@ -147,47 +168,57 @@ public class WorkAttendanceService {
 
     private WorkSchedule findTargetScheduleForCheckIn(List<WorkSchedule> schedules, LocalDateTime now) {
         for (WorkSchedule schedule : schedules) {
-            LocalDateTime start = schedule.getStartTime();
-            LocalDateTime end = schedule.getEndTime();
+            LocalDateTime start = toDateTime(schedule, schedule.getStartTime());
+            LocalDateTime end = toDateTime(schedule, schedule.getEndTime());
 
             if (now.isAfter(start.minusMinutes(10)) && now.isBefore(end)) {
                 return schedule;
             }
         }
+
         return null;
     }
 
     private WorkSchedule findTargetScheduleForCheckOut(List<WorkSchedule> schedules, LocalDateTime now) {
         for (WorkSchedule schedule : schedules) {
-            LocalDateTime end = schedule.getEndTime();
+            LocalDateTime end = toDateTime(schedule, schedule.getEndTime());
 
             if (now.isAfter(end.minusMinutes(5)) && now.isBefore(end.plusHours(1))) {
                 return schedule;
             }
         }
+
         return null;
     }
 
     private void checkIfAlreadyCheckedIn(WorkSchedule schedule) {
-        List<WorkAttendance> attendances = workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+        List<WorkAttendance> attendances =
+                workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+
         boolean exists = attendances.stream()
                 .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT01);
+
         if (exists) {
             throw new CustomException(AttendanceErrorCode.ALREADY_CHECKED_IN);
         }
     }
-    
+
     private void checkIfAlreadyCheckedOut(WorkSchedule schedule) {
-        List<WorkAttendance> attendances = workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+        List<WorkAttendance> attendances =
+                workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+
         boolean exists = attendances.stream()
                 .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT02);
+
         if (exists) {
             throw new CustomException(AttendanceErrorCode.ALREADY_CHECKED_OUT);
         }
     }
 
     private boolean hasCheckedIn(WorkSchedule schedule) {
-        List<WorkAttendance> attendances = workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+        List<WorkAttendance> attendances =
+                workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+
         return attendances.stream()
                 .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT01);
     }
@@ -201,5 +232,9 @@ public class WorkAttendanceService {
                 .scheduleStartTime(attendance.getSchedule().getStartTime())
                 .scheduleEndTime(attendance.getSchedule().getEndTime())
                 .build();
+    }
+
+    private LocalDateTime toDateTime(WorkSchedule schedule, LocalTime time) {
+        return LocalDateTime.of(schedule.getDate(), time);
     }
 }

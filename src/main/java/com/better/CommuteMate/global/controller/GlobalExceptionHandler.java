@@ -2,18 +2,30 @@ package com.better.CommuteMate.global.controller;
 
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.global.exceptions.MonthlyWorkTimeExceededException;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.MonthlyLimitExceededResponseDetail;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    protected ResponseEntity<Response> handleInvalidRequest(final Exception e) {
+        log.warn("Invalid request: {}", e.getMessage());
+        return ResponseEntity.badRequest().body(
+                Response.of(false, "요청 값이 올바르지 않습니다.", null)
+        );
+    }
 
     @ExceptionHandler(CustomException.class)
     protected ResponseEntity<Response> handleCustomException(final CustomException e) {
@@ -66,5 +78,19 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(MonthlyWorkTimeExceededException.class)
+    public ResponseEntity<Response> handleMonthlyWorkTimeExceeded(
+            MonthlyWorkTimeExceededException e
+    ) {
+        return ResponseEntity.unprocessableEntity().body(Response.of(
+                false,
+                "월 최대 근무 시간을 초과하였습니다.",
+                MonthlyLimitExceededResponseDetail.of(
+                        e.getLimitHours(),
+                        e.getRequestedHours()
+                )
+        ));
     }
 }
