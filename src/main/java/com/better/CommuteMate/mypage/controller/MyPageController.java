@@ -3,6 +3,7 @@ package com.better.CommuteMate.mypage.controller;
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.mypage.application.MyPageService;
 import com.better.CommuteMate.global.controller.dtos.Response;
+import com.better.CommuteMate.mypage.dto.GetMyDraftFaqListResponseWrapper;
 import com.better.CommuteMate.mypage.dto.GetMyFaqListResponseWrapper;
 import com.better.CommuteMate.mypage.dto.GetMyPageResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -95,8 +96,20 @@ public class MyPageController {
             description = "임시저장(DRAFT) 상태의 업무일지 목록을 조회하는 API입니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "임시저장 업무일지 목록 조회 성공"),
-            @ApiResponse(responseCode = "500", description = "서버 오류")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "임시저장 업무일지 목록 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = GetMyDraftFaqListResponseWrapper.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류"
+            )
     })
     @GetMapping("/faqs/drafts")
     @SecurityRequirement(name = "JWT")
