@@ -5,7 +5,6 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "workplace")
@@ -16,11 +15,12 @@ import java.util.UUID;
 public class Workplace {
 
     @Id
-    @Column(name = "workplace_id", nullable = false, length = 36)
-    private String workplaceId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "workplace_id", nullable = false)
+    private Long workplaceId;
 
-    @Column(name = "organization_id", nullable = false, length = 36)
-    private String organizationId;
+    @Column(name = "organization_id", nullable = false)
+    private Long organizationId;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
@@ -90,10 +90,6 @@ public class Workplace {
 
     @PrePersist
     protected void onCreate() {
-        if (this.workplaceId == null) {
-            this.workplaceId = UUID.randomUUID().toString();
-        }
-
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }

@@ -35,7 +35,7 @@ public class AdminWorkScheduleQueryService {
     private final WorkUnavailableTimeRepository unavailableTimeRepository;
 
     public AdminScheduleRangeResponse getSchedules(
-            String organizationId,
+            Long organizationId,
             String startDateValue,
             String endDateValue,
             String userName
@@ -105,7 +105,7 @@ public class AdminWorkScheduleQueryService {
         );
     }
 
-    private boolean hasSetting(String organizationId, YearMonth yearMonth) {
+    private boolean hasSetting(Long organizationId, YearMonth yearMonth) {
         return settingRepository.existsByOrganizationIdAndYearAndMonth(
                 organizationId,
                 yearMonth.getYear(),

@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "관리자 근무 일정 관리", description = "관리자용 근무 일정 설정 API")
-@SecurityRequirement(name = "JWT")
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
@@ -139,6 +138,7 @@ public class AdminScheduleController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
             @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
     })
+    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> saveScheduleSetting(
             @Parameter(description = "설정 연도", example = "2026", required = true)
             @PathVariable int year,
@@ -147,7 +147,7 @@ public class AdminScheduleController {
             @Valid @RequestBody SaveScheduleSettingRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+        Long organizationId = userDetails.getUser().getOrganizationId();
         String adminId = String.valueOf(userDetails.getUserId());
         SaveScheduleSettingResponse result = monthlyScheduleSettingService.save(
                 organizationId, year, month, request, adminId

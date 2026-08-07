@@ -17,7 +17,7 @@ public class AttendanceHistoryResponse {
     private Long attendanceId;
     private LocalDateTime checkTime;
     private CodeType checkType;
-    private String scheduleId;
+    private Long scheduleId;
     private LocalTime scheduleStartTime;
     private LocalTime scheduleEndTime;
 }

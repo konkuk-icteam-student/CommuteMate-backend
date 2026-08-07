@@ -38,7 +38,7 @@ public class MonthlyScheduleSettingService {
 
     @Transactional
     public SaveScheduleSettingResponse save(
-            String organizationId,
+            Long organizationId,
             int year,
             int month,
             SaveScheduleSettingRequest request,
@@ -104,7 +104,7 @@ public class MonthlyScheduleSettingService {
     }
 
     private WorkScheduleSetting newSetting(
-            String organizationId,
+            Long organizationId,
             int year,
             int month,
             SaveScheduleSettingRequest request,
