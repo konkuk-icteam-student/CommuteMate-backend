@@ -75,7 +75,7 @@ public class ScheduleService {
     private static final List<CodeType> ACTIVE_STATUSES = List.of(CodeType.WS01, CodeType.WS02);
     private static final int DEFAULT_SETTING_MAX_CONCURRENT = 4;
     private static final LocalTime WORK_START_TIME = LocalTime.of(9, 0);
-    private static final LocalTime WORK_END_TIME = LocalTime.of(17, 30);
+    private static final LocalTime WORK_END_TIME = LocalTime.of(18, 0);
     private static final int SLOT_MINUTES = 30;
 
     /**
