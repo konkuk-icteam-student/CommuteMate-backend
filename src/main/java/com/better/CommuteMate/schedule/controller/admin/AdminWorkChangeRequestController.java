@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "관리자 근로시간 수정 요청", description = "관리자의 근로시간 수정 요청 조회 API")
+@SecurityRequirement(name = "JWT")
 @RestController
 @RequestMapping("/api/v1/admin/work-change-requests")
 @RequiredArgsConstructor
@@ -95,7 +96,6 @@ public class AdminWorkChangeRequestController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
             @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
     })
-    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> getRequests(
             @Parameter(description = "조회 연도", example = "2026", required = true)
             @RequestParam(required = false) Integer year,
@@ -188,7 +188,6 @@ public class AdminWorkChangeRequestController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
             @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
     })
-    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> processRequest(
             @Parameter(description = "처리할 근로시간 수정 요청 ID", example = "1", required = true)
             @PathVariable Long requestId,
@@ -256,7 +255,6 @@ public class AdminWorkChangeRequestController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
             @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
     })
-    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> bulkApprove(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
