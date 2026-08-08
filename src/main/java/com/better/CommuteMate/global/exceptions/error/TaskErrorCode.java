@@ -21,6 +21,10 @@ public enum TaskErrorCode implements CustomErrorCode {
             "업무 날짜가 유효하지 않습니다.",
             "[Error] : 업무 날짜 유효성 검증 실패",
             HttpStatus.BAD_REQUEST),
+    INVALID_TODO_DATE(
+            "날짜 형식이 올바르지 않습니다.",
+            "[Error] : invalid admin todo date format",
+            HttpStatus.BAD_REQUEST),
     INVALID_TASK_TYPE(
             "업무 유형이 유효하지 않습니다. TT01(정기) 또는 TT02(비정기)를 사용해주세요.",
             "[Error] : 업무 유형 유효성 검증 실패",
