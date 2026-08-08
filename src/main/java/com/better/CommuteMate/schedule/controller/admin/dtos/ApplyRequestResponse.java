@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 public record ApplyRequestResponse(
-        String scheduleId,
+        Long scheduleId,
         Long userId,
         String userName,
         LocalDate date,

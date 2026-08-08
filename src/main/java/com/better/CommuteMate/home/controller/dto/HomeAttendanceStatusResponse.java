@@ -13,13 +13,13 @@ import java.time.LocalTime;
 public class HomeAttendanceStatusResponse extends ResponseDetail {
     private AttendanceStatus status;
     private String message;
-    private String currentScheduleId;
+    private Long currentScheduleId;
     private LocalTime scheduleStartTime;
     private LocalTime scheduleEndTime;
 
     @Builder
     public HomeAttendanceStatusResponse(AttendanceStatus status, String message,
-                                        String currentScheduleId,
+                                        Long currentScheduleId,
                                         LocalTime scheduleStartTime,
                                         LocalTime scheduleEndTime) {
         super();

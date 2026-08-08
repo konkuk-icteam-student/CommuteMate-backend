@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(
@@ -23,11 +22,12 @@ import java.util.UUID;
 public class WorkScheduleSetting {
 
     @Id
-    @Column(name = "setting_id", nullable = false, length = 36)
-    private String settingId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "setting_id", nullable = false)
+    private Long settingId;
 
-    @Column(name = "organization_id", nullable = false, length = 36)
-    private String organizationId;
+    @Column(name = "organization_id", nullable = false)
+    private Long organizationId;
 
     @Column(name = "year", nullable = false)
     private Integer year;
@@ -162,10 +162,6 @@ public class WorkScheduleSetting {
 
     @PrePersist
     protected void onCreate() {
-        if (this.settingId == null) {
-            this.settingId = UUID.randomUUID().toString();
-        }
-
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }

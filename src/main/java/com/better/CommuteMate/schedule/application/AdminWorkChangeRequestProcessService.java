@@ -104,7 +104,7 @@ public class AdminWorkChangeRequestProcessService {
         scheduleRepository.flush();
 
         Workplace workplace = workplaceRepository
-                .findFirstByOrganizationId(String.valueOf(organizationId))
+                .findFirstByOrganizationId(organizationId)
                 .orElseThrow(() -> CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE));
 
         for (WorkChangeRequestItem item : items) {
@@ -113,7 +113,7 @@ public class AdminWorkChangeRequestProcessService {
             }
             YearMonth month = YearMonth.from(item.getDate());
             WorkScheduleSetting setting = settingRepository.findForUpdate(
-                            String.valueOf(organizationId),
+                            organizationId,
                             month.getYear(),
                             month.getMonthValue()
                     )

@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "notification", indexes = {
@@ -20,8 +19,9 @@ import java.util.UUID;
 public class Notification {
 
     @Id
-    @Column(name = "notification_id", nullable = false, length = 36)
-    private String notificationId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "notification_id", nullable = false)
+    private Long notificationId;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
@@ -44,9 +44,6 @@ public class Notification {
 
     @PrePersist
     protected void onCreate() {
-        if (notificationId == null) {
-            notificationId = UUID.randomUUID().toString();
-        }
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }

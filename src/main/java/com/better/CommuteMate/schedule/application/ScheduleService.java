@@ -75,7 +75,7 @@ public class ScheduleService {
     private static final List<CodeType> ACTIVE_STATUSES = List.of(CodeType.WS01, CodeType.WS02);
     private static final int DEFAULT_SETTING_MAX_CONCURRENT = 4;
     private static final LocalTime WORK_START_TIME = LocalTime.of(9, 0);
-    private static final LocalTime WORK_END_TIME = LocalTime.of(17, 30);
+    private static final LocalTime WORK_END_TIME = LocalTime.of(18, 0);
     private static final int SLOT_MINUTES = 30;
 
     /**
@@ -284,7 +284,7 @@ public class ScheduleService {
         }
 
         WorkScheduleSetting setting = workScheduleSettingService.getRequiredSetting(
-                String.valueOf(user.getOrganizationId()),
+                user.getOrganizationId(),
                 slot.date().getYear(),
                 slot.date().getMonthValue()
         );
@@ -328,7 +328,7 @@ public class ScheduleService {
      * User 엔티티 구조에 맞게 이 부분만 수정하면 됩니다.
      */
     private Workplace resolveWorkplace(User user) {
-        return workplaceRepository.findFirstByOrganizationId(String.valueOf(user.getOrganizationId()))
+        return workplaceRepository.findFirstByOrganizationId(user.getOrganizationId())
                 .orElseThrow(() -> CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE));
     }
 
@@ -436,7 +436,7 @@ public class ScheduleService {
     @Transactional(readOnly = true)
     public WorkScheduleResponse getWorkSchedule(
             Long userId,
-            String scheduleId
+            Long scheduleId
     ) {
         WorkSchedule schedule = workSchedulesRepository.findById(scheduleId)
                 .orElseThrow(() -> CustomException.of(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
@@ -481,7 +481,7 @@ public class ScheduleService {
 
     @Transactional(readOnly = true)
     public WorkScheduleMonthlyLimitResponse getMonthlyLimit(
-            String organizationId,
+            Long organizationId,
             Integer year,
             Integer month
     ) {
@@ -512,7 +512,7 @@ public class ScheduleService {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
 
-        validateMonthlyLimitForEdit(userId, String.valueOf(user.getOrganizationId()), addSlots, deleteSlots);
+        validateMonthlyLimitForEdit(userId, user.getOrganizationId(), addSlots, deleteSlots);
 
         WorkChangeRequest changeRequest = WorkChangeRequest.builder()
                 .user(user)
@@ -558,7 +558,7 @@ public class ScheduleService {
 
     private void validateMonthlyLimitForEdit(
             Long userId,
-            String organizationId,
+            Long organizationId,
             List<WorkScheduleEditRequest.Slot> addSlots,
             List<WorkScheduleEditRequest.Slot> deleteSlots
     ) {
@@ -599,7 +599,7 @@ public class ScheduleService {
     @Transactional(readOnly = true)
     public WorkMonthlyScheduleResponse getMonthlyScheduleView(
             Long userId,
-            String organizationId,
+            Long organizationId,
             Integer year,
             Integer month
     ) {
@@ -625,7 +625,7 @@ public class ScheduleService {
     @Transactional(readOnly = true)
     public WorkScheduleSummaryResponse getScheduleSummary(
             Long userId,
-            String organizationId,
+            Long organizationId,
             LocalDate startDate,
             LocalDate endDate
     ) {
@@ -677,7 +677,7 @@ public class ScheduleService {
     @Transactional(readOnly = true)
     public WorkScheduleRangeResponse getScheduleRangeView(
             Long userId,
-            String organizationId,
+            Long organizationId,
             LocalDate startDate,
             LocalDate endDate
     ) {

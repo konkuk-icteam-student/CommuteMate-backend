@@ -45,7 +45,7 @@ public class AdminHomeService {
         List<WorkAttendance> attendances = schedules.isEmpty()
                 ? List.of()
                 : attendanceRepository.findAllByScheduleIn(schedules);
-        Map<String, List<WorkAttendance>> attendanceBySchedule = attendances.stream()
+        Map<Long, List<WorkAttendance>> attendanceBySchedule = attendances.stream()
                 .collect(Collectors.groupingBy(
                         attendance -> attendance.getSchedule().getScheduleId()
                 ));

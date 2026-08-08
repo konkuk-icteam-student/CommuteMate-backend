@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, String> {
+public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Long> {
 
     /**
      * 특정 날짜의 근무 일정 목록을 조회

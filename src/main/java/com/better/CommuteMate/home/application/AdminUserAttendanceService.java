@@ -83,7 +83,7 @@ public class AdminUserAttendanceService {
         List<WorkAttendance> attendances = schedules.isEmpty()
                 ? List.of()
                 : attendanceRepository.findAllByScheduleIn(schedules);
-        Map<String, List<WorkAttendance>> attendancesBySchedule = attendances.stream()
+        Map<Long, List<WorkAttendance>> attendancesBySchedule = attendances.stream()
                 .collect(Collectors.groupingBy(
                         attendance -> attendance.getSchedule().getScheduleId()
                 ));
@@ -91,7 +91,7 @@ public class AdminUserAttendanceService {
                 .collect(Collectors.groupingBy(schedule -> schedule.getUser().getUserId()));
         Optional<WorkScheduleSetting> setting =
                 settingRepository.findByOrganizationIdAndYearAndMonth(
-                        String.valueOf(organizationId), date.getYear(), date.getMonthValue()
+                        organizationId, date.getYear(), date.getMonthValue()
                 );
         int weeklyLimit = setting.map(WorkScheduleSetting::getWeeklyMaxMinutes).orElse(0);
         int monthlyLimit = setting.map(WorkScheduleSetting::getMonthlyMaxMinutes).orElse(0);
@@ -175,7 +175,7 @@ public class AdminUserAttendanceService {
 
     private Status determineStatus(
             List<WorkSchedule> schedules,
-            Map<String, List<WorkAttendance>> attendancesBySchedule,
+            Map<Long, List<WorkAttendance>> attendancesBySchedule,
             LocalDateTime referenceTime
     ) {
         if (schedules.isEmpty()) {
@@ -243,7 +243,7 @@ public class AdminUserAttendanceService {
 
     private LateSummary calculateLateSummary(
             List<WorkSchedule> schedules,
-            Map<String, List<WorkAttendance>> attendancesBySchedule
+            Map<Long, List<WorkAttendance>> attendancesBySchedule
     ) {
         int count = 0;
         int minutes = 0;
@@ -264,7 +264,7 @@ public class AdminUserAttendanceService {
 
     private int calculateWorkedMinutes(
             List<WorkSchedule> schedules,
-            Map<String, List<WorkAttendance>> attendancesBySchedule,
+            Map<Long, List<WorkAttendance>> attendancesBySchedule,
             Predicate<WorkSchedule> include,
             LocalDateTime referenceTime
     ) {

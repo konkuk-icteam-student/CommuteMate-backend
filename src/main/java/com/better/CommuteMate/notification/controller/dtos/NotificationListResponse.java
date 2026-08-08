@@ -24,8 +24,8 @@ public class NotificationListResponse extends ResponseDetail {
     }
 
     public record NotificationItem(
-            @Schema(description = "알림 ID (UUID)", example = "550e8400-e29b-41d4-a716-446655440000")
-            String notificationId,
+            @Schema(description = "알림 ID", example = "1")
+            Long notificationId,
 
             @Schema(description = "알림 유형 코드 (NT01: 근무 변경 요청 승인, NT02: 근무 변경 요청 거절, NT03: 근무 신청 시작)", example = "NT02")
             String typeCode,

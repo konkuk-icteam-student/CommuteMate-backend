@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Hidden;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -34,7 +33,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @Tag(name = "사용자 근무 일정", description = "사용자 근무 일정 신청 및 조회 API")
-@SecurityRequirement(name = "JWT")
 @RestController
 @RequestMapping("/api/v1/work-schedules")
 @RequiredArgsConstructor
@@ -180,7 +178,7 @@ public class WorkScheduleController {
     @Operation(summary = "특정 근무 일정 조회", description = "ID로 특정 근무 일정을 조회합니다.")
     @GetMapping("/{scheduleId}")
     public ResponseEntity<Response> getWorkSchedule(
-            @PathVariable String scheduleId,
+            @PathVariable Long scheduleId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUser().getUserId();
@@ -227,7 +225,7 @@ public class WorkScheduleController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUser().getUserId();
-        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+        Long organizationId = userDetails.getUser().getOrganizationId();
         WorkScheduleSummaryResponse response =
                 scheduleService.getScheduleSummary(userId, organizationId, startDate, endDate);
         return ResponseEntity.ok(Response.of(true, "근로시간 요약을 조회했습니다.", response));
@@ -297,7 +295,7 @@ public class WorkScheduleController {
             @PathVariable Integer month,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+        Long organizationId = userDetails.getUser().getOrganizationId();
         return ResponseEntity.ok(Response.of(
                 true,
                 "월별 스케줄 제한을 조회했습니다.",
@@ -335,7 +333,7 @@ public class WorkScheduleController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUser().getUserId();
-        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+        Long organizationId = userDetails.getUser().getOrganizationId();
 
         WorkMonthlyScheduleResponse response =
                 scheduleService.getMonthlyScheduleView(userId, organizationId, year, month);
@@ -377,7 +375,7 @@ public class WorkScheduleController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUser().getUserId();
-        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+        Long organizationId = userDetails.getUser().getOrganizationId();
 
         WorkScheduleRangeResponse response =
                 scheduleService.getScheduleRangeView(userId, organizationId, startDate, endDate);

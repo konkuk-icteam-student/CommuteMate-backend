@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "관리자 근로시간표", description = "관리자용 근로시간표 조회 API")
-@SecurityRequirement(name = "JWT")
 @RestController
 @RequestMapping("/api/v1/admin/work-schedules")
 @RequiredArgsConstructor
@@ -105,6 +104,7 @@ public class AdminWorkScheduleController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
             @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
     })
+    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> getSchedules(
             @Parameter(description = "조회 시작일", example = "2026-04-15", required = true)
             @RequestParam(required = false) String startDate,
@@ -114,7 +114,7 @@ public class AdminWorkScheduleController {
             @RequestParam(required = false) String userName,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+        Long organizationId = userDetails.getUser().getOrganizationId();
         AdminScheduleRangeResponse details = queryService.getSchedules(
                 organizationId, startDate, endDate, userName
         );
