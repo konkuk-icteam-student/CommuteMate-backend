@@ -289,14 +289,14 @@ public class ScheduleService {
                 slot.date().getMonthValue()
         );
 
+        if (!setting.isApplyPeriod(LocalDateTime.now())) {
+            throw CustomException.of(ScheduleErrorCode.APPLY_PERIOD_NOT_ACTIVE);
+        }
+
         if (!scheduleValidator.isScheduleInsertable(slot, setting)) {
             failure.add(toResponseSlot(slot));
             return;
         }
-
-        CodeType statusCode = setting.isApplyPeriod(LocalDateTime.now())
-                ? CodeType.WS02
-                : CodeType.WS01;
 
         WorkSchedule workSchedule = WorkSchedule.builder()
                 .user(user)
@@ -305,7 +305,7 @@ public class ScheduleService {
                 .date(slot.date())
                 .startTime(slot.start())
                 .endTime(slot.end())
-                .statusCode(statusCode)
+                .statusCode(CodeType.WS02)
                 .createdBy(String.valueOf(user.getUserId()))
                 .updatedBy(String.valueOf(user.getUserId()))
                 .build();
@@ -314,13 +314,11 @@ public class ScheduleService {
 
         success.add(toResponseSlot(slot));
 
-        if (statusCode.equals(CodeType.WS02)) {
-            changes.add(new ScheduleChange(
-                    true,
-                    slot.startDateTime(),
-                    slot.endDateTime()
-            ));
-        }
+        changes.add(new ScheduleChange(
+                true,
+                slot.startDateTime(),
+                slot.endDateTime()
+        ));
     }
 
     /**

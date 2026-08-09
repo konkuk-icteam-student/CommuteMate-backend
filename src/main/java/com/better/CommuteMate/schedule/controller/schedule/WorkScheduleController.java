@@ -74,6 +74,11 @@ public class WorkScheduleController {
                                     {"isSuccess":false,"message":"신청하신 일정이 모두 실패하였습니다.","details":{"success":[],"failure":[{"start":"2026-04-07T09:00:00","end":"2026-04-07T10:00:00"}]}}
                                     """)
                     })),
+            @ApiResponse(responseCode = "400", description = "근로 신청 기간 외 요청",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {"isSuccess":false,"message":"근로 신청 기간이 아닙니다.","details":null}
+                                    """))),
             @ApiResponse(responseCode = "404", description = "해당 연월의 스케줄 설정 없음",
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(value = """
