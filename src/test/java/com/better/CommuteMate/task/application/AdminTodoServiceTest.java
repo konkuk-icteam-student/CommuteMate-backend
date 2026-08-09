@@ -5,6 +5,7 @@ import com.better.CommuteMate.domain.task.repository.TaskRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +20,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
 class AdminTodoServiceTest {
@@ -62,6 +66,33 @@ class AdminTodoServiceTest {
         assertThatThrownBy(() -> service.getTodos(10L, "2026/04/15"))
                 .isInstanceOf(CustomException.class)
                 .hasMessage("날짜 형식이 올바르지 않습니다.");
+    }
+
+    @Test
+    void createsPendingTodo() {
+        Task saved = Task.builder()
+                .taskId(3L)
+                .title("Newspaper pickup")
+                .taskDate(LocalDate.of(2026, 4, 15))
+                .taskTime(LocalTime.of(9, 0))
+                .isCompleted(false)
+                .createdBy(7L)
+                .createdAt(LocalDateTime.of(2026, 4, 15, 8, 30))
+                .build();
+        when(taskRepository.save(any(Task.class))).thenReturn(saved);
+
+        var response = service.createTodo(
+                new CreateAdminTodoRequest("2026-04-15", "09:00", "Newspaper pickup"),
+                7L
+        );
+
+        assertThat(response.todoId).isEqualTo(3L);
+        assertThat(response.status).isEqualTo("PENDING");
+        assertThat(response.completed).isFalse();
+        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
+        verify(taskRepository).save(captor.capture());
+        assertThat(captor.getValue().getCreatedBy()).isEqualTo(7L);
+        assertThat(captor.getValue().getTitle()).isEqualTo("Newspaper pickup");
     }
 
     private Task task(Long id, String title, LocalTime time, boolean completed, Long createdBy) {

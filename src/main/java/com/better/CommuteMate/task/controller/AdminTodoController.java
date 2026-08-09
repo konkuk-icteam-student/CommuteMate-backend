@@ -4,6 +4,8 @@ import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.task.application.AdminTodoService;
 import com.better.CommuteMate.task.controller.dtos.AdminTodosResponse;
+import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoRequest;
+import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,10 +15,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +34,67 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminTodoController {
 
     private final AdminTodoService adminTodoService;
+
+    @PostMapping
+    @PreAuthorize("hasRole('RL02')")
+    @Operation(
+            summary = "관리자 업무사항 등록",
+            description = "특정 날짜와 시간에 수행할 업무사항을 등록합니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "date": "2026-04-15",
+                                      "timeSlot": "09:00",
+                                      "description": "신문지 가져오기"
+                                    }
+                                    """)
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "업무사항 등록 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = CREATE_SUCCESS_EXAMPLE)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "업무사항 입력값 오류",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "isSuccess": false,
+                                      "message": "업무사항 입력값이 올바르지 않습니다.",
+                                      "details": null
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> createTodo(
+            @Valid @RequestBody CreateAdminTodoRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        CreateAdminTodoResponse details = adminTodoService.createTodo(
+                request,
+                userDetails.getUserId()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(Response.of(
+                true,
+                "업무사항 등록에 성공했습니다.",
+                details
+        ));
+    }
 
     @GetMapping
     @PreAuthorize("hasRole('RL02')")
@@ -140,6 +207,22 @@ public class AdminTodoController {
                 "date": "2026-04-15",
                 "morningTodos": [],
                 "afternoonTodos": []
+              }
+            }
+            """;
+
+    private static final String CREATE_SUCCESS_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "업무사항 등록에 성공했습니다.",
+              "details": {
+                "todoId": 1,
+                "date": "2026-04-15",
+                "timeSlot": "09:00:00",
+                "description": "신문지 가져오기",
+                "status": "PENDING",
+                "completed": false,
+                "createdAt": "2026-04-15T08:30:00"
               }
             }
             """;

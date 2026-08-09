@@ -7,6 +7,9 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.TaskErrorCode;
 import com.better.CommuteMate.task.controller.dtos.AdminTodosResponse;
+import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoRequest;
+import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoResponse;
+import com.better.CommuteMate.global.code.CodeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +32,30 @@ public class AdminTodoService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+
+    @Transactional
+    public CreateAdminTodoResponse createTodo(
+            CreateAdminTodoRequest request,
+            Long adminId
+    ) {
+        LocalDate date;
+        LocalTime timeSlot;
+        try {
+            date = LocalDate.parse(request.date());
+            timeSlot = LocalTime.parse(request.timeSlot());
+        } catch (DateTimeParseException e) {
+            throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
+        }
+
+        Task task = Task.create(
+                request.description().trim(),
+                date,
+                timeSlot,
+                CodeType.TT01,
+                adminId
+        );
+        return CreateAdminTodoResponse.from(taskRepository.save(task));
+    }
 
     public AdminTodosResponse getTodos(Long organizationId, String dateValue) {
         LocalDate date = parseDate(dateValue);
