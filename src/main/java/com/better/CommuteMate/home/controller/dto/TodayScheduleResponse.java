@@ -32,8 +32,8 @@ public class TodayScheduleResponse extends ResponseDetail {
     @Builder
     public static class ScheduleItem {
 
-        @Schema(description = "근무 일정 ID", example = "1")
-        private Long scheduleId;
+        @Schema(description = "병합된 근무 슬롯 ID 목록 (시간 순)", example = "[1, 2, 3, 4, 5]")
+        private List<Long> scheduleIds;
 
         @Schema(description = "근무 구분 라벨 (오전 12시 기준 오전/오후)", example = "오전 근무")
         private String label;

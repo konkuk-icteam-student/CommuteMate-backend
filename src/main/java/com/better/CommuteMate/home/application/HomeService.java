@@ -8,8 +8,12 @@ import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRep
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
+import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.global.exceptions.error.AttendanceErrorCode;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse.AttendanceStatus;
+import com.better.CommuteMate.home.controller.dto.HomeCheckInResponse;
 import com.better.CommuteMate.home.controller.dto.HomeWorkTimeResponse;
 import com.better.CommuteMate.home.controller.dto.TodayScheduleResponse;
 import com.better.CommuteMate.home.controller.dto.WeeklyWorkSummaryResponse;
@@ -26,6 +30,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -37,26 +42,24 @@ public class HomeService {
     private final WorkAttendanceRepository workAttendanceRepository;
     private final UserRepository userRepository;
 
-    private static final List<CodeType> VALID_STATUS_CODES = List.of(
-            CodeType.WS01,
-            CodeType.WS02
-    );
+    private static final List<CodeType> VALID_STATUS_CODES = List.of(CodeType.WS01, CodeType.WS02);
+    private static final int CHECK_IN_GRACE_MINUTES = 10;
 
     @Transactional(readOnly = true)
     public TodayScheduleResponse getTodaySchedules(Long userId) {
         LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
 
-        List<WorkSchedule> schedules = workSchedulesRepository
+        List<WorkSchedule> slots = workSchedulesRepository
                 .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(userId, today, today, VALID_STATUS_CODES);
-        schedules.sort(Comparator.comparing(WorkSchedule::getStartTime));
+        slots.sort(Comparator.comparing(WorkSchedule::getStartTime));
 
-        if (schedules.isEmpty()) {
+        if (slots.isEmpty()) {
             return TodayScheduleResponse.builder().date(today).schedules(List.of()).build();
         }
 
         Map<Long, WorkAttendance> checkInByScheduleId = workAttendanceRepository
-                .findAllByScheduleIn(schedules).stream()
+                .findAllByScheduleIn(slots).stream()
                 .filter(a -> a.getCheckTypeCode() == CodeType.CT01)
                 .collect(Collectors.toMap(
                         a -> a.getSchedule().getScheduleId(),
@@ -64,18 +67,27 @@ public class HomeService {
                         (a1, a2) -> a1
                 ));
 
-        List<TodayScheduleResponse.ScheduleItem> items = schedules.stream()
-                .map(s -> {
-                    WorkAttendance checkIn = checkInByScheduleId.get(s.getScheduleId());
-                    boolean checkedIn = checkIn != null;
+        List<TodayScheduleResponse.ScheduleItem> items = ScheduleSlotUtils.mergeConsecutiveSlots(slots).stream()
+                .map(group -> {
+                    WorkSchedule first = group.get(0);
+                    WorkSchedule last = group.get(group.size() - 1);
+                    List<Long> scheduleIds = group.stream().map(WorkSchedule::getScheduleId).toList();
+
+                    Optional<WorkAttendance> earliest = group.stream()
+                            .map(s -> checkInByScheduleId.get(s.getScheduleId()))
+                            .filter(Objects::nonNull)
+                            .min(Comparator.comparing(WorkAttendance::getCheckTime));
+
+                    boolean checkedIn = earliest.isPresent();
                     return TodayScheduleResponse.ScheduleItem.builder()
-                            .scheduleId(s.getScheduleId())
-                            .label(s.getStartTime().isBefore(LocalTime.NOON) ? "오전 근무" : "오후 근무")
-                            .start(s.getStartTime())
-                            .end(s.getEndTime())
-                            .workStatusCode(resolveWorkStatusCode(s, checkedIn, now))
+                            .scheduleIds(scheduleIds)
+                            .label(first.getStartTime().isBefore(LocalTime.NOON) ? "오전 근무" : "오후 근무")
+                            .start(first.getStartTime())
+                            .end(last.getEndTime())
+                            .workStatusCode(resolveWorkStatusCode(
+                                    today, first.getStartTime(), last.getEndTime(), checkedIn, now))
                             .checkedIn(checkedIn)
-                            .checkInTime(checkedIn ? checkIn.getCheckTime() : null)
+                            .checkInTime(checkedIn ? earliest.get().getCheckTime() : null)
                             .build();
                 })
                 .toList();
@@ -83,9 +95,62 @@ public class HomeService {
         return TodayScheduleResponse.builder().date(today).schedules(items).build();
     }
 
-    private String resolveWorkStatusCode(WorkSchedule s, boolean checkedIn, LocalDateTime now) {
-        LocalDateTime end = LocalDateTime.of(s.getDate(), s.getEndTime());
-        LocalDateTime lateThreshold = LocalDateTime.of(s.getDate(), s.getStartTime()).plusMinutes(10);
+    @Transactional
+    public HomeCheckInResponse checkIn(Long userId, List<Long> scheduleIds) {
+        List<WorkSchedule> schedules = workSchedulesRepository.findAllById(scheduleIds);
+        LocalDate today = LocalDate.now();
+
+        if (schedules.size() != scheduleIds.size()
+                || schedules.stream().anyMatch(s -> !s.getUser().getUserId().equals(userId))
+                || schedules.stream().anyMatch(s -> !s.getDate().equals(today))
+                || schedules.stream().anyMatch(s -> s.getStatusCode() == CodeType.WS04)) {
+            throw CustomException.of(AttendanceErrorCode.SCHEDULE_NOT_FOUND);
+        }
+
+        schedules.sort(Comparator.comparing(WorkSchedule::getStartTime));
+
+        if (!ScheduleSlotUtils.isConsecutive(schedules)) {
+            throw CustomException.of(AttendanceErrorCode.NOT_CONSECUTIVE_SLOTS);
+        }
+
+        boolean alreadyCheckedIn = workAttendanceRepository.findAllByScheduleIn(schedules).stream()
+                .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT01);
+        if (alreadyCheckedIn) {
+            throw CustomException.of(AttendanceErrorCode.ALREADY_CHECKED_IN);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        WorkSchedule firstSlot = schedules.get(0);
+        LocalDateTime lateThreshold = LocalDateTime.of(firstSlot.getDate(), firstSlot.getStartTime())
+                .plusMinutes(CHECK_IN_GRACE_MINUTES);
+        if (now.isAfter(lateThreshold)) {
+            throw CustomException.of(AttendanceErrorCode.CHECK_IN_LATE);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> CustomException.of(GlobalErrorCode.USER_NOT_FOUND));
+
+        List<WorkAttendance> records = schedules.stream()
+                .map(s -> WorkAttendance.builder()
+                        .user(user)
+                        .schedule(s)
+                        .checkTime(now)
+                        .checkTypeCode(CodeType.CT01)
+                        .verified(true)
+                        .build())
+                .toList();
+        workAttendanceRepository.saveAll(records);
+
+        return HomeCheckInResponse.builder()
+                .scheduleIds(scheduleIds)
+                .checkInTime(now)
+                .build();
+    }
+
+    private String resolveWorkStatusCode(LocalDate date, LocalTime mergedStart, LocalTime mergedEnd,
+                                          boolean checkedIn, LocalDateTime now) {
+        LocalDateTime end = LocalDateTime.of(date, mergedEnd);
+        LocalDateTime lateThreshold = LocalDateTime.of(date, mergedStart).plusMinutes(CHECK_IN_GRACE_MINUTES);
         if (checkedIn) {
             return now.isBefore(end) ? CodeType.WK02.getFullCode() : CodeType.WK03.getFullCode();
         } else {
