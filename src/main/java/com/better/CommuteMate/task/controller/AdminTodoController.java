@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -189,6 +190,71 @@ public class AdminTodoController {
                 "업무사항 수정에 성공했습니다.",
                 details
         ));
+    }
+
+    @DeleteMapping("/{todoId}")
+    @PreAuthorize("hasRole('RL02')")
+    @Operation(
+            summary = "관리자 업무사항 삭제",
+            description = "업무사항을 삭제합니다. 같은 조직의 관리자만 삭제할 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "업무사항 삭제 성공",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 필요",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "isSuccess": false,
+                                      "message": "인증이 필요합니다.",
+                                      "details": null
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "업무사항 삭제 권한 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "isSuccess": false,
+                                      "message": "업무사항을 삭제할 권한이 없습니다.",
+                                      "details": null
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "업무사항을 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "isSuccess": false,
+                                      "message": "업무사항을 찾을 수 없습니다.",
+                                      "details": null
+                                    }
+                                    """)
+                    )
+            )
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Void> deleteTodo(
+            @Parameter(description = "삭제할 업무사항 ID", example = "1", required = true)
+            @PathVariable Long todoId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        adminTodoService.deleteTodo(todoId, userDetails.getUserId());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping

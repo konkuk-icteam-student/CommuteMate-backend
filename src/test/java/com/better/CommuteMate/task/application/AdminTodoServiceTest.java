@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
@@ -177,6 +178,35 @@ class AdminTodoServiceTest {
         ))
                 .isInstanceOf(CustomException.class)
                 .hasMessage("업무사항을 찾을 수 없습니다.");
+    }
+
+    @Test
+    void deletesTodoCreatedInSameOrganization() {
+        User admin = User.builder().userId(7L).organizationId(10L).build();
+        User creator = User.builder().userId(8L).organizationId(10L).build();
+        Task task = Task.builder().taskId(3L).createdBy(8L).build();
+        when(taskRepository.findById(3L)).thenReturn(Optional.of(task));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(admin));
+        when(userRepository.findById(8L)).thenReturn(Optional.of(creator));
+
+        service.deleteTodo(3L, 7L);
+
+        verify(taskRepository).delete(task);
+    }
+
+    @Test
+    void rejectsDeleteFromAnotherOrganization() {
+        User admin = User.builder().userId(7L).organizationId(10L).build();
+        User creator = User.builder().userId(8L).organizationId(20L).build();
+        Task task = Task.builder().taskId(3L).createdBy(8L).build();
+        when(taskRepository.findById(3L)).thenReturn(Optional.of(task));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(admin));
+        when(userRepository.findById(8L)).thenReturn(Optional.of(creator));
+
+        assertThatThrownBy(() -> service.deleteTodo(3L, 7L))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("업무사항을 삭제할 권한이 없습니다.");
+        verify(taskRepository, never()).delete(task);
     }
 
     private Task task(Long id, String title, LocalTime time, boolean completed, Long createdBy) {

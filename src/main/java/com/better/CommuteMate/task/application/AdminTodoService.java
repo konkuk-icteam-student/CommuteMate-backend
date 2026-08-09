@@ -83,6 +83,14 @@ public class AdminTodoService {
         return UpdateAdminTodoResponse.from(taskRepository.saveAndFlush(task));
     }
 
+    @Transactional
+    public void deleteTodo(Long todoId, Long adminId) {
+        Task task = taskRepository.findById(todoId)
+                .orElseThrow(() -> CustomException.of(TaskErrorCode.TODO_NOT_FOUND));
+        validateDeleteAccess(task, adminId);
+        taskRepository.delete(task);
+    }
+
     public AdminTodosResponse getTodos(Long organizationId, String dateValue) {
         LocalDate date = parseDate(dateValue);
         List<Task> tasks = taskRepository.findAdminTodos(organizationId, date);
@@ -145,16 +153,26 @@ public class AdminTodoService {
     }
 
     private void validateUpdateAccess(Task task, Long adminId) {
+        if (!hasSameOrganization(task, adminId)) {
+            throw CustomException.of(TaskErrorCode.TODO_UPDATE_ACCESS_DENIED);
+        }
+    }
+
+    private void validateDeleteAccess(Task task, Long adminId) {
+        if (!hasSameOrganization(task, adminId)) {
+            throw CustomException.of(TaskErrorCode.TODO_DELETE_ACCESS_DENIED);
+        }
+    }
+
+    private boolean hasSameOrganization(Task task, Long adminId) {
         User admin = userRepository.findById(adminId)
-                .orElseThrow(() -> CustomException.of(TaskErrorCode.TODO_UPDATE_ACCESS_DENIED));
+                .orElse(null);
         User creator = task.getCreatedBy() == null
                 ? null
                 : userRepository.findById(task.getCreatedBy()).orElse(null);
-
-        if (creator == null
-                || !Objects.equals(admin.getOrganizationId(), creator.getOrganizationId())) {
-            throw CustomException.of(TaskErrorCode.TODO_UPDATE_ACCESS_DENIED);
-        }
+        return admin != null
+                && creator != null
+                && Objects.equals(admin.getOrganizationId(), creator.getOrganizationId());
     }
 
     private Map<Long, User> findCreators(List<Task> tasks) {

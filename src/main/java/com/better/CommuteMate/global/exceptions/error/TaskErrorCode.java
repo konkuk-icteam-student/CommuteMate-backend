@@ -33,6 +33,10 @@ public enum TaskErrorCode implements CustomErrorCode {
             "업무사항을 수정할 권한이 없습니다.",
             "[Error] : admin todo update access denied",
             HttpStatus.FORBIDDEN),
+    TODO_DELETE_ACCESS_DENIED(
+            "업무사항을 삭제할 권한이 없습니다.",
+            "[Error] : admin todo delete access denied",
+            HttpStatus.FORBIDDEN),
     TODO_NOT_FOUND(
             "업무사항을 찾을 수 없습니다.",
             "[Error] : admin todo not found",
