@@ -9,6 +9,8 @@ import com.better.CommuteMate.global.exceptions.error.TaskErrorCode;
 import com.better.CommuteMate.task.controller.dtos.AdminTodosResponse;
 import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoRequest;
 import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoResponse;
+import com.better.CommuteMate.task.controller.dtos.UpdateAdminTodoRequest;
+import com.better.CommuteMate.task.controller.dtos.UpdateAdminTodoResponse;
 import com.better.CommuteMate.global.code.CodeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -57,6 +59,30 @@ public class AdminTodoService {
         return CreateAdminTodoResponse.from(taskRepository.save(task));
     }
 
+    @Transactional
+    public UpdateAdminTodoResponse updateTodo(
+            Long todoId,
+            UpdateAdminTodoRequest request,
+            Long adminId
+    ) {
+        Task task = taskRepository.findById(todoId)
+                .orElseThrow(() -> CustomException.of(TaskErrorCode.TODO_NOT_FOUND));
+        validateUpdateAccess(task, adminId);
+
+        if (request.date() == null
+                && request.timeSlot() == null
+                && request.description() == null) {
+            throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
+        }
+
+        LocalDate date = parseOptionalDate(request.date());
+        LocalTime timeSlot = parseOptionalTime(request.timeSlot());
+        String description = parseOptionalDescription(request.description());
+
+        task.updateAdminTodo(date, timeSlot, description, adminId);
+        return UpdateAdminTodoResponse.from(taskRepository.saveAndFlush(task));
+    }
+
     public AdminTodosResponse getTodos(Long organizationId, String dateValue) {
         LocalDate date = parseDate(dateValue);
         List<Task> tasks = taskRepository.findAdminTodos(organizationId, date);
@@ -82,6 +108,52 @@ public class AdminTodoService {
             return LocalDate.parse(value);
         } catch (DateTimeParseException e) {
             throw CustomException.of(TaskErrorCode.INVALID_TODO_DATE);
+        }
+    }
+
+    private LocalDate parseOptionalDate(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
+        }
+    }
+
+    private LocalTime parseOptionalTime(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return LocalTime.parse(value);
+        } catch (DateTimeParseException e) {
+            throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
+        }
+    }
+
+    private String parseOptionalDescription(String value) {
+        if (value == null) {
+            return null;
+        }
+        String description = value.trim();
+        if (description.isEmpty()) {
+            throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
+        }
+        return description;
+    }
+
+    private void validateUpdateAccess(Task task, Long adminId) {
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> CustomException.of(TaskErrorCode.TODO_UPDATE_ACCESS_DENIED));
+        User creator = task.getCreatedBy() == null
+                ? null
+                : userRepository.findById(task.getCreatedBy()).orElse(null);
+
+        if (creator == null
+                || !Objects.equals(admin.getOrganizationId(), creator.getOrganizationId())) {
+            throw CustomException.of(TaskErrorCode.TODO_UPDATE_ACCESS_DENIED);
         }
     }
 

@@ -29,6 +29,14 @@ public enum TaskErrorCode implements CustomErrorCode {
             "업무사항 입력값이 올바르지 않습니다.",
             "[Error] : invalid admin todo information",
             HttpStatus.BAD_REQUEST),
+    TODO_UPDATE_ACCESS_DENIED(
+            "업무사항을 수정할 권한이 없습니다.",
+            "[Error] : admin todo update access denied",
+            HttpStatus.FORBIDDEN),
+    TODO_NOT_FOUND(
+            "업무사항을 찾을 수 없습니다.",
+            "[Error] : admin todo not found",
+            HttpStatus.NOT_FOUND),
     INVALID_TASK_TYPE(
             "업무 유형이 유효하지 않습니다. TT01(정기) 또는 TT02(비정기)를 사용해주세요.",
             "[Error] : 업무 유형 유효성 검증 실패",
