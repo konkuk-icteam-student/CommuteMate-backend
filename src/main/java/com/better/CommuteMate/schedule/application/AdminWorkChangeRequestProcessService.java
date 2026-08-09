@@ -14,7 +14,6 @@ import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
-import com.better.CommuteMate.schedule.application.WorkSlotUtils;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeResponse;
 import com.better.CommuteMate.schedule.controller.dtos.NotificationMessage;
@@ -23,11 +22,15 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -79,7 +82,7 @@ public class AdminWorkChangeRequestProcessService {
         List<ProcessWorkChangeResponse.ScheduleResult> deleted = new ArrayList<>();
         List<ProcessWorkChangeResponse.ScheduleResult> added = new ArrayList<>();
 
-        // CR02: 교체 대상을 단위 슬롯 단위로 모두 취소한다.
+        // === CR02: 교체 대상을 단위 슬롯 단위로 모두 취소한다.
         // 취소를 먼저 완료해야 이후 CR01 정원 계산이 정확해진다.
         for (WorkChangeRequestItem item : items) {
             if (item.getChangeTypeCode() != CodeType.CR02) {
@@ -91,15 +94,20 @@ public class AdminWorkChangeRequestProcessService {
                     .orElseThrow(() -> CustomException.of(
                             ScheduleErrorCode.ADMIN_SCHEDULE_SETTING_NOT_FOUND));
 
-            for (WorkScheduleSlotCommand unitSlot : WorkSlotUtils.splitIntoUnitSlots(
+            List<WorkScheduleSlotCommand> unitSlots = WorkSlotUtils.splitIntoUnitSlots(
                     item.getDate(), item.getStartTime(), item.getEndTime(),
-                    setting.getMinWorkUnitMinutes())) {
-                WorkSchedule schedule = scheduleRepository
+                    setting.getMinWorkUnitMinutes());
+
+            for (WorkScheduleSlotCommand unitSlot : unitSlots) {
+                Optional<WorkSchedule> scheduleOpt = scheduleRepository
                         .findByUser_UserIdAndDateAndStartTimeAndEndTime(
                                 request.getUser().getUserId(),
-                                unitSlot.date(), unitSlot.start(), unitSlot.end())
-                        .orElseThrow(() -> CustomException.of(
-                                ScheduleErrorCode.DELETE_SCHEDULE_NOT_FOUND));
+                                unitSlot.date(), unitSlot.start(), unitSlot.end());
+
+                if (scheduleOpt.isEmpty() || scheduleOpt.get().getStatusCode() == CodeType.WS04) {
+                    continue;
+                }
+                WorkSchedule schedule = scheduleOpt.get();
                 schedule.cancel(String.valueOf(adminId));
                 deleted.add(toResult(schedule));
             }
@@ -111,7 +119,12 @@ public class AdminWorkChangeRequestProcessService {
                 .findFirstByOrganizationId(organizationId)
                 .orElseThrow(() -> CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE));
 
-        // CR01: 원본 범위를 단위 슬롯으로 분할해 정원을 확인하고 저장한다.
+        // === CR01: 원본 범위를 단위 슬롯으로 분할해 정원을 확인하고 일괄 저장한다.
+        // daySchedulesMap: 날짜별 당일 근무 목록. 이미 추가한 슬롯도 여기에 넣어
+        // 다음 단위 슬롯의 정원 검사에 반영한다 (saveAll 전에 DB flush 없이도 정확한 검사 가능).
+        Map<LocalDate, List<WorkSchedule>> daySchedulesMap = new HashMap<>();
+        List<WorkSchedule> toSave = new ArrayList<>();
+
         for (WorkChangeRequestItem item : items) {
             if (item.getChangeTypeCode() != CodeType.CR01) {
                 continue;
@@ -122,10 +135,16 @@ public class AdminWorkChangeRequestProcessService {
                     .orElseThrow(() -> CustomException.of(
                             ScheduleErrorCode.ADMIN_SCHEDULE_SETTING_NOT_FOUND));
 
-            for (WorkScheduleSlotCommand unitSlot : WorkSlotUtils.splitIntoUnitSlots(
+            List<WorkScheduleSlotCommand> unitSlots = WorkSlotUtils.splitIntoUnitSlots(
                     item.getDate(), item.getStartTime(), item.getEndTime(),
-                    setting.getMinWorkUnitMinutes())) {
-                if (!scheduleValidator.isScheduleInsertable(unitSlot, setting)) {
+                    setting.getMinWorkUnitMinutes());
+
+            List<WorkSchedule> dayList = daySchedulesMap.computeIfAbsent(
+                    item.getDate(), d -> new ArrayList<>(scheduleRepository.findAllByDate(d)));
+
+            for (WorkScheduleSlotCommand unitSlot : unitSlots) {
+                if (!scheduleValidator.isScheduleInsertable(
+                        unitSlot, setting.getMaxConcurrentWorkers(), dayList)) {
                     throw CustomException.of(ScheduleErrorCode.CHANGE_REQUEST_CAPACITY_EXCEEDED);
                 }
                 WorkSchedule schedule = WorkSchedule.builder()
@@ -140,11 +159,16 @@ public class AdminWorkChangeRequestProcessService {
                         .createdBy(String.valueOf(adminId))
                         .updatedBy(String.valueOf(adminId))
                         .build();
-                // 다음 단위 슬롯의 정원 검사에 현재 저장 건이 포함되도록 즉시 반영한다.
-                scheduleRepository.saveAndFlush(schedule);
-                added.add(toResult(schedule));
+                // dayList에 포함시켜 다음 슬롯 정원 검사에 반영한다.
+                dayList.add(schedule);
+                toSave.add(schedule);
             }
         }
+
+        if (!toSave.isEmpty()) {
+            scheduleRepository.saveAll(toSave);
+        }
+        toSave.forEach(s -> added.add(toResult(s)));
 
         sendNotification(request, true);
         return new ProcessWorkChangeResponse(
