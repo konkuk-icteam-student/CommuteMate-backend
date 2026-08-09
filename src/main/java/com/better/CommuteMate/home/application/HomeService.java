@@ -11,6 +11,7 @@ import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse.AttendanceStatus;
 import com.better.CommuteMate.home.controller.dto.HomeWorkTimeResponse;
+import com.better.CommuteMate.home.controller.dto.TodayScheduleResponse;
 import com.better.CommuteMate.home.controller.dto.WeeklyWorkSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,10 +21,13 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +41,57 @@ public class HomeService {
             CodeType.WS01,
             CodeType.WS02
     );
+
+    @Transactional(readOnly = true)
+    public TodayScheduleResponse getTodaySchedules(Long userId) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+
+        List<WorkSchedule> schedules = workSchedulesRepository
+                .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(userId, today, today, VALID_STATUS_CODES);
+        schedules.sort(Comparator.comparing(WorkSchedule::getStartTime));
+
+        if (schedules.isEmpty()) {
+            return TodayScheduleResponse.builder().date(today).schedules(List.of()).build();
+        }
+
+        Map<Long, WorkAttendance> checkInByScheduleId = workAttendanceRepository
+                .findAllByScheduleIn(schedules).stream()
+                .filter(a -> a.getCheckTypeCode() == CodeType.CT01)
+                .collect(Collectors.toMap(
+                        a -> a.getSchedule().getScheduleId(),
+                        a -> a,
+                        (a1, a2) -> a1
+                ));
+
+        List<TodayScheduleResponse.ScheduleItem> items = schedules.stream()
+                .map(s -> {
+                    WorkAttendance checkIn = checkInByScheduleId.get(s.getScheduleId());
+                    boolean checkedIn = checkIn != null;
+                    return TodayScheduleResponse.ScheduleItem.builder()
+                            .scheduleId(s.getScheduleId())
+                            .label(s.getStartTime().isBefore(LocalTime.NOON) ? "오전 근무" : "오후 근무")
+                            .start(s.getStartTime())
+                            .end(s.getEndTime())
+                            .workStatusCode(resolveWorkStatusCode(s, checkedIn, now))
+                            .checkedIn(checkedIn)
+                            .checkInTime(checkedIn ? checkIn.getCheckTime() : null)
+                            .build();
+                })
+                .toList();
+
+        return TodayScheduleResponse.builder().date(today).schedules(items).build();
+    }
+
+    private String resolveWorkStatusCode(WorkSchedule s, boolean checkedIn, LocalDateTime now) {
+        LocalDateTime end = LocalDateTime.of(s.getDate(), s.getEndTime());
+        LocalDateTime lateThreshold = LocalDateTime.of(s.getDate(), s.getStartTime()).plusMinutes(10);
+        if (checkedIn) {
+            return now.isBefore(end) ? CodeType.WK02.getFullCode() : CodeType.WK03.getFullCode();
+        } else {
+            return now.isAfter(lateThreshold) ? CodeType.WK04.getFullCode() : CodeType.WK01.getFullCode();
+        }
+    }
 
     /**
      * 오늘의 총 근무 시간(분 단위)과 예정된 스케줄 개수를 조회합니다.
