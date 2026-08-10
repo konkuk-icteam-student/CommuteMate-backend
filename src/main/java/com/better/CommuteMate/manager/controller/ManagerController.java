@@ -3,12 +3,9 @@ package com.better.CommuteMate.manager.controller;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.manager.application.ManagerService;
 import com.better.CommuteMate.manager.application.dto.request.PostManagerRequest;
-import com.better.CommuteMate.manager.application.dto.response.GetManagerListWrapper;
-import com.better.CommuteMate.manager.application.dto.response.PatchFavoriteManagerResponse;
-import com.better.CommuteMate.manager.application.dto.response.PostManagerResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +27,8 @@ public class ManagerController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "담당자 등록 성공",
-                    content = @Content(schema = @Schema(implementation = PostManagerResponse.class))),
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = REGISTER_MANAGER_SUCCESS_EXAMPLE))),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content),
             @ApiResponse(responseCode = "404", description = "해당 카테고리 없음", content = @Content),
             @ApiResponse(responseCode = "409", description = "이미 등록된 담당자", content = @Content),
@@ -48,7 +46,9 @@ public class ManagerController {
             description = "담당자 목록을 조회합니다. 조직, 분류, 즐겨찾기 여부로 필터링할 수 있습니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "담당자 목록 조회 성공", content = @Content(schema = @Schema(implementation = GetManagerListWrapper.class))),
+            @ApiResponse(responseCode = "200", description = "담당자 목록 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = GET_MANAGER_LIST_SUCCESS_EXAMPLE))),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터",  content = @Content),
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     })
@@ -69,7 +69,8 @@ public class ManagerController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "담당자 즐겨찾기 등록 및 해제 성공",
-                    content = @Content(schema = @Schema(implementation = PatchFavoriteManagerResponse.class))),
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = FAVORITE_MANAGER_SUCCESS_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "해당 담당자-분류 매핑 없음"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
@@ -101,4 +102,51 @@ public class ManagerController {
         managerService.deleteManager(managerId);
         return ResponseEntity.ok(new Response(true, "담당자 삭제 성공", null));
     }
+
+    private static final String REGISTER_MANAGER_SUCCESS_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "담당자 등록 성공",
+              "details": {
+                "timestamp": "2026-08-10T12:44:33.890Z",
+                "managerId": 1,
+                "categoryId": 1
+              }
+            }
+            """;
+
+    private static final String GET_MANAGER_LIST_SUCCESS_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "카테고리 담당자 목록 조회 성공",
+              "details": {
+                "timestamp": "2026-08-10T12:44:33.890Z",
+                "managers": [
+                  {
+                    "categoryId": 1,
+                    "categoryName": "인사관리",
+                    "managerId": 1,
+                    "managerName": "홍길동",
+                    "managerFavorite": true,
+                    "organizationId": 1,
+                    "organizationName": "정보운영팀",
+                    "phonenum": "01012345678"
+                  }
+                ]
+              }
+            }
+            """;
+
+    private static final String FAVORITE_MANAGER_SUCCESS_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "즐겨찾기 등록 성공",
+              "details": {
+                "timestamp": "2026-08-10T12:44:33.890Z",
+                "managerId": 1,
+                "categoryId": 1,
+                "favorite": true
+              }
+            }
+            """;
 }

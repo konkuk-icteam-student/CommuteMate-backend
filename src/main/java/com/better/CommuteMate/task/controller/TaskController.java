@@ -7,7 +7,7 @@ import com.better.CommuteMate.task.controller.dtos.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,7 +32,9 @@ public class TaskController {
 
     @Operation(summary = "일별 업무 목록 조회", description = "특정 날짜의 업무 목록을 정기/비정기, 오전/오후로 구분하여 조회합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = DailyTasksResponse.class))),
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = GET_TASKS_BY_DATE_SUCCESS_EXAMPLE))),
             @ApiResponse(responseCode = "400", description = "잘못된 날짜 형식")
     })
     @GetMapping
@@ -182,4 +184,48 @@ public class TaskController {
         return ResponseEntity.status(status)
                 .body(new Response(response.getTotalErrors() == 0, message, response));
     }
+
+    private static final String GET_TASKS_BY_DATE_SUCCESS_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "업무 목록을 조회했습니다.",
+              "details": {
+                "timestamp": "2026-08-10T12:44:33.890Z",
+                "date": "2026-08-10",
+                "regularTasks": {
+                  "morning": [
+                    {
+                      "taskId": 1,
+                      "title": "신문지 가져오기",
+                      "assigneeId": 7,
+                      "assigneeName": "홍길동",
+                      "taskDate": "2026-08-10",
+                      "taskTime": "09:00:00",
+                      "taskType": "TT01",
+                      "taskTypeName": "정기 업무",
+                      "isCompleted": true,
+                      "completedByName": "홍길동",
+                      "completedTime": "09:13:00"
+                    }
+                  ],
+                  "afternoon": []
+                },
+                "irregularTasks": [
+                  {
+                    "taskId": 2,
+                    "title": "회의실 청소",
+                    "assigneeId": 7,
+                    "assigneeName": "홍길동",
+                    "taskDate": "2026-08-10",
+                    "taskTime": "14:00:00",
+                    "taskType": "TT02",
+                    "taskTypeName": "비정기 업무",
+                    "isCompleted": false,
+                    "completedByName": null,
+                    "completedTime": null
+                  }
+                ]
+              }
+            }
+            """;
 }
