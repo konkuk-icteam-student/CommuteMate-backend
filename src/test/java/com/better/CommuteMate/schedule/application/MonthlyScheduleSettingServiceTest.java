@@ -48,8 +48,8 @@ class MonthlyScheduleSettingServiceTest {
     @DisplayName("근로신청 설정 저장 - 변경된 규칙과 충돌하는 기존 스케줄을 취소한다")
     void saveCancelsSchedulesConflictingWithNewRule() {
         WorkScheduleSetting setting = WorkScheduleSetting.builder()
-                .settingId("setting-1")
-                .organizationId("10")
+                .settingId(1L)
+                .organizationId(10L)
                 .year(2026)
                 .month(4)
                 .applyStartAt(LocalDateTime.of(2026, 4, 1, 0, 0))
@@ -60,7 +60,7 @@ class MonthlyScheduleSettingServiceTest {
                 .build();
         User user = User.builder().userId(1L).build();
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId("schedule-1")
+                .scheduleId(1L)
                 .setting(setting)
                 .user(user)
                 .date(LocalDate.of(2026, 4, 19))
@@ -71,13 +71,13 @@ class MonthlyScheduleSettingServiceTest {
                 .build();
         SaveScheduleSettingRequest request = validRequest();
 
-        when(settingRepository.findByOrganizationIdAndYearAndMonth("10", 2026, 4))
+        when(settingRepository.findByOrganizationIdAndYearAndMonth(10L, 2026, 4))
                 .thenReturn(Optional.of(setting));
         when(scheduleRepository.findAllBySettingAndStatusCodeIn(
                 setting, List.of(CodeType.WS01, CodeType.WS02)
         )).thenReturn(List.of(schedule));
 
-        var response = service.save("10", 2026, 4, request, "99");
+        var response = service.save(10L, 2026, 4, request, "99");
 
         assertThat(response.affectedScheduleCount).isEqualTo(1);
         assertThat(response.affectedUserCount).isEqualTo(1);
@@ -99,7 +99,7 @@ class MonthlyScheduleSettingServiceTest {
                 4, 120, 600, 540, 1200, 1620
         );
 
-        assertThatThrownBy(() -> service.save("10", 2026, 4, invalid, "99"))
+        assertThatThrownBy(() -> service.save(10L, 2026, 4, invalid, "99"))
                 .isInstanceOf(CustomException.class)
                 .hasMessage("최소 근무시간은 최대 근무시간보다 작아야 합니다.");
     }

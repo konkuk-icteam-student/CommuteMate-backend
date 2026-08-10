@@ -80,16 +80,13 @@ class ScheduleServiceTest {
         WorkScheduleSetting setting = setting();
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
-        // 사용자 기존 슬롯 없음 (중복 없음)
-        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(
-                any(), any(), any(), any())).thenReturn(List.of());
-        // 해당 날짜 전체 근무 없음 (정원 여유)
-        when(workSchedulesRepository.findAllByDate(any())).thenReturn(List.of());
-        when(workScheduleSettingService.getRequiredSetting(eq(10L), eq(2026), eq(8)))
-                .thenReturn(setting);
-        // 정원 검증 통과 (4개 단위 슬롯 각각 호출)
-        when(scheduleValidator.isScheduleInsertable(
-                any(WorkScheduleSlotCommand.class), anyInt(), anyList())).thenReturn(true);
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workSchedulesRepository.existsByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeNot(
+                1L, slot.date(), slot.start(), slot.end(), com.better.CommuteMate.global.code.CodeType.WS04))
+                .thenReturn(false);
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting);
+        when(scheduleValidator.isScheduleInsertable(slot, setting)).thenReturn(true);
         when(workplaceRepository.findFirstByOrganizationId(10L))
                 .thenReturn(Optional.of(Workplace.builder().organizationId(10L).name("본사").build()));
 
@@ -111,12 +108,10 @@ class ScheduleServiceTest {
         WorkScheduleSetting setting = setting();
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
-        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(
-                any(), any(), any(), any())).thenReturn(List.of());
-        when(workSchedulesRepository.findAllByDate(any())).thenReturn(List.of());
-        when(workScheduleSettingService.getRequiredSetting(eq(10L), eq(2026), eq(8)))
-                .thenReturn(setting);
-        // 정원 초과 (Mock 기본값 false 반환)
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting);
+        when(scheduleValidator.isScheduleInsertable(slot, setting)).thenReturn(false);
 
         WorkScheduleChangeResultCommand result = scheduleService.changeWorkSchedules(
                 new WorkScheduleChangeCommand(1L, List.of(slot), List.of())
