@@ -82,11 +82,8 @@ class ScheduleServiceTest {
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
                 .thenReturn(List.of());
-        when(workSchedulesRepository.existsByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeNot(
-                1L, slot.date(), slot.start(), slot.end(), com.better.CommuteMate.global.code.CodeType.WS04))
-                .thenReturn(false);
         when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting);
-        when(scheduleValidator.isScheduleInsertable(slot, setting)).thenReturn(true);
+        when(scheduleValidator.isScheduleInsertable(any(WorkScheduleSlotCommand.class), anyInt(), anyList())).thenReturn(true);
         when(workplaceRepository.findFirstByOrganizationId(10L))
                 .thenReturn(Optional.of(Workplace.builder().organizationId(10L).name("본사").build()));
 
@@ -111,7 +108,7 @@ class ScheduleServiceTest {
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
                 .thenReturn(List.of());
         when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting);
-        when(scheduleValidator.isScheduleInsertable(slot, setting)).thenReturn(false);
+        when(scheduleValidator.isScheduleInsertable(any(WorkScheduleSlotCommand.class), anyInt(), anyList())).thenReturn(false);
 
         WorkScheduleChangeResultCommand result = scheduleService.changeWorkSchedules(
                 new WorkScheduleChangeCommand(1L, List.of(slot), List.of())
@@ -137,8 +134,6 @@ class ScheduleServiceTest {
         WorkScheduleSetting setting = setting();
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
-        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(
-                any(), any(), any(), any())).thenReturn(List.of());
         when(workScheduleSettingService.getRequiredSetting(eq(10L), eq(2026), eq(8)))
                 .thenReturn(setting);
 
@@ -158,8 +153,6 @@ class ScheduleServiceTest {
         WorkScheduleSetting setting = setting();
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
-        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(
-                any(), any(), any(), any())).thenReturn(List.of());
         when(workScheduleSettingService.getRequiredSetting(eq(10L), eq(2026), eq(8)))
                 .thenReturn(setting);
 
