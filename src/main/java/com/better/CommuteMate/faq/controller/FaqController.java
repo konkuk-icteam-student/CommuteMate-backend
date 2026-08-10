@@ -3,11 +3,12 @@ package com.better.CommuteMate.faq.controller;
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.faq.application.dto.request.*;
 import com.better.CommuteMate.faq.application.service.FaqService;
+import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
+import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -152,22 +153,20 @@ public class FaqController {
                     """
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "FAQ 상세 조회 성공",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = GET_FAQ_DETAIL_SUCCESS_EXAMPLE))),
+            @ApiResponse(responseCode = "200", description = "FAQ 상세 조회 성공"),
             @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음", content = @Content),
             @ApiResponse(responseCode = "404", description = "해당 날짜의 FAQ 기록을 찾을 수 없음", content = @Content),
             @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content)
     })
     @GetMapping("/{faqId}")
-    public ResponseEntity<Response> getFaqDetail(
+    public ResponseEntity<Response<GetFaqDetailResponse>> getFaqDetail(
             @Parameter(description = "조회할 FAQ ID", required = true)
             @PathVariable Long faqId,
 
             @Parameter(description = "조회할 날짜 (yyyy-MM-dd)", required = true)
             @RequestParam LocalDate date
     ) {
-        return ResponseEntity.ok(new Response(true, "FAQ 상세 조회 성공", faqService.getFaqDetailByDate(faqId, date)));
+        return ResponseEntity.ok(new Response<>(true, "FAQ 상세 조회 성공", faqService.getFaqDetailByDate(faqId, date)));
     }
 
     @Operation(
@@ -180,13 +179,11 @@ public class FaqController {
                     """
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "FAQ 목록 조회 성공",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = GET_FAQ_LIST_SUCCESS_EXAMPLE))),
+            @ApiResponse(responseCode = "200", description = "FAQ 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
     @GetMapping
-    public ResponseEntity<Response> getFaqList(
+    public ResponseEntity<Response<GetFaqListWrapper>> getFaqList(
             @RequestParam(required = false) Long organizationId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
@@ -195,7 +192,7 @@ public class FaqController {
             @RequestParam(required = false) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page
     ) {
-        return ResponseEntity.ok(new Response(true, "FAQ 목록 조회 성공", faqService.getFaqList(organizationId, categoryId, keyword, searchScope, startDate, endDate, page)));
+        return ResponseEntity.ok(new Response<>(true, "FAQ 목록 조회 성공", faqService.getFaqList(organizationId, categoryId, keyword, searchScope, startDate, endDate, page)));
     }
 
     @Operation(
@@ -246,72 +243,4 @@ public class FaqController {
                 new Response(true, "파일 업로드 성공", faqService.uploadFaqFile(file))
         );
     }
-
-    private static final String GET_FAQ_DETAIL_SUCCESS_EXAMPLE = """
-            {
-              "isSuccess": true,
-              "message": "FAQ 상세 조회 성공",
-              "details": {
-                "timestamp": "2026-08-10T12:44:33.890Z",
-                "faqId": 1,
-                "title": "학정시 로그인 오류",
-                "categoryNames": ["로그인", "계정"],
-                "deletedFlag": true,
-                "complainantName": "홍길동",
-                "writerName": "양지윤",
-                "content": "<p>로그인 시 OTP 오류가 발생합니다.<img src=\\"...\\"></p>",
-                "answer": "<p>비밀번호 재설정 후 다시 로그인해주세요.</p>",
-                "etc": "반복 문의 발생",
-                "files": [
-                  {
-                    "url": "https://kusd.konkuk.ac.kr/uploads/prod/faq/files/3f1c2a9b-1234-4abc-9def-123456789abc.pdf",
-                    "originalName": "강의자료.pdf"
-                  }
-                ],
-                "pastManagers": [
-                  {
-                    "managerName": "김철수",
-                    "organizationName": "학사팀",
-                    "categoryName": "로그인"
-                  }
-                ],
-                "currentManagers": [
-                  {
-                    "managerName": "이영희",
-                    "organizationName": "학사팀",
-                    "categoryName": "로그인"
-                  }
-                ],
-                "editedDates": ["2024-11-01", "2024-11-10"],
-                "deletedAt": "2026-01-01",
-                "relatedFaqs": [
-                  {
-                    "faqId": 2,
-                    "title": "비밀번호 재설정 방법",
-                    "updatedDate": "2026-08-01"
-                  }
-                ]
-              }
-            }
-            """;
-
-    private static final String GET_FAQ_LIST_SUCCESS_EXAMPLE = """
-            {
-              "isSuccess": true,
-              "message": "FAQ 목록 조회 성공",
-              "details": {
-                "timestamp": "2026-08-10T12:44:33.890Z",
-                "faqs": [
-                  {
-                    "faqId": 1,
-                    "title": "학정시 로그인 오류",
-                    "updatedDate": "2026-08-01T10:00:00",
-                    "deletedFlag": false
-                  }
-                ],
-                "page": 0,
-                "totalPages": 10
-              }
-            }
-            """;
 }

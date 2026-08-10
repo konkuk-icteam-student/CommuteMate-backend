@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,9 +34,7 @@ public class FaqAIController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "카테고리 추천 성공",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = CATEGORY_RECOMMEND_SUCCESS_EXAMPLE))
+                    description = "카테고리 추천 성공"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -51,7 +48,7 @@ public class FaqAIController {
             )
     })
     @PostMapping("/category-recommend")
-    public Response recommend(
+    public Response<PostAICategoryResponse> recommend(
             @RequestBody PostAICategoryRequest request
     ) {
 
@@ -62,7 +59,7 @@ public class FaqAIController {
                 .map(c -> new CategoryDto(c.getId(), c.getName()))
                 .toList();
 
-        return new Response(
+        return new Response<>(
                 true,
                 "카테고리 추천 성공",
                 new PostAICategoryResponse(result)
@@ -87,24 +84,4 @@ public class FaqAIController {
     ) {
         return ResponseEntity.ok(new Response(true, "FAQ AI 검색 성공", faqAIService.search(request)));
     }
-
-    private static final String CATEGORY_RECOMMEND_SUCCESS_EXAMPLE = """
-            {
-              "isSuccess": true,
-              "message": "카테고리 추천 성공",
-              "details": {
-                "timestamp": "2026-08-10T12:44:33.890Z",
-                "categories": [
-                  {
-                    "id": 1,
-                    "name": "로그인"
-                  },
-                  {
-                    "id": 2,
-                    "name": "계정"
-                  }
-                ]
-              }
-            }
-            """;
 }
