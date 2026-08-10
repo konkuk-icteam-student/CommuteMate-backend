@@ -72,7 +72,7 @@ class AdminUserAttendanceServiceTest {
                 .phoneNumber("010-0000-0000")
                 .build();
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId("schedule-1")
+                .scheduleId(1L)
                 .user(user)
                 .date(date)
                 .startTime(start)
@@ -102,7 +102,7 @@ class AdminUserAttendanceServiceTest {
         when(attendanceRepository.findAllByScheduleIn(List.of(schedule)))
                 .thenReturn(List.of(checkIn));
         when(settingRepository.findByOrganizationIdAndYearAndMonth(
-                "10", date.getYear(), date.getMonthValue()
+                10L, date.getYear(), date.getMonthValue()
         )).thenReturn(Optional.of(setting));
 
         var response = service.getUserAttendance(10L, date.toString(), null, null, null);

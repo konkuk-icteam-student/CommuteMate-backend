@@ -119,6 +119,6 @@ public class AdminHomeService {
         return attendances.stream()
                 .filter(attendance -> attendance.getCheckTypeCode() == CodeType.CT01)
                 .map(WorkAttendance::getCheckTime)
-                .anyMatch(checkIn -> checkIn.isAfter(scheduledStart));
+                .anyMatch(checkIn -> checkIn.isAfter(scheduledStart.plusMinutes(10)));
     }
 }

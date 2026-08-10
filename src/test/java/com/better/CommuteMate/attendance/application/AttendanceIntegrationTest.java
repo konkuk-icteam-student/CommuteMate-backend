@@ -54,7 +54,7 @@ class AttendanceIntegrationTest {
         testUser = User.builder().userId(1L).name("Test User").build();
         LocalDateTime now = LocalDateTime.now();
         testSchedule = WorkSchedule.builder()
-                .scheduleId("100")
+                .scheduleId(100L)
                 .user(testUser)
                 .date(now.toLocalDate())
                 .startTime(now.minusHours(1).toLocalTime())
@@ -75,12 +75,12 @@ class AttendanceIntegrationTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(testSchedule));
-        when(workAttendanceRepository.findBySchedule_ScheduleId("100")).thenReturn(Collections.emptyList());
+        when(workAttendanceRepository.findBySchedule_ScheduleId(100L)).thenReturn(Collections.emptyList());
 
         workAttendanceService.checkIn(1L, token);
         
         verify(workAttendanceRepository, times(1)).save(argThat(a -> 
-            a.getCheckTypeCode() == CodeType.CT01 && a.getSchedule().getScheduleId().equals("100")
+            a.getCheckTypeCode() == CodeType.CT01 && a.getSchedule().getScheduleId().equals(100L)
         ));
 
         // 3. Check Out
@@ -93,7 +93,7 @@ class AttendanceIntegrationTest {
                 .checkTime(LocalDateTime.now())
                 .build();
         
-        when(workAttendanceRepository.findBySchedule_ScheduleId("100")).thenReturn(List.of(checkInRecord));
+        when(workAttendanceRepository.findBySchedule_ScheduleId(100L)).thenReturn(List.of(checkInRecord));
         
         // Generate new token for checkout (simulating time passing or fresh token)
         QrTokenResponse tokenResponse2 = workAttendanceService.generateQrToken();
@@ -102,7 +102,7 @@ class AttendanceIntegrationTest {
         workAttendanceService.checkOut(1L, token2);
 
         verify(workAttendanceRepository, times(1)).save(argThat(a -> 
-            a.getCheckTypeCode() == CodeType.CT02 && a.getSchedule().getScheduleId().equals("100")
+            a.getCheckTypeCode() == CodeType.CT02 && a.getSchedule().getScheduleId().equals(100L)
         ));
     }
 
