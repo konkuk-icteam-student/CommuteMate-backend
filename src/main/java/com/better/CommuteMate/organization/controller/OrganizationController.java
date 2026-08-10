@@ -7,7 +7,6 @@ import com.better.CommuteMate.organization.application.dto.response.GetOrganizat
 import com.better.CommuteMate.organization.application.dto.response.PostOrganizationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,17 +33,16 @@ public class OrganizationController {
             description = "새로운 조직을 등록합니다. 이미 존재하는 조직은 등록할 수 없습니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조직 등록 성공",
-                    content = @Content(schema = @Schema(implementation = PostOrganizationResponse.class))),
+            @ApiResponse(responseCode = "200", description = "조직 등록 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content),
             @ApiResponse(responseCode = "409", description = "이미 등록된 조직", content = @Content),
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     })
     @PostMapping
-    public ResponseEntity<Response> registerOrganization(
+    public ResponseEntity<Response<PostOrganizationResponse>> registerOrganization(
             @RequestBody PostOrganizationRequest request
     ) {
-        return ResponseEntity.ok(new Response(true, "조직 등록 성공", organizationService.registerOrganization(request)));
+        return ResponseEntity.ok(new Response<>(true, "조직 등록 성공", organizationService.registerOrganization(request)));
     }
 
     @Operation(
@@ -52,13 +50,12 @@ public class OrganizationController {
             description = "전체 조직을 조회합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조직 전체 목록 조회 성공",
-                    content = @Content(schema = @Schema(implementation = GetOrganizationListWrapper.class))),
+            @ApiResponse(responseCode = "200", description = "조직 전체 목록 조회 성공"),
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     })
     @GetMapping
-    public ResponseEntity<Response> getOrganizationList() {
-        return ResponseEntity.ok(new Response(true, "조직 전체 목록 조회 성공", organizationService.getOrganizationList()));
+    public ResponseEntity<Response<GetOrganizationListWrapper>> getOrganizationList() {
+        return ResponseEntity.ok(new Response<>(true, "조직 전체 목록 조회 성공", organizationService.getOrganizationList()));
     }
 
     @Operation(
@@ -78,5 +75,4 @@ public class OrganizationController {
         organizationService.deleteOrganization(organizationId);
         return ResponseEntity.ok(new Response(true, "조직 삭제 성공", null));
     }
-
 }

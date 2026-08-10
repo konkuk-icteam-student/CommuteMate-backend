@@ -9,7 +9,6 @@ import com.better.CommuteMate.global.controller.dtos.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -154,21 +153,20 @@ public class FaqController {
                     """
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "FAQ 상세 조회 성공",
-                    content = @Content(schema = @Schema(implementation = GetFaqDetailResponse.class))),
+            @ApiResponse(responseCode = "200", description = "FAQ 상세 조회 성공"),
             @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음", content = @Content),
             @ApiResponse(responseCode = "404", description = "해당 날짜의 FAQ 기록을 찾을 수 없음", content = @Content),
             @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content)
     })
     @GetMapping("/{faqId}")
-    public ResponseEntity<Response> getFaqDetail(
+    public ResponseEntity<Response<GetFaqDetailResponse>> getFaqDetail(
             @Parameter(description = "조회할 FAQ ID", required = true)
             @PathVariable Long faqId,
 
             @Parameter(description = "조회할 날짜 (yyyy-MM-dd)", required = true)
             @RequestParam LocalDate date
     ) {
-        return ResponseEntity.ok(new Response(true, "FAQ 상세 조회 성공", faqService.getFaqDetailByDate(faqId, date)));
+        return ResponseEntity.ok(new Response<>(true, "FAQ 상세 조회 성공", faqService.getFaqDetailByDate(faqId, date)));
     }
 
     @Operation(
@@ -181,12 +179,11 @@ public class FaqController {
                     """
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "FAQ 목록 조회 성공",
-                    content = @Content(schema = @Schema(implementation = GetFaqListWrapper.class))),
+            @ApiResponse(responseCode = "200", description = "FAQ 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
     @GetMapping
-    public ResponseEntity<Response> getFaqList(
+    public ResponseEntity<Response<GetFaqListWrapper>> getFaqList(
             @RequestParam(required = false) Long organizationId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
@@ -195,7 +192,7 @@ public class FaqController {
             @RequestParam(required = false) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page
     ) {
-        return ResponseEntity.ok(new Response(true, "FAQ 목록 조회 성공", faqService.getFaqList(organizationId, categoryId, keyword, searchScope, startDate, endDate, page)));
+        return ResponseEntity.ok(new Response<>(true, "FAQ 목록 조회 성공", faqService.getFaqList(organizationId, categoryId, keyword, searchScope, startDate, endDate, page)));
     }
 
     @Operation(
