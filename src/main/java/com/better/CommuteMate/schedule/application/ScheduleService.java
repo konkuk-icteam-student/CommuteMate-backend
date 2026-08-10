@@ -719,19 +719,32 @@ public class ScheduleService {
                 .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(userId, monthStart, monthEnd, ACTIVE_STATUSES)
                 .stream().mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes()).sum();
 
-        int weekLimitHours = settingOpt
+        int minWorkUnitMinutes = settingOpt
+                .map(s -> s.getMinWorkUnitMinutes() != null ? s.getMinWorkUnitMinutes() : 30).orElse(30);
+        int weekMinHours = settingOpt
+                .map(s -> s.getWeeklyMinMinutes() != null ? s.getWeeklyMinMinutes() / 60 : 0).orElse(0);
+        int weekMaxHours = settingOpt
                 .map(s -> s.getWeeklyMaxMinutes() != null ? s.getWeeklyMaxMinutes() / 60 : 0).orElse(0);
-        int monthLimitHours = settingOpt.map(s -> s.getMonthlyRequiredMinutes() / 60).orElse(0);
+        int monthMinHours = settingOpt
+                .map(s -> s.getMonthlyMinMinutes() != null ? s.getMonthlyMinMinutes() / 60 : 0).orElse(0);
+        int monthMaxHours = settingOpt.map(s -> {
+            if (s.getMonthlyMaxMinutes() != null) return s.getMonthlyMaxMinutes() / 60;
+            if (s.getMonthlyRequiredMinutes() != null) return s.getMonthlyRequiredMinutes() / 60;
+            return 0;
+        }).orElse(0);
         int weekNumber = WorkWeekUtils.weekOfMonth(startDate);
 
         return WorkScheduleSummaryResponse.builder()
                 .startDate(startDate).endDate(endDate)
+                .minWorkUnitMinutes(minWorkUnitMinutes)
                 .week(WorkScheduleSummaryResponse.PeriodSummary.builder()
                         .label(weekNumber + "주차")
-                        .usedHours((int) (weekUsedMinutes / 60)).limitHours(weekLimitHours).build())
+                        .usedHours((int) (weekUsedMinutes / 60))
+                        .minHours(weekMinHours).maxHours(weekMaxHours).build())
                 .month(WorkScheduleSummaryResponse.PeriodSummary.builder()
                         .label(startDate.getMonthValue() + "월 전체")
-                        .usedHours((int) (monthUsedMinutes / 60)).limitHours(monthLimitHours).build())
+                        .usedHours((int) (monthUsedMinutes / 60))
+                        .minHours(monthMinHours).maxHours(monthMaxHours).build())
                 .build();
     }
 
