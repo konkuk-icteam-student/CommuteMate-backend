@@ -80,6 +80,7 @@ public class SecurityConfig {
                         .frameOptions(frame -> frame.sameOrigin())
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/admin/work-schedules", "/api/admin/handover-memos").authenticated()
                         .requestMatchers("/api/admin/**", "/api/v1/admin/**").hasRole("RL02")
                         .requestMatchers("/api/tasks/**", "/api/task-templates/**").authenticated()
                         .requestMatchers(
