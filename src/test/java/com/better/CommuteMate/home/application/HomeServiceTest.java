@@ -66,7 +66,7 @@ class HomeServiceTest {
         LocalDateTime endTime = now.plusHours(4);
 
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId("1")
+                .scheduleId(1L)
                 .date(now.toLocalDate())
                 .startTime(startTime.toLocalTime())
                 .endTime(endTime.toLocalTime())
@@ -86,7 +86,7 @@ class HomeServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(new java.util.ArrayList<>(List.of(schedule)));
-        when(workAttendanceRepository.findBySchedule_ScheduleId("1"))
+        when(workAttendanceRepository.findBySchedule_ScheduleId(1L))
                 .thenReturn(List.of(checkIn, checkOut));
 
         // When
@@ -117,7 +117,7 @@ class HomeServiceTest {
         LocalDateTime now = LocalDateTime.now();
         // Starts in 1 hour
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId("1")
+                .scheduleId(1L)
                 .date(now.toLocalDate())
                 .startTime(now.plusHours(1).toLocalTime())
                 .endTime(now.plusHours(4).toLocalTime())
@@ -127,7 +127,7 @@ class HomeServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(new java.util.ArrayList<>(List.of(schedule)));
-        when(workAttendanceRepository.findBySchedule_ScheduleId("1"))
+        when(workAttendanceRepository.findBySchedule_ScheduleId(1L))
                 .thenReturn(Collections.emptyList());
 
         HomeAttendanceStatusResponse response = homeService.getAttendanceStatus(1L);
