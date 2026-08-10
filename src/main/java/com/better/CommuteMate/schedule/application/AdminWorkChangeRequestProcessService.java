@@ -162,6 +162,7 @@ public class AdminWorkChangeRequestProcessService {
                 // dayList에 포함시켜 다음 슬롯 정원 검사에 반영한다.
                 dayList.add(schedule);
                 toSave.add(schedule);
+                item.linkSchedule(schedule);
             }
         }
 

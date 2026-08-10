@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,8 +29,7 @@ public class HandoverMemoController {
     private final HandoverMemoService handoverMemoService;
 
     @GetMapping
-    @PreAuthorize("hasRole('RL02')")
-    @Operation(summary = "일별 인수인계 메모 조회", description = "관리자 조직의 특정 날짜 인수인계 메모를 조회합니다.")
+    @Operation(summary = "일별 인수인계 메모 조회", description = "인증된 사용자의 조직에 속한 특정 날짜 인수인계 메모를 조회합니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -58,8 +56,7 @@ public class HandoverMemoController {
                                     """)
                     )
             ),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-            @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content)
     })
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> getMemos(
