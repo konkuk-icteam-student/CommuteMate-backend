@@ -217,7 +217,7 @@ public class WorkScheduleController {
             @ApiResponse(responseCode = "200", description = "근로시간 요약 조회 성공",
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(name = "조회 성공", value = """
-                                    {"isSuccess":true,"message":"근로시간 요약을 조회했습니다.","details":{"startDate":"2026-04-06","endDate":"2026-04-10","week":{"label":"1주차","usedHours":0,"limitHours":13},"month":{"label":"4월 전체","usedHours":3,"limitHours":27}}}
+                                    {"isSuccess":true,"message":"근로시간 요약을 조회했습니다.","details":{"startDate":"2026-04-06","endDate":"2026-04-10","minWorkUnitMinutes":30,"week":{"label":"1주차","usedHours":0,"minHours":5,"maxHours":13},"month":{"label":"4월 전체","usedHours":3,"minHours":20,"maxHours":27}}}
                                     """))),
             @ApiResponse(responseCode = "400", description = "잘못된 조회 기간",
                     content = @Content(mediaType = "application/json", examples = {
