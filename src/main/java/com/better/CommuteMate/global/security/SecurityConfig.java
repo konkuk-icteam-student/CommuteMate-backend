@@ -81,11 +81,15 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/admin/**", "/api/v1/admin/**").hasRole("RL02")
-                        // Task API만 인증 필요
                         .requestMatchers("/api/tasks/**", "/api/task-templates/**").authenticated()
-                        // 알림 API 인증 필요
-                        .requestMatchers("/api/v1/notifications/**").authenticated()
-                        // 나머지는 모두 허용
+                        .requestMatchers(
+                                "/api/v1/work-schedules/**",
+                                "/api/v1/work-change-requests/**",
+                                "/api/v1/notifications/**",
+                                "/api/v1/home/**",
+                                "/api/home/**",
+                                "/api/mypage/**"
+                        ).hasRole("RL01")
                         .anyRequest().permitAll()
                 )
                 .exceptionHandling(ex -> ex

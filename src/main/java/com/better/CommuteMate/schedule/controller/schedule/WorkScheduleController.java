@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @Tag(name = "사용자 근무 일정", description = "사용자 근무 일정 신청 및 조회 API")
+@SecurityRequirement(name = "JWT")
 @RestController
 @RequestMapping("/api/v1/work-schedules")
 @RequiredArgsConstructor
@@ -72,6 +74,15 @@ public class WorkScheduleController {
                                     """),
                             @ExampleObject(name = "전부 실패", value = """
                                     {"isSuccess":false,"message":"신청하신 일정이 모두 실패하였습니다.","details":{"success":[],"failure":[{"start":"2026-04-07T09:00:00","end":"2026-04-07T10:00:00"}]}}
+                                    """)
+                    })),
+            @ApiResponse(responseCode = "400", description = "잘못된 근무 단위 요청",
+                    content = @Content(mediaType = "application/json", examples = {
+                            @ExampleObject(name = "최소 근무 단위 미준수", value = """
+                                    {"isSuccess":false,"message":"근무 시간은 최소 근무 단위 기준으로 신청해야 합니다.","details":null}
+                                    """),
+                            @ExampleObject(name = "최소 근무 시간 미충족", value = """
+                                    {"isSuccess":false,"message":"1회 최소 근무 시간(2시간)을 충족하지 못했습니다.","details":null}
                                     """)
                     })),
             @ApiResponse(responseCode = "404", description = "해당 연월의 스케줄 설정 없음",
@@ -254,6 +265,11 @@ public class WorkScheduleController {
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(name = "수정 요청 성공", value = """
                                     {"isSuccess":true,"message":"수정 요청이 제출되었습니다. 승인 후 시간표에 반영됩니다.","details":{"requestId":123,"status":"PENDING"}}
+                                    """))),
+            @ApiResponse(responseCode = "400", description = "잘못된 근무 단위 요청",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {"isSuccess":false,"message":"근무 시간은 최소 근무 단위 기준으로 신청해야 합니다.","details":null}
                                     """))),
             @ApiResponse(responseCode = "422", description = "월 최대 근무 시간 초과",
                     content = @Content(mediaType = "application/json",
