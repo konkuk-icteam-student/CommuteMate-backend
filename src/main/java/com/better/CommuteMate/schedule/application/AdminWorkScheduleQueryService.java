@@ -29,6 +29,8 @@ public class AdminWorkScheduleQueryService {
     private static final List<CodeType> ACTIVE_STATUSES = List.of(CodeType.WS01, CodeType.WS02);
     private static final int SLOT_MINUTES = 30;
     private static final int DEFAULT_MAX_CONCURRENT_WORKERS = 4;
+    private static final LocalTime WORK_START_TIME = LocalTime.of(9, 0);
+    private static final LocalTime WORK_END_TIME   = LocalTime.of(18, 0);
 
     private final WorkScheduleSettingRepository settingRepository;
     private final WorkSchedulesRepository scheduleRepository;
@@ -154,10 +156,16 @@ public class AdminWorkScheduleQueryService {
 
     private Set<SlotKey> buildUnavailableSlots(List<WorkUnavailableTime> unavailableTimes) {
         Set<SlotKey> result = new HashSet<>();
-        unavailableTimes.forEach(unavailable -> result.addAll(expandToSlots(
-                unavailable.getDate(), unavailable.getStartTime(), unavailable.getEndTime()
-        )));
+        for (WorkUnavailableTime u : unavailableTimes) {
+            LocalTime start = isAllDayUnavailable(u) ? WORK_START_TIME : u.getStartTime();
+            LocalTime end   = isAllDayUnavailable(u) ? WORK_END_TIME   : u.getEndTime();
+            result.addAll(expandToSlots(u.getDate(), start, end));
+        }
         return result;
+    }
+
+    private boolean isAllDayUnavailable(WorkUnavailableTime u) {
+        return LocalTime.MIN.equals(u.getStartTime()) && LocalTime.MIN.equals(u.getEndTime());
     }
 
     private boolean matchesUserName(

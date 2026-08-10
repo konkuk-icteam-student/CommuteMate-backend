@@ -106,9 +106,11 @@ public class ScheduleSettingResponse extends ResponseDetail {
     }
 
     private static boolean isFullDay(WorkUnavailableTime time) {
-        return LocalTime.MIN.equals(time.getStartTime())
-                // PostgreSQL의 time 타입은 나노초 일부를 반올림할 수 있어 초 단위로 판별합니다.
-                && time.getEndTime().toSecondOfDay() == LocalTime.MAX.toSecondOfDay();
+        if (!LocalTime.MIN.equals(time.getStartTime())) return false;
+        // sentinel: start=00:00, end=00:00 (현재 DB 저장 방식)
+        if (LocalTime.MIN.equals(time.getEndTime())) return true;
+        // 이전 호환: end=23:59:59... (LocalTime.MAX 기반, PostgreSQL 나노초 반올림으로 초 단위 비교)
+        return time.getEndTime().toSecondOfDay() == LocalTime.MAX.toSecondOfDay();
     }
 
     @Override

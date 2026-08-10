@@ -823,8 +823,11 @@ public class ScheduleService {
         Set<SlotKey> unavailableSlots = new HashSet<>();
         if (setting != null) {
             for (WorkUnavailableTime u : workUnavailableTimeRepository.findBySettingAndDateBetween(
-                    setting, queryStart, queryEnd))
-                unavailableSlots.addAll(expandToSlots(u.getDate(), u.getStartTime(), u.getEndTime()));
+                    setting, queryStart, queryEnd)) {
+                LocalTime start = isAllDayUnavailable(u) ? WORK_START_TIME : u.getStartTime();
+                LocalTime end   = isAllDayUnavailable(u) ? WORK_END_TIME   : u.getEndTime();
+                unavailableSlots.addAll(expandToSlots(u.getDate(), start, end));
+            }
         }
 
         long usedMinutes = workSchedulesRepository
@@ -874,6 +877,10 @@ public class ScheduleService {
             current = next;
         }
         return slots;
+    }
+
+    private boolean isAllDayUnavailable(WorkUnavailableTime u) {
+        return LocalTime.MIN.equals(u.getStartTime()) && LocalTime.MIN.equals(u.getEndTime());
     }
 
     private record SlotViewContext(
