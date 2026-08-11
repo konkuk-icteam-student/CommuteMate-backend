@@ -18,7 +18,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -91,6 +93,70 @@ public class HandoverMemoController {
         ));
     }
 
+    @DeleteMapping("/{memoId}")
+    @Operation(summary = "인수인계 메모 삭제", description = "본인이 작성한 인수인계 메모를 삭제합니다.")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "인수인계 메모 삭제 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = DELETE_SUCCESS_EXAMPLE)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 필요",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "isSuccess": false,
+                                      "message": "인증이 필요합니다.",
+                                      "details": null
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "본인 메모 아님",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "isSuccess": false,
+                                      "message": "본인이 작성한 메모만 삭제할 수 있습니다.",
+                                      "details": null
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "메모 없음 또는 이미 삭제됨",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "isSuccess": false,
+                                      "message": "인수인계 메모를 찾을 수 없습니다.",
+                                      "details": null
+                                    }
+                                    """)
+                    )
+            )
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> deleteMemo(
+            @Parameter(description = "삭제할 메모 ID", example = "1", required = true)
+            @PathVariable Long memoId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        handoverMemoService.deleteMemo(memoId, userDetails.getUserId());
+        return ResponseEntity.ok(new Response<>(true, "인수인계 메모를 삭제했습니다.", null));
+    }
+
     @GetMapping
     @Operation(summary = "일별 인수인계 메모 조회", description = "인증된 사용자의 조직에 속한 특정 날짜 인수인계 메모를 조회합니다.")
     @ApiResponses({
@@ -136,6 +202,14 @@ public class HandoverMemoController {
                 details
         ));
     }
+
+    private static final String DELETE_SUCCESS_EXAMPLE = """
+            {
+              "isSuccess": true,
+              "message": "인수인계 메모를 삭제했습니다.",
+              "details": null
+            }
+            """;
 
     private static final String CREATE_SUCCESS_EXAMPLE = """
             {

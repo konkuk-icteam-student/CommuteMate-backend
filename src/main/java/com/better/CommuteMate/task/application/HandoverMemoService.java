@@ -24,6 +24,17 @@ public class HandoverMemoService {
     private final HandoverMemoRepository handoverMemoRepository;
 
     @Transactional
+    public void deleteMemo(Long memoId, Long userId) {
+        HandoverMemo memo = handoverMemoRepository.findById(memoId)
+                .filter(m -> m.getDeletedAt() == null)
+                .orElseThrow(() -> CustomException.of(HandoverMemoErrorCode.MEMO_NOT_FOUND));
+        if (!memo.getCreatedBy().getUserId().equals(userId)) {
+            throw CustomException.of(HandoverMemoErrorCode.MEMO_DELETE_FORBIDDEN);
+        }
+        memo.softDelete();
+    }
+
+    @Transactional
     public CreateHandoverMemoResponse createMemo(Long organizationId, User createdBy, CreateHandoverMemoRequest request) {
         HandoverMemo memo = HandoverMemo.builder()
                 .organizationId(organizationId)

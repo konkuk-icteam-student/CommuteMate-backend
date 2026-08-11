@@ -7,6 +7,16 @@ public enum HandoverMemoErrorCode implements CustomErrorCode {
             "날짜 형식이 올바르지 않습니다.",
             "[Error] : invalid handover memo date format",
             HttpStatus.BAD_REQUEST
+    ),
+    MEMO_NOT_FOUND(
+            "인수인계 메모를 찾을 수 없습니다.",
+            "[Error] : handover memo not found",
+            HttpStatus.NOT_FOUND
+    ),
+    MEMO_DELETE_FORBIDDEN(
+            "본인이 작성한 메모만 삭제할 수 있습니다.",
+            "[Error] : not the author of the handover memo",
+            HttpStatus.FORBIDDEN
     );
 
     private final String message;

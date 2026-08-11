@@ -19,6 +19,7 @@ public interface HandoverMemoRepository extends JpaRepository<HandoverMemo, Long
             where memo.organizationId = :organizationId
               and memo.createdAt >= :startAt
               and memo.createdAt < :endAt
+              and memo.deletedAt is null
             order by memo.createdAt asc, memo.memoId asc
             """)
     List<HandoverMemo> findDailyMemos(

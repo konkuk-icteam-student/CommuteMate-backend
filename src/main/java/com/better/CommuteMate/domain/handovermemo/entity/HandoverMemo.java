@@ -51,7 +51,14 @@ public class HandoverMemo {
     @Column(name = "expires_at", nullable = false, updatable = false)
     private LocalDateTime expiresAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     private static final long EXPIRE_DAYS = 3;
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 
     @PrePersist
     protected void onCreate() {
