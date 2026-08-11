@@ -28,9 +28,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin/handover-memos")
+@RequestMapping("/api/v1/handover-memos")
 @RequiredArgsConstructor
-@Tag(name = "Admin Handover Memo", description = "관리자 인수인계 메모 API")
+@Tag(name = "Handover Memo", description = "인수인계 메모 API")
 public class HandoverMemoController {
 
     private final HandoverMemoService handoverMemoService;

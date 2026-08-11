@@ -87,8 +87,8 @@ public class SecurityConfig {
                                 "/api/admin/todos"
                         ).authenticated()
                         .requestMatchers(
-                                "/api/v1/admin/handover-memos",
-                                "/api/v1/admin/handover-memos/**",
+                                "/api/v1/handover-memos",
+                                "/api/v1/handover-memos/**",
                                 "/api/tasks/**",
                                 "/api/task-templates/**"
                         ).authenticated()
