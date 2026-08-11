@@ -2,6 +2,9 @@ package com.better.CommuteMate.admin.controller;
 
 import com.better.CommuteMate.admin.application.AdminWorkerService;
 import com.better.CommuteMate.admin.controller.dto.AdminWorkerPageResponse;
+import com.better.CommuteMate.admin.controller.dto.AdminWorkerDetailResponse;
+import com.better.CommuteMate.admin.controller.dto.UpdateAdminWorkerRequest;
+import com.better.CommuteMate.admin.controller.dto.UpdateAdminWorkerResponse;
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.global.controller.dtos.Response;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,6 +27,128 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AdminWorkerController {
     private final AdminWorkerService adminWorkerService;
+
+    @PatchMapping("/workers/{userId}")
+    @Operation(summary = "근무 인원 정보 수정",
+            description = "같은 조직의 일반 근무자 정보를 선택적으로 수정합니다. 이메일, 비밀번호, 근로 시작일은 수정하지 않습니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "근무 인원 정보 수정 성공",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {
+                              "isSuccess": true,
+                              "message": "근무 인원 정보 수정에 성공했습니다.",
+                              "details": {
+                                "userId": 1,
+                                "name": "홍길동",
+                                "studentId": "202211414",
+                                "department": "컴퓨터공학과",
+                                "grade": 3,
+                                "phoneNumber": "010-9876-5432",
+                                "email": "wori1206@konkuk.ac.kr",
+                                "workStartDate": "2022-03-01"
+                              }
+                            }
+                            """))),
+            @ApiResponse(responseCode = "400", description = "본문이 비었거나 입력값이 올바르지 않음",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {"isSuccess":false,"message":"근무 인원 정보 입력값이 올바르지 않습니다.","details":null}
+                            """))),
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {"isSuccess":false,"message":"인증이 필요합니다.","details":null}
+                            """))),
+            @ApiResponse(responseCode = "403", description = "근무 인원 수정 권한 없음",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {"isSuccess":false,"message":"근무 인원 정보를 수정할 권한이 없습니다.","details":null}
+                            """))),
+            @ApiResponse(responseCode = "404", description = "근무자를 찾을 수 없음",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {"isSuccess":false,"message":"근무 인원을 찾을 수 없습니다.","details":null}
+                            """)))
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> updateWorker(
+            @Parameter(description = "수정할 근무자 ID", example = "1", required = true)
+            @PathVariable Long userId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+                    description = "수정할 필드만 선택적으로 전달합니다.",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {
+                              "name": "홍길동",
+                              "studentId": "202211414",
+                              "department": "컴퓨터공학과",
+                              "grade": 3,
+                              "phoneNumber": "010-1234-5678"
+                            }
+                            """)))
+            @Valid @RequestBody(required = false) UpdateAdminWorkerRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        UpdateAdminWorkerResponse details = adminWorkerService.updateWorker(
+                userDetails.getUser().getOrganizationId(), userId, request);
+        return ResponseEntity.ok(Response.of(true, "근무 인원 정보 수정에 성공했습니다.", details));
+    }
+
+    @GetMapping("/workers/{userId}")
+    @Operation(summary = "근무 인원 상세 조회",
+            description = "근무자의 기본 정보와 기준일이 속한 주·월의 실제 근무시간 및 수정 요청 통계를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "근무 인원 상세 조회 성공",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {
+                              "isSuccess": true,
+                              "message": "근무 인원 상세 조회에 성공했습니다.",
+                              "details": {
+                                "date": "2026-07-15",
+                                "userId": 1,
+                                "name": "홍길동",
+                                "studentId": "202211414",
+                                "department": "컴퓨터공학과",
+                                "grade": 3,
+                                "phoneNumber": "010-3242-2213",
+                                "email": "wori1206@konkuk.ac.kr",
+                                "workStartDate": "2022-03-01",
+                                "weeklyWorkedMinutes": 270,
+                                "weeklyLimitMinutes": 780,
+                                "monthlyWorkedMinutes": 780,
+                                "monthlyLimitMinutes": 1620,
+                                "totalChangeRequestCount": 7,
+                                "approvedChangeRequestCount": 3
+                              }
+                            }
+                            """))),
+            @ApiResponse(responseCode = "400", description = "잘못된 조회 날짜",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {"isSuccess":false,"message":"조회 날짜 값이 올바르지 않습니다.","details":null}
+                            """))),
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {"isSuccess":false,"message":"인증이 필요합니다.","details":null}
+                            """))),
+            @ApiResponse(responseCode = "403", description = "근무 인원 조회 권한 없음",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {"isSuccess":false,"message":"근무 인원 조회 권한이 없습니다.","details":null}
+                            """))),
+            @ApiResponse(responseCode = "404", description = "근무자 또는 월 스케줄 설정을 찾을 수 없음",
+                    content = @Content(mediaType = "application/json", examples = {
+                            @ExampleObject(name = "근무자 없음", value = """
+                                    {"isSuccess":false,"message":"근무 인원을 찾을 수 없습니다.","details":null}
+                                    """),
+                            @ExampleObject(name = "월 설정 없음", value = """
+                                    {"isSuccess":false,"message":"해당 월의 스케줄 설정을 찾을 수 없습니다.","details":null}
+                                    """)
+                    }))
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> getWorker(
+            @Parameter(description = "조회할 근무자 ID", example = "1", required = true)
+            @PathVariable Long userId,
+            @Parameter(description = "조회 기준일 (yyyy-MM-dd)", example = "2026-07-15", required = true)
+            @RequestParam String date,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AdminWorkerDetailResponse details = adminWorkerService.getWorker(
+                userDetails.getUser().getOrganizationId(), userId, date);
+        return ResponseEntity.ok(Response.of(true, "근무 인원 상세 조회에 성공했습니다.", details));
+    }
 
     @GetMapping("/workers")
     @Operation(summary = "근무 인원 목록 조회", description = "이름으로 근무자를 검색하고 기준일이 속한 주·월의 근무 및 요청·근태 통계를 조회합니다. 시간 값은 분 단위입니다.")

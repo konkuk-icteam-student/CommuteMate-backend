@@ -42,4 +42,11 @@ public class UserProfile {
 
     @Column(name = "phone_number", length = 30)
     private String phoneNumber;
+
+    public void update(String studentId, String department, Integer grade, String phoneNumber) {
+        if (studentId != null) this.studentId = studentId;
+        if (department != null) this.department = department;
+        if (grade != null) this.grade = grade;
+        if (phoneNumber != null) this.phoneNumber = phoneNumber;
+    }
 }

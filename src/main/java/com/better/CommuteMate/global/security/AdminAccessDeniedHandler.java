@@ -20,11 +20,13 @@ public class AdminAccessDeniedHandler implements AccessDeniedHandler {
                        AccessDeniedException accessDeniedException) throws IOException {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json;charset=UTF-8");
-        boolean workerQuery = request.getRequestURI().equals("/api/v1/admin/workers");
+        boolean workerQuery = request.getRequestURI().startsWith("/api/v1/admin/workers");
+        boolean workerUpdate = workerQuery && request.getMethod().equals("PATCH");
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("isSuccess", false);
         body.put("code", workerQuery ? "ADMIN_ACCESS_DENIED" : "ACCESS_DENIED");
-        body.put("message", workerQuery ? "근무 인원 조회 권한이 없습니다." : "해당 작업을 수행할 권한이 없습니다.");
+        body.put("message", workerUpdate ? "근무 인원 정보를 수정할 권한이 없습니다."
+                : workerQuery ? "근무 인원 조회 권한이 없습니다." : "해당 작업을 수행할 권한이 없습니다.");
         response.getWriter().write(objectMapper.writeValueAsString(body));
     }
 }
