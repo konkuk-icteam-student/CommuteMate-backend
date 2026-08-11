@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
     protected ResponseEntity<Response> handleInvalidRequest(final Exception e) {
         log.warn("Invalid request: {}", e.getMessage());
         return ResponseEntity.badRequest().body(
-                Response.of(false, "요청 값이 올바르지 않습니다.", null)
+                Response.error("INVALID_REQUEST", "요청 값이 올바르지 않습니다.")
         );
     }
 
@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
     protected ResponseEntity<Response> handleCustomException(final CustomException e) {
         //TODO: log 저장 규칙 지정
         log.error("{}: {}", e.getHttpStatus(), e.getLogMessage(), e);
-        Response response = new Response(false, e.getMessage(), null);
+        Response response = Response.error(e.getErrorCode().getName(), e.getMessage());
         return new ResponseEntity<>(response, e.getHttpStatus());
     }
 
@@ -52,7 +52,7 @@ public class GlobalExceptionHandler {
                 .orElse("입력값이 올바르지 않습니다.");
 
         log.warn("Validation failed: {}", errorMessage);
-        Response response = new Response(false, errorMessage, null);
+        Response response = Response.error("INVALID_REQUEST", errorMessage);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     protected ResponseEntity<Response> handleAccessDeniedException(final AccessDeniedException e) {
         log.warn("Access denied: {}", e.getMessage());
-        Response response = new Response(false, "해당 작업을 수행할 권한이 없습니다.", null);
+        Response response = Response.error("ACCESS_DENIED", "해당 작업을 수행할 권한이 없습니다.");
         return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
 
@@ -71,11 +71,7 @@ public class GlobalExceptionHandler {
 
         log.error("Unhandled exception", e);
 
-        Response response = new Response(
-                false,
-                "서버 내부 오류가 발생했습니다.",
-                null
-        );
+        Response response = Response.error("INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.");
 
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }

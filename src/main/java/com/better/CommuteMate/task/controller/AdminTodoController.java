@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/admin/todos")
+@RequestMapping("/api/v1/admin/todos")
 @RequiredArgsConstructor
 @Tag(name = "Admin Todo", description = "관리자 업무사항 API")
 public class AdminTodoController {
