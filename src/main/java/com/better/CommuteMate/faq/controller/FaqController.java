@@ -2,6 +2,7 @@ package com.better.CommuteMate.faq.controller;
 
 import com.better.CommuteMate.auth.application.CustomUserDetails;
 import com.better.CommuteMate.faq.application.dto.request.*;
+import com.better.CommuteMate.faq.application.dto.response.GetDraftFaqDetailResponse;
 import com.better.CommuteMate.faq.application.service.FaqService;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
 import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
@@ -167,6 +168,32 @@ public class FaqController {
             @RequestParam LocalDate date
     ) {
         return ResponseEntity.ok(new Response<>(true, "FAQ 상세 조회 성공", faqService.getFaqDetailByDate(faqId, date)));
+    }
+
+    @Operation(
+            summary = "임시저장 FAQ 상세 조회",
+            description = """
+                FAQ ID를 기준으로
+                임시저장 상태의 FAQ 상세 정보를 조회합니다.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "임시저장 FAQ 상세 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음", content = @Content),
+            @ApiResponse(responseCode = "400", description = "임시저장 상태의 FAQ가 아님", content = @Content)
+    })
+    @GetMapping("/{faqId}/draft")
+    public ResponseEntity<Response<GetDraftFaqDetailResponse>> getDraftFaqDetail(
+            @Parameter(description = "조회할 FAQ ID", required = true)
+            @PathVariable Long faqId
+    ) {
+        return ResponseEntity.ok(
+                new Response<>(
+                        true,
+                        "임시저장 FAQ 상세 조회 성공",
+                        faqService.getDraftFaqDetail(faqId)
+                )
+        );
     }
 
     @Operation(
