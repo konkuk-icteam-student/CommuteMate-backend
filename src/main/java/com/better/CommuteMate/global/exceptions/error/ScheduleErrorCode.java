@@ -38,7 +38,9 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     DELETE_SCHEDULE_NOT_FOUND("삭제 요청한 스케줄을 찾을 수 없습니다.", "[Error] : 삭제 요청 스케줄 미존재", HttpStatus.NOT_FOUND),
     CROSS_WEEK_RANGE_NOT_ALLOWED("조회 기간은 같은 주 이내여야 합니다.", "[Error] : 다른 주에 걸친 조회 범위", HttpStatus.BAD_REQUEST),
     APPLY_PERIOD_NOT_ACTIVE("근로 신청 기간이 아닙니다.", "[Error] : 근로 신청 기간 외 신청 시도", HttpStatus.BAD_REQUEST),
-    INVALID_SLOT_UNIT("근무 시간은 최소 근무 단위 기준으로 신청해야 합니다.", "[Error] : 최소 근무 단위 미준수", HttpStatus.BAD_REQUEST);
+    INVALID_SLOT_UNIT("근무 시간은 최소 근무 단위 기준으로 신청해야 합니다.", "[Error] : 최소 근무 단위 미준수", HttpStatus.BAD_REQUEST),
+    INVALID_SLOT_BOUNDARY("근무 시간은 30분 단위로 신청해야 합니다.", "[Error] : 30분 경계 정렬 위반", HttpStatus.BAD_REQUEST),
+    INVALID_SLOT_DURATION("근무 시간은 최소 근무 시간 이상으로 신청해야 합니다.", "[Error] : 최소 근무 시간 미충족", HttpStatus.BAD_REQUEST);
 
 
     private final String message;

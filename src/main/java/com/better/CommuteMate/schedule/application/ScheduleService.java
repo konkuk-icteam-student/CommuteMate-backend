@@ -185,17 +185,41 @@ public class ScheduleService {
     private void validateSlotUnitAlignment(
             List<WorkScheduleSlotCommand> slots,
             Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        Map<LocalDate, List<WorkScheduleSlotCommand>> byDate = new LinkedHashMap<>();
         for (WorkScheduleSlotCommand slot : slots) {
-            WorkScheduleSetting setting = settingsByMonth.get(YearMonth.from(slot.date()));
+            byDate.computeIfAbsent(slot.date(), k -> new ArrayList<>()).add(slot);
+        }
+        validateUnitAlignmentByDate(byDate, settingsByMonth);
+    }
+
+    /**
+     * 날짜별로 그룹화된 슬롯에 대해 두 가지 검증을 수행한다.
+     * (1) 각 슬롯의 start·end가 30분 경계에 맞는지 (SLOT_MINUTES 단위 정렬)
+     * (2) 연속 구간을 병합한 뒤 각 구간 길이가 min_work_unit_minutes 이상인지 (하한 비교)
+     * setting == null인 날짜는 검증을 스킵한다 (기존 동작 유지).
+     */
+    private void validateUnitAlignmentByDate(
+            Map<LocalDate, List<WorkScheduleSlotCommand>> byDate,
+            Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        for (Map.Entry<LocalDate, List<WorkScheduleSlotCommand>> entry : byDate.entrySet()) {
+            WorkScheduleSetting setting = settingsByMonth.get(YearMonth.from(entry.getKey()));
             if (setting == null) continue;
-            int unitMinutes = setting.getMinWorkUnitMinutes();
-            int startTotalMinutes = slot.start().getHour() * 60 + slot.start().getMinute();
-            if (startTotalMinutes % unitMinutes != 0) {
-                throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_UNIT);
+            List<WorkScheduleSlotCommand> dateSlots = entry.getValue();
+            // (1) 30분 경계 정렬 검증
+            for (WorkScheduleSlotCommand slot : dateSlots) {
+                int startMin = slot.start().getHour() * 60 + slot.start().getMinute();
+                int endMin = slot.end().getHour() * 60 + slot.end().getMinute();
+                if (startMin % SLOT_MINUTES != 0 || endMin % SLOT_MINUTES != 0) {
+                    throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_BOUNDARY);
+                }
             }
-            long durationMinutes = Duration.between(slot.start(), slot.end()).toMinutes();
-            if (durationMinutes <= 0 || durationMinutes % unitMinutes != 0) {
-                throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_UNIT);
+            // (2) 연속 구간 단위 최소 근무 시간 하한 검증
+            int minMinutes = setting.getMinWorkUnitMinutes() != null
+                    ? setting.getMinWorkUnitMinutes() : SLOT_MINUTES;
+            for (WorkSlotUtils.TimeRange range : WorkSlotUtils.mergeConsecutiveRanges(dateSlots)) {
+                if (Duration.between(range.start(), range.end()).toMinutes() < minMinutes) {
+                    throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_DURATION);
+                }
             }
         }
     }
@@ -630,19 +654,12 @@ public class ScheduleService {
     private void validateEditSlotUnitAlignment(
             List<WorkScheduleEditRequest.Slot> slots,
             Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        Map<LocalDate, List<WorkScheduleSlotCommand>> byDate = new LinkedHashMap<>();
         for (WorkScheduleEditRequest.Slot slot : slots) {
-            WorkScheduleSetting setting = settingsByMonth.get(YearMonth.from(slot.date()));
-            if (setting == null) continue;
-            int unitMinutes = setting.getMinWorkUnitMinutes();
-            int startTotalMinutes = slot.start().getHour() * 60 + slot.start().getMinute();
-            if (startTotalMinutes % unitMinutes != 0) {
-                throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_UNIT);
-            }
-            long durationMinutes = Duration.between(slot.start(), slot.end()).toMinutes();
-            if (durationMinutes <= 0 || durationMinutes % unitMinutes != 0) {
-                throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_UNIT);
-            }
+            byDate.computeIfAbsent(slot.date(), k -> new ArrayList<>())
+                  .add(new WorkScheduleSlotCommand(slot.date(), slot.start(), slot.end()));
         }
+        validateUnitAlignmentByDate(byDate, settingsByMonth);
     }
 
     private void validateMonthlyLimitForEdit(
