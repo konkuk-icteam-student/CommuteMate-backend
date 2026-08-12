@@ -602,6 +602,7 @@ public class ScheduleService {
 
         validateEditSlotUnitAlignment(addSlots, settingsForEdit);
         validateEditSlotUnitAlignment(deleteSlots, settingsForEdit);
+        validateCombinedDurationForEdit(userId, addSlots, deleteSlots, settingsForEdit);
 
         validateMonthlyLimitForEdit(userId, user.getOrganizationId(), addSlots, deleteSlots);
 
@@ -643,12 +644,81 @@ public class ScheduleService {
     private void validateEditSlotUnitAlignment(
             List<WorkScheduleEditRequest.Slot> slots,
             Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
-        Map<LocalDate, List<WorkScheduleSlotCommand>> byDate = new LinkedHashMap<>();
         for (WorkScheduleEditRequest.Slot slot : slots) {
-            byDate.computeIfAbsent(slot.date(), k -> new ArrayList<>())
-                  .add(new WorkScheduleSlotCommand(slot.date(), slot.start(), slot.end()));
+            WorkScheduleSetting setting = settingsByMonth.get(YearMonth.from(slot.date()));
+            if (setting == null) continue;
+            int startMin = slot.start().getHour() * 60 + slot.start().getMinute();
+            int endMin = slot.end().getHour() * 60 + slot.end().getMinute();
+            if (startMin % SLOT_MINUTES != 0 || endMin % SLOT_MINUTES != 0) {
+                throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_BOUNDARY);
+            }
         }
-        validateUnitAlignmentByDate(byDate, settingsByMonth);
+    }
+
+    /**
+     * 날짜별 슬롯 집합을 병합한 연속 구간이 min_work_unit_minutes 이상인지 검증한다.
+     * 호출자(apply: 요청 슬롯만, edit: DB−삭제+추가 합산)가 byDate를 구성해 전달한다.
+     * setting == null인 날짜는 검증을 스킵한다.
+     */
+    private void validateMinDurationByDate(
+            Map<LocalDate, List<WorkScheduleSlotCommand>> byDate,
+            Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        for (Map.Entry<LocalDate, List<WorkScheduleSlotCommand>> entry : byDate.entrySet()) {
+            WorkScheduleSetting setting = settingsByMonth.get(YearMonth.from(entry.getKey()));
+            if (setting == null) continue;
+            int minMinutes = setting.getMinWorkUnitMinutes() != null
+                    ? setting.getMinWorkUnitMinutes() : SLOT_MINUTES;
+            for (WorkSlotUtils.TimeRange range : WorkSlotUtils.mergeConsecutiveRanges(entry.getValue())) {
+                if (Duration.between(range.start(), range.end()).toMinutes() < minMinutes) {
+                    throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_DURATION);
+                }
+            }
+        }
+    }
+
+    /**
+     * edit 전용: (DB ACTIVE 슬롯) − (deleteSlots) + (addSlots) 합산 집합으로 날짜별 하한 검증.
+     * addSlots와 deleteSlots는 30분 단위로 분할해 DB 저장 단위와 동일한 입도로 처리한다.
+     */
+    private void validateCombinedDurationForEdit(
+            Long userId,
+            List<WorkScheduleEditRequest.Slot> addSlots,
+            List<WorkScheduleEditRequest.Slot> deleteSlots,
+            Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        Set<LocalDate> allDates = new HashSet<>();
+        addSlots.forEach(s -> allDates.add(s.date()));
+        deleteSlots.forEach(s -> allDates.add(s.date()));
+        if (allDates.isEmpty()) return;
+
+        Set<WorkScheduleSlotCommand> deleteSet = new HashSet<>();
+        for (WorkScheduleEditRequest.Slot slot : deleteSlots) {
+            deleteSet.addAll(WorkSlotUtils.splitIntoUnitSlots(
+                    slot.date(), slot.start(), slot.end(), SLOT_MINUTES));
+        }
+
+        LocalDate minDate = allDates.stream().min(Comparator.naturalOrder()).orElseThrow();
+        LocalDate maxDate = allDates.stream().max(Comparator.naturalOrder()).orElseThrow();
+
+        Map<LocalDate, List<WorkScheduleSlotCommand>> byDate = new LinkedHashMap<>();
+        for (WorkSchedule s : workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                userId, minDate, maxDate, ACTIVE_STATUSES)) {
+            WorkScheduleSlotCommand cmd = new WorkScheduleSlotCommand(
+                    s.getDate(), s.getStartTime(), s.getEndTime());
+            if (!deleteSet.contains(cmd)) {
+                byDate.computeIfAbsent(s.getDate(), k -> new ArrayList<>()).add(cmd);
+            }
+        }
+
+        for (WorkScheduleEditRequest.Slot slot : addSlots) {
+            for (WorkScheduleSlotCommand unit : WorkSlotUtils.splitIntoUnitSlots(
+                    slot.date(), slot.start(), slot.end(), SLOT_MINUTES)) {
+                byDate.computeIfAbsent(slot.date(), k -> new ArrayList<>()).add(unit);
+            }
+        }
+
+        byDate.keySet().retainAll(allDates);
+
+        validateMinDurationByDate(byDate, settingsByMonth);
     }
 
     private void validateMonthlyLimitForEdit(

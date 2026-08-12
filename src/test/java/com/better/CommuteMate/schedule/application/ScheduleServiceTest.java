@@ -428,6 +428,131 @@ class ScheduleServiceTest {
         verify(scheduleValidator, never()).isScheduleInsertable(any(), anyInt(), anyList());
     }
 
+    // ── edit 합산 검증 케이스 ──────────────────────────────────────────
+
+    @Test
+    @DisplayName("수정 신청 - 기존 DB 슬롯(09:00~10:00 WS02)에 10:00~10:30 추가 → 합산 90분 → min=60 통과")
+    void submitEditRequest_WithExistingDb_Plus30minAdd_Combined90min_Passes() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+
+        WorkSchedule db1 = WorkSchedule.builder()
+                .user(user).date(date)
+                .startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(9, 30))
+                .statusCode(CodeType.WS02).build();
+        WorkSchedule db2 = WorkSchedule.builder()
+                .user(user).date(date)
+                .startTime(LocalTime.of(9, 30)).endTime(LocalTime.of(10, 0))
+                .statusCode(CodeType.WS02).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60()));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(date), eq(date), anyList())).thenReturn(List.of(db1, db2));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(
+                any(), any(), any(), any())).thenReturn(List.of());
+        when(workChangeRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(date, LocalTime.of(10, 0), LocalTime.of(10, 30))),
+                "사유"
+        );
+
+        assertThat(scheduleService.submitEditRequest(1L, request)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 기존 DB 슬롯(09:00~09:30 WS01)에 09:30~10:00 추가 → 합산 60분 → min=60 통과")
+    void submitEditRequest_WithExistingWS01_AdjacentAdd_Combined60min_Passes() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60()));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(date), eq(date), anyList()))
+                .thenReturn(List.of(workSchedule(user, date, LocalTime.of(9, 0), LocalTime.of(9, 30))));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(
+                any(), any(), any(), any())).thenReturn(List.of());
+        when(workChangeRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(date, LocalTime.of(9, 30), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThat(scheduleService.submitEditRequest(1L, request)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 기존 09:00~10:00 중 09:30~10:00 삭제 → 남는 09:00~09:30(30분) → min=60 반려")
+    void submitEditRequest_DeleteLeaves30min_WithMin60_ThrowsInvalidSlotDuration() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60()));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(date), eq(date), anyList())).thenReturn(List.of(
+                workSchedule(user, date, LocalTime.of(9, 0), LocalTime.of(9, 30)),
+                workSchedule(user, date, LocalTime.of(9, 30), LocalTime.of(10, 0))));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(new WorkScheduleEditRequest.Slot(date, LocalTime.of(9, 30), LocalTime.of(10, 0))),
+                List.of(),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class);
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 기존 09:00~09:30 있을 때 끊긴 10:00~10:30 추가 → 각 구간 30분, 비연속 → min=60 반려")
+    void submitEditRequest_WithExisting_DisconnectedAdd_EachUnder60min_ThrowsInvalidSlotDuration() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60()));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(date), eq(date), anyList()))
+                .thenReturn(List.of(workSchedule(user, date, LocalTime.of(9, 0), LocalTime.of(9, 30))));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(date, LocalTime.of(10, 0), LocalTime.of(10, 30))),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class);
+    }
+
+    @Test
+    @DisplayName("수정 신청 - WS03·WS04 슬롯은 ACTIVE 조회(WS01+WS02)에서 제외 → 30분 추가 단독으로 min=60 반려")
+    void submitEditRequest_InactiveDbSlotsExcluded_30minAddFails() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60()));
+        // WS01+WS02 조회 결과 빈 리스트 (WS03/WS04만 존재하는 상황을 모사)
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(date), eq(date), anyList())).thenReturn(List.of());
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(date, LocalTime.of(9, 0), LocalTime.of(9, 30))),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class);
+    }
+
     // ── 헬퍼 ─────────────────────────────────────────────────────────
 
     private WorkScheduleSetting setting() {
