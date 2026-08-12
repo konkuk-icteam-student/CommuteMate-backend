@@ -1,7 +1,7 @@
 package com.better.CommuteMate.task.application;
 
-import com.better.CommuteMate.domain.task.entity.Task;
-import com.better.CommuteMate.domain.task.repository.TaskRepository;
+import com.better.CommuteMate.domain.todo.entity.Todo;
+import com.better.CommuteMate.domain.todo.repository.TodoRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
@@ -11,7 +11,6 @@ import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoRequest;
 import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoResponse;
 import com.better.CommuteMate.task.controller.dtos.UpdateAdminTodoRequest;
 import com.better.CommuteMate.task.controller.dtos.UpdateAdminTodoResponse;
-import com.better.CommuteMate.global.code.CodeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,13 +31,14 @@ public class AdminTodoService {
 
     private static final LocalTime NOON = LocalTime.NOON;
 
-    private final TaskRepository taskRepository;
+    private final TodoRepository todoRepository;
     private final UserRepository userRepository;
 
     @Transactional
     public CreateAdminTodoResponse createTodo(
             CreateAdminTodoRequest request,
-            Long adminId
+            Long adminId,
+            Long organizationId
     ) {
         LocalDate date;
         LocalTime timeSlot;
@@ -49,25 +49,26 @@ public class AdminTodoService {
             throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
         }
 
-        Task task = Task.create(
+        Todo todo = Todo.create(
+                organizationId,
                 request.description().trim(),
                 date,
                 timeSlot,
-                CodeType.TT01,
                 adminId
         );
-        return CreateAdminTodoResponse.from(taskRepository.save(task));
+        return CreateAdminTodoResponse.from(todoRepository.save(todo));
     }
 
     @Transactional
     public UpdateAdminTodoResponse updateTodo(
             Long todoId,
             UpdateAdminTodoRequest request,
-            Long adminId
+            Long adminId,
+            Long organizationId
     ) {
-        Task task = taskRepository.findById(todoId)
+        Todo todo = todoRepository.findById(todoId)
                 .orElseThrow(() -> CustomException.of(TaskErrorCode.TODO_NOT_FOUND));
-        validateUpdateAccess(task, adminId);
+        validateUpdateAccess(todo, organizationId);
 
         if (request.date() == null
                 && request.timeSlot() == null
@@ -79,30 +80,30 @@ public class AdminTodoService {
         LocalTime timeSlot = parseOptionalTime(request.timeSlot());
         String description = parseOptionalDescription(request.description());
 
-        task.updateAdminTodo(date, timeSlot, description, adminId);
-        return UpdateAdminTodoResponse.from(taskRepository.saveAndFlush(task));
+        todo.update(date, timeSlot, description, adminId);
+        return UpdateAdminTodoResponse.from(todoRepository.saveAndFlush(todo));
     }
 
     @Transactional
-    public void deleteTodo(Long todoId, Long adminId) {
-        Task task = taskRepository.findById(todoId)
+    public void deleteTodo(Long todoId, Long adminId, Long organizationId) {
+        Todo todo = todoRepository.findById(todoId)
                 .orElseThrow(() -> CustomException.of(TaskErrorCode.TODO_NOT_FOUND));
-        validateDeleteAccess(task, adminId);
-        taskRepository.delete(task);
+        validateDeleteAccess(todo, organizationId);
+        todoRepository.delete(todo);
     }
 
     public AdminTodosResponse getTodos(Long organizationId, String dateValue) {
         LocalDate date = parseDate(dateValue);
-        List<Task> tasks = taskRepository.findAdminTodos(organizationId, date);
-        Map<Long, User> creators = findCreators(tasks);
+        List<Todo> todos = todoRepository.findByOrganizationIdAndDate(organizationId, date);
+        Map<Long, User> creators = findCreators(todos);
 
-        List<AdminTodosResponse.TodoItem> morningTodos = tasks.stream()
-                .filter(task -> task.getTaskTime().isBefore(NOON))
-                .map(task -> AdminTodosResponse.toItem(task, creators))
+        List<AdminTodosResponse.TodoItem> morningTodos = todos.stream()
+                .filter(todo -> todo.getTimeSlot().isBefore(NOON))
+                .map(todo -> AdminTodosResponse.toItem(todo, creators))
                 .toList();
-        List<AdminTodosResponse.TodoItem> afternoonTodos = tasks.stream()
-                .filter(task -> !task.getTaskTime().isBefore(NOON))
-                .map(task -> AdminTodosResponse.toItem(task, creators))
+        List<AdminTodosResponse.TodoItem> afternoonTodos = todos.stream()
+                .filter(todo -> !todo.getTimeSlot().isBefore(NOON))
+                .map(todo -> AdminTodosResponse.toItem(todo, creators))
                 .toList();
 
         return new AdminTodosResponse(date, morningTodos, afternoonTodos);
@@ -152,32 +153,21 @@ public class AdminTodoService {
         return description;
     }
 
-    private void validateUpdateAccess(Task task, Long adminId) {
-        if (!hasSameOrganization(task, adminId)) {
+    private void validateUpdateAccess(Todo todo, Long organizationId) {
+        if (!Objects.equals(todo.getOrganizationId(), organizationId)) {
             throw CustomException.of(TaskErrorCode.TODO_UPDATE_ACCESS_DENIED);
         }
     }
 
-    private void validateDeleteAccess(Task task, Long adminId) {
-        if (!hasSameOrganization(task, adminId)) {
+    private void validateDeleteAccess(Todo todo, Long organizationId) {
+        if (!Objects.equals(todo.getOrganizationId(), organizationId)) {
             throw CustomException.of(TaskErrorCode.TODO_DELETE_ACCESS_DENIED);
         }
     }
 
-    private boolean hasSameOrganization(Task task, Long adminId) {
-        User admin = userRepository.findById(adminId)
-                .orElse(null);
-        User creator = task.getCreatedBy() == null
-                ? null
-                : userRepository.findById(task.getCreatedBy()).orElse(null);
-        return admin != null
-                && creator != null
-                && Objects.equals(admin.getOrganizationId(), creator.getOrganizationId());
-    }
-
-    private Map<Long, User> findCreators(List<Task> tasks) {
-        List<Long> creatorIds = tasks.stream()
-                .map(Task::getCreatedBy)
+    private Map<Long, User> findCreators(List<Todo> todos) {
+        List<Long> creatorIds = todos.stream()
+                .map(Todo::getCreatedBy)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();

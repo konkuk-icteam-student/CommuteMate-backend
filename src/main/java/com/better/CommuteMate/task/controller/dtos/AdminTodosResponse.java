@@ -1,6 +1,6 @@
 package com.better.CommuteMate.task.controller.dtos;
 
-import com.better.CommuteMate.domain.task.entity.Task;
+import com.better.CommuteMate.domain.todo.entity.Todo;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -22,17 +22,17 @@ public class AdminTodosResponse extends ResponseDetail {
         this.afternoonTodos = afternoonTodos;
     }
 
-    public static TodoItem toItem(Task task, Map<Long, User> creators) {
-        User creator = creators.get(task.getCreatedBy());
+    public static TodoItem toItem(Todo todo, Map<Long, User> creators) {
+        User creator = creators.get(todo.getCreatedBy());
         return new TodoItem(
-                task.getTaskId(),
-                task.getTitle(),
-                task.getTaskTime(),
-                Boolean.TRUE.equals(task.getIsCompleted()) ? "COMPLETED" : "PENDING",
+                todo.getTodoId(),
+                todo.getDescription(),
+                todo.getTimeSlot(),
+                Boolean.TRUE.equals(todo.getIsCompleted()) ? "COMPLETED" : "PENDING",
                 creator == null ? null : new CreatedBy(creator.getUserId(), creator.getName()),
-                task.getCreatedAt(),
-                task.getCompletedByName(),
-                task.getCompletedTime()
+                todo.getCreatedAt(),
+                todo.getCompletedByName(),
+                todo.getCompletedTime()
         );
     }
 

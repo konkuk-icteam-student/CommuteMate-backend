@@ -89,7 +89,8 @@ public class AdminTodoController {
     ) {
         CreateAdminTodoResponse details = adminTodoService.createTodo(
                 request,
-                userDetails.getUserId()
+                userDetails.getUserId(),
+                userDetails.getUser().getOrganizationId()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(Response.of(
                 true,
@@ -180,7 +181,8 @@ public class AdminTodoController {
         UpdateAdminTodoResponse details = adminTodoService.updateTodo(
                 todoId,
                 request,
-                userDetails.getUserId()
+                userDetails.getUserId(),
+                userDetails.getUser().getOrganizationId()
         );
         return ResponseEntity.ok(Response.of(
                 true,
@@ -250,7 +252,7 @@ public class AdminTodoController {
             @PathVariable Long todoId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        adminTodoService.deleteTodo(todoId, userDetails.getUserId());
+        adminTodoService.deleteTodo(todoId, userDetails.getUserId(), userDetails.getUser().getOrganizationId());
         return ResponseEntity.noContent().build();
     }
 
