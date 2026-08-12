@@ -12,7 +12,6 @@ import java.util.List;
 public interface WorkAttendanceRepository extends JpaRepository<WorkAttendance, Integer> {
     List<WorkAttendance> findByUser_UserIdAndCheckTime(Long userId, LocalDateTime checkTime);
     List<WorkAttendance> findBySchedule_ScheduleId(Long scheduleId);
-    boolean existsBySchedule_ScheduleId(Long scheduleId);
     List<WorkAttendance> findByUser_UserIdAndCheckTimeBetween(Long userId, LocalDateTime start, LocalDateTime end);
     List<WorkAttendance> findAllByScheduleIn(List<WorkSchedule> schedules);
 }
