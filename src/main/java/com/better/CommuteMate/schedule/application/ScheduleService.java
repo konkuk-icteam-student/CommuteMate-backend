@@ -121,8 +121,7 @@ public class ScheduleService {
         Set<SlotKey> tentativeSlotKeys = new HashSet<>();
 
         for (WorkScheduleSlotCommand slot : deleteSlots) {
-            int unitMinutes = getUnitMinutes(allSettings, slot);
-            deleteSlotByRange(command.userId(), slot, unitMinutes,
+            deleteSlotByRange(command.userId(), slot,
                     success, failure, changes, userScheduleMap);
         }
 
@@ -235,12 +234,6 @@ public class ScheduleService {
         return map;
     }
 
-    private int getUnitMinutes(Map<YearMonth, WorkScheduleSetting> settings,
-                               WorkScheduleSlotCommand slot) {
-        WorkScheduleSetting setting = settings.get(YearMonth.from(slot.date()));
-        return setting != null ? setting.getMinWorkUnitMinutes() : SLOT_MINUTES;
-    }
-
     /**
      * 원본 범위를 단위 슬롯으로 분할해 모두 찾아 취소한다.
      * 하나라도 존재하지 않거나 이미 취소 상태면 전체 범위를 실패로 처리한다.
@@ -248,14 +241,13 @@ public class ScheduleService {
     private void deleteSlotByRange(
             Long userId,
             WorkScheduleSlotCommand originalSlot,
-            int unitMinutes,
             List<WorkScheduleChangeResponseDetail.Slot> success,
             List<WorkScheduleChangeResponseDetail.Slot> failure,
             List<ScheduleChange> changes,
             Map<SlotKey, WorkSchedule> userScheduleMap) {
 
         List<WorkScheduleSlotCommand> unitSlots = WorkSlotUtils.splitIntoUnitSlots(
-                originalSlot.date(), originalSlot.start(), originalSlot.end(), unitMinutes);
+                originalSlot.date(), originalSlot.start(), originalSlot.end(), SLOT_MINUTES);
 
         List<WorkSchedule> toCancel = new ArrayList<>();
         for (WorkScheduleSlotCommand unitSlot : unitSlots) {
@@ -293,9 +285,8 @@ public class ScheduleService {
             Map<SlotKey, WorkSchedule> userScheduleMap,
             Set<SlotKey> tentativeSlotKeys) {
 
-        int unitMinutes = setting.getMinWorkUnitMinutes();
         List<WorkScheduleSlotCommand> unitSlots = WorkSlotUtils.splitIntoUnitSlots(
-                originalSlot.date(), originalSlot.start(), originalSlot.end(), unitMinutes);
+                originalSlot.date(), originalSlot.start(), originalSlot.end(), SLOT_MINUTES);
 
         CodeType statusCode = setting.isApplyPeriod(LocalDateTime.now()) ? CodeType.WS02 : CodeType.WS01;
 
@@ -620,10 +611,8 @@ public class ScheduleService {
         workChangeRequestRepository.save(changeRequest);
 
         for (WorkScheduleEditRequest.Slot slot : deleteSlots) {
-            WorkScheduleSetting setting = settingsForEdit.get(YearMonth.from(slot.date()));
-            int unitMinutes = setting != null ? setting.getMinWorkUnitMinutes() : SLOT_MINUTES;
             for (WorkScheduleSlotCommand unitSlot : WorkSlotUtils.splitIntoUnitSlots(
-                    slot.date(), slot.start(), slot.end(), unitMinutes)) {
+                    slot.date(), slot.start(), slot.end(), SLOT_MINUTES)) {
                 workSchedulesRepository
                         .findByUser_UserIdAndDateAndStartTimeAndEndTime(
                                 userId, unitSlot.date(), unitSlot.start(), unitSlot.end())
