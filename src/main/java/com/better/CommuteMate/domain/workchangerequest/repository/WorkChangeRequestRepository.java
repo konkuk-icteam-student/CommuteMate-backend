@@ -18,6 +18,23 @@ import java.time.LocalDate;
 public interface WorkChangeRequestRepository extends JpaRepository<WorkChangeRequest, Long> {
     List<WorkChangeRequest> findByUser_UserId(Long userId);
 
+    @Query("""
+            select distinct request
+            from WorkChangeRequest request
+            where request.user.userId in :userIds
+              and exists (
+                select item.itemId
+                from WorkChangeRequestItem item
+                where item.request = request
+                  and item.date between :startDate and :endDate
+              )
+            """)
+    List<WorkChangeRequest> findAllByUsersAndItemDateBetween(
+            @Param("userIds") List<Long> userIds,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
     // 같은 요청이 동시에 승인·거절되는 것을 막기 위해 처리 완료 시점까지 행 잠금을 유지합니다.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
@@ -83,4 +100,88 @@ public interface WorkChangeRequestRepository extends JpaRepository<WorkChangeReq
             @Param("endDate") LocalDate endDate,
             @Param("statusCode") CodeType statusCode
     );
+
+    @Query("""
+            select request
+            from WorkChangeRequest request
+            where request.user.userId = :userId
+              and exists (
+                select item.itemId
+                from WorkChangeRequestItem item
+                where item.request = request
+                  and item.date between :startDate and :endDate
+              )
+            """)
+    Page<WorkChangeRequest> findUserRequestsByMonth(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
+    );
+
+    @Query("""
+            select request
+            from WorkChangeRequest request
+            where request.user.userId = :userId
+              and exists (
+                select item.itemId
+                from WorkChangeRequestItem item
+                where item.request = request
+                  and item.date between :startDate and :endDate
+              )
+              and request.statusCode = :statusCode
+            """)
+    Page<WorkChangeRequest> findUserRequestsByMonthAndStatus(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statusCode") CodeType statusCode,
+            Pageable pageable
+    );
+
+    Page<WorkChangeRequest> findByUser_UserId(Long userId, Pageable pageable);
+
+    Page<WorkChangeRequest> findByUser_UserIdAndStatusCode(
+            Long userId, CodeType statusCode, Pageable pageable
+    );
+
+    @Query("""
+            select count(request.requestId)
+            from WorkChangeRequest request
+            where request.user.userId = :userId
+              and exists (
+                select item.itemId
+                from WorkChangeRequestItem item
+                where item.request = request
+                  and item.date between :startDate and :endDate
+              )
+            """)
+    long countUserRequestsByMonth(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+            select count(request.requestId)
+            from WorkChangeRequest request
+            where request.user.userId = :userId
+              and exists (
+                select item.itemId
+                from WorkChangeRequestItem item
+                where item.request = request
+                  and item.date between :startDate and :endDate
+              )
+              and request.statusCode = :statusCode
+            """)
+    long countUserRequestsByMonthAndStatus(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statusCode") CodeType statusCode
+    );
+
+    long countByUser_UserId(Long userId);
+
+    long countByUser_UserIdAndStatusCode(Long userId, CodeType statusCode);
 }

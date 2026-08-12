@@ -13,6 +13,24 @@ import java.util.List;
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
+    List<Task> findAllByAssignee_OrganizationIdAndTaskDate(Long organizationId, LocalDate taskDate);
+
+    @Query("""
+            select task
+            from Task task
+            where task.taskDate = :taskDate
+              and task.createdBy in (
+                select creator.userId
+                from User creator
+                where creator.organizationId = :organizationId
+              )
+            order by task.taskTime asc, task.taskId asc
+            """)
+    List<Task> findAdminTodos(
+            @Param("organizationId") Long organizationId,
+            @Param("taskDate") LocalDate taskDate
+    );
+
     /**
      * 특정 날짜의 모든 업무 조회 (시간순 정렬)
      */

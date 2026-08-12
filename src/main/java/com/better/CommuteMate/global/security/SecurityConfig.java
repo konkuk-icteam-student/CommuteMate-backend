@@ -1,5 +1,6 @@
 package com.better.CommuteMate.global.security;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -68,7 +69,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+                                                   JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                   JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
@@ -79,11 +81,33 @@ public class SecurityConfig {
                         .frameOptions(frame -> frame.sameOrigin())
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/admin/**", "/api/v1/admin/**").hasRole("RL02")
-                        // Task API만 인증 필요
-                        .requestMatchers("/api/tasks/**", "/api/task-templates/**").authenticated()
-                        // 나머지는 모두 허용
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/admin/work-schedules",
+                                "/api/admin/todos"
+                        ).authenticated()
+                        .requestMatchers(
+                                "/api/v1/handover-memos",
+                                "/api/v1/handover-memos/**",
+                                "/api/tasks/**",
+                                "/api/task-templates/**"
+                        ).authenticated()
+                        .requestMatchers(
+                                "/api/v1/work-schedules/**",
+                                "/api/v1/work-change-requests/**",
+                                "/api/v1/notifications/**",
+                                "/api/v1/home/**",
+                                "/api/home/**",
+                                "/api/mypage/**"
+                        ).hasRole("RL01")
+                        .requestMatchers(
+                                "/api/admin/**",
+                                "/api/v1/admin/**"
+                        ).hasRole("RL02")
                         .anyRequest().permitAll()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

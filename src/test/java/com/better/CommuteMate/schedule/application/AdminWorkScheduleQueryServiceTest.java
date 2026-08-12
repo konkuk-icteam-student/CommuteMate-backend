@@ -63,7 +63,7 @@ class AdminWorkScheduleQueryServiceTest {
                 .endTime(LocalTime.of(10, 30))
                 .build();
 
-        when(settingRepository.findByOrganizationIdAndYearAndMonth("10", 2026, 4))
+        when(settingRepository.findByOrganizationIdAndYearAndMonth(10L, 2026, 4))
                 .thenReturn(Optional.of(setting));
         when(scheduleRepository.findAllBySettingAndDateBetweenAndStatusCodeIn(
                 setting, date, date, List.of(CodeType.WS01, CodeType.WS02)
@@ -71,9 +71,11 @@ class AdminWorkScheduleQueryServiceTest {
         when(unavailableTimeRepository.findBySettingAndDateBetween(setting, date, date))
                 .thenReturn(List.of(unavailable));
 
-        var response = service.getSchedules("10", "2026-04-15", "2026-04-15", null);
+        var response = service.getSchedules(10L, "2026-04-15", "2026-04-15", null);
 
         assertThat(response.maxConcurrentWorkers).isEqualTo(4);
+        assertThat(response.hasPrev).isFalse();
+        assertThat(response.hasNext).isFalse();
         assertThat(response.days).hasSize(1);
         assertThat(response.days.get(0).slots()).hasSize(3);
         assertThat(response.days.get(0).slots().get(0).status()).isEqualTo("AVAILABLE");
@@ -87,29 +89,34 @@ class AdminWorkScheduleQueryServiceTest {
     @DisplayName("관리자 근로시간표 조회 - 조회 기간이 서로 다른 월이면 실패한다")
     void rejectsCrossMonthRange() {
         assertThatThrownBy(() -> service.getSchedules(
-                "10", "2026-04-30", "2026-05-01", null
+                10L, "2026-04-30", "2026-05-01", null
         ))
                 .isInstanceOf(CustomException.class)
                 .hasMessage("조회 연도 또는 월 값이 올바르지 않습니다.");
     }
 
     @Test
-    @DisplayName("관리자 근로시간표 조회 - 해당 월 설정이 없으면 실패한다")
-    void throwsNotFoundWhenMonthlySettingDoesNotExist() {
-        when(settingRepository.findByOrganizationIdAndYearAndMonth("10", 2026, 4))
+    @DisplayName("관리자 근로시간표 조회 - 해당 월 설정이 없으면 빈 배열과 이전·다음 설정 여부를 반환한다")
+    void returnsEmptyDaysWhenMonthlySettingDoesNotExist() {
+        when(settingRepository.findByOrganizationIdAndYearAndMonth(10L, 2026, 4))
                 .thenReturn(Optional.empty());
+        when(settingRepository.existsByOrganizationIdAndYearAndMonth(10L, 2026, 3))
+                .thenReturn(true);
+        when(settingRepository.existsByOrganizationIdAndYearAndMonth(10L, 2026, 5))
+                .thenReturn(false);
 
-        assertThatThrownBy(() -> service.getSchedules(
-                "10", "2026-04-15", "2026-04-15", null
-        ))
-                .isInstanceOf(CustomException.class)
-                .hasMessage("해당 월의 스케줄 설정을 찾을 수 없습니다.");
+        var response = service.getSchedules(10L, "2026-04-15", "2026-04-15", null);
+
+        assertThat(response.maxConcurrentWorkers).isEqualTo(4);
+        assertThat(response.hasPrev).isTrue();
+        assertThat(response.hasNext).isFalse();
+        assertThat(response.days).isEmpty();
     }
 
     private WorkScheduleSetting setting() {
         return WorkScheduleSetting.builder()
-                .settingId("setting-1")
-                .organizationId("10")
+                .settingId(1L)
+                .organizationId(10L)
                 .year(2026)
                 .month(4)
                 .applyStartAt(LocalDateTime.of(2026, 4, 1, 0, 0))

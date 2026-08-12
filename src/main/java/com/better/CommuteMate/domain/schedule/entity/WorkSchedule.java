@@ -9,7 +9,6 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "work_schedule")
@@ -20,8 +19,9 @@ import java.util.UUID;
 public class WorkSchedule {
 
     @Id
-    @Column(name = "schedule_id", nullable = false, length = 36)
-    private String scheduleId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "schedule_id", nullable = false)
+    private Long scheduleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -47,6 +47,15 @@ public class WorkSchedule {
     @Enumerated(EnumType.STRING)
     @Column(name = "status_code", columnDefinition = "CHAR(4)", nullable = false)
     private CodeType statusCode;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "work_status_code", columnDefinition = "CHAR(4)")
+    private CodeType workStatusCode = CodeType.WK01;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attendance_status_code", columnDefinition = "CHAR(4)")
+    private CodeType attendanceStatusCode;
 
     @Column(name = "created_request_id", length = 36)
     private String createdRequestId;
@@ -99,12 +108,25 @@ public class WorkSchedule {
         this.updatedBy = updatedBy;
     }
 
+    public void markWorking(boolean late, String updatedBy) {
+        this.workStatusCode = CodeType.WK02;
+        this.attendanceStatusCode = late ? CodeType.AT02 : CodeType.AT01;
+        this.updatedBy = updatedBy;
+    }
+
+    public void markCompleted(String updatedBy) {
+        this.workStatusCode = CodeType.WK03;
+        this.updatedBy = updatedBy;
+    }
+
+    public void markNoShow(boolean absent, String updatedBy) {
+        this.workStatusCode = CodeType.WK04;
+        this.attendanceStatusCode = absent ? CodeType.AT03 : null;
+        this.updatedBy = updatedBy;
+    }
+
     @PrePersist
     protected void onCreate() {
-        if (this.scheduleId == null) {
-            this.scheduleId = UUID.randomUUID().toString();
-        }
-
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }

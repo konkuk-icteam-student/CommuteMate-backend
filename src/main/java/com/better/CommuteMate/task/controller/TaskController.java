@@ -7,7 +7,6 @@ import com.better.CommuteMate.task.controller.dtos.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,14 +31,14 @@ public class TaskController {
 
     @Operation(summary = "일별 업무 목록 조회", description = "특정 날짜의 업무 목록을 정기/비정기, 오전/오후로 구분하여 조회합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = DailyTasksResponse.class))),
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 날짜 형식")
     })
     @GetMapping
-    public ResponseEntity<Response> getTasksByDate(
+    public ResponseEntity<Response<DailyTasksResponse>> getTasksByDate(
             @Parameter(description = "조회할 날짜 (yyyy-MM-dd)", example = "2025-10-24") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         DailyTasksResponse response = taskService.getTasksByDate(date);
-        return ResponseEntity.ok(new Response(true, "업무 목록을 조회했습니다.", response));
+        return ResponseEntity.ok(new Response<>(true, "업무 목록을 조회했습니다.", response));
     }
 
     @Operation(summary = "업무 단건 조회", description = "특정 업무의 상세 정보를 조회합니다.")

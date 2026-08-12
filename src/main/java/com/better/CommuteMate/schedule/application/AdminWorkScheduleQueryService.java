@@ -28,13 +28,16 @@ public class AdminWorkScheduleQueryService {
 
     private static final List<CodeType> ACTIVE_STATUSES = List.of(CodeType.WS01, CodeType.WS02);
     private static final int SLOT_MINUTES = 30;
+    private static final int DEFAULT_MAX_CONCURRENT_WORKERS = 4;
+    private static final LocalTime WORK_START_TIME = LocalTime.of(9, 0);
+    private static final LocalTime WORK_END_TIME   = LocalTime.of(18, 0);
 
     private final WorkScheduleSettingRepository settingRepository;
     private final WorkSchedulesRepository scheduleRepository;
     private final WorkUnavailableTimeRepository unavailableTimeRepository;
 
     public AdminScheduleRangeResponse getSchedules(
-            String organizationId,
+            Long organizationId,
             String startDateValue,
             String endDateValue,
             String userName
@@ -43,13 +46,27 @@ public class AdminWorkScheduleQueryService {
         LocalDate endDate = parseDate(endDateValue);
         validateRange(startDate, endDate);
 
-        WorkScheduleSetting setting = settingRepository
+        YearMonth targetMonth = YearMonth.from(startDate);
+        YearMonth previousMonth = targetMonth.minusMonths(1);
+        YearMonth nextMonth = targetMonth.plusMonths(1);
+        boolean hasPrev = hasSetting(organizationId, previousMonth);
+        boolean hasNext = hasSetting(organizationId, nextMonth);
+
+        Optional<WorkScheduleSetting> settingOptional = settingRepository
                 .findByOrganizationIdAndYearAndMonth(
                         organizationId, startDate.getYear(), startDate.getMonthValue()
-                )
-                .orElseThrow(() -> CustomException.of(
-                        ScheduleErrorCode.ADMIN_SCHEDULE_SETTING_NOT_FOUND
-                ));
+                );
+        if (settingOptional.isEmpty()) {
+            return new AdminScheduleRangeResponse(
+                    startDate,
+                    endDate,
+                    DEFAULT_MAX_CONCURRENT_WORKERS,
+                    hasPrev,
+                    hasNext,
+                    List.of()
+            );
+        }
+        WorkScheduleSetting setting = settingOptional.get();
 
         List<WorkSchedule> schedules =
                 scheduleRepository.findAllBySettingAndDateBetweenAndStatusCodeIn(
@@ -81,7 +98,20 @@ public class AdminWorkScheduleQueryService {
         }
 
         return new AdminScheduleRangeResponse(
-                startDate, endDate, setting.getMaxConcurrentWorkers(), days
+                startDate,
+                endDate,
+                setting.getMaxConcurrentWorkers(),
+                hasPrev,
+                hasNext,
+                days
+        );
+    }
+
+    private boolean hasSetting(Long organizationId, YearMonth yearMonth) {
+        return settingRepository.existsByOrganizationIdAndYearAndMonth(
+                organizationId,
+                yearMonth.getYear(),
+                yearMonth.getMonthValue()
         );
     }
 
@@ -126,10 +156,16 @@ public class AdminWorkScheduleQueryService {
 
     private Set<SlotKey> buildUnavailableSlots(List<WorkUnavailableTime> unavailableTimes) {
         Set<SlotKey> result = new HashSet<>();
-        unavailableTimes.forEach(unavailable -> result.addAll(expandToSlots(
-                unavailable.getDate(), unavailable.getStartTime(), unavailable.getEndTime()
-        )));
+        for (WorkUnavailableTime u : unavailableTimes) {
+            LocalTime start = isAllDayUnavailable(u) ? WORK_START_TIME : u.getStartTime();
+            LocalTime end   = isAllDayUnavailable(u) ? WORK_END_TIME   : u.getEndTime();
+            result.addAll(expandToSlots(u.getDate(), start, end));
+        }
         return result;
+    }
+
+    private boolean isAllDayUnavailable(WorkUnavailableTime u) {
+        return LocalTime.MIN.equals(u.getStartTime()) && LocalTime.MIN.equals(u.getEndTime());
     }
 
     private boolean matchesUserName(

@@ -8,7 +8,6 @@ import com.better.CommuteMate.manager.application.dto.response.PatchFavoriteMana
 import com.better.CommuteMate.manager.application.dto.response.PostManagerResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,18 +28,17 @@ public class ManagerController {
             description = "새로운 담당자를 등록합니다. 이미 해당 카테고리에 등록된 담당자는 등록할 수 없습니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "담당자 등록 성공",
-                    content = @Content(schema = @Schema(implementation = PostManagerResponse.class))),
+            @ApiResponse(responseCode = "200", description = "담당자 등록 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content),
             @ApiResponse(responseCode = "404", description = "해당 카테고리 없음", content = @Content),
             @ApiResponse(responseCode = "409", description = "이미 등록된 담당자", content = @Content),
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     })
     @PostMapping
-    public ResponseEntity<Response> registerManager(
+    public ResponseEntity<Response<PostManagerResponse>> registerManager(
             @RequestBody PostManagerRequest request
     ) {
-        return ResponseEntity.ok(new Response(true, "담당자 등록 성공", managerService.registerManager(request)));
+        return ResponseEntity.ok(new Response<>(true, "담당자 등록 성공", managerService.registerManager(request)));
     }
 
     @Operation(
@@ -48,18 +46,18 @@ public class ManagerController {
             description = "담당자 목록을 조회합니다. 조직, 분류, 즐겨찾기 여부로 필터링할 수 있습니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "담당자 목록 조회 성공", content = @Content(schema = @Schema(implementation = GetManagerListWrapper.class))),
+            @ApiResponse(responseCode = "200", description = "담당자 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터",  content = @Content),
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
     })
     @GetMapping
-    public ResponseEntity<Response> getManagerList(
+    public ResponseEntity<Response<GetManagerListWrapper>> getManagerList(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long organizationId,
             @RequestParam(defaultValue = "false") boolean favoriteOnly,
             @RequestParam(required = false) String searchName
     ) {
-        return ResponseEntity.ok(new Response(true, "카테고리 담당자 목록 조회 성공", managerService.getManagerList(categoryId, organizationId, favoriteOnly, searchName)));
+        return ResponseEntity.ok(new Response<>(true, "카테고리 담당자 목록 조회 성공", managerService.getManagerList(categoryId, organizationId, favoriteOnly, searchName)));
     }
 
 
@@ -68,20 +66,19 @@ public class ManagerController {
             description = "담당자를 즐겨찾기 등록 및 해제합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "담당자 즐겨찾기 등록 및 해제 성공",
-                    content = @Content(schema = @Schema(implementation = PatchFavoriteManagerResponse.class))),
+            @ApiResponse(responseCode = "200", description = "담당자 즐겨찾기 등록 및 해제 성공"),
             @ApiResponse(responseCode = "404", description = "해당 담당자-분류 매핑 없음"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PatchMapping("/{managerId}/category/{categoryId}")
-    public ResponseEntity<Response> updateFavoriteManager(
+    public ResponseEntity<Response<PatchFavoriteManagerResponse>> updateFavoriteManager(
             @PathVariable Long managerId,
             @PathVariable Long categoryId,
             @RequestParam boolean favorite
     ) {
         String message = favorite ? "즐겨찾기 등록 성공" : "즐겨찾기 해제 성공";
 
-        return ResponseEntity.ok(new Response(true, message, managerService.updateFavorite(managerId, categoryId, favorite)));
+        return ResponseEntity.ok(new Response<>(true, message, managerService.updateFavorite(managerId, categoryId, favorite)));
     }
 
 

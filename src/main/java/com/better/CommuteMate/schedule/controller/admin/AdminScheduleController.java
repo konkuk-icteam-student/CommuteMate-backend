@@ -5,6 +5,7 @@ import com.better.CommuteMate.global.controller.dtos.Response;
 import com.better.CommuteMate.schedule.application.MonthlyScheduleSettingService;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.ScheduleSettingResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +33,35 @@ public class AdminScheduleController {
 
     private final MonthlyScheduleSettingService monthlyScheduleSettingService;
 
+    @GetMapping("/work-application-settings/{year}/{month}")
+    @Operation(
+            summary = "월별 근로신청 설정 조회",
+            description = "관리자 조직의 월별 근로신청 설정을 조회합니다. 설정이 없으면 isConfigured=false로 응답합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "근로신청 설정 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "조회 연도 또는 월 값이 올바르지 않음"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> getScheduleSetting(
+            @Parameter(description = "조회 연도", example = "2026", required = true)
+            @PathVariable int year,
+            @Parameter(description = "조회 월", example = "4", required = true)
+            @PathVariable int month,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        ScheduleSettingResponse result = monthlyScheduleSettingService.get(
+                userDetails.getUser().getOrganizationId(), year, month
+        );
+        return ResponseEntity.ok(Response.of(
+                true,
+                "근로신청 설정을 조회했습니다.",
+                result
+        ));
+    }
+
     @PutMapping("/work-application-settings/{year}/{month}")
     @Operation(
             summary = "월별 근로신청 설정 저장",
@@ -40,17 +71,14 @@ public class AdminScheduleController {
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    name = "월별 근로신청 설정",
+                                    name = "근로신청 설정 저장 요청",
                                     value = """
                                             {
                                               "applyStartDate": "2026-04-01",
                                               "applyEndDate": "2026-04-10",
                                               "unavailableDates": ["2026-04-19"],
                                               "unavailableTimeRanges": [
-                                                {
-                                                  "start": "11:00",
-                                                  "end": "13:00"
-                                                }
+                                                {"start": "11:00", "end": "13:00"}
                                               ],
                                               "maxConcurrentWorkers": 4,
                                               "minWorkUnitMinutes": 120,
@@ -150,7 +178,7 @@ public class AdminScheduleController {
             @Valid @RequestBody SaveScheduleSettingRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String organizationId = String.valueOf(userDetails.getUser().getOrganizationId());
+        Long organizationId = userDetails.getUser().getOrganizationId();
         String adminId = String.valueOf(userDetails.getUserId());
         SaveScheduleSettingResponse result = monthlyScheduleSettingService.save(
                 organizationId, year, month, request, adminId

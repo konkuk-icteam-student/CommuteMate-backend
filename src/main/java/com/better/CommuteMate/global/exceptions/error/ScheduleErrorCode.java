@@ -18,6 +18,7 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     CHANGE_REQUEST_NOT_FOUND("근로시간 수정 요청을 찾을 수 없습니다.", "[Error] : change request not found", HttpStatus.NOT_FOUND),
     CHANGE_REQUEST_CAPACITY_EXCEEDED("해당 시간대의 최대 근무 인원을 초과했습니다.", "[Error] : change request capacity exceeded", HttpStatus.CONFLICT),
     INVALID_CHANGE_REQUEST_STATUS("올바르지 않은 변경 요청 상태입니다.", "[Error] : invalid change request status", HttpStatus.BAD_REQUEST),
+    INVALID_CHANGE_REQUEST_HISTORY_STATUS("올바르지 않은 신청기록 상태입니다.", "[Error] : invalid change request history status", HttpStatus.BAD_REQUEST),
     INVALID_CHANGE_REQUEST_PAGE("페이지 요청 값이 올바르지 않습니다.", "[Error] : invalid change request page", HttpStatus.BAD_REQUEST),
     INVALID_CHANGE_REQUEST_YEAR_MONTH("조회 연도 또는 월 값이 올바르지 않습니다.", "[Error] : invalid change request year or month", HttpStatus.BAD_REQUEST),
     ADMIN_SCHEDULE_QUERY_INVALID("조회 연도 또는 월 값이 올바르지 않습니다.", "[Error] : invalid admin schedule query range", HttpStatus.BAD_REQUEST),
@@ -43,7 +44,11 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     EDIT_REQUEST_EMPTY("수정 요청 항목이 없습니다.", "[Error] : 수정 요청 항목 없음", HttpStatus.BAD_REQUEST),
     EDIT_REQUEST_REASON_REQUIRED("수정 요청 사유를 입력해야 합니다.", "[Error] : 수정 요청 사유 미입력", HttpStatus.BAD_REQUEST),
     DELETE_SCHEDULE_NOT_FOUND("삭제 요청한 스케줄을 찾을 수 없습니다.", "[Error] : 삭제 요청 스케줄 미존재", HttpStatus.NOT_FOUND),
-    CROSS_WEEK_RANGE_NOT_ALLOWED("조회 기간은 같은 주 이내여야 합니다.", "[Error] : 다른 주에 걸친 조회 범위", HttpStatus.BAD_REQUEST);
+    CROSS_WEEK_RANGE_NOT_ALLOWED("조회 기간은 같은 주 이내여야 합니다.", "[Error] : 다른 주에 걸친 조회 범위", HttpStatus.BAD_REQUEST),
+    APPLY_PERIOD_NOT_ACTIVE("근로 신청 기간이 아닙니다.", "[Error] : 근로 신청 기간 외 신청 시도", HttpStatus.BAD_REQUEST),
+    INVALID_SLOT_UNIT("근무 시간은 최소 근무 단위 기준으로 신청해야 합니다.", "[Error] : 최소 근무 단위 미준수", HttpStatus.BAD_REQUEST),
+    INVALID_SLOT_BOUNDARY("근무 시간은 30분 단위로 신청해야 합니다.", "[Error] : 30분 경계 정렬 위반", HttpStatus.BAD_REQUEST),
+    INVALID_SLOT_DURATION("근무 시간은 최소 근무 시간 이상으로 신청해야 합니다.", "[Error] : 최소 근무 시간 미충족", HttpStatus.BAD_REQUEST);
 
 
     private final String message;

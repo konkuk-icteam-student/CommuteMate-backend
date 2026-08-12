@@ -54,11 +54,11 @@ public record SaveScheduleSettingRequest(
     public record UnavailableTimeRange(
             @Schema(type = "string", format = "time", example = "11:00")
             @NotNull(message = "요청 값이 올바르지 않습니다.")
-            @JsonFormat(pattern = "HH:mm") LocalTime start,
-
-            @Schema(type = "string", format = "time", example = "13:00")
+            @JsonFormat(pattern = "HH:mm")
+            @Schema(type = "string", format = "time", example = "11:00") LocalTime start,
             @NotNull(message = "요청 값이 올바르지 않습니다.")
-            @JsonFormat(pattern = "HH:mm") LocalTime end
+            @JsonFormat(pattern = "HH:mm")
+            @Schema(type = "string", format = "time", example = "13:00") LocalTime end
     ) {
     }
 }

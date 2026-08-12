@@ -64,7 +64,9 @@ public class ManagerService {
                     .orElseThrow(() -> new CustomException(OrganizationErrorCode.ORGANIZATION_NOT_FOUND));
         }
 
-        List<ManagerCategory> managerCategories = managerCategoryRepository.getManagers(categoryId, organization, favoriteOnly, searchName);
+        String normalizedSearchName = (searchName == null) ? "" : searchName.trim();
+
+        List<ManagerCategory> managerCategories = managerCategoryRepository.getManagers(categoryId, organization, favoriteOnly, normalizedSearchName);
 
         List<GetManagerListResponse> result = managerCategories.stream()
                 .map(GetManagerListResponse::new)

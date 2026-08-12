@@ -11,13 +11,19 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 @Repository
-public interface WorkScheduleSettingRepository extends JpaRepository<WorkScheduleSetting, String> {
+public interface WorkScheduleSettingRepository extends JpaRepository<WorkScheduleSetting, Long> {
 
     /**
      * 특정 조직의 특정 연/월 근무 일정 설정을 조회
      */
     Optional<WorkScheduleSetting> findByOrganizationIdAndYearAndMonth(
-            String organizationId,
+            Long organizationId,
+            Integer year,
+            Integer month
+    );
+
+    boolean existsByOrganizationIdAndYearAndMonth(
+            Long organizationId,
             Integer year,
             Integer month
     );
@@ -32,7 +38,7 @@ public interface WorkScheduleSettingRepository extends JpaRepository<WorkSchedul
               and setting.month = :month
             """)
     Optional<WorkScheduleSetting> findForUpdate(
-            @Param("organizationId") String organizationId,
+            @Param("organizationId") Long organizationId,
             @Param("year") Integer year,
             @Param("month") Integer month
     );

@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -22,47 +23,46 @@ public class ScheduleValidator {
     private final WorkSchedulesRepository workSchedulesRepository;
 
     /**
-     * 변경사항 API의 슬롯 기준으로 동시 근무 제한을 검증합니다.
-     * addSlots 처리 시 사용합니다.
+     * 어드민 승인 처리 등 DB에서 직접 조회가 필요한 경우에 사용합니다.
      */
     public boolean isScheduleInsertable(
             WorkScheduleSlotCommand slot,
             WorkScheduleSetting setting
     ) {
-        return isScheduleInsertable(
-                slot.date(),
-                slot.start(),
-                slot.end(),
-                setting.getMaxConcurrentWorkers()
-        );
+        List<WorkSchedule> daySchedules = workSchedulesRepository.findAllByDate(slot.date());
+        return isScheduleInsertable(slot.start(), slot.end(),
+                setting.getMaxConcurrentWorkers(), daySchedules);
     }
 
     /**
-     * 해당 날짜, 시작 시간, 종료 시간을 기준으로 동시 근무 제한을 검증합니다.
+     * 미리 조회한 해당 날짜 전체 근무 목록으로 동시 근무 제한을 검증합니다.
+     * changeWorkSchedules에서 배치 처리 시 사용합니다.
      */
+    public boolean isScheduleInsertable(
+            WorkScheduleSlotCommand slot,
+            int maxConcurrentWorkers,
+            List<WorkSchedule> preloadedDaySchedules
+    ) {
+        return isScheduleInsertable(slot.start(), slot.end(),
+                maxConcurrentWorkers, preloadedDaySchedules);
+    }
+
     private boolean isScheduleInsertable(
-            LocalDate date,
             LocalTime startTime,
             LocalTime endTime,
-            int maxConcurrentWorkers
+            int maxConcurrentWorkers,
+            List<WorkSchedule> daySchedules
     ) {
-        List<WorkSchedule> daySchedules = workSchedulesRepository.findAllByDate(date);
-
+        Set<CodeType> activeStatuses = Set.of(CodeType.WS01, CodeType.WS02);
         LocalTime currentCheckPoint = startTime.plusMinutes(15);
 
         while (currentCheckPoint.isBefore(endTime)) {
             LocalTime finalCheckPoint = currentCheckPoint;
 
             long overlappingCount = daySchedules.stream()
-                    .filter(schedule -> !schedule.getStatusCode().equals(CodeType.WS04))
-                    .filter(schedule ->
-                            schedule.getStatusCode().equals(CodeType.WS01)
-                                    || schedule.getStatusCode().equals(CodeType.WS02)
-                    )
-                    .filter(schedule ->
-                            schedule.getStartTime().isBefore(finalCheckPoint)
-                                    && schedule.getEndTime().isAfter(finalCheckPoint)
-                    )
+                    .filter(s -> activeStatuses.contains(s.getStatusCode()))
+                    .filter(s -> s.getStartTime().isBefore(finalCheckPoint)
+                            && s.getEndTime().isAfter(finalCheckPoint))
                     .count();
 
             if (overlappingCount >= maxConcurrentWorkers) {

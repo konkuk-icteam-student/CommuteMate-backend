@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, String> {
+public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Long> {
 
     Optional<WorkSchedule> findByScheduleIdAndUser_OrganizationIdAndStatusCodeIn(
             String scheduleId,
@@ -33,6 +33,19 @@ public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Str
      * 특정 날짜의 근무 일정 목록을 조회
      */
     List<WorkSchedule> findAllByDate(LocalDate date);
+
+    List<WorkSchedule> findAllByUser_OrganizationIdAndDateAndStatusCode(
+            Long organizationId,
+            LocalDate date,
+            CodeType statusCode
+    );
+
+    List<WorkSchedule> findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+            List<Long> userIds,
+            LocalDate startDate,
+            LocalDate endDate,
+            CodeType statusCode
+    );
 
     /**
      * 특정 사용자의 특정 기간 내 유효한 근무 일정 목록을 조회
