@@ -7,11 +7,13 @@ import com.better.CommuteMate.schedule.controller.admin.dtos.BulkApproveWorkChan
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminWorkChangeRequestBulkService {
@@ -41,14 +43,19 @@ public class AdminWorkChangeRequestBulkService {
                         requestId, "SUCCESS", response.processedAt
                 ));
                 successCount++;
-            } catch (CustomException exception) {
+            } catch (CustomException e) {
                 results.add(new BulkApproveWorkChangeResponse.Result(
-                        requestId, toResultCode(exception), null
+                        requestId, toResultCode(requestId, e), null
+                ));
+            } catch (RuntimeException e) {
+                log.error("requestId={} 일괄 승인 처리 중 예외", requestId, e);
+                results.add(new BulkApproveWorkChangeResponse.Result(
+                        requestId, "FAILED", null
                 ));
             }
         }
 
-        int totalCount = results.size();
+        int totalCount = command.requestIds().size();
         return new BulkApproveWorkChangeResponse(
                 new BulkApproveWorkChangeResponse.Summary(
                         totalCount,
@@ -68,16 +75,17 @@ public class AdminWorkChangeRequestBulkService {
         }
     }
 
-    private String toResultCode(CustomException exception) {
-        if (exception.getErrorCode() == ScheduleErrorCode.CHANGE_REQUEST_NOT_FOUND) {
+    private String toResultCode(Long requestId, CustomException e) {
+        if (e.getErrorCode() == ScheduleErrorCode.CHANGE_REQUEST_NOT_FOUND) {
             return "NOT_FOUND";
         }
-        if (exception.getErrorCode() == ScheduleErrorCode.CHANGE_REQUEST_ALREADY_PROCESSED) {
+        if (e.getErrorCode() == ScheduleErrorCode.CHANGE_REQUEST_ALREADY_PROCESSED) {
             return "ALREADY_PROCESSED";
         }
-        if (exception.getErrorCode() == ScheduleErrorCode.CHANGE_REQUEST_CAPACITY_EXCEEDED) {
+        if (e.getErrorCode() == ScheduleErrorCode.CHANGE_REQUEST_CAPACITY_EXCEEDED) {
             return "CAPACITY_EXCEEDED";
         }
-        throw exception;
+        log.warn("requestId={} 매핑되지 않은 비즈니스 예외: {}", requestId, e.getMessage());
+        return "FAILED";
     }
 }
