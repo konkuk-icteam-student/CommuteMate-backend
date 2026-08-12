@@ -40,7 +40,8 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     APPLY_PERIOD_NOT_ACTIVE("근로 신청 기간이 아닙니다.", "[Error] : 근로 신청 기간 외 신청 시도", HttpStatus.BAD_REQUEST),
     INVALID_SLOT_UNIT("근무 시간은 최소 근무 단위 기준으로 신청해야 합니다.", "[Error] : 최소 근무 단위 미준수", HttpStatus.BAD_REQUEST),
     INVALID_SLOT_BOUNDARY("근무 시간은 30분 단위로 신청해야 합니다.", "[Error] : 30분 경계 정렬 위반", HttpStatus.BAD_REQUEST),
-    INVALID_SLOT_DURATION("근무 시간은 최소 근무 시간 이상으로 신청해야 합니다.", "[Error] : 최소 근무 시간 미충족", HttpStatus.BAD_REQUEST);
+    INVALID_SLOT_DURATION("근무 시간은 최소 근무 시간 이상으로 신청해야 합니다.", "[Error] : 최소 근무 시간 미충족", HttpStatus.BAD_REQUEST),
+    UNAVAILABLE_TIME_CONFLICT("근무 불가 시간대에 신청할 수 없습니다.", "[Error] : 근무 불가 시간대 신청 시도", HttpStatus.UNPROCESSABLE_ENTITY);
 
 
     private final String message;

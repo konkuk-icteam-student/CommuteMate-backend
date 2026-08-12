@@ -114,6 +114,13 @@ public class ScheduleService {
         addSlots.stream().map(WorkScheduleSlotCommand::date).distinct()
                 .forEach(d -> daySchedules.put(d, workSchedulesRepository.findAllByDate(d)));
 
+        Map<LocalDate, Set<SlotKey>> unavailableByDate = new HashMap<>();
+        addSlots.stream().map(WorkScheduleSlotCommand::date).distinct()
+                .forEach(d -> unavailableByDate.put(d, WorkSlotUtils.buildUnavailableSlotKeys(
+                        workUnavailableTimeRepository.findBySettingAndDateBetween(
+                                addSettings.get(YearMonth.from(d)), d, d),
+                        WORK_START_TIME, WORK_END_TIME, SLOT_MINUTES)));
+
         List<WorkScheduleChangeResponseDetail.Slot> success = new ArrayList<>();
         List<WorkScheduleChangeResponseDetail.Slot> failure = new ArrayList<>();
         List<ScheduleChange> changes = new ArrayList<>();
@@ -128,7 +135,8 @@ public class ScheduleService {
         for (WorkScheduleSlotCommand slot : addSlots) {
             WorkScheduleSetting setting = addSettings.get(YearMonth.from(slot.date()));
             processAddSlot(user, slot, setting,
-                    success, failure, changes, toSave, daySchedules, userScheduleMap, tentativeSlotKeys);
+                    success, failure, changes, toSave, daySchedules, userScheduleMap, tentativeSlotKeys,
+                    unavailableByDate);
         }
 
         if (!toSave.isEmpty()) {
@@ -283,7 +291,8 @@ public class ScheduleService {
             List<WorkSchedule> toSave,
             Map<LocalDate, List<WorkSchedule>> daySchedules,
             Map<SlotKey, WorkSchedule> userScheduleMap,
-            Set<SlotKey> tentativeSlotKeys) {
+            Set<SlotKey> tentativeSlotKeys,
+            Map<LocalDate, Set<SlotKey>> unavailableByDate) {
 
         List<WorkScheduleSlotCommand> unitSlots = WorkSlotUtils.splitIntoUnitSlots(
                 originalSlot.date(), originalSlot.start(), originalSlot.end(), SLOT_MINUTES);
@@ -293,6 +302,11 @@ public class ScheduleService {
         // 모든 단위 슬롯을 먼저 검증
         for (WorkScheduleSlotCommand unitSlot : unitSlots) {
             SlotKey key = new SlotKey(unitSlot.date(), unitSlot.start(), unitSlot.end());
+
+            if (unavailableByDate.getOrDefault(unitSlot.date(), Set.of()).contains(key)) {
+                failure.add(toResponseSlot(originalSlot));
+                return;
+            }
 
             WorkSchedule existing = userScheduleMap.get(key);
             boolean isDuplicate = (existing != null && !existing.getStatusCode().equals(CodeType.WS04))
@@ -605,6 +619,7 @@ public class ScheduleService {
         validateCombinedDurationForEdit(userId, addSlots, deleteSlots, settingsForEdit);
 
         validateMonthlyLimitForEdit(userId, user.getOrganizationId(), addSlots, deleteSlots);
+        validateUnavailableForEditAdd(addSlots, settingsForEdit);
 
         WorkChangeRequest changeRequest = WorkChangeRequest.builder()
                 .user(user).reason(request.reason()).statusCode(CodeType.CS01)
@@ -639,6 +654,27 @@ public class ScheduleService {
         return WorkScheduleEditResponse.builder()
                 .requestId(changeRequest.getRequestId())
                 .status(CodeType.CS01.getCodeName()).build();
+    }
+
+    private void validateUnavailableForEditAdd(
+            List<WorkScheduleEditRequest.Slot> addSlots,
+            Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        Map<LocalDate, Set<SlotKey>> unavailableByDate = new HashMap<>();
+        for (WorkScheduleEditRequest.Slot slot : addSlots) {
+            Set<SlotKey> unavailable = unavailableByDate.computeIfAbsent(slot.date(), d -> {
+                WorkScheduleSetting s = settingsByMonth.get(YearMonth.from(d));
+                if (s == null) return Set.of();
+                return WorkSlotUtils.buildUnavailableSlotKeys(
+                        workUnavailableTimeRepository.findBySettingAndDateBetween(s, d, d),
+                        WORK_START_TIME, WORK_END_TIME, SLOT_MINUTES);
+            });
+            for (WorkScheduleSlotCommand unit : WorkSlotUtils.splitIntoUnitSlots(
+                    slot.date(), slot.start(), slot.end(), SLOT_MINUTES)) {
+                if (unavailable.contains(new SlotKey(unit.date(), unit.start(), unit.end()))) {
+                    throw CustomException.of(ScheduleErrorCode.UNAVAILABLE_TIME_CONFLICT);
+                }
+            }
+        }
     }
 
     private void validateEditSlotUnitAlignment(

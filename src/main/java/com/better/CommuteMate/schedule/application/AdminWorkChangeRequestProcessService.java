@@ -4,6 +4,8 @@ import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
 import com.better.CommuteMate.domain.schedule.repository.WorkScheduleSettingRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
+import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
+import com.better.CommuteMate.schedule.application.WorkSlotUtils.SlotKey;
 import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequest;
 import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequestItem;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestItemRepository;
@@ -24,19 +26,24 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class AdminWorkChangeRequestProcessService {
 
     private static final int SLOT_MINUTES = 30;
+    private static final LocalTime WORK_START_TIME = LocalTime.of(9, 0);
+    private static final LocalTime WORK_END_TIME   = LocalTime.of(18, 0);
 
     private final WorkChangeRequestRepository requestRepository;
     private final WorkChangeRequestItemRepository itemRepository;
@@ -45,6 +52,7 @@ public class AdminWorkChangeRequestProcessService {
     private final WorkplaceRepository workplaceRepository;
     private final ScheduleValidator scheduleValidator;
     private final SimpMessagingTemplate messagingTemplate;
+    private final WorkUnavailableTimeRepository unavailableTimeRepository;
 
     @Transactional
     public ProcessWorkChangeResponse process(
@@ -124,6 +132,7 @@ public class AdminWorkChangeRequestProcessService {
         // daySchedulesMap: 날짜별 당일 근무 목록. 이미 추가한 슬롯도 여기에 넣어
         // 다음 단위 슬롯의 정원 검사에 반영한다 (saveAll 전에 DB flush 없이도 정확한 검사 가능).
         Map<LocalDate, List<WorkSchedule>> daySchedulesMap = new HashMap<>();
+        Map<LocalDate, Set<SlotKey>> unavailableByDate = new HashMap<>();
         List<WorkSchedule> toSave = new ArrayList<>();
 
         for (WorkChangeRequestItem item : items) {
@@ -142,7 +151,16 @@ public class AdminWorkChangeRequestProcessService {
             List<WorkSchedule> dayList = daySchedulesMap.computeIfAbsent(
                     item.getDate(), d -> new ArrayList<>(scheduleRepository.findAllByDate(d)));
 
+            Set<SlotKey> unavailableSlots = unavailableByDate.computeIfAbsent(
+                    item.getDate(), d -> WorkSlotUtils.buildUnavailableSlotKeys(
+                            unavailableTimeRepository.findBySettingAndDateBetween(setting, d, d),
+                            WORK_START_TIME, WORK_END_TIME, SLOT_MINUTES));
+
             for (WorkScheduleSlotCommand unitSlot : unitSlots) {
+                SlotKey key = new SlotKey(unitSlot.date(), unitSlot.start(), unitSlot.end());
+                if (unavailableSlots.contains(key)) {
+                    throw CustomException.of(ScheduleErrorCode.UNAVAILABLE_TIME_CONFLICT);
+                }
                 if (!scheduleValidator.isScheduleInsertable(
                         unitSlot, setting.getMaxConcurrentWorkers(), dayList)) {
                     throw CustomException.of(ScheduleErrorCode.CHANGE_REQUEST_CAPACITY_EXCEEDED);
