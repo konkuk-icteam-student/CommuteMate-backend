@@ -76,6 +76,11 @@ public class WorkScheduleController {
                                     {"isSuccess":false,"message":"신청하신 일정이 모두 실패하였습니다.","details":{"success":[],"failure":[{"start":"2026-04-07T09:00:00","end":"2026-04-07T10:00:00"}]}}
                                     """)
                     })),
+            @ApiResponse(responseCode = "400", description = "근로 신청 기간 외 요청",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {"isSuccess":false,"message":"근로 신청 기간이 아닙니다.","details":null}
+                                    """))),
             @ApiResponse(responseCode = "400", description = "잘못된 근무 단위 요청",
                     content = @Content(mediaType = "application/json", examples = {
                             @ExampleObject(name = "최소 근무 단위 미준수", value = """
@@ -212,7 +217,7 @@ public class WorkScheduleController {
             @ApiResponse(responseCode = "200", description = "근로시간 요약 조회 성공",
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(name = "조회 성공", value = """
-                                    {"isSuccess":true,"message":"근로시간 요약을 조회했습니다.","details":{"startDate":"2026-04-06","endDate":"2026-04-10","week":{"label":"1주차","usedHours":0,"limitHours":13},"month":{"label":"4월 전체","usedHours":3,"limitHours":27}}}
+                                    {"isSuccess":true,"message":"근로시간 요약을 조회했습니다.","details":{"startDate":"2026-04-06","endDate":"2026-04-10","minWorkUnitMinutes":30,"week":{"label":"1주차","usedHours":0,"minHours":5,"maxHours":13},"month":{"label":"4월 전체","usedHours":3,"minHours":20,"maxHours":27}}}
                                     """))),
             @ApiResponse(responseCode = "400", description = "잘못된 조회 기간",
                     content = @Content(mediaType = "application/json", examples = {

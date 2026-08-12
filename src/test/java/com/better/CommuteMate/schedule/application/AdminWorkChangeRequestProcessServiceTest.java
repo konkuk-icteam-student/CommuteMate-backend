@@ -31,6 +31,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -75,9 +77,14 @@ class AdminWorkChangeRequestProcessServiceTest {
         WorkChangeRequestItem deleteItem = item(
                 request, CodeType.CR02, deletedSchedule, 15, 9, 11
         );
-        WorkChangeRequestItem addItem = item(
-                request, CodeType.CR01, null, 17, 13, 15
-        );
+        WorkChangeRequestItem addItem = WorkChangeRequestItem.builder()
+                .request(request)
+                .changeTypeCode(CodeType.CR01)
+                .schedule(null)
+                .date(LocalDate.of(2026, 6, 17))
+                .startTime(LocalTime.of(13, 0))
+                .endTime(LocalTime.of(13, 30))
+                .build();
         WorkScheduleSetting setting = WorkScheduleSetting.builder()
                 .organizationId(10L)
                 .year(2026)
@@ -92,11 +99,11 @@ class AdminWorkChangeRequestProcessServiceTest {
                 .thenReturn(Optional.of(Workplace.builder().workplaceId(1L).build()));
         when(settingRepository.findForUpdate(10L, 2026, 6))
                 .thenReturn(Optional.of(setting));
+        when(scheduleRepository.findByUser_UserIdAndDateAndStartTimeAndEndTime(
+                any(), any(), any(), any())).thenReturn(Optional.of(deletedSchedule));
         when(scheduleValidator.isScheduleInsertable(
-                any(WorkScheduleSlotCommand.class), any(WorkScheduleSetting.class)
+                any(WorkScheduleSlotCommand.class), anyInt(), anyList()
         )).thenReturn(true);
-        when(scheduleRepository.saveAndFlush(any(WorkSchedule.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
 
         var response = service.process(
                 1L, new ProcessWorkChangeRequest("CS02", null), 99L, 10L
@@ -174,7 +181,7 @@ class AdminWorkChangeRequestProcessServiceTest {
         when(settingRepository.findForUpdate(10L, 2026, 6))
                 .thenReturn(Optional.of(WorkScheduleSetting.builder()
                         .maxConcurrentWorkers(4).build()));
-        when(scheduleValidator.isScheduleInsertable(any(), any())).thenReturn(false);
+        when(scheduleValidator.isScheduleInsertable(any(WorkScheduleSlotCommand.class), anyInt(), anyList())).thenReturn(false);
 
         assertThatThrownBy(() -> service.process(
                 1L, new ProcessWorkChangeRequest("CS02", null), 99L, 10L

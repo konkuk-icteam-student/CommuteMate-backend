@@ -355,6 +355,114 @@ public class ScheduleService {
         }
     }
 
+    /**
+     * 삭제 요청 슬롯을 처리합니다.
+     * 일치하는 일정이 있으면 취소 처리하고, 없으면 실패 목록에 추가합니다.
+     */
+    private void deleteSlot(
+            Long userId,
+            WorkScheduleSlotCommand slot,
+            List<WorkScheduleChangeResponseDetail.Slot> success,
+            List<WorkScheduleChangeResponseDetail.Slot> failure,
+            List<ScheduleChange> changes
+    ) {
+        Optional<WorkSchedule> scheduleOptional =
+                workSchedulesRepository.findByUser_UserIdAndDateAndStartTimeAndEndTime(
+                        userId,
+                        slot.date(),
+                        slot.start(),
+                        slot.end()
+                );
+
+        if (scheduleOptional.isEmpty()) {
+            failure.add(toResponseSlot(slot));
+            return;
+        }
+
+        WorkSchedule schedule = scheduleOptional.get();
+
+        if (schedule.getStatusCode().equals(CodeType.WS04)) {
+            failure.add(toResponseSlot(slot));
+            return;
+        }
+
+        schedule.cancel(String.valueOf(userId));
+
+        success.add(toResponseSlot(slot));
+        changes.add(new ScheduleChange(
+                false,
+                slot.startDateTime(),
+                slot.endDateTime()
+        ));
+    }
+
+    /**
+     * 추가 요청 슬롯을 처리합니다.
+     * 동일한 일정이 이미 있거나 동시 근무 제한을 초과하면 실패 목록에 추가합니다.
+     */
+    private void addSlot(
+            User user,
+            WorkScheduleSlotCommand slot,
+            List<WorkScheduleChangeResponseDetail.Slot> success,
+            List<WorkScheduleChangeResponseDetail.Slot> failure,
+            List<ScheduleChange> changes
+    ) {
+        boolean exists =
+                workSchedulesRepository.existsByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeNot(
+                        user.getUserId(),
+                        slot.date(),
+                        slot.start(),
+                        slot.end(),
+                        CodeType.WS04
+                );
+
+        if (exists) {
+            failure.add(toResponseSlot(slot));
+            return;
+        }
+
+        WorkScheduleSetting setting = workScheduleSettingService.getRequiredSetting(
+                user.getOrganizationId(),
+                slot.date().getYear(),
+                slot.date().getMonthValue()
+        );
+
+        if (!setting.isApplyPeriod(LocalDateTime.now())) {
+            throw CustomException.of(ScheduleErrorCode.APPLY_PERIOD_NOT_ACTIVE);
+        }
+
+        if (!scheduleValidator.isScheduleInsertable(slot, setting)) {
+            failure.add(toResponseSlot(slot));
+            return;
+        }
+
+        WorkSchedule workSchedule = WorkSchedule.builder()
+                .user(user)
+                .setting(setting)
+                .workplace(resolveWorkplace(user))
+                .date(slot.date())
+                .startTime(slot.start())
+                .endTime(slot.end())
+                .statusCode(CodeType.WS02)
+                .createdBy(String.valueOf(user.getUserId()))
+                .updatedBy(String.valueOf(user.getUserId()))
+                .build();
+
+        workSchedulesRepository.save(workSchedule);
+
+        success.add(toResponseSlot(slot));
+
+        changes.add(new ScheduleChange(
+                true,
+                slot.startDateTime(),
+                slot.endDateTime()
+        ));
+    }
+
+    /**
+     * User 기준으로 근무지를 조회합니다.
+     * User 엔티티 구조에 맞게 이 부분만 수정하면 됩니다.
+     */
     private Workplace resolveWorkplace(User user) {
         return workplaceRepository.findFirstByOrganizationId(user.getOrganizationId())
                 .orElseThrow(() -> CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE));
@@ -611,19 +719,32 @@ public class ScheduleService {
                 .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(userId, monthStart, monthEnd, ACTIVE_STATUSES)
                 .stream().mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes()).sum();
 
-        int weekLimitHours = settingOpt
+        int minWorkUnitMinutes = settingOpt
+                .map(s -> s.getMinWorkUnitMinutes() != null ? s.getMinWorkUnitMinutes() : 30).orElse(30);
+        int weekMinHours = settingOpt
+                .map(s -> s.getWeeklyMinMinutes() != null ? s.getWeeklyMinMinutes() / 60 : 0).orElse(0);
+        int weekMaxHours = settingOpt
                 .map(s -> s.getWeeklyMaxMinutes() != null ? s.getWeeklyMaxMinutes() / 60 : 0).orElse(0);
-        int monthLimitHours = settingOpt.map(s -> s.getMonthlyRequiredMinutes() / 60).orElse(0);
+        int monthMinHours = settingOpt
+                .map(s -> s.getMonthlyMinMinutes() != null ? s.getMonthlyMinMinutes() / 60 : 0).orElse(0);
+        int monthMaxHours = settingOpt.map(s -> {
+            if (s.getMonthlyMaxMinutes() != null) return s.getMonthlyMaxMinutes() / 60;
+            if (s.getMonthlyRequiredMinutes() != null) return s.getMonthlyRequiredMinutes() / 60;
+            return 0;
+        }).orElse(0);
         int weekNumber = WorkWeekUtils.weekOfMonth(startDate);
 
         return WorkScheduleSummaryResponse.builder()
                 .startDate(startDate).endDate(endDate)
+                .minWorkUnitMinutes(minWorkUnitMinutes)
                 .week(WorkScheduleSummaryResponse.PeriodSummary.builder()
                         .label(weekNumber + "주차")
-                        .usedHours((int) (weekUsedMinutes / 60)).limitHours(weekLimitHours).build())
+                        .usedHours((int) (weekUsedMinutes / 60))
+                        .minHours(weekMinHours).maxHours(weekMaxHours).build())
                 .month(WorkScheduleSummaryResponse.PeriodSummary.builder()
                         .label(startDate.getMonthValue() + "월 전체")
-                        .usedHours((int) (monthUsedMinutes / 60)).limitHours(monthLimitHours).build())
+                        .usedHours((int) (monthUsedMinutes / 60))
+                        .minHours(monthMinHours).maxHours(monthMaxHours).build())
                 .build();
     }
 
@@ -702,8 +823,11 @@ public class ScheduleService {
         Set<SlotKey> unavailableSlots = new HashSet<>();
         if (setting != null) {
             for (WorkUnavailableTime u : workUnavailableTimeRepository.findBySettingAndDateBetween(
-                    setting, queryStart, queryEnd))
-                unavailableSlots.addAll(expandToSlots(u.getDate(), u.getStartTime(), u.getEndTime()));
+                    setting, queryStart, queryEnd)) {
+                LocalTime start = isAllDayUnavailable(u) ? WORK_START_TIME : u.getStartTime();
+                LocalTime end   = isAllDayUnavailable(u) ? WORK_END_TIME   : u.getEndTime();
+                unavailableSlots.addAll(expandToSlots(u.getDate(), start, end));
+            }
         }
 
         long usedMinutes = workSchedulesRepository
@@ -753,6 +877,10 @@ public class ScheduleService {
             current = next;
         }
         return slots;
+    }
+
+    private boolean isAllDayUnavailable(WorkUnavailableTime u) {
+        return LocalTime.MIN.equals(u.getStartTime()) && LocalTime.MIN.equals(u.getEndTime());
     }
 
     private record SlotViewContext(
