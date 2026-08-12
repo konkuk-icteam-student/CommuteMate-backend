@@ -16,7 +16,7 @@ import java.util.Optional;
 public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Long> {
 
     Optional<WorkSchedule> findByScheduleIdAndUser_OrganizationIdAndStatusCodeIn(
-            String scheduleId,
+            Long scheduleId,
             Long organizationId,
             List<CodeType> statusCodes
     );

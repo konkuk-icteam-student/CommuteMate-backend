@@ -12,7 +12,7 @@ import java.time.LocalTime;
 @Getter
 public class AdminWorkAssignmentResponse extends ResponseDetail {
 
-    private final String scheduleId;
+    private final Long scheduleId;
     private final String userId;
     private final String userName;
     private final LocalDate date;
@@ -24,7 +24,7 @@ public class AdminWorkAssignmentResponse extends ResponseDetail {
     private final int maxConcurrentWorkers;
 
     public AdminWorkAssignmentResponse(
-            String scheduleId,
+            Long scheduleId,
             String userId,
             String userName,
             LocalDate date,

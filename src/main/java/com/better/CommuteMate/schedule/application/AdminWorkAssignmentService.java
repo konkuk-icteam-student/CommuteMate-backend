@@ -50,7 +50,7 @@ public class AdminWorkAssignmentService {
         User user = findUser(request.userId(), organizationId);
 
         WorkScheduleSetting setting = settingRepository.findForUpdate(
-                        String.valueOf(organizationId),
+                        organizationId,
                         parsed.date().getYear(),
                         parsed.date().getMonthValue()
                 )
@@ -58,7 +58,7 @@ public class AdminWorkAssignmentService {
                         ScheduleErrorCode.ADMIN_SCHEDULE_SETTING_NOT_FOUND
                 ));
         Workplace workplace = workplaceRepository
-                .findFirstByOrganizationId(String.valueOf(organizationId))
+                .findFirstByOrganizationId(organizationId)
                 .orElseThrow(() -> CustomException.of(
                         ScheduleErrorCode.ADMIN_WORK_ASSIGNMENT_WORKPLACE_NOT_FOUND
                 ));

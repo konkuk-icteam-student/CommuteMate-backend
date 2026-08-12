@@ -58,7 +58,7 @@ class AdminWorkAssignmentServiceTest {
                 .name("김송은")
                 .build();
         WorkScheduleSetting setting = WorkScheduleSetting.builder()
-                .organizationId("10")
+                .organizationId(10L)
                 .year(2026)
                 .month(9)
                 .maxConcurrentWorkers(4)
@@ -67,9 +67,9 @@ class AdminWorkAssignmentServiceTest {
 
         when(userRepository.findByUserIdAndOrganizationId(1L, 10L))
                 .thenReturn(Optional.of(user));
-        when(settingRepository.findForUpdate("10", 2026, 9))
+        when(settingRepository.findForUpdate(10L, 2026, 9))
                 .thenReturn(Optional.of(setting));
-        when(workplaceRepository.findFirstByOrganizationId("10"))
+        when(workplaceRepository.findFirstByOrganizationId(10L))
                 .thenReturn(Optional.of(workplace));
         when(scheduleRepository
                 .existsByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeIn(
@@ -80,7 +80,7 @@ class AdminWorkAssignmentServiceTest {
                 .thenAnswer(invocation -> {
                     WorkSchedule schedule = invocation.getArgument(0);
                     return WorkSchedule.builder()
-                            .scheduleId("ssid")
+                            .scheduleId(100L)
                             .user(schedule.getUser())
                             .setting(schedule.getSetting())
                             .workplace(schedule.getWorkplace())
@@ -96,7 +96,7 @@ class AdminWorkAssignmentServiceTest {
 
         var response = service.assign(request("09:00", "09:30"), 10L, 99L);
 
-        assertThat(response.getScheduleId()).isEqualTo("ssid");
+        assertThat(response.getScheduleId()).isEqualTo(100L);
         assertThat(response.getUserName()).isEqualTo("김송은");
         assertThat(response.getCurrentCount()).isEqualTo(5);
         assertThat(response.getMaxConcurrentWorkers()).isEqualTo(4);
@@ -135,9 +135,9 @@ class AdminWorkAssignmentServiceTest {
 
         when(userRepository.findByUserIdAndOrganizationId(1L, 10L))
                 .thenReturn(Optional.of(user));
-        when(settingRepository.findForUpdate("10", 2026, 9))
+        when(settingRepository.findForUpdate(10L, 2026, 9))
                 .thenReturn(Optional.of(setting));
-        when(workplaceRepository.findFirstByOrganizationId("10"))
+        when(workplaceRepository.findFirstByOrganizationId(10L))
                 .thenReturn(Optional.of(Workplace.builder().build()));
         when(scheduleRepository
                 .existsByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeIn(
@@ -160,9 +160,9 @@ class AdminWorkAssignmentServiceTest {
 
         when(userRepository.findByUserIdAndOrganizationId(1L, 10L))
                 .thenReturn(Optional.of(user));
-        when(settingRepository.findForUpdate("10", 2026, 9))
+        when(settingRepository.findForUpdate(10L, 2026, 9))
                 .thenReturn(Optional.of(setting));
-        when(workplaceRepository.findFirstByOrganizationId("10"))
+        when(workplaceRepository.findFirstByOrganizationId(10L))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.assign(request("09:00", "09:30"), 10L, 99L))
@@ -182,14 +182,14 @@ class AdminWorkAssignmentServiceTest {
                 .name("김송은")
                 .build();
         WorkScheduleSetting setting = WorkScheduleSetting.builder()
-                .organizationId("10")
+                .organizationId(10L)
                 .year(2026)
                 .month(9)
                 .maxConcurrentWorkers(4)
                 .build();
         Workplace workplace = Workplace.builder().build();
         WorkSchedule cancelled = WorkSchedule.builder()
-                .scheduleId("cancelled-id")
+                .scheduleId(101L)
                 .user(user)
                 .setting(setting)
                 .workplace(workplace)
@@ -201,9 +201,9 @@ class AdminWorkAssignmentServiceTest {
 
         when(userRepository.findByUserIdAndOrganizationId(1L, 10L))
                 .thenReturn(Optional.of(user));
-        when(settingRepository.findForUpdate("10", 2026, 9))
+        when(settingRepository.findForUpdate(10L, 2026, 9))
                 .thenReturn(Optional.of(setting));
-        when(workplaceRepository.findFirstByOrganizationId("10"))
+        when(workplaceRepository.findFirstByOrganizationId(10L))
                 .thenReturn(Optional.of(workplace));
         when(scheduleRepository
                 .existsByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeIn(
@@ -222,7 +222,7 @@ class AdminWorkAssignmentServiceTest {
 
         var response = service.assign(request("09:00", "09:30"), 10L, 99L);
 
-        assertThat(response.getScheduleId()).isEqualTo("cancelled-id");
+        assertThat(response.getScheduleId()).isEqualTo(101L);
         assertThat(cancelled.getStatusCode()).isEqualTo(CodeType.WS02);
         assertThat(cancelled.getUpdatedBy()).isEqualTo("99");
         verify(scheduleRepository).saveAndFlush(cancelled);

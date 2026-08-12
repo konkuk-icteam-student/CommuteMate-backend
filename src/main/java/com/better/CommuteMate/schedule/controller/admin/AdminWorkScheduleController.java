@@ -272,7 +272,7 @@ public class AdminWorkScheduleController {
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> deleteSchedule(
             @Parameter(description = "삭제할 스케줄 ID", example = "e5f6a7b8-1f2c-4d3e-9a5b-6c7d8e9f0123", required = true)
-            @PathVariable String scheduleId,
+            @PathVariable Long scheduleId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         AdminWorkScheduleDeleteResponse details = deletionService.delete(

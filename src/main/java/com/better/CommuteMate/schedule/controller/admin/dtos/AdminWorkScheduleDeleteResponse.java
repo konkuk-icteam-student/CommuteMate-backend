@@ -12,7 +12,7 @@ import java.time.LocalTime;
 @Getter
 public class AdminWorkScheduleDeleteResponse extends ResponseDetail {
 
-    private final String scheduleId;
+    private final Long scheduleId;
     private final LocalDate date;
     @JsonFormat(pattern = "HH:mm")
     private final LocalTime startTime;
@@ -22,7 +22,7 @@ public class AdminWorkScheduleDeleteResponse extends ResponseDetail {
     private final int maxConcurrentWorkers;
 
     public AdminWorkScheduleDeleteResponse(
-            String scheduleId,
+            Long scheduleId,
             LocalDate date,
             LocalTime startTime,
             LocalTime endTime,

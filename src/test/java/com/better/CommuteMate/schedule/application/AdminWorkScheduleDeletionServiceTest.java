@@ -48,11 +48,11 @@ class AdminWorkScheduleDeletionServiceTest {
         WorkSchedule schedule = schedule(setting);
 
         when(scheduleRepository.findByScheduleIdAndUser_OrganizationIdAndStatusCodeIn(
-                "schedule-id", 10L, List.of(CodeType.WS01, CodeType.WS02)
+                100L, 10L, List.of(CodeType.WS01, CodeType.WS02)
         )).thenReturn(Optional.of(schedule));
-        when(settingRepository.findForUpdate("10", 2026, 9))
+        when(settingRepository.findForUpdate(10L, 2026, 9))
                 .thenReturn(Optional.of(setting));
-        when(attendanceRepository.existsBySchedule_ScheduleId("schedule-id"))
+        when(attendanceRepository.existsBySchedule_ScheduleId(100L))
                 .thenReturn(false);
         when(scheduleRepository.countBySettingAndDateAndStartTimeAndEndTimeAndStatusCode(
                 setting,
@@ -62,11 +62,11 @@ class AdminWorkScheduleDeletionServiceTest {
                 CodeType.WS02
         )).thenReturn(2L);
 
-        var response = service.delete("schedule-id", 10L, 99L);
+        var response = service.delete(100L, 10L, 99L);
 
         assertThat(schedule.getStatusCode()).isEqualTo(CodeType.WS04);
         assertThat(schedule.getUpdatedBy()).isEqualTo("99");
-        assertThat(response.getScheduleId()).isEqualTo("schedule-id");
+        assertThat(response.getScheduleId()).isEqualTo(100L);
         assertThat(response.getCurrentCount()).isEqualTo(2);
         assertThat(response.getMaxConcurrentWorkers()).isEqualTo(4);
         verify(scheduleRepository).flush();
@@ -76,14 +76,14 @@ class AdminWorkScheduleDeletionServiceTest {
     @DisplayName("관리자 근로 시간표 삭제 - 다른 조직, 취소 또는 없는 스케줄은 찾을 수 없음 처리한다")
     void rejectsUnknownSchedule() {
         when(scheduleRepository.findByScheduleIdAndUser_OrganizationIdAndStatusCodeIn(
-                "unknown", 10L, List.of(CodeType.WS01, CodeType.WS02)
+                999L, 10L, List.of(CodeType.WS01, CodeType.WS02)
         )).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.delete("unknown", 10L, 99L))
+        assertThatThrownBy(() -> service.delete(999L, 10L, 99L))
                 .isInstanceOf(CustomException.class)
                 .hasMessage("근로 시간표를 찾을 수 없습니다.");
 
-        verify(attendanceRepository, never()).existsBySchedule_ScheduleId("unknown");
+        verify(attendanceRepository, never()).existsBySchedule_ScheduleId(999L);
     }
 
     @Test
@@ -93,14 +93,14 @@ class AdminWorkScheduleDeletionServiceTest {
         WorkSchedule schedule = schedule(setting);
 
         when(scheduleRepository.findByScheduleIdAndUser_OrganizationIdAndStatusCodeIn(
-                "schedule-id", 10L, List.of(CodeType.WS01, CodeType.WS02)
+                100L, 10L, List.of(CodeType.WS01, CodeType.WS02)
         )).thenReturn(Optional.of(schedule));
-        when(settingRepository.findForUpdate("10", 2026, 9))
+        when(settingRepository.findForUpdate(10L, 2026, 9))
                 .thenReturn(Optional.of(setting));
-        when(attendanceRepository.existsBySchedule_ScheduleId("schedule-id"))
+        when(attendanceRepository.existsBySchedule_ScheduleId(100L))
                 .thenReturn(true);
 
-        assertThatThrownBy(() -> service.delete("schedule-id", 10L, 99L))
+        assertThatThrownBy(() -> service.delete(100L, 10L, 99L))
                 .isInstanceOf(CustomException.class)
                 .hasMessage("출퇴근 기록이 있어 삭제할 수 없습니다.");
 
@@ -110,7 +110,7 @@ class AdminWorkScheduleDeletionServiceTest {
 
     private WorkScheduleSetting setting() {
         return WorkScheduleSetting.builder()
-                .organizationId("10")
+                .organizationId(10L)
                 .year(2026)
                 .month(9)
                 .maxConcurrentWorkers(4)
@@ -119,7 +119,7 @@ class AdminWorkScheduleDeletionServiceTest {
 
     private WorkSchedule schedule(WorkScheduleSetting setting) {
         return WorkSchedule.builder()
-                .scheduleId("schedule-id")
+                .scheduleId(100L)
                 .setting(setting)
                 .date(LocalDate.of(2026, 9, 8))
                 .startTime(LocalTime.of(9, 0))

@@ -28,7 +28,7 @@ public class AdminWorkScheduleDeletionService {
 
     @Transactional
     public AdminWorkScheduleDeleteResponse delete(
-            String scheduleId,
+            Long scheduleId,
             Long organizationId,
             Long adminId
     ) {
@@ -41,7 +41,7 @@ public class AdminWorkScheduleDeletionService {
                 ));
 
         WorkScheduleSetting setting = settingRepository.findForUpdate(
-                        String.valueOf(organizationId),
+                        organizationId,
                         schedule.getDate().getYear(),
                         schedule.getDate().getMonthValue()
                 )
