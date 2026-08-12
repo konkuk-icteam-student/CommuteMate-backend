@@ -55,10 +55,6 @@ public class WorkChangeRequestItem {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public void linkSchedule(WorkSchedule schedule) {
-        this.schedule = schedule;
-    }
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
