@@ -82,7 +82,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/v1/admin/work-schedules").authenticated()
-                        .requestMatchers("/api/admin/handover-memos").authenticated()
+                        .requestMatchers("/api/admin/handover-memos", "/api/v1/todos/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/todos").authenticated()
                         .requestMatchers("/api/admin/**", "/api/v1/admin/**").hasRole("RL02")
                         .requestMatchers("/api/tasks/**", "/api/task-templates/**").authenticated()

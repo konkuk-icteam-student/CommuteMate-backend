@@ -11,6 +11,7 @@ import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoRequest;
 import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoResponse;
 import com.better.CommuteMate.task.controller.dtos.UpdateAdminTodoRequest;
 import com.better.CommuteMate.task.controller.dtos.UpdateAdminTodoResponse;
+import com.better.CommuteMate.task.controller.dtos.UpdateTodoCompletionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,6 +91,35 @@ public class AdminTodoService {
                 .orElseThrow(() -> CustomException.of(TodoErrorCode.TODO_NOT_FOUND));
         validateDeleteAccess(todo, organizationId);
         todoRepository.delete(todo);
+    }
+
+    @Transactional
+    public UpdateTodoCompletionResponse checkTodo(
+            Long todoId,
+            Boolean isCompleted,
+            Long userId,
+            Long organizationId,
+            String userName
+    ) {
+        Todo todo = todoRepository.findById(todoId)
+                .orElseThrow(() -> CustomException.of(TodoErrorCode.TODO_NOT_FOUND));
+
+        if (!Objects.equals(todo.getOrganizationId(), organizationId)) {
+            throw CustomException.of(TodoErrorCode.TODO_CHECK_ACCESS_DENIED);
+        }
+
+        if (Boolean.TRUE.equals(isCompleted)) {
+            todo.complete(userName, LocalTime.now(), userId);
+        } else {
+            todo.uncomplete(userId);
+        }
+        todoRepository.save(todo);
+
+        long totalCount = todoRepository.countByOrganizationIdAndDate(organizationId, todo.getDate());
+        long completedCount = todoRepository.countByOrganizationIdAndDateAndIsCompleted(
+                organizationId, todo.getDate(), true);
+
+        return UpdateTodoCompletionResponse.of(todo, (int) completedCount, (int) totalCount);
     }
 
     public AdminTodosResponse getTodos(Long organizationId, String dateValue) {

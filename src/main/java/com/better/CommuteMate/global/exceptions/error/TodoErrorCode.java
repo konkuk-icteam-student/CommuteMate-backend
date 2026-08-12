@@ -23,7 +23,11 @@ public enum TodoErrorCode implements CustomErrorCode {
     TODO_NOT_FOUND(
             "업무사항을 찾을 수 없습니다.",
             "[Error] : admin todo not found",
-            HttpStatus.NOT_FOUND);
+            HttpStatus.NOT_FOUND),
+    TODO_CHECK_ACCESS_DENIED(
+            "업무사항을 체크할 권한이 없습니다.",
+            "[Error] : todo check access denied",
+            HttpStatus.FORBIDDEN);
 
     private final String message;
     private final String logMessage;

@@ -7,6 +7,7 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoRequest;
 import com.better.CommuteMate.task.controller.dtos.UpdateAdminTodoRequest;
+import com.better.CommuteMate.task.controller.dtos.UpdateTodoCompletionResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -203,6 +204,75 @@ class AdminTodoServiceTest {
         assertThatThrownBy(() -> service.deleteTodo(999L, 7L, 10L))
                 .isInstanceOf(CustomException.class)
                 .hasMessage("업무사항을 찾을 수 없습니다.");
+    }
+
+    @Test
+    void completesTodo_setsCompletedByNameAndTime() {
+        Todo todo = todo(1L, "커피머신 청소", LocalTime.of(9, 0), false, 10L, 7L);
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(todo));
+        when(todoRepository.save(todo)).thenReturn(todo);
+        when(todoRepository.countByOrganizationIdAndDate(10L, todo.getDate())).thenReturn(4L);
+        when(todoRepository.countByOrganizationIdAndDateAndIsCompleted(10L, todo.getDate(), true)).thenReturn(3L);
+
+        UpdateTodoCompletionResponse response = service.checkTodo(1L, true, 7L, 10L, "홍길동");
+
+        assertThat(response.todo.status()).isEqualTo("COMPLETED");
+        assertThat(response.todo.completedByName()).isEqualTo("홍길동");
+        assertThat(response.todo.completedTime()).isNotNull();
+        assertThat(response.summary.completedCount()).isEqualTo(3);
+        assertThat(response.summary.totalCount()).isEqualTo(4);
+        assertThat(todo.getIsCompleted()).isTrue();
+    }
+
+    @Test
+    void uncompletesTodo_clearsNameAndTime() {
+        Todo todo = todo(1L, "커피머신 청소", LocalTime.of(9, 0), true, 10L, 7L);
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(todo));
+        when(todoRepository.save(todo)).thenReturn(todo);
+        when(todoRepository.countByOrganizationIdAndDate(10L, todo.getDate())).thenReturn(4L);
+        when(todoRepository.countByOrganizationIdAndDateAndIsCompleted(10L, todo.getDate(), true)).thenReturn(2L);
+
+        UpdateTodoCompletionResponse response = service.checkTodo(1L, false, 7L, 10L, "홍길동");
+
+        assertThat(response.todo.status()).isEqualTo("PENDING");
+        assertThat(response.todo.completedByName()).isNull();
+        assertThat(response.todo.completedTime()).isNull();
+        assertThat(todo.getIsCompleted()).isFalse();
+        assertThat(response.summary.completedCount()).isEqualTo(2);
+    }
+
+    @Test
+    void checkTodo_notFound_throws404() {
+        when(todoRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.checkTodo(999L, true, 7L, 10L, "홍길동"))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("업무사항을 찾을 수 없습니다.");
+    }
+
+    @Test
+    void checkTodo_differentOrganization_throws403() {
+        Todo todo = todo(1L, "커피머신 청소", LocalTime.of(9, 0), false, 20L, 8L);
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(todo));
+
+        assertThatThrownBy(() -> service.checkTodo(1L, true, 7L, 10L, "홍길동"))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("업무사항을 체크할 권한이 없습니다.");
+    }
+
+    @Test
+    void checkTodo_summaryReflectsOrganizationAndDate() {
+        Todo todo = todo(2L, "회의실 청소", LocalTime.of(14, 0), false, 10L, 7L);
+        when(todoRepository.findById(2L)).thenReturn(Optional.of(todo));
+        when(todoRepository.save(todo)).thenReturn(todo);
+        when(todoRepository.countByOrganizationIdAndDate(10L, todo.getDate())).thenReturn(5L);
+        when(todoRepository.countByOrganizationIdAndDateAndIsCompleted(10L, todo.getDate(), true)).thenReturn(1L);
+
+        UpdateTodoCompletionResponse response = service.checkTodo(2L, true, 7L, 10L, "김철수");
+
+        assertThat(response.date).isEqualTo(todo.getDate());
+        assertThat(response.summary.totalCount()).isEqualTo(5);
+        assertThat(response.summary.completedCount()).isEqualTo(1);
     }
 
     private Todo todo(Long id, String description, LocalTime time, boolean completed,

@@ -23,4 +23,8 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
             @Param("organizationId") Long organizationId,
             @Param("date") LocalDate date
     );
+
+    long countByOrganizationIdAndDate(Long organizationId, LocalDate date);
+
+    long countByOrganizationIdAndDateAndIsCompleted(Long organizationId, LocalDate date, Boolean isCompleted);
 }
