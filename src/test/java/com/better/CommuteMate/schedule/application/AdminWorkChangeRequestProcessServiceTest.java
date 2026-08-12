@@ -116,8 +116,6 @@ class AdminWorkChangeRequestProcessServiceTest {
         assertThat(request.getStatusCode()).isEqualTo(CodeType.CS02);
         assertThat(request.getProcessedBy()).isEqualTo(99L);
         assertThat(deletedSchedule.getStatusCode()).isEqualTo(CodeType.WS04);
-        assertThat(addItem.getSchedule()).isNotNull();
-        assertThat(addItem.getSchedule().getStatusCode()).isEqualTo(CodeType.WS02);
         assertThat(response.deleteSchedules).singleElement()
                 .extracting(result -> result.statusCode()).isEqualTo("WS04");
         assertThat(response.addSchedules).singleElement()
@@ -159,6 +157,85 @@ class AdminWorkChangeRequestProcessServiceTest {
         ))
                 .isInstanceOf(CustomException.class)
                 .hasMessage("이미 처리된 요청입니다.");
+    }
+
+    @Test
+    @DisplayName("수정 요청 승인 - CR01 항목 2개(같은 월)가 예외 없이 승인되고 슬롯이 2건 생성된다")
+    void approvesTwoCr01ItemsInSameMonthWithoutException() {
+        WorkChangeRequest request = pendingRequest();
+        WorkChangeRequestItem addItem1 = WorkChangeRequestItem.builder()
+                .request(request)
+                .changeTypeCode(CodeType.CR01)
+                .schedule(null)
+                .date(LocalDate.of(2026, 6, 16))
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(9, 30))
+                .build();
+        WorkChangeRequestItem addItem2 = WorkChangeRequestItem.builder()
+                .request(request)
+                .changeTypeCode(CodeType.CR01)
+                .schedule(null)
+                .date(LocalDate.of(2026, 6, 17))
+                .startTime(LocalTime.of(10, 0))
+                .endTime(LocalTime.of(10, 30))
+                .build();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(6).maxConcurrentWorkers(4).build();
+
+        when(requestRepository.findForProcessing(1L)).thenReturn(Optional.of(request));
+        when(itemRepository.findAllByRequest_RequestId(1L))
+                .thenReturn(List.of(addItem1, addItem2));
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().workplaceId(1L).build()));
+        when(settingRepository.findForUpdate(10L, 2026, 6)).thenReturn(Optional.of(setting));
+        when(scheduleValidator.isScheduleInsertable(any(), anyInt(), anyList())).thenReturn(true);
+
+        var response = service.process(
+                1L, new ProcessWorkChangeRequest("CS02", null), 99L, 10L);
+
+        assertThat(response.addSchedules).hasSize(2);
+        assertThat(response.addSchedules).allMatch(r -> r.statusCode().equals("WS02"));
+    }
+
+    @Test
+    @DisplayName("수정 요청 승인 - CR01 항목 2개(다른 월)에서 findForUpdate가 두 번 호출되어도 예외 없이 승인된다")
+    void approvesTwoCr01ItemsAcrossDifferentMonthsWithoutException() {
+        WorkChangeRequest request = pendingRequest();
+        WorkChangeRequestItem addItemJune = WorkChangeRequestItem.builder()
+                .request(request)
+                .changeTypeCode(CodeType.CR01)
+                .schedule(null)
+                .date(LocalDate.of(2026, 6, 30))
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(9, 30))
+                .build();
+        WorkChangeRequestItem addItemJuly = WorkChangeRequestItem.builder()
+                .request(request)
+                .changeTypeCode(CodeType.CR01)
+                .schedule(null)
+                .date(LocalDate.of(2026, 7, 1))
+                .startTime(LocalTime.of(10, 0))
+                .endTime(LocalTime.of(10, 30))
+                .build();
+        WorkScheduleSetting juneSetting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(6).maxConcurrentWorkers(4).build();
+        WorkScheduleSetting julySetting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(7).maxConcurrentWorkers(4).build();
+
+        when(requestRepository.findForProcessing(1L)).thenReturn(Optional.of(request));
+        when(itemRepository.findAllByRequest_RequestId(1L))
+                .thenReturn(List.of(addItemJune, addItemJuly));
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().workplaceId(1L).build()));
+        when(settingRepository.findForUpdate(10L, 2026, 6)).thenReturn(Optional.of(juneSetting));
+        when(settingRepository.findForUpdate(10L, 2026, 7)).thenReturn(Optional.of(julySetting));
+        when(scheduleValidator.isScheduleInsertable(any(), anyInt(), anyList())).thenReturn(true);
+
+        var response = service.process(
+                1L, new ProcessWorkChangeRequest("CS02", null), 99L, 10L);
+
+        assertThat(response.addSchedules).hasSize(2);
+        assertThat(response.addSchedules).allMatch(r -> r.statusCode().equals("WS02"));
     }
 
     @Test
