@@ -2,8 +2,10 @@ package com.better.CommuteMate.schedule.application;
 
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
+import com.better.CommuteMate.domain.schedule.entity.WorkUnavailableTime;
 import com.better.CommuteMate.domain.schedule.repository.WorkScheduleSettingRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
+import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequest;
 import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequestItem;
@@ -46,6 +48,7 @@ class AdminWorkChangeRequestProcessServiceTest {
     @Mock WorkplaceRepository workplaceRepository;
     @Mock ScheduleValidator scheduleValidator;
     @Mock SimpMessagingTemplate messagingTemplate;
+    @Mock WorkUnavailableTimeRepository unavailableTimeRepository;
 
     AdminWorkChangeRequestProcessService service;
 
@@ -58,7 +61,8 @@ class AdminWorkChangeRequestProcessServiceTest {
                 settingRepository,
                 workplaceRepository,
                 scheduleValidator,
-                messagingTemplate
+                messagingTemplate,
+                unavailableTimeRepository
         );
     }
 
@@ -188,6 +192,109 @@ class AdminWorkChangeRequestProcessServiceTest {
         ))
                 .isInstanceOf(CustomException.class)
                 .hasMessage("해당 시간대의 최대 근무 인원을 초과했습니다.");
+    }
+
+    // ─── unavailable 시간대 승인 차단 ─────────────────────────────────────
+
+    @Test
+    @DisplayName("승인 - 부분 불가(10:00~11:00)인 날 13:00~13:30 추가는 통과한다")
+    void process_SlotOutsideUnavailable_Passes() {
+        WorkChangeRequest request = pendingRequest();
+        WorkChangeRequestItem addItem = item(request, CodeType.CR01, null, 17, 13, 14);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(6).maxConcurrentWorkers(4).build();
+        WorkUnavailableTime unavailable = WorkUnavailableTime.builder()
+                .date(LocalDate.of(2026, 6, 17))
+                .startTime(LocalTime.of(10, 0)).endTime(LocalTime.of(11, 0)).build();
+
+        when(requestRepository.findForProcessing(1L)).thenReturn(Optional.of(request));
+        when(itemRepository.findAllByRequest_RequestId(1L)).thenReturn(List.of(addItem));
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().workplaceId(1L).build()));
+        when(settingRepository.findForUpdate(10L, 2026, 6)).thenReturn(Optional.of(setting));
+        when(unavailableTimeRepository.findBySettingAndDateBetween(
+                any(), any(), any())).thenReturn(List.of(unavailable));
+        when(scheduleValidator.isScheduleInsertable(any(), anyInt(), anyList())).thenReturn(true);
+
+        var response = service.process(
+                1L, new ProcessWorkChangeRequest("CS02", null), 99L, 10L);
+
+        assertThat(response.addSchedules).hasSize(2); // 13:00~13:30, 13:30~14:00
+    }
+
+    @Test
+    @DisplayName("승인 - 부분 불가(10:00~11:00) 날 10:00~10:30 추가는 차단된다")
+    void process_SlotInsidePartialUnavailable_ThrowsConflict() {
+        WorkChangeRequest request = pendingRequest();
+        WorkChangeRequestItem addItem = item(request, CodeType.CR01, null, 17, 10, 11);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(6).maxConcurrentWorkers(4).build();
+        WorkUnavailableTime unavailable = WorkUnavailableTime.builder()
+                .date(LocalDate.of(2026, 6, 17))
+                .startTime(LocalTime.of(10, 0)).endTime(LocalTime.of(11, 0)).build();
+
+        when(requestRepository.findForProcessing(1L)).thenReturn(Optional.of(request));
+        when(itemRepository.findAllByRequest_RequestId(1L)).thenReturn(List.of(addItem));
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().workplaceId(1L).build()));
+        when(settingRepository.findForUpdate(10L, 2026, 6)).thenReturn(Optional.of(setting));
+        when(unavailableTimeRepository.findBySettingAndDateBetween(
+                any(), any(), any())).thenReturn(List.of(unavailable));
+
+        assertThatThrownBy(() -> service.process(
+                1L, new ProcessWorkChangeRequest("CS02", null), 99L, 10L))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("근무 불가 시간대에 신청할 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("승인 - 종일 불가(MIN~MAX) 날 09:00~09:30 추가는 차단된다 (sentinel 확장 확인)")
+    void process_SlotInsideAllDayUnavailable_ThrowsConflict() {
+        WorkChangeRequest request = pendingRequest();
+        WorkChangeRequestItem addItem = item(request, CodeType.CR01, null, 17, 9, 10);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(6).maxConcurrentWorkers(4).build();
+        WorkUnavailableTime allDay = WorkUnavailableTime.builder()
+                .date(LocalDate.of(2026, 6, 17))
+                .startTime(LocalTime.MIN).endTime(LocalTime.MAX).build();
+
+        when(requestRepository.findForProcessing(1L)).thenReturn(Optional.of(request));
+        when(itemRepository.findAllByRequest_RequestId(1L)).thenReturn(List.of(addItem));
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().workplaceId(1L).build()));
+        when(settingRepository.findForUpdate(10L, 2026, 6)).thenReturn(Optional.of(setting));
+        when(unavailableTimeRepository.findBySettingAndDateBetween(
+                any(), any(), any())).thenReturn(List.of(allDay));
+
+        assertThatThrownBy(() -> service.process(
+                1L, new ProcessWorkChangeRequest("CS02", null), 99L, 10L))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("근무 불가 시간대에 신청할 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("승인 - 신청 이후 관리자가 불가 설정 추가 시 승인 시점 검증으로 차단된다 (시점 문제)")
+    void process_UnavailableAddedAfterRequest_BlockedAtApproval() {
+        WorkChangeRequest request = pendingRequest();
+        WorkChangeRequestItem addItem = item(request, CodeType.CR01, null, 17, 9, 10);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(6).maxConcurrentWorkers(4).build();
+        WorkUnavailableTime laterAdded = WorkUnavailableTime.builder()
+                .date(LocalDate.of(2026, 6, 17))
+                .startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(10, 0)).build();
+
+        when(requestRepository.findForProcessing(1L)).thenReturn(Optional.of(request));
+        when(itemRepository.findAllByRequest_RequestId(1L)).thenReturn(List.of(addItem));
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().workplaceId(1L).build()));
+        when(settingRepository.findForUpdate(10L, 2026, 6)).thenReturn(Optional.of(setting));
+        when(unavailableTimeRepository.findBySettingAndDateBetween(
+                any(), any(), any())).thenReturn(List.of(laterAdded));
+
+        assertThatThrownBy(() -> service.process(
+                1L, new ProcessWorkChangeRequest("CS02", null), 99L, 10L))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("근무 불가 시간대에 신청할 수 없습니다.");
     }
 
     private WorkChangeRequest pendingRequest() {

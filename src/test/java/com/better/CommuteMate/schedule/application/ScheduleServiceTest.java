@@ -2,6 +2,7 @@ package com.better.CommuteMate.schedule.application;
 
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
+import com.better.CommuteMate.domain.schedule.entity.WorkUnavailableTime;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
 import com.better.CommuteMate.domain.user.entity.User;
@@ -551,6 +552,193 @@ class ScheduleServiceTest {
 
         assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
                 .isInstanceOf(CustomException.class);
+    }
+
+    // ── unavailable 신청 차단 (apply) ─────────────────────────────────
+
+    @Test
+    @DisplayName("근무 신청 - 부분 불가(10:00~11:00) 시간대 신청은 failure에 담긴다")
+    void changeWorkSchedules_PartialUnavailable_SlotGoesToFailure() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        WorkScheduleSetting setting = setting();
+        WorkUnavailableTime unavailable = WorkUnavailableTime.builder()
+                .date(LocalDate.of(2026, 8, 10))
+                .startTime(LocalTime.of(10, 0)).endTime(LocalTime.of(11, 0)).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting);
+        when(workUnavailableTimeRepository.findBySettingAndDateBetween(any(), any(), any()))
+                .thenReturn(List.of(unavailable));
+
+        // 10:00~11:00 (불가 시간대 그대로 신청)
+        WorkScheduleSlotCommand badSlot = new WorkScheduleSlotCommand(
+                LocalDate.of(2026, 8, 10), LocalTime.of(10, 0), LocalTime.of(11, 0));
+        WorkScheduleChangeResultCommand result = scheduleService.changeWorkSchedules(
+                new WorkScheduleChangeCommand(1L, List.of(badSlot), List.of()));
+
+        assertThat(result.success()).isEmpty();
+        assertThat(result.failure()).hasSize(1);
+        verify(workSchedulesRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("근무 신청 - 종일 불가(MIN~MAX) 날 09:00~10:00 신청은 failure에 담긴다")
+    void changeWorkSchedules_AllDayUnavailable_SlotGoesToFailure() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        WorkScheduleSetting setting = setting();
+        WorkUnavailableTime allDay = WorkUnavailableTime.builder()
+                .date(LocalDate.of(2026, 8, 10))
+                .startTime(LocalTime.MIN).endTime(LocalTime.MAX).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting);
+        when(workUnavailableTimeRepository.findBySettingAndDateBetween(any(), any(), any()))
+                .thenReturn(List.of(allDay));
+
+        WorkScheduleChangeResultCommand result = scheduleService.changeWorkSchedules(
+                new WorkScheduleChangeCommand(1L, List.of(slot), List.of()));
+
+        assertThat(result.success()).isEmpty();
+        assertThat(result.failure()).hasSize(1);
+        verify(workSchedulesRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("근무 신청 - 불가 경계: 09:30~10:00은 통과, 10:00~10:30은 차단 (동등비교 경계)")
+    void changeWorkSchedules_BoundaryUnavailable_PassesBeforeBlocksAfter() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        WorkScheduleSetting setting = setting();
+        WorkUnavailableTime unavailable = WorkUnavailableTime.builder()
+                .date(LocalDate.of(2026, 8, 10))
+                .startTime(LocalTime.of(10, 0)).endTime(LocalTime.of(11, 0)).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting);
+        when(workUnavailableTimeRepository.findBySettingAndDateBetween(any(), any(), any()))
+                .thenReturn(List.of(unavailable));
+        when(scheduleValidator.isScheduleInsertable(any(), anyInt(), anyList())).thenReturn(true);
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().organizationId(10L).name("본사").build()));
+
+        // 09:30~10:00 → 불가 시간대 외 → 통과
+        WorkScheduleSlotCommand before = new WorkScheduleSlotCommand(
+                LocalDate.of(2026, 8, 10), LocalTime.of(9, 30), LocalTime.of(10, 0));
+        // 10:00~10:30 → 불가 시간대 경계 내 → 차단
+        WorkScheduleSlotCommand inside = new WorkScheduleSlotCommand(
+                LocalDate.of(2026, 8, 10), LocalTime.of(10, 0), LocalTime.of(10, 30));
+
+        WorkScheduleChangeResultCommand result = scheduleService.changeWorkSchedules(
+                new WorkScheduleChangeCommand(1L, List.of(before, inside), List.of()));
+
+        assertThat(result.success()).hasSize(1);
+        assertThat(result.failure()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("근무 신청 - unavailable 없으면 정상 신청 통과 (회귀)")
+    void changeWorkSchedules_NoUnavailable_Passes() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        WorkScheduleSetting setting = setting();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting);
+        when(workUnavailableTimeRepository.findBySettingAndDateBetween(any(), any(), any()))
+                .thenReturn(List.of());
+        when(scheduleValidator.isScheduleInsertable(any(), anyInt(), anyList())).thenReturn(true);
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().organizationId(10L).name("본사").build()));
+
+        WorkScheduleChangeResultCommand result = scheduleService.changeWorkSchedules(
+                new WorkScheduleChangeCommand(1L, List.of(slot), List.of()));
+
+        assertThat(result.success()).hasSize(1);
+        assertThat(result.failure()).isEmpty();
+    }
+
+    // ── unavailable 신청 차단 (edit 요청) ──────────────────────────────
+
+    @Test
+    @DisplayName("수정 신청 - 부분 불가(10:00~11:00) 시간대 add 요청은 throw된다")
+    void submitEditRequest_PartialUnavailable_ThrowsConflict() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        WorkUnavailableTime unavailable = WorkUnavailableTime.builder()
+                .date(LocalDate.of(2026, 8, 10))
+                .startTime(LocalTime.of(10, 0)).endTime(LocalTime.of(11, 0)).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8))
+                .thenReturn(Optional.of(setting()));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workUnavailableTimeRepository.findBySettingAndDateBetween(any(), any(), any()))
+                .thenReturn(List.of(unavailable));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(10, 0), LocalTime.of(11, 0))),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("근무 불가 시간대에 신청할 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 종일 불가(MIN~MAX) 날 09:00~10:00 add 요청은 throw된다")
+    void submitEditRequest_AllDayUnavailable_ThrowsConflict() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        WorkUnavailableTime allDay = WorkUnavailableTime.builder()
+                .date(LocalDate.of(2026, 8, 10))
+                .startTime(LocalTime.MIN).endTime(LocalTime.MAX).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8))
+                .thenReturn(Optional.of(setting()));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workUnavailableTimeRepository.findBySettingAndDateBetween(any(), any(), any()))
+                .thenReturn(List.of(allDay));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("근무 불가 시간대에 신청할 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("수정 신청 - setting 없으면 unavailable 검증 skip (정상 통과)")
+    void submitEditRequest_NoSetting_SkipsUnavailableCheck() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8))
+                .thenReturn(Optional.empty());
+        when(workChangeRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThat(scheduleService.submitEditRequest(1L, request)).isNotNull();
     }
 
     // ── 헬퍼 ─────────────────────────────────────────────────────────
