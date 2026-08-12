@@ -98,6 +98,7 @@ public class ScheduleService {
         Map<YearMonth, WorkScheduleSetting> allSettings =
                 loadOptionalSettings(user.getOrganizationId(), deleteSlots, addSettings);
 
+        validateApplyPeriod(addSettings);
         validateSlotUnitAlignment(addSlots, allSettings);
         validateSlotUnitAlignment(deleteSlots, allSettings);
 
@@ -150,6 +151,15 @@ public class ScheduleService {
     private void validateChangeCommand(WorkScheduleChangeCommand command) {
         if (command == null || command.isEmpty()) {
             throw CustomException.of(ScheduleErrorCode.SCHEDULE_FAILURE);
+        }
+    }
+
+    private void validateApplyPeriod(Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        LocalDateTime now = LocalDateTime.now();
+        for (WorkScheduleSetting setting : settingsByMonth.values()) {
+            if (!setting.isApplyPeriod(now)) {
+                throw CustomException.of(ScheduleErrorCode.APPLY_PERIOD_NOT_ACTIVE);
+            }
         }
     }
 
@@ -297,8 +307,6 @@ public class ScheduleService {
         List<WorkScheduleSlotCommand> unitSlots = WorkSlotUtils.splitIntoUnitSlots(
                 originalSlot.date(), originalSlot.start(), originalSlot.end(), SLOT_MINUTES);
 
-        CodeType statusCode = setting.isApplyPeriod(LocalDateTime.now()) ? CodeType.WS02 : CodeType.WS01;
-
         // 모든 단위 슬롯을 먼저 검증
         for (WorkScheduleSlotCommand unitSlot : unitSlots) {
             SlotKey key = new SlotKey(unitSlot.date(), unitSlot.start(), unitSlot.end());
@@ -336,16 +344,14 @@ public class ScheduleService {
                     .date(unitSlot.date())
                     .startTime(unitSlot.start())
                     .endTime(unitSlot.end())
-                    .statusCode(statusCode)
+                    .statusCode(CodeType.WS02)
                     .createdBy(String.valueOf(user.getUserId()))
                     .updatedBy(String.valueOf(user.getUserId()))
                     .build());
 
-            if (statusCode.equals(CodeType.WS02)) {
-                changes.add(new ScheduleChange(true,
-                        LocalDateTime.of(unitSlot.date(), unitSlot.start()),
-                        LocalDateTime.of(unitSlot.date(), unitSlot.end())));
-            }
+            changes.add(new ScheduleChange(true,
+                    LocalDateTime.of(unitSlot.date(), unitSlot.start()),
+                    LocalDateTime.of(unitSlot.date(), unitSlot.end())));
         }
         success.add(toResponseSlot(originalSlot));
     }
@@ -420,69 +426,6 @@ public class ScheduleService {
         success.add(toResponseSlot(slot));
         changes.add(new ScheduleChange(
                 false,
-                slot.startDateTime(),
-                slot.endDateTime()
-        ));
-    }
-
-    /**
-     * 추가 요청 슬롯을 처리합니다.
-     * 동일한 일정이 이미 있거나 동시 근무 제한을 초과하면 실패 목록에 추가합니다.
-     */
-    private void addSlot(
-            User user,
-            WorkScheduleSlotCommand slot,
-            List<WorkScheduleChangeResponseDetail.Slot> success,
-            List<WorkScheduleChangeResponseDetail.Slot> failure,
-            List<ScheduleChange> changes
-    ) {
-        boolean exists =
-                workSchedulesRepository.existsByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeNot(
-                        user.getUserId(),
-                        slot.date(),
-                        slot.start(),
-                        slot.end(),
-                        CodeType.WS04
-                );
-
-        if (exists) {
-            failure.add(toResponseSlot(slot));
-            return;
-        }
-
-        WorkScheduleSetting setting = workScheduleSettingService.getRequiredSetting(
-                user.getOrganizationId(),
-                slot.date().getYear(),
-                slot.date().getMonthValue()
-        );
-
-        if (!setting.isApplyPeriod(LocalDateTime.now())) {
-            throw CustomException.of(ScheduleErrorCode.APPLY_PERIOD_NOT_ACTIVE);
-        }
-
-        if (!scheduleValidator.isScheduleInsertable(slot, setting)) {
-            failure.add(toResponseSlot(slot));
-            return;
-        }
-
-        WorkSchedule workSchedule = WorkSchedule.builder()
-                .user(user)
-                .setting(setting)
-                .workplace(resolveWorkplace(user))
-                .date(slot.date())
-                .startTime(slot.start())
-                .endTime(slot.end())
-                .statusCode(CodeType.WS02)
-                .createdBy(String.valueOf(user.getUserId()))
-                .updatedBy(String.valueOf(user.getUserId()))
-                .build();
-
-        workSchedulesRepository.save(workSchedule);
-
-        success.add(toResponseSlot(slot));
-
-        changes.add(new ScheduleChange(
-                true,
                 slot.startDateTime(),
                 slot.endDateTime()
         ));
