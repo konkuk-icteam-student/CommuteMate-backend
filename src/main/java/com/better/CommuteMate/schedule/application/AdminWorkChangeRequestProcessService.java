@@ -36,6 +36,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AdminWorkChangeRequestProcessService {
 
+    private static final int SLOT_MINUTES = 30;
+
     private final WorkChangeRequestRepository requestRepository;
     private final WorkChangeRequestItemRepository itemRepository;
     private final WorkSchedulesRepository scheduleRepository;
@@ -95,8 +97,7 @@ public class AdminWorkChangeRequestProcessService {
                             ScheduleErrorCode.ADMIN_SCHEDULE_SETTING_NOT_FOUND));
 
             List<WorkScheduleSlotCommand> unitSlots = WorkSlotUtils.splitIntoUnitSlots(
-                    item.getDate(), item.getStartTime(), item.getEndTime(),
-                    setting.getMinWorkUnitMinutes());
+                    item.getDate(), item.getStartTime(), item.getEndTime(), SLOT_MINUTES);
 
             for (WorkScheduleSlotCommand unitSlot : unitSlots) {
                 Optional<WorkSchedule> scheduleOpt = scheduleRepository
@@ -136,8 +137,7 @@ public class AdminWorkChangeRequestProcessService {
                             ScheduleErrorCode.ADMIN_SCHEDULE_SETTING_NOT_FOUND));
 
             List<WorkScheduleSlotCommand> unitSlots = WorkSlotUtils.splitIntoUnitSlots(
-                    item.getDate(), item.getStartTime(), item.getEndTime(),
-                    setting.getMinWorkUnitMinutes());
+                    item.getDate(), item.getStartTime(), item.getEndTime(), SLOT_MINUTES);
 
             List<WorkSchedule> dayList = daySchedulesMap.computeIfAbsent(
                     item.getDate(), d -> new ArrayList<>(scheduleRepository.findAllByDate(d)));

@@ -121,8 +121,7 @@ public class ScheduleService {
         Set<SlotKey> tentativeSlotKeys = new HashSet<>();
 
         for (WorkScheduleSlotCommand slot : deleteSlots) {
-            int unitMinutes = getUnitMinutes(allSettings, slot);
-            deleteSlotByRange(command.userId(), slot, unitMinutes,
+            deleteSlotByRange(command.userId(), slot,
                     success, failure, changes, userScheduleMap);
         }
 
@@ -185,17 +184,41 @@ public class ScheduleService {
     private void validateSlotUnitAlignment(
             List<WorkScheduleSlotCommand> slots,
             Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        Map<LocalDate, List<WorkScheduleSlotCommand>> byDate = new LinkedHashMap<>();
         for (WorkScheduleSlotCommand slot : slots) {
-            WorkScheduleSetting setting = settingsByMonth.get(YearMonth.from(slot.date()));
+            byDate.computeIfAbsent(slot.date(), k -> new ArrayList<>()).add(slot);
+        }
+        validateUnitAlignmentByDate(byDate, settingsByMonth);
+    }
+
+    /**
+     * 날짜별로 그룹화된 슬롯에 대해 두 가지 검증을 수행한다.
+     * (1) 각 슬롯의 start·end가 30분 경계에 맞는지 (SLOT_MINUTES 단위 정렬)
+     * (2) 연속 구간을 병합한 뒤 각 구간 길이가 min_work_unit_minutes 이상인지 (하한 비교)
+     * setting == null인 날짜는 검증을 스킵한다 (기존 동작 유지).
+     */
+    private void validateUnitAlignmentByDate(
+            Map<LocalDate, List<WorkScheduleSlotCommand>> byDate,
+            Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        for (Map.Entry<LocalDate, List<WorkScheduleSlotCommand>> entry : byDate.entrySet()) {
+            WorkScheduleSetting setting = settingsByMonth.get(YearMonth.from(entry.getKey()));
             if (setting == null) continue;
-            int unitMinutes = setting.getMinWorkUnitMinutes();
-            int startTotalMinutes = slot.start().getHour() * 60 + slot.start().getMinute();
-            if (startTotalMinutes % unitMinutes != 0) {
-                throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_UNIT);
+            List<WorkScheduleSlotCommand> dateSlots = entry.getValue();
+            // (1) 30분 경계 정렬 검증
+            for (WorkScheduleSlotCommand slot : dateSlots) {
+                int startMin = slot.start().getHour() * 60 + slot.start().getMinute();
+                int endMin = slot.end().getHour() * 60 + slot.end().getMinute();
+                if (startMin % SLOT_MINUTES != 0 || endMin % SLOT_MINUTES != 0) {
+                    throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_BOUNDARY);
+                }
             }
-            long durationMinutes = Duration.between(slot.start(), slot.end()).toMinutes();
-            if (durationMinutes <= 0 || durationMinutes % unitMinutes != 0) {
-                throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_UNIT);
+            // (2) 연속 구간 단위 최소 근무 시간 하한 검증
+            int minMinutes = setting.getMinWorkUnitMinutes() != null
+                    ? setting.getMinWorkUnitMinutes() : SLOT_MINUTES;
+            for (WorkSlotUtils.TimeRange range : WorkSlotUtils.mergeConsecutiveRanges(dateSlots)) {
+                if (Duration.between(range.start(), range.end()).toMinutes() < minMinutes) {
+                    throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_DURATION);
+                }
             }
         }
     }
@@ -211,12 +234,6 @@ public class ScheduleService {
         return map;
     }
 
-    private int getUnitMinutes(Map<YearMonth, WorkScheduleSetting> settings,
-                               WorkScheduleSlotCommand slot) {
-        WorkScheduleSetting setting = settings.get(YearMonth.from(slot.date()));
-        return setting != null ? setting.getMinWorkUnitMinutes() : SLOT_MINUTES;
-    }
-
     /**
      * 원본 범위를 단위 슬롯으로 분할해 모두 찾아 취소한다.
      * 하나라도 존재하지 않거나 이미 취소 상태면 전체 범위를 실패로 처리한다.
@@ -224,14 +241,13 @@ public class ScheduleService {
     private void deleteSlotByRange(
             Long userId,
             WorkScheduleSlotCommand originalSlot,
-            int unitMinutes,
             List<WorkScheduleChangeResponseDetail.Slot> success,
             List<WorkScheduleChangeResponseDetail.Slot> failure,
             List<ScheduleChange> changes,
             Map<SlotKey, WorkSchedule> userScheduleMap) {
 
         List<WorkScheduleSlotCommand> unitSlots = WorkSlotUtils.splitIntoUnitSlots(
-                originalSlot.date(), originalSlot.start(), originalSlot.end(), unitMinutes);
+                originalSlot.date(), originalSlot.start(), originalSlot.end(), SLOT_MINUTES);
 
         List<WorkSchedule> toCancel = new ArrayList<>();
         for (WorkScheduleSlotCommand unitSlot : unitSlots) {
@@ -269,9 +285,8 @@ public class ScheduleService {
             Map<SlotKey, WorkSchedule> userScheduleMap,
             Set<SlotKey> tentativeSlotKeys) {
 
-        int unitMinutes = setting.getMinWorkUnitMinutes();
         List<WorkScheduleSlotCommand> unitSlots = WorkSlotUtils.splitIntoUnitSlots(
-                originalSlot.date(), originalSlot.start(), originalSlot.end(), unitMinutes);
+                originalSlot.date(), originalSlot.start(), originalSlot.end(), SLOT_MINUTES);
 
         CodeType statusCode = setting.isApplyPeriod(LocalDateTime.now()) ? CodeType.WS02 : CodeType.WS01;
 
@@ -596,10 +611,8 @@ public class ScheduleService {
         workChangeRequestRepository.save(changeRequest);
 
         for (WorkScheduleEditRequest.Slot slot : deleteSlots) {
-            WorkScheduleSetting setting = settingsForEdit.get(YearMonth.from(slot.date()));
-            int unitMinutes = setting != null ? setting.getMinWorkUnitMinutes() : SLOT_MINUTES;
             for (WorkScheduleSlotCommand unitSlot : WorkSlotUtils.splitIntoUnitSlots(
-                    slot.date(), slot.start(), slot.end(), unitMinutes)) {
+                    slot.date(), slot.start(), slot.end(), SLOT_MINUTES)) {
                 workSchedulesRepository
                         .findByUser_UserIdAndDateAndStartTimeAndEndTime(
                                 userId, unitSlot.date(), unitSlot.start(), unitSlot.end())
@@ -630,19 +643,12 @@ public class ScheduleService {
     private void validateEditSlotUnitAlignment(
             List<WorkScheduleEditRequest.Slot> slots,
             Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        Map<LocalDate, List<WorkScheduleSlotCommand>> byDate = new LinkedHashMap<>();
         for (WorkScheduleEditRequest.Slot slot : slots) {
-            WorkScheduleSetting setting = settingsByMonth.get(YearMonth.from(slot.date()));
-            if (setting == null) continue;
-            int unitMinutes = setting.getMinWorkUnitMinutes();
-            int startTotalMinutes = slot.start().getHour() * 60 + slot.start().getMinute();
-            if (startTotalMinutes % unitMinutes != 0) {
-                throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_UNIT);
-            }
-            long durationMinutes = Duration.between(slot.start(), slot.end()).toMinutes();
-            if (durationMinutes <= 0 || durationMinutes % unitMinutes != 0) {
-                throw CustomException.of(ScheduleErrorCode.INVALID_SLOT_UNIT);
-            }
+            byDate.computeIfAbsent(slot.date(), k -> new ArrayList<>())
+                  .add(new WorkScheduleSlotCommand(slot.date(), slot.start(), slot.end()));
         }
+        validateUnitAlignmentByDate(byDate, settingsByMonth);
     }
 
     private void validateMonthlyLimitForEdit(
