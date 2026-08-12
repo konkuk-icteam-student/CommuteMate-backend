@@ -5,7 +5,7 @@ import com.better.CommuteMate.domain.todo.repository.TodoRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
-import com.better.CommuteMate.global.exceptions.error.TaskErrorCode;
+import com.better.CommuteMate.global.exceptions.error.TodoErrorCode;
 import com.better.CommuteMate.task.controller.dtos.AdminTodosResponse;
 import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoRequest;
 import com.better.CommuteMate.task.controller.dtos.CreateAdminTodoResponse;
@@ -46,7 +46,7 @@ public class AdminTodoService {
             date = LocalDate.parse(request.date());
             timeSlot = LocalTime.parse(request.timeSlot());
         } catch (DateTimeParseException e) {
-            throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
+            throw CustomException.of(TodoErrorCode.INVALID_TODO_INFORMATION);
         }
 
         Todo todo = Todo.create(
@@ -67,13 +67,13 @@ public class AdminTodoService {
             Long organizationId
     ) {
         Todo todo = todoRepository.findById(todoId)
-                .orElseThrow(() -> CustomException.of(TaskErrorCode.TODO_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(TodoErrorCode.TODO_NOT_FOUND));
         validateUpdateAccess(todo, organizationId);
 
         if (request.date() == null
                 && request.timeSlot() == null
                 && request.description() == null) {
-            throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
+            throw CustomException.of(TodoErrorCode.INVALID_TODO_INFORMATION);
         }
 
         LocalDate date = parseOptionalDate(request.date());
@@ -87,7 +87,7 @@ public class AdminTodoService {
     @Transactional
     public void deleteTodo(Long todoId, Long adminId, Long organizationId) {
         Todo todo = todoRepository.findById(todoId)
-                .orElseThrow(() -> CustomException.of(TaskErrorCode.TODO_NOT_FOUND));
+                .orElseThrow(() -> CustomException.of(TodoErrorCode.TODO_NOT_FOUND));
         validateDeleteAccess(todo, organizationId);
         todoRepository.delete(todo);
     }
@@ -111,12 +111,12 @@ public class AdminTodoService {
 
     private LocalDate parseDate(String value) {
         if (value == null || value.isBlank()) {
-            throw CustomException.of(TaskErrorCode.INVALID_TODO_DATE);
+            throw CustomException.of(TodoErrorCode.INVALID_TODO_DATE);
         }
         try {
             return LocalDate.parse(value);
         } catch (DateTimeParseException e) {
-            throw CustomException.of(TaskErrorCode.INVALID_TODO_DATE);
+            throw CustomException.of(TodoErrorCode.INVALID_TODO_DATE);
         }
     }
 
@@ -127,7 +127,7 @@ public class AdminTodoService {
         try {
             return LocalDate.parse(value);
         } catch (DateTimeParseException e) {
-            throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
+            throw CustomException.of(TodoErrorCode.INVALID_TODO_INFORMATION);
         }
     }
 
@@ -138,7 +138,7 @@ public class AdminTodoService {
         try {
             return LocalTime.parse(value);
         } catch (DateTimeParseException e) {
-            throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
+            throw CustomException.of(TodoErrorCode.INVALID_TODO_INFORMATION);
         }
     }
 
@@ -148,20 +148,20 @@ public class AdminTodoService {
         }
         String description = value.trim();
         if (description.isEmpty()) {
-            throw CustomException.of(TaskErrorCode.INVALID_TODO_INFORMATION);
+            throw CustomException.of(TodoErrorCode.INVALID_TODO_INFORMATION);
         }
         return description;
     }
 
     private void validateUpdateAccess(Todo todo, Long organizationId) {
         if (!Objects.equals(todo.getOrganizationId(), organizationId)) {
-            throw CustomException.of(TaskErrorCode.TODO_UPDATE_ACCESS_DENIED);
+            throw CustomException.of(TodoErrorCode.TODO_UPDATE_ACCESS_DENIED);
         }
     }
 
     private void validateDeleteAccess(Todo todo, Long organizationId) {
         if (!Objects.equals(todo.getOrganizationId(), organizationId)) {
-            throw CustomException.of(TaskErrorCode.TODO_DELETE_ACCESS_DENIED);
+            throw CustomException.of(TodoErrorCode.TODO_DELETE_ACCESS_DENIED);
         }
     }
 
