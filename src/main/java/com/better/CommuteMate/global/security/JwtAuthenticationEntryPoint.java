@@ -25,8 +25,8 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("isSuccess", false);
-        body.put("code", "UNAUTHORIZED");
         body.put("message", "인증이 필요합니다.");
+        body.put("details", null);
 
         response.getWriter().write(objectMapper.writeValueAsString(body));
     }
