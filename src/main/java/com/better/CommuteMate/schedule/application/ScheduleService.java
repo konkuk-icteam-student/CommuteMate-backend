@@ -2,7 +2,6 @@ package com.better.CommuteMate.schedule.application;
 
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
-import com.better.CommuteMate.domain.schedule.entity.WorkUnavailableTime;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
 import com.better.CommuteMate.domain.user.entity.User;
@@ -20,6 +19,7 @@ import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.MonthlyWorkTimeExceededException;
 import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
+import com.better.CommuteMate.schedule.application.WorkSlotUtils.SlotKey;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResultCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
@@ -853,7 +853,7 @@ public class ScheduleService {
         workChangeRequestItemRepository
                 .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
                         userId, CodeType.CS01, changeTypeCode, startDate, endDate)
-                .forEach(item -> slots.addAll(expandToSlots(item.getDate(), item.getStartTime(), item.getEndTime())));
+                .forEach(item -> slots.addAll(WorkSlotUtils.expandToSlots(item.getDate(), item.getStartTime(), item.getEndTime(), SLOT_MINUTES)));
         return slots;
     }
 
@@ -884,27 +884,22 @@ public class ScheduleService {
         Map<SlotKey, Integer> currentCountMap = new HashMap<>();
         for (WorkSchedule s : workSchedulesRepository.findAllByDateBetweenAndStatusCodeIn(
                 queryStart, queryEnd, ACTIVE_STATUSES)) {
-            for (SlotKey k : expandToSlots(s.getDate(), s.getStartTime(), s.getEndTime()))
+            for (SlotKey k : WorkSlotUtils.expandToSlots(s.getDate(), s.getStartTime(), s.getEndTime(), SLOT_MINUTES))
                 currentCountMap.merge(k, 1, Integer::sum);
         }
 
         Set<SlotKey> myScheduleSlots = new HashSet<>();
         for (WorkSchedule s : workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
                 userId, queryStart, queryEnd, ACTIVE_STATUSES))
-            myScheduleSlots.addAll(expandToSlots(s.getDate(), s.getStartTime(), s.getEndTime()));
+            myScheduleSlots.addAll(WorkSlotUtils.expandToSlots(s.getDate(), s.getStartTime(), s.getEndTime(), SLOT_MINUTES));
 
         Set<SlotKey> pendingDeleteSlots = buildItemSlots(userId, CodeType.CR02, queryStart, queryEnd);
         Set<SlotKey> pendingAddSlots = buildItemSlots(userId, CodeType.CR01, queryStart, queryEnd);
 
-        Set<SlotKey> unavailableSlots = new HashSet<>();
-        if (setting != null) {
-            for (WorkUnavailableTime u : workUnavailableTimeRepository.findBySettingAndDateBetween(
-                    setting, queryStart, queryEnd)) {
-                LocalTime start = isAllDayUnavailable(u) ? WORK_START_TIME : u.getStartTime();
-                LocalTime end   = isAllDayUnavailable(u) ? WORK_END_TIME   : u.getEndTime();
-                unavailableSlots.addAll(expandToSlots(u.getDate(), start, end));
-            }
-        }
+        Set<SlotKey> unavailableSlots = setting == null ? new HashSet<>()
+                : WorkSlotUtils.buildUnavailableSlotKeys(
+                        workUnavailableTimeRepository.findBySettingAndDateBetween(setting, queryStart, queryEnd),
+                        WORK_START_TIME, WORK_END_TIME, SLOT_MINUTES);
 
         long usedMinutes = workSchedulesRepository
                 .findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(userId, monthStart, monthEnd, ACTIVE_STATUSES)
@@ -944,21 +939,6 @@ public class ScheduleService {
         return "EMPTY";
     }
 
-    private List<SlotKey> expandToSlots(LocalDate date, LocalTime startTime, LocalTime endTime) {
-        List<SlotKey> slots = new ArrayList<>();
-        LocalTime current = startTime;
-        while (current.isBefore(endTime)) {
-            LocalTime next = current.plusMinutes(SLOT_MINUTES);
-            slots.add(new SlotKey(date, current, next));
-            current = next;
-        }
-        return slots;
-    }
-
-    private boolean isAllDayUnavailable(WorkUnavailableTime u) {
-        return LocalTime.MIN.equals(u.getStartTime()) && LocalTime.MIN.equals(u.getEndTime());
-    }
-
     private record SlotViewContext(
             Map<SlotKey, Integer> currentCountMap,
             Set<SlotKey> myScheduleSlots,
@@ -966,8 +946,6 @@ public class ScheduleService {
             Set<SlotKey> pendingAddSlots,
             Set<SlotKey> unavailableSlots,
             int usedHours) {}
-
-    private record SlotKey(LocalDate date, LocalTime startTime, LocalTime endTime) {}
 
     @Getter
     @AllArgsConstructor
