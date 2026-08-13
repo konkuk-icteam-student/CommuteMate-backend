@@ -47,9 +47,9 @@ public class AdminUserController {
                                               "message": "요청에 성공하였습니다.",
                                               "details": {
                                                 "users": [
-                                                  {"userId": "2", "userName": "박영희"},
-                                                  {"userId": "3", "userName": "박지민"},
-                                                  {"userId": "4", "userName": "박보검"}
+                                                  {"userId": "2", "userName": "박영희", "department": "컴퓨터공학과", "studentId": "202211414"},
+                                                  {"userId": "3", "userName": "박지민", "department": "경영학과", "studentId": "202312345"},
+                                                  {"userId": "4", "userName": "박보검", "department": null, "studentId": null}
                                                 ]
                                               }
                                             }
