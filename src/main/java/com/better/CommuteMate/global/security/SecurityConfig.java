@@ -83,12 +83,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/api/v1/admin/work-schedules",
-                                "/api/admin/todos"
+                                "/api/v1/admin/work-schedules"
                         ).authenticated()
                         .requestMatchers(
                                 "/api/v1/handover-memos",
                                 "/api/v1/handover-memos/**",
+                                "/api/v1/todos",
+                                "/api/v1/todos/**",
                                 "/api/tasks/**",
                                 "/api/task-templates/**"
                         ).authenticated()
