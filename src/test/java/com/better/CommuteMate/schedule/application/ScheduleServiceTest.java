@@ -741,6 +741,91 @@ class ScheduleServiceTest {
         assertThat(scheduleService.submitEditRequest(1L, request)).isNotNull();
     }
 
+    // ── 신청 기간 검증 ────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("근무 신청 - 신청 기간 종료(applyEndAt 경과) 후 신청 시 APPLY_PERIOD_NOT_ACTIVE 예외")
+    void changeWorkSchedules_AfterApplyEndAt_ThrowsApplyPeriodNotActive() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(settingExpired());
+
+        assertThatThrownBy(() -> scheduleService.changeWorkSchedules(
+                new WorkScheduleChangeCommand(1L, List.of(slot), List.of())))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("근로 신청 기간이 아닙니다.");
+    }
+
+    @Test
+    @DisplayName("근무 신청 - applyStartAt 이전에 신청 시 APPLY_PERIOD_NOT_ACTIVE 예외")
+    void changeWorkSchedules_BeforeApplyStartAt_ThrowsApplyPeriodNotActive() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(settingFuture());
+
+        assertThatThrownBy(() -> scheduleService.changeWorkSchedules(
+                new WorkScheduleChangeCommand(1L, List.of(slot), List.of())))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("근로 신청 기간이 아닙니다.");
+    }
+
+    @Test
+    @DisplayName("근무 신청 - applyEnabled=false 이면 기간 내여도 APPLY_PERIOD_NOT_ACTIVE 예외")
+    void changeWorkSchedules_ApplyDisabled_ThrowsApplyPeriodNotActive() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(settingDisabled());
+
+        assertThatThrownBy(() -> scheduleService.changeWorkSchedules(
+                new WorkScheduleChangeCommand(1L, List.of(slot), List.of())))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("근로 신청 기간이 아닙니다.");
+    }
+
+    @Test
+    @DisplayName("근무 신청 - 신청 기간 내 저장 시 상태코드가 항상 WS02이다")
+    void changeWorkSchedules_InPeriod_SavesAsWS02() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting());
+        when(scheduleValidator.isScheduleInsertable(any(WorkScheduleSlotCommand.class), anyInt(), anyList())).thenReturn(true);
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().organizationId(10L).name("본사").build()));
+
+        scheduleService.changeWorkSchedules(new WorkScheduleChangeCommand(1L, List.of(slot), List.of()));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<WorkSchedule>> captor = ArgumentCaptor.forClass(List.class);
+        verify(workSchedulesRepository).saveAll(captor.capture());
+        assertThat(captor.getValue()).allMatch(s -> s.getStatusCode() == CodeType.WS02);
+    }
+
+    @Test
+    @DisplayName("근무 신청 - 여러 월 중 한 달이 기간 밖이면 요청 전체가 APPLY_PERIOD_NOT_ACTIVE로 거부된다")
+    void changeWorkSchedules_MultiMonth_OneExpired_ThrowsApplyPeriodNotActive() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        WorkScheduleSlotCommand slotSep = new WorkScheduleSlotCommand(
+                LocalDate.of(2026, 9, 10), LocalTime.of(9, 0), LocalTime.of(11, 0));
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting());
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 9)).thenReturn(settingExpired());
+
+        assertThatThrownBy(() -> scheduleService.changeWorkSchedules(
+                new WorkScheduleChangeCommand(1L, List.of(slot, slotSep), List.of())))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("근로 신청 기간이 아닙니다.");
+
+        verify(workSchedulesRepository, never()).saveAll(anyList());
+    }
+
     // ── 헬퍼 ─────────────────────────────────────────────────────────
 
     private WorkScheduleSetting setting() {
@@ -768,6 +853,46 @@ class ScheduleServiceTest {
                 .weeklyMaxMinutes(13 * 60)
                 .applyStartAt(LocalDateTime.of(2020, 1, 1, 0, 0))
                 .applyEndAt(LocalDateTime.of(2030, 1, 1, 0, 0))
+                .build();
+    }
+
+    private WorkScheduleSetting settingExpired() {
+        return WorkScheduleSetting.builder()
+                .organizationId(10L)
+                .year(2026).month(8)
+                .maxConcurrentWorkers(3)
+                .minWorkUnitMinutes(30)
+                .monthlyRequiredMinutes(27 * 60)
+                .weeklyMaxMinutes(13 * 60)
+                .applyStartAt(LocalDateTime.of(2020, 1, 1, 0, 0))
+                .applyEndAt(LocalDateTime.of(2020, 12, 31, 23, 59))
+                .build();
+    }
+
+    private WorkScheduleSetting settingFuture() {
+        return WorkScheduleSetting.builder()
+                .organizationId(10L)
+                .year(2026).month(8)
+                .maxConcurrentWorkers(3)
+                .minWorkUnitMinutes(30)
+                .monthlyRequiredMinutes(27 * 60)
+                .weeklyMaxMinutes(13 * 60)
+                .applyStartAt(LocalDateTime.of(2030, 1, 1, 0, 0))
+                .applyEndAt(LocalDateTime.of(2030, 12, 31, 23, 59))
+                .build();
+    }
+
+    private WorkScheduleSetting settingDisabled() {
+        return WorkScheduleSetting.builder()
+                .organizationId(10L)
+                .year(2026).month(8)
+                .maxConcurrentWorkers(3)
+                .minWorkUnitMinutes(30)
+                .monthlyRequiredMinutes(27 * 60)
+                .weeklyMaxMinutes(13 * 60)
+                .applyStartAt(LocalDateTime.of(2020, 1, 1, 0, 0))
+                .applyEndAt(LocalDateTime.of(2030, 1, 1, 0, 0))
+                .applyEnabled(false)
                 .build();
     }
 
