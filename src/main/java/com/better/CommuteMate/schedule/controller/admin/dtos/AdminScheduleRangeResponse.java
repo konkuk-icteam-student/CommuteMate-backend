@@ -3,6 +3,7 @@ package com.better.CommuteMate.schedule.controller.admin.dtos;
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -59,7 +60,17 @@ public class AdminScheduleRangeResponse extends ResponseDetail {
 
     public record Worker(
             String userId,
-            String userName
+            String userName,
+            @Schema(
+                    description = """
+                            삭제 API(DELETE /api/v1/admin/work-schedules/{scheduleId})에 사용할 근무 신청 ID.
+                            같은 WorkSchedule(예: 09:00~11:00)은 30분 슬롯 단위로 분해되므로,
+                            연속된 여러 슬롯에 동일한 scheduleId가 반복 노출됩니다.
+                            이 scheduleId로 삭제 API를 1회 호출하면 해당 WorkSchedule 전체(연결된 모든 슬롯)가 취소됩니다.
+                            """,
+                    example = "101"
+            )
+            Long scheduleId
     ) {
     }
 }
