@@ -105,12 +105,12 @@ class WorkSlotUtilsTest {
     }
 
     @Test
-    @DisplayName("이전 버그 조건(MIN~MIN)은 isAllDayUnavailable=false — sentinel 오판정 회귀 방지")
-    void isAllDayUnavailable_MinToMin_ReturnsFalse() {
+    @DisplayName("종일 불가 저장값(MIN~MIN)은 isAllDayUnavailable=true 반환")
+    void isAllDayUnavailable_MinToMin_ReturnsTrue() {
         WorkUnavailableTime minToMin = WorkUnavailableTime.builder()
                 .date(DATE).startTime(LocalTime.MIN).endTime(LocalTime.MIN).build();
 
-        assertThat(WorkSlotUtils.isAllDayUnavailable(minToMin)).isFalse();
+        assertThat(WorkSlotUtils.isAllDayUnavailable(minToMin)).isTrue();
     }
 
     // ─── expandToSlots ────────────────────────────────────────────────────────
@@ -154,6 +154,20 @@ class WorkSlotUtilsTest {
         assertThat(result).contains(new SlotKey(DATE, LocalTime.of(17, 30), LocalTime.of(18, 0)));
         assertThat(result).doesNotContain(new SlotKey(DATE, LocalTime.of(8, 30), LocalTime.of(9, 0)));
         assertThat(result).doesNotContain(new SlotKey(DATE, LocalTime.of(18, 0), LocalTime.of(18, 30)));
+    }
+
+    @Test
+    @DisplayName("종일 불가(MIN~MIN)는 09:00~18:00의 30분 슬롯 전체로 확장")
+    void buildUnavailableSlotKeys_MinToMinAllDay_Returns18SlotsFrom09To18() {
+        WorkUnavailableTime allDay = WorkUnavailableTime.builder()
+                .date(DATE).startTime(LocalTime.MIN).endTime(LocalTime.MIN).build();
+
+        Set<SlotKey> result = WorkSlotUtils.buildUnavailableSlotKeys(
+                List.of(allDay), LocalTime.of(9, 0), LocalTime.of(18, 0), 30);
+
+        assertThat(result).hasSize(18);
+        assertThat(result).contains(new SlotKey(DATE, LocalTime.of(9, 0), LocalTime.of(9, 30)));
+        assertThat(result).contains(new SlotKey(DATE, LocalTime.of(17, 30), LocalTime.of(18, 0)));
     }
 
     @Test

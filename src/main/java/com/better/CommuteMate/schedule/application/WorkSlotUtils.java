@@ -28,11 +28,14 @@ public final class WorkSlotUtils {
 
     /**
      * 종일 불가 여부 판정.
-     * MonthlyScheduleSettingService.replaceUnavailableTimes가 종일 불가를
-     * startTime=LocalTime.MIN, endTime=LocalTime.MAX 로 저장하는 규칙에 맞춘다.
+     * 현재 저장 규칙인 MIN~MIN과 기존 저장값인 MIN~MAX를 모두 지원한다.
      */
     public static boolean isAllDayUnavailable(WorkUnavailableTime u) {
-        return LocalTime.MIN.equals(u.getStartTime()) && LocalTime.MAX.equals(u.getEndTime());
+        if (!LocalTime.MIN.equals(u.getStartTime())) {
+            return false;
+        }
+        return LocalTime.MIN.equals(u.getEndTime())
+                || u.getEndTime().toSecondOfDay() == LocalTime.MAX.toSecondOfDay();
     }
 
     /**

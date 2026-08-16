@@ -334,7 +334,7 @@ public class MonthlyScheduleSettingService {
                 .setting(setting)
                 .date(date)
                 .startTime(LocalTime.MIN)
-                .endTime(LocalTime.MAX)
+                .endTime(LocalTime.MIN)
                 .build()));
 
         // 시간대 제한은 특정 날짜가 아닌 월의 모든 신청 가능 날짜에 동일하게 적용합니다.
