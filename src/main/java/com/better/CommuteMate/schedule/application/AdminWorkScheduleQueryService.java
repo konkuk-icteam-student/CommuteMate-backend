@@ -158,7 +158,8 @@ public class AdminWorkScheduleQueryService {
                                 schedule.getUser().getUserId(),
                                 new AdminScheduleRangeResponse.Worker(
                                         String.valueOf(schedule.getUser().getUserId()),
-                                        schedule.getUser().getName()
+                                        schedule.getUser().getName(),
+                                        schedule.getScheduleId()
                                 )
                         )));
         return result;
