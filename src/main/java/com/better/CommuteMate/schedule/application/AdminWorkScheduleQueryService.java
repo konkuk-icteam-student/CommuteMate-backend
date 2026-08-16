@@ -80,8 +80,7 @@ public class AdminWorkScheduleQueryService {
         Set<SlotKey> unavailableSlots = WorkSlotUtils.buildUnavailableSlotKeys(
                 unavailableTimes, WORK_START_TIME, WORK_END_TIME, SLOT_MINUTES);
 
-        Set<SlotKey> visibleSlots = new HashSet<>(workersBySlot.keySet());
-        visibleSlots.addAll(unavailableSlots);
+        Set<SlotKey> visibleSlots = buildAllSlots(startDate, endDate);
 
         String keyword = userName == null ? "" : userName.trim().toLowerCase(Locale.ROOT);
         List<AdminScheduleRangeResponse.Day> days = new ArrayList<>();
@@ -114,6 +113,16 @@ public class AdminWorkScheduleQueryService {
                 yearMonth.getYear(),
                 yearMonth.getMonthValue()
         );
+    }
+
+    private Set<SlotKey> buildAllSlots(LocalDate startDate, LocalDate endDate) {
+        Set<SlotKey> slots = new HashSet<>();
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            slots.addAll(WorkSlotUtils.expandToSlots(
+                    date, WORK_START_TIME, WORK_END_TIME, SLOT_MINUTES
+            ));
+        }
+        return slots;
     }
 
     private LocalDate parseDate(String value) {

@@ -77,12 +77,17 @@ class AdminWorkScheduleQueryServiceTest {
         assertThat(response.hasPrev).isFalse();
         assertThat(response.hasNext).isFalse();
         assertThat(response.days).hasSize(1);
-        assertThat(response.days.get(0).slots()).hasSize(3);
+        assertThat(response.days.get(0).slots()).hasSize(18);
         assertThat(response.days.get(0).slots().get(0).status()).isEqualTo("AVAILABLE");
         assertThat(response.days.get(0).slots().get(0).currentCount()).isEqualTo(1);
         assertThat(response.days.get(0).slots().get(0).users().get(0).userName())
                 .isEqualTo("학생A");
         assertThat(response.days.get(0).slots().get(1).status()).isEqualTo("UNAVAILABLE");
+        assertThat(response.days.get(0).slots().get(17).start()).isEqualTo(LocalTime.of(17, 30));
+        assertThat(response.days.get(0).slots().get(17).end()).isEqualTo(LocalTime.of(18, 0));
+        assertThat(response.days.get(0).slots().get(17).status()).isEqualTo("AVAILABLE");
+        assertThat(response.days.get(0).slots().get(17).currentCount()).isZero();
+        assertThat(response.days.get(0).slots().get(17).users()).isEmpty();
     }
 
     @Test
