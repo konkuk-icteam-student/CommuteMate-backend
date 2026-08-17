@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HomeController.class)
+@Import(com.better.CommuteMate.global.security.SecurityConfig.class)
 class HomeControllerTest {
 
     @Autowired
@@ -92,5 +94,23 @@ class HomeControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.details.status").value("BEFORE_WORK"))
                 .andExpect(jsonPath("$.details.message").value("출근 전입니다."));
+    }
+
+    @Test
+    @DisplayName("관리자는 일반 사용자 홈 API에 접근할 수 없다")
+    void adminCannotAccessStudentHomeApi() throws Exception {
+        User admin = User.builder()
+                .userId(2L)
+                .email("admin@test.com")
+                .roleCode(CodeType.RL02)
+                .build();
+
+        mockMvc.perform(get("/api/home/work-time")
+                        .with(user(new CustomUserDetails(admin)))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.isSuccess").value(false))
+                .andExpect(jsonPath("$.message").value("해당 작업을 수행할 권한이 없습니다."))
+                .andExpect(jsonPath("$.details").doesNotExist());
     }
 }
