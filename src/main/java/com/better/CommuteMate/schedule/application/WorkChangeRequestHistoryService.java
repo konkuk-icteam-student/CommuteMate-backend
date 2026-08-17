@@ -56,7 +56,7 @@ public class WorkChangeRequestHistoryService {
         LocalDate endDate = targetMonth != null ? targetMonth.atEndOfMonth() : null;
 
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<WorkChangeRequest> requestPage = requestRepository.findUserRequests(
+        Page<WorkChangeRequest> requestPage = findUserRequests(
                 userId, startDate, endDate, statusFilter.code, pageable
         );
 
@@ -128,7 +128,35 @@ public class WorkChangeRequestHistoryService {
     }
 
     private long countUser(Long userId, LocalDate startDate, LocalDate endDate, CodeType statusCode) {
-        return requestRepository.countUserRequests(userId, startDate, endDate, statusCode);
+        if (startDate != null) {
+            return statusCode == null
+                    ? requestRepository.countUserRequestsByMonth(userId, startDate, endDate)
+                    : requestRepository.countUserRequestsByMonthAndStatus(
+                            userId, startDate, endDate, statusCode
+                    );
+        }
+        return statusCode == null
+                ? requestRepository.countByUser_UserId(userId)
+                : requestRepository.countByUser_UserIdAndStatusCode(userId, statusCode);
+    }
+
+    private Page<WorkChangeRequest> findUserRequests(
+            Long userId,
+            LocalDate startDate,
+            LocalDate endDate,
+            CodeType statusCode,
+            PageRequest pageable
+    ) {
+        if (startDate != null) {
+            return statusCode == null
+                    ? requestRepository.findUserRequestsByMonth(userId, startDate, endDate, pageable)
+                    : requestRepository.findUserRequestsByMonthAndStatus(
+                            userId, startDate, endDate, statusCode, pageable
+                    );
+        }
+        return statusCode == null
+                ? requestRepository.findByUser_UserId(userId, pageable)
+                : requestRepository.findByUser_UserIdAndStatusCode(userId, statusCode, pageable);
     }
 
     private WorkChangeRequestHistoryResponse.HistoryItem toHistoryItem(

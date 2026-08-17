@@ -43,7 +43,7 @@ public class ProcessWorkChangeResponse extends ResponseDetail {
     }
 
     public record ScheduleResult(
-            String scheduleId,
+            Long scheduleId,
             @JsonFormat(pattern = "yyyy-MM-dd") LocalDate date,
             @JsonFormat(pattern = "HH:mm") LocalTime start,
             @JsonFormat(pattern = "HH:mm") LocalTime end,

@@ -10,13 +10,13 @@ import java.time.LocalDateTime;
 @Getter
 public class WorkScheduleResponse extends ResponseDetail {
 
-    private final String id;
+    private final Long id;
     private final LocalDateTime start;
     private final LocalDateTime end;
     private final CodeType status;
 
     public WorkScheduleResponse(
-            String id,
+            Long id,
             LocalDateTime start,
             LocalDateTime end,
             CodeType status

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "알림", description = "사용자 알림 조회 API")
+@SecurityRequirement(name = "JWT")
 @RestController
 @RequestMapping("/api/v1/notifications")
 @RequiredArgsConstructor
@@ -50,7 +51,6 @@ public class NotificationController {
             ),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content)
     })
-    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> getNotifications(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -85,7 +85,6 @@ public class NotificationController {
             ),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content)
     })
-    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> getNewNotificationStatus(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -117,7 +116,6 @@ public class NotificationController {
             ),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content)
     })
-    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> checkNotification(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {

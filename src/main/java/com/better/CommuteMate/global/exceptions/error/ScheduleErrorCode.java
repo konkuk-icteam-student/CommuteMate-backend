@@ -3,6 +3,14 @@ package com.better.CommuteMate.global.exceptions.error;
 import org.springframework.http.HttpStatus;
 
 public enum ScheduleErrorCode implements CustomErrorCode {
+    INVALID_ADMIN_WORK_ASSIGNMENT_TIME("근로 시간은 30분 단위로만 지정할 수 있습니다.", "[Error] : invalid admin work assignment time", HttpStatus.BAD_REQUEST),
+    ADMIN_WORK_ASSIGNMENT_USER_NOT_FOUND("사용자를 찾을 수 없습니다.", "[Error] : admin work assignment user not found", HttpStatus.BAD_REQUEST),
+    ADMIN_WORK_ASSIGNMENT_DUPLICATED("이미 해당 시간에 배치된 사용자입니다.", "[Error] : duplicated admin work assignment", HttpStatus.CONFLICT),
+    ADMIN_WORK_ASSIGNMENT_WORKPLACE_NOT_FOUND("조직의 근무지를 찾을 수 없습니다.", "[Error] : admin work assignment workplace not found", HttpStatus.NOT_FOUND),
+    ADMIN_WORK_SCHEDULE_NOT_FOUND("근로 시간표를 찾을 수 없습니다.", "[Error] : admin work schedule not found", HttpStatus.NOT_FOUND),
+    ADMIN_WORK_SCHEDULE_HAS_ATTENDANCE("출퇴근 기록이 있어 삭제할 수 없습니다.", "[Error] : admin work schedule has attendance", HttpStatus.CONFLICT),
+    ADMIN_WORK_SCHEDULE_USER_NOT_FOUND("사용자를 찾을 수 없습니다.", "[Error] : admin work schedule user not found", HttpStatus.BAD_REQUEST),
+    ADMIN_WORK_SCHEDULE_INVALID_RANGE("조회 기간이 올바르지 않습니다.", "[Error] : invalid admin work schedule range", HttpStatus.BAD_REQUEST),
     INVALID_CHANGE_REQUEST_IDS("요청 ID 목록이 올바르지 않습니다.", "[Error] : invalid change request ids", HttpStatus.BAD_REQUEST),
     INVALID_CHANGE_REQUEST_PROCESS_STATUS("올바르지 않은 처리 상태입니다.", "[Error] : invalid change request process status", HttpStatus.BAD_REQUEST),
     CHANGE_REQUEST_REJECT_REASON_REQUIRED("거절 사유를 입력해야 합니다.", "[Error] : change request reject reason required", HttpStatus.BAD_REQUEST),
@@ -36,7 +44,12 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     EDIT_REQUEST_EMPTY("수정 요청 항목이 없습니다.", "[Error] : 수정 요청 항목 없음", HttpStatus.BAD_REQUEST),
     EDIT_REQUEST_REASON_REQUIRED("수정 요청 사유를 입력해야 합니다.", "[Error] : 수정 요청 사유 미입력", HttpStatus.BAD_REQUEST),
     DELETE_SCHEDULE_NOT_FOUND("삭제 요청한 스케줄을 찾을 수 없습니다.", "[Error] : 삭제 요청 스케줄 미존재", HttpStatus.NOT_FOUND),
-    CROSS_WEEK_RANGE_NOT_ALLOWED("조회 기간은 같은 주 이내여야 합니다.", "[Error] : 다른 주에 걸친 조회 범위", HttpStatus.BAD_REQUEST);
+    CROSS_WEEK_RANGE_NOT_ALLOWED("조회 기간은 같은 주 이내여야 합니다.", "[Error] : 다른 주에 걸친 조회 범위", HttpStatus.BAD_REQUEST),
+    APPLY_PERIOD_NOT_ACTIVE("근로 신청 기간이 아닙니다.", "[Error] : 근로 신청 기간 외 신청 시도", HttpStatus.BAD_REQUEST),
+    INVALID_SLOT_UNIT("근무 시간은 최소 근무 단위 기준으로 신청해야 합니다.", "[Error] : 최소 근무 단위 미준수", HttpStatus.BAD_REQUEST),
+    INVALID_SLOT_BOUNDARY("근무 시간은 30분 단위로 신청해야 합니다.", "[Error] : 30분 경계 정렬 위반", HttpStatus.BAD_REQUEST),
+    INVALID_SLOT_DURATION("근무 시간은 최소 근무 시간 이상으로 신청해야 합니다.", "[Error] : 최소 근무 시간 미충족", HttpStatus.BAD_REQUEST),
+    UNAVAILABLE_TIME_CONFLICT("근무 불가 시간대에 신청할 수 없습니다.", "[Error] : 근무 불가 시간대 신청 시도", HttpStatus.UNPROCESSABLE_ENTITY);
 
 
     private final String message;

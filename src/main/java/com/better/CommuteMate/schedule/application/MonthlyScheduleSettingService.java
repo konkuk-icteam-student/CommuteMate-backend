@@ -11,6 +11,7 @@ import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingResponse;
+import com.better.CommuteMate.schedule.controller.admin.dtos.ScheduleSettingResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,9 +37,35 @@ public class MonthlyScheduleSettingService {
     private final WorkSchedulesRepository scheduleRepository;
     private final WorkUnavailableTimeRepository unavailableTimeRepository;
 
+    @Transactional(readOnly = true)
+    public ScheduleSettingResponse get(Long organizationId, int year, int month) {
+        YearMonth targetMonth;
+        if (year < 1900 || year > 9999) {
+            throw CustomException.of(ScheduleErrorCode.ADMIN_SCHEDULE_QUERY_INVALID);
+        }
+        try {
+            targetMonth = YearMonth.of(year, month);
+        } catch (RuntimeException e) {
+            throw CustomException.of(ScheduleErrorCode.ADMIN_SCHEDULE_QUERY_INVALID);
+        }
+
+        Optional<WorkScheduleSetting> settingOptional = settingRepository
+                .findByOrganizationIdAndYearAndMonth(organizationId, year, month);
+        if (settingOptional.isEmpty()) {
+            return ScheduleSettingResponse.notConfigured(year, month);
+        }
+
+        WorkScheduleSetting setting = settingOptional.get();
+        List<WorkUnavailableTime> unavailableTimes = unavailableTimeRepository
+                .findBySettingAndDateBetween(
+                        setting, targetMonth.atDay(1), targetMonth.atEndOfMonth()
+                );
+        return ScheduleSettingResponse.configured(setting, unavailableTimes, LocalDateTime.now());
+    }
+
     @Transactional
     public SaveScheduleSettingResponse save(
-            String organizationId,
+            Long organizationId,
             int year,
             int month,
             SaveScheduleSettingRequest request,
@@ -104,7 +131,7 @@ public class MonthlyScheduleSettingService {
     }
 
     private WorkScheduleSetting newSetting(
-            String organizationId,
+            Long organizationId,
             int year,
             int month,
             SaveScheduleSettingRequest request,
@@ -307,7 +334,7 @@ public class MonthlyScheduleSettingService {
                 .setting(setting)
                 .date(date)
                 .startTime(LocalTime.MIN)
-                .endTime(LocalTime.MAX)
+                .endTime(LocalTime.MIN)
                 .build()));
 
         // 시간대 제한은 특정 날짜가 아닌 월의 모든 신청 가능 날짜에 동일하게 적용합니다.

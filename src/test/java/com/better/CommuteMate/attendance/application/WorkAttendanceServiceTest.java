@@ -82,7 +82,7 @@ class WorkAttendanceServiceTest {
         // Given
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId("1")
+                .scheduleId(1L)
                 .date(now.toLocalDate())
                 .startTime(now.plusHours(1).toLocalTime()) // 1 hour later
                 .endTime(now.plusHours(4).toLocalTime())
@@ -106,7 +106,7 @@ class WorkAttendanceServiceTest {
         // Given
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId("1")
+                .scheduleId(1L)
                 .date(now.toLocalDate())
                 .startTime(now.minusMinutes(5).toLocalTime()) // Started 5 mins ago
                 .endTime(now.plusHours(3).toLocalTime())
@@ -121,7 +121,7 @@ class WorkAttendanceServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().userId(1L).build()));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(schedule));
-        when(workAttendanceRepository.findBySchedule_ScheduleId("1")).thenReturn(List.of(existing));
+        when(workAttendanceRepository.findBySchedule_ScheduleId(1L)).thenReturn(List.of(existing));
 
         // When & Then
         assertThatThrownBy(() -> workAttendanceService.checkIn(1L, "valid"))
@@ -135,7 +135,7 @@ class WorkAttendanceServiceTest {
         // Given
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId("1")
+                .scheduleId(1L)
                 .date(now.toLocalDate())
                 .startTime(now.minusMinutes(5).toLocalTime())
                 .endTime(now.plusHours(3).toLocalTime())
@@ -146,7 +146,7 @@ class WorkAttendanceServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().userId(1L).build()));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(schedule));
-        when(workAttendanceRepository.findBySchedule_ScheduleId("1")).thenReturn(Collections.emptyList());
+        when(workAttendanceRepository.findBySchedule_ScheduleId(1L)).thenReturn(Collections.emptyList());
 
         // When
         workAttendanceService.checkIn(1L, "valid");
@@ -161,7 +161,7 @@ class WorkAttendanceServiceTest {
         // Given
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
-                .scheduleId("1")
+                .scheduleId(1L)
                 .date(now.toLocalDate())
                 .startTime(now.minusHours(3).toLocalTime())
                 .endTime(now.minusMinutes(1).toLocalTime())
@@ -173,7 +173,7 @@ class WorkAttendanceServiceTest {
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(schedule));
         // No attendance records
-        when(workAttendanceRepository.findBySchedule_ScheduleId("1")).thenReturn(Collections.emptyList());
+        when(workAttendanceRepository.findBySchedule_ScheduleId(1L)).thenReturn(Collections.emptyList());
 
         // When & Then
         assertThatThrownBy(() -> workAttendanceService.checkOut(1L, "valid"))

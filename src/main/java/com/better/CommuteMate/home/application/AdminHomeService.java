@@ -45,7 +45,7 @@ public class AdminHomeService {
         List<WorkAttendance> attendances = schedules.isEmpty()
                 ? List.of()
                 : attendanceRepository.findAllByScheduleIn(schedules);
-        Map<String, List<WorkAttendance>> attendanceBySchedule = attendances.stream()
+        Map<Long, List<WorkAttendance>> attendanceBySchedule = attendances.stream()
                 .collect(Collectors.groupingBy(
                         attendance -> attendance.getSchedule().getScheduleId()
                 ));
@@ -119,6 +119,6 @@ public class AdminHomeService {
         return attendances.stream()
                 .filter(attendance -> attendance.getCheckTypeCode() == CodeType.CT01)
                 .map(WorkAttendance::getCheckTime)
-                .anyMatch(checkIn -> checkIn.isAfter(scheduledStart));
+                .anyMatch(checkIn -> checkIn.isAfter(scheduledStart.plusMinutes(10)));
     }
 }

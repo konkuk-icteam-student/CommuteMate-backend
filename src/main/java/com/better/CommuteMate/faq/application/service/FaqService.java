@@ -11,13 +11,7 @@ import com.better.CommuteMate.domain.faq.repository.FaqRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.faq.application.dto.request.*;
-import com.better.CommuteMate.faq.application.dto.response.GetFaqDetailResponse;
-import com.better.CommuteMate.faq.application.dto.response.GetFaqListResponse;
-import com.better.CommuteMate.faq.application.dto.response.GetFaqListWrapper;
-import com.better.CommuteMate.faq.application.dto.response.PostFaqFileResponse;
-import com.better.CommuteMate.faq.application.dto.response.PostFaqImageResponse;
-import com.better.CommuteMate.faq.application.dto.response.PostFaqResponse;
-import com.better.CommuteMate.faq.application.dto.response.PutFaqUpdateResponse;
+import com.better.CommuteMate.faq.application.dto.response.*;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.CategoryErrorCode;
 import com.better.CommuteMate.global.exceptions.error.FaqErrorCode;
@@ -157,8 +151,8 @@ public class FaqService {
                 FaqStatus.PUBLISHED
         );
 
-        faq.getImages().forEach(FaqImage::detachFaq);
-        faq.getFiles().forEach(FaqFile::detachFaq);
+        faq.removeAllImages();
+        faq.removeAllFiles();
 
         List<String> imageUrls = extractImageUrls(request.content(), request.answer());
         if (!imageUrls.isEmpty()) {
@@ -290,7 +284,7 @@ public class FaqService {
 
         List<String> imageUrls = extractImageUrls(request.content(), request.answer());
 
-        faq.getImages().clear();
+        faq.removeAllImages();
 
         if (!imageUrls.isEmpty()) {
             List<FaqImage> images = faqImageRepository.findByUrlIn(imageUrls);
@@ -337,6 +331,23 @@ public class FaqService {
         return new GetFaqDetailResponse(faq, history, editedDates, relatedFaqs);
     }
 
+    @Transactional(readOnly = true)
+    public GetDraftFaqDetailResponse getDraftFaqDetail(Long faqId) {
+        Faq faq = faqRepository.findById(faqId)
+                .orElseThrow(() -> CustomException.of(FaqErrorCode.FAQ_NOT_FOUND));
+
+        if (faq.getStatus() != FaqStatus.DRAFT) {
+            throw CustomException.of(FaqErrorCode.INVALID_FAQ_STATUS);
+        }
+
+        List<Faq> relatedFaqs = faq.getRelatedFaqRelations().stream()
+                .map(FaqRelation::getRelatedFaq)
+                .filter(f -> !f.getDeletedFlag())
+                .toList();
+
+        return new GetDraftFaqDetailResponse(faq, relatedFaqs);
+    }
+
     public void deleteFaq(Long faqId) {
         Faq faq = faqRepository.findById(faqId)
                 .orElseThrow(() -> CustomException.of(FaqErrorCode.FAQ_NOT_FOUND));
@@ -345,8 +356,8 @@ public class FaqService {
             throw CustomException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
         }
 
-        faq.getImages().forEach(FaqImage::detachFaq);
-        faq.getFiles().forEach(FaqFile::detachFaq);
+        faq.removeAllImages();
+        faq.removeAllFiles();
 
         faqRelationRepository.deleteByRelatedFaqId(faqId);
 

@@ -38,6 +38,8 @@ class HomeControllerTest {
     private com.better.CommuteMate.auth.application.CustomUserDetailsService customUserDetailsService;
     @MockBean
     private com.better.CommuteMate.auth.application.TokenBlacklistService tokenBlacklistService;
+    @MockBean
+    private com.better.CommuteMate.global.security.JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Test
     @DisplayName("오늘의 근무 시간 조회 API - 성공")

@@ -170,4 +170,22 @@ public class Faq {
         this.files.add(file);
         file.assignFaq(this);
     }
+
+    public void removeImage(FaqImage image) {
+        images.remove(image);
+        image.detachFaq();
+    }
+
+    public void removeAllImages() {
+        new ArrayList<>(images).forEach(this::removeImage);
+    }
+
+    public void removeFile(FaqFile file) {
+        files.remove(file);
+        file.detachFaq();
+    }
+
+    public void removeAllFiles() {
+        new ArrayList<>(files).forEach(this::removeFile);
+    }
 }

@@ -89,6 +89,24 @@ public class Task {
         this.updatedBy = updatedBy;
     }
 
+    public void updateAdminTodo(
+            LocalDate taskDate,
+            LocalTime taskTime,
+            String title,
+            Long updatedBy
+    ) {
+        if (taskDate != null) {
+            this.taskDate = taskDate;
+        }
+        if (taskTime != null) {
+            this.taskTime = taskTime;
+        }
+        if (title != null) {
+            this.title = title;
+        }
+        this.updatedBy = updatedBy;
+    }
+
     // 완료 상태 토글
     public void toggleComplete(Long updatedBy) {
         this.isCompleted = !this.isCompleted;

@@ -80,6 +80,79 @@ class AdminWorkChangeRequestBulkServiceTest {
     }
 
     @Test
+    @DisplayName("일괄 승인 - 중간 요청이 예상 못한 RuntimeException으로 실패해도 나머지는 처리되고 FAILED로 기록된다")
+    void runtimeExceptionInMiddleIsRecordedAsFailedAndLoopContinues() {
+        LocalDateTime processedAt = LocalDateTime.of(2026, 6, 13, 14, 30);
+        ProcessWorkChangeResponse successResponse =
+                new ProcessWorkChangeResponse(0L, "CS02", processedAt, null, List.of(), List.of());
+
+        when(processService.process(eq(1L), any(), eq(99L), eq(10L))).thenReturn(successResponse);
+        when(processService.process(eq(2L), any(), eq(99L), eq(10L))).thenReturn(successResponse);
+        when(processService.process(eq(3L), any(), eq(99L), eq(10L)))
+                .thenThrow(new RuntimeException("db error"));
+        when(processService.process(eq(4L), any(), eq(99L), eq(10L))).thenReturn(successResponse);
+        when(processService.process(eq(5L), any(), eq(99L), eq(10L))).thenReturn(successResponse);
+
+        var response = service.approve(
+                new BulkApproveWorkChangeRequest(List.of(1L, 2L, 3L, 4L, 5L)),
+                99L, 10L
+        );
+
+        assertThat(response.summary.totalCount()).isEqualTo(5);
+        assertThat(response.summary.successCount()).isEqualTo(4);
+        assertThat(response.summary.failCount()).isEqualTo(1);
+        assertThat(response.results).extracting(r -> r.resultCode())
+                .containsExactly("SUCCESS", "SUCCESS", "FAILED", "SUCCESS", "SUCCESS");
+        assertThat(response.results.get(2).requestId()).isEqualTo(3L);
+        assertThat(response.results.get(2).processedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("일괄 승인 - 매핑되지 않은 CustomException(UNAVAILABLE_TIME_CONFLICT)은 FAILED로 기록되고 루프가 계속된다")
+    void unmappedCustomExceptionIsRecordedAsFailed() {
+        LocalDateTime processedAt = LocalDateTime.of(2026, 6, 13, 14, 30);
+        when(processService.process(eq(1L), any(), eq(99L), eq(10L)))
+                .thenReturn(new ProcessWorkChangeResponse(1L, "CS02", processedAt, null, List.of(), List.of()));
+        when(processService.process(eq(2L), any(), eq(99L), eq(10L)))
+                .thenThrow(CustomException.of(ScheduleErrorCode.UNAVAILABLE_TIME_CONFLICT));
+
+        var response = service.approve(
+                new BulkApproveWorkChangeRequest(List.of(1L, 2L)),
+                99L, 10L
+        );
+
+        assertThat(response.summary.totalCount()).isEqualTo(2);
+        assertThat(response.summary.successCount()).isEqualTo(1);
+        assertThat(response.summary.failCount()).isEqualTo(1);
+        assertThat(response.results).extracting(r -> r.resultCode())
+                .containsExactly("SUCCESS", "FAILED");
+    }
+
+    @Test
+    @DisplayName("일괄 승인 - 전건 성공 시 summary와 results가 모두 정확하다")
+    void allSuccessReturnsCorrectSummary() {
+        LocalDateTime processedAt = LocalDateTime.of(2026, 6, 13, 14, 30);
+        ProcessWorkChangeResponse successResponse =
+                new ProcessWorkChangeResponse(0L, "CS02", processedAt, null, List.of(), List.of());
+
+        when(processService.process(eq(1L), any(), eq(99L), eq(10L))).thenReturn(successResponse);
+        when(processService.process(eq(2L), any(), eq(99L), eq(10L))).thenReturn(successResponse);
+        when(processService.process(eq(3L), any(), eq(99L), eq(10L))).thenReturn(successResponse);
+
+        var response = service.approve(
+                new BulkApproveWorkChangeRequest(List.of(1L, 2L, 3L)),
+                99L, 10L
+        );
+
+        assertThat(response.summary.totalCount()).isEqualTo(3);
+        assertThat(response.summary.successCount()).isEqualTo(3);
+        assertThat(response.summary.failCount()).isEqualTo(0);
+        assertThat(response.results).extracting(r -> r.resultCode())
+                .containsExactly("SUCCESS", "SUCCESS", "SUCCESS");
+        assertThat(response.results).allMatch(r -> r.processedAt() != null);
+    }
+
+    @Test
     @DisplayName("일괄 승인 - 요청 ID 목록이 비어 있으면 실패한다")
     void rejectsEmptyRequestIds() {
         assertThatThrownBy(() -> service.approve(

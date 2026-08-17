@@ -28,7 +28,7 @@ public class WorkScheduleSettingService {
      * 특정 조직의 특정 연/월 근무 일정 설정을 조회합니다.
      */
     public Optional<WorkScheduleSetting> getSetting(
-            String organizationId,
+            Long organizationId,
             Integer year,
             Integer month
     ) {
@@ -44,7 +44,7 @@ public class WorkScheduleSettingService {
      * 설정이 없으면 예외를 발생시킵니다.
      */
     public WorkScheduleSetting getRequiredSetting(
-            String organizationId,
+            Long organizationId,
             Integer year,
             Integer month
     ) {
@@ -63,7 +63,7 @@ public class WorkScheduleSettingService {
      * 특정 시간이 신청 기간 내인지 확인합니다.
      */
     public boolean isCurrentlyInApplyTerm(
-            String organizationId,
+            Long organizationId,
             LocalDateTime targetTime
     ) {
         WorkScheduleSetting setting = getRequiredSetting(
@@ -80,7 +80,7 @@ public class WorkScheduleSettingService {
      */
     @Transactional
     public WorkScheduleSetting setApplyTerm(
-            String organizationId,
+            Long organizationId,
             Integer year,
             Integer month,
             LocalDateTime applyStartAt,
@@ -133,7 +133,7 @@ public class WorkScheduleSettingService {
      */
     @Transactional
     public WorkScheduleSetting setWorkRule(
-            String organizationId,
+            Long organizationId,
             Integer year,
             Integer month,
             Integer maxConcurrentWorkers,

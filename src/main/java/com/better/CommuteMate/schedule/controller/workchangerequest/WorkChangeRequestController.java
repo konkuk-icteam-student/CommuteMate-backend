@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "사용자 근로시간 수정 신청", description = "사용자의 근로시간 수정 신청기록 조회 API")
+@SecurityRequirement(name = "JWT")
 @RestController
 @RequestMapping("/api/v1/work-change-requests")
 @RequiredArgsConstructor
@@ -90,7 +91,6 @@ public class WorkChangeRequestController {
             ),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content)
     })
-    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> getHistory(
             @Parameter(description = "조회 연도. year와 month 모두 있을 때만 연월 필터 적용됩니다.", example = "2026")
             @RequestParam(required = false) Integer year,

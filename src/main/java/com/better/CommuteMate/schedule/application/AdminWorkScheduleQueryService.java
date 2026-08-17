@@ -3,6 +3,7 @@ package com.better.CommuteMate.schedule.application;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
 import com.better.CommuteMate.domain.schedule.entity.WorkUnavailableTime;
+import com.better.CommuteMate.schedule.application.WorkSlotUtils.SlotKey;
 import com.better.CommuteMate.domain.schedule.repository.WorkScheduleSettingRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
@@ -29,13 +29,15 @@ public class AdminWorkScheduleQueryService {
     private static final List<CodeType> ACTIVE_STATUSES = List.of(CodeType.WS01, CodeType.WS02);
     private static final int SLOT_MINUTES = 30;
     private static final int DEFAULT_MAX_CONCURRENT_WORKERS = 4;
+    private static final LocalTime WORK_START_TIME = LocalTime.of(9, 0);
+    private static final LocalTime WORK_END_TIME   = LocalTime.of(18, 0);
 
     private final WorkScheduleSettingRepository settingRepository;
     private final WorkSchedulesRepository scheduleRepository;
     private final WorkUnavailableTimeRepository unavailableTimeRepository;
 
     public AdminScheduleRangeResponse getSchedules(
-            String organizationId,
+            Long organizationId,
             String startDateValue,
             String endDateValue,
             String userName
@@ -75,19 +77,19 @@ public class AdminWorkScheduleQueryService {
 
         Map<SlotKey, LinkedHashMap<Long, AdminScheduleRangeResponse.Worker>> workersBySlot =
                 buildWorkersBySlot(schedules);
-        Set<SlotKey> unavailableSlots = buildUnavailableSlots(unavailableTimes);
+        Set<SlotKey> unavailableSlots = WorkSlotUtils.buildUnavailableSlotKeys(
+                unavailableTimes, WORK_START_TIME, WORK_END_TIME, SLOT_MINUTES);
 
-        Set<SlotKey> visibleSlots = new HashSet<>(workersBySlot.keySet());
-        visibleSlots.addAll(unavailableSlots);
+        Set<SlotKey> visibleSlots = buildAllSlots(startDate, endDate);
 
         String keyword = userName == null ? "" : userName.trim().toLowerCase(Locale.ROOT);
         List<AdminScheduleRangeResponse.Day> days = new ArrayList<>();
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
             LocalDate currentDate = date;
             List<AdminScheduleRangeResponse.Slot> slots = visibleSlots.stream()
-                    .filter(slot -> slot.date.equals(currentDate))
+                    .filter(slot -> slot.date().equals(currentDate))
                     .filter(slot -> matchesUserName(slot, workersBySlot, keyword))
-                    .sorted(Comparator.comparing(slot -> slot.start))
+                    .sorted(Comparator.comparing(SlotKey::start))
                     .map(slot -> toResponseSlot(
                             slot, workersBySlot, unavailableSlots, setting.getMaxConcurrentWorkers()
                     ))
@@ -105,12 +107,22 @@ public class AdminWorkScheduleQueryService {
         );
     }
 
-    private boolean hasSetting(String organizationId, YearMonth yearMonth) {
+    private boolean hasSetting(Long organizationId, YearMonth yearMonth) {
         return settingRepository.existsByOrganizationIdAndYearAndMonth(
                 organizationId,
                 yearMonth.getYear(),
                 yearMonth.getMonthValue()
         );
+    }
+
+    private Set<SlotKey> buildAllSlots(LocalDate startDate, LocalDate endDate) {
+        Set<SlotKey> slots = new HashSet<>();
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            slots.addAll(WorkSlotUtils.expandToSlots(
+                    date, WORK_START_TIME, WORK_END_TIME, SLOT_MINUTES
+            ));
+        }
+        return slots;
     }
 
     private LocalDate parseDate(String value) {
@@ -139,24 +151,17 @@ public class AdminWorkScheduleQueryService {
                 .sorted(Comparator.comparing(WorkSchedule::getDate)
                         .thenComparing(WorkSchedule::getStartTime)
                         .thenComparing(schedule -> schedule.getUser().getName()))
-                .forEach(schedule -> expandToSlots(
-                        schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()
+                .forEach(schedule -> WorkSlotUtils.expandToSlots(
+                        schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(), SLOT_MINUTES
                 ).forEach(slot -> result.computeIfAbsent(slot, ignored -> new LinkedHashMap<>())
                         .putIfAbsent(
                                 schedule.getUser().getUserId(),
                                 new AdminScheduleRangeResponse.Worker(
                                         String.valueOf(schedule.getUser().getUserId()),
-                                        schedule.getUser().getName()
+                                        schedule.getUser().getName(),
+                                        schedule.getScheduleId()
                                 )
                         )));
-        return result;
-    }
-
-    private Set<SlotKey> buildUnavailableSlots(List<WorkUnavailableTime> unavailableTimes) {
-        Set<SlotKey> result = new HashSet<>();
-        unavailableTimes.forEach(unavailable -> result.addAll(expandToSlots(
-                unavailable.getDate(), unavailable.getStartTime(), unavailable.getEndTime()
-        )));
         return result;
     }
 
@@ -184,8 +189,8 @@ public class AdminWorkScheduleQueryService {
         int currentCount = workers.size();
         boolean unavailable = unavailableSlots.contains(slot);
         return new AdminScheduleRangeResponse.Slot(
-                slot.start,
-                slot.end,
+                slot.start(),
+                slot.end(),
                 unavailable ? "UNAVAILABLE" : "AVAILABLE",
                 currentCount,
                 currentCount > maxConcurrentWorkers,
@@ -193,21 +198,4 @@ public class AdminWorkScheduleQueryService {
         );
     }
 
-    private List<SlotKey> expandToSlots(LocalDate date, LocalTime start, LocalTime end) {
-        List<SlotKey> result = new ArrayList<>();
-        LocalDateTime current = date.atTime(start);
-        LocalDateTime limit = end.equals(LocalTime.MAX)
-                ? date.plusDays(1).atStartOfDay()
-                : date.atTime(end);
-        int maximumSlots = 24 * 60 / SLOT_MINUTES;
-        for (int index = 0; current.isBefore(limit) && index < maximumSlots; index++) {
-            LocalDateTime next = current.plusMinutes(SLOT_MINUTES);
-            result.add(new SlotKey(date, current.toLocalTime(), next.toLocalTime()));
-            current = next;
-        }
-        return result;
-    }
-
-    private record SlotKey(LocalDate date, LocalTime start, LocalTime end) {
-    }
 }

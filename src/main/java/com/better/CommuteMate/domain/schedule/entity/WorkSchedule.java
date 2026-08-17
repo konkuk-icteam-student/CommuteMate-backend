@@ -9,7 +9,6 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "work_schedule")
@@ -20,8 +19,9 @@ import java.util.UUID;
 public class WorkSchedule {
 
     @Id
-    @Column(name = "schedule_id", nullable = false, length = 36)
-    private String scheduleId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "schedule_id", nullable = false)
+    private Long scheduleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -127,10 +127,6 @@ public class WorkSchedule {
 
     @PrePersist
     protected void onCreate() {
-        if (this.scheduleId == null) {
-            this.scheduleId = UUID.randomUUID().toString();
-        }
-
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
