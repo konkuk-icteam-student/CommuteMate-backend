@@ -50,6 +50,10 @@ app:
   schedule:
     concurrent:
       max: ${SCHEDULE_CONCURRENT_MAX:5}
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
 
 springdoc:
   swagger-ui:
