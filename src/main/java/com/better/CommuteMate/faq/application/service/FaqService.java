@@ -151,8 +151,8 @@ public class FaqService {
                 FaqStatus.PUBLISHED
         );
 
-        faq.getImages().forEach(FaqImage::detachFaq);
-        faq.getFiles().forEach(FaqFile::detachFaq);
+        faq.removeAllImages();
+        faq.removeAllFiles();
 
         List<String> imageUrls = extractImageUrls(request.content(), request.answer());
         if (!imageUrls.isEmpty()) {
@@ -284,7 +284,7 @@ public class FaqService {
 
         List<String> imageUrls = extractImageUrls(request.content(), request.answer());
 
-        faq.getImages().clear();
+        faq.removeAllImages();
 
         if (!imageUrls.isEmpty()) {
             List<FaqImage> images = faqImageRepository.findByUrlIn(imageUrls);
@@ -356,8 +356,8 @@ public class FaqService {
             throw CustomException.of(FaqErrorCode.FAQ_ALREADY_DELETED);
         }
 
-        faq.getImages().forEach(FaqImage::detachFaq);
-        faq.getFiles().forEach(FaqFile::detachFaq);
+        faq.removeAllImages();
+        faq.removeAllFiles();
 
         faqRelationRepository.deleteByRelatedFaqId(faqId);
 
