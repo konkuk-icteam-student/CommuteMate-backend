@@ -6,11 +6,13 @@ import com.better.CommuteMate.schedule.application.AdminWorkAssignmentService;
 import com.better.CommuteMate.schedule.application.AdminWorkScheduleDeletionService;
 import com.better.CommuteMate.schedule.application.AdminWorkScheduleQuickSearchService;
 import com.better.CommuteMate.schedule.application.AdminWorkScheduleQueryService;
+import com.better.CommuteMate.schedule.application.AdminUserWorkScheduleQueryService;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkAssignmentRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkAssignmentResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminScheduleRangeResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkScheduleDeleteResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.AdminWorkScheduleQuickSearchResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,6 +23,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +35,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+
 @Tag(name = "관리자 근로시간표", description = "근로시간표 조회 API")
 @RestController
 @RequestMapping("/api/v1/admin/work-schedules")
@@ -42,6 +47,41 @@ public class AdminWorkScheduleController {
     private final AdminWorkAssignmentService assignmentService;
     private final AdminWorkScheduleDeletionService deletionService;
     private final AdminWorkScheduleQuickSearchService quickSearchService;
+    private final AdminUserWorkScheduleQueryService userScheduleQueryService;
+
+    @GetMapping("/user")
+    @Operation(
+            summary = "사용자별 근로 시간표 조회",
+            description = "관리자가 같은 조직에 소속된 사용자의 근로 시간표를 지정한 날짜 범위로 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "사용자 근로 시간표 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "조회 기간이 올바르지 않음"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
+    })
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Response> getUserSchedule(
+            @Parameter(description = "조회할 사용자 ID", example = "1", required = true)
+            @RequestParam Long userId,
+            @Parameter(description = "조회 시작일", example = "2026-05-18", required = true)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @Parameter(description = "조회 종료일", example = "2026-05-22", required = true)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        AdminUserWorkScheduleQueryService.Result result = userScheduleQueryService.getSchedule(
+                userId,
+                userDetails.getUser().getOrganizationId(),
+                startDate,
+                endDate
+        );
+        WorkScheduleRangeResponse details = result.response();
+        return ResponseEntity.ok(Response.of(
+                true, result.userName() + "의 근로 시간표를 조회했습니다.", details
+        ));
+    }
 
     @PostMapping
     @Operation(
