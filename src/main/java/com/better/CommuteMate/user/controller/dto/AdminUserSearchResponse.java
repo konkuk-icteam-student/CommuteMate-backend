@@ -22,7 +22,7 @@ public class AdminUserSearchResponse extends ResponseDetail {
                 .map(user -> {
                     UserProfile profile = profiles.get(user.getUserId());
                     return new UserSummary(
-                            String.valueOf(user.getUserId()),
+                            user.getUserId(),
                             user.getName(),
                             profile == null ? null : profile.getDepartment(),
                             profile == null ? null : profile.getStudentId()
@@ -37,6 +37,6 @@ public class AdminUserSearchResponse extends ResponseDetail {
         return super.getTimestamp();
     }
 
-    public record UserSummary(String userId, String userName, String department, String studentId) {
+    public record UserSummary(Long userId, String userName, String department, String studentId) {
     }
 }
