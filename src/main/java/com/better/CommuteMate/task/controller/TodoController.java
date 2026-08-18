@@ -35,7 +35,7 @@ public class TodoController {
     private final AdminTodoService adminTodoService;
 
     @GetMapping
-    @Operation(summary = "일별 업무사항 조회", description = "특정 날짜의 업무사항을 오전과 오후로 구분하여 조회합니다.")
+    @Operation(summary = "일별 업무사항 조회", description = "매일 반복되는 고정 업무와 조회 날짜의 완료 상태를 오전과 오후로 구분하여 조회합니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -79,13 +79,13 @@ public class TodoController {
     @PatchMapping("/{todoId}/completion")
     @Operation(
             summary = "업무사항 완료 체크",
-            description = "업무사항의 완료 여부를 변경합니다. 학생·관리자 모두 가능하며 같은 조직의 업무사항만 체크할 수 있습니다.",
+            description = "지정한 날짜의 업무 완료 여부를 변경합니다. 다른 날짜의 완료 상태에는 영향을 주지 않습니다.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(value = """
-                                    { "isCompleted": true }
+                                    { "date": "2026-04-15", "isCompleted": true }
                                     """)
                     )
             )
@@ -138,6 +138,7 @@ public class TodoController {
     ) {
         UpdateTodoCompletionResponse details = adminTodoService.checkTodo(
                 todoId,
+                request.date(),
                 request.isCompleted(),
                 userDetails.getUserId(),
                 userDetails.getUser().getOrganizationId(),
