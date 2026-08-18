@@ -3,6 +3,7 @@ package com.better.CommuteMate.global.exceptions.error;
 import org.springframework.http.HttpStatus;
 
 public enum ScheduleErrorCode implements CustomErrorCode {
+    ADMIN_WORK_SCHEDULE_TARGET_USER_NOT_FOUND("사용자를 찾을 수 없습니다.", "[Error] : admin work schedule target user not found", HttpStatus.NOT_FOUND),
     INVALID_ADMIN_WORK_ASSIGNMENT_TIME("근로 시간은 30분 단위로만 지정할 수 있습니다.", "[Error] : invalid admin work assignment time", HttpStatus.BAD_REQUEST),
     ADMIN_WORK_ASSIGNMENT_USER_NOT_FOUND("사용자를 찾을 수 없습니다.", "[Error] : admin work assignment user not found", HttpStatus.BAD_REQUEST),
     ADMIN_WORK_ASSIGNMENT_DUPLICATED("이미 해당 시간에 배치된 사용자입니다.", "[Error] : duplicated admin work assignment", HttpStatus.CONFLICT),
