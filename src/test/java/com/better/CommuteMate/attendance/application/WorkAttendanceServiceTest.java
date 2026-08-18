@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -121,7 +122,7 @@ class WorkAttendanceServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().userId(1L).build()));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(schedule));
-        when(workAttendanceRepository.findBySchedule_ScheduleId(1L)).thenReturn(List.of(existing));
+        when(workAttendanceRepository.findAllByScheduleIn(anyList())).thenReturn(List.of(existing));
 
         // When & Then
         assertThatThrownBy(() -> workAttendanceService.checkIn(1L, "valid"))
@@ -146,13 +147,13 @@ class WorkAttendanceServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().userId(1L).build()));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(schedule));
-        when(workAttendanceRepository.findBySchedule_ScheduleId(1L)).thenReturn(Collections.emptyList());
+        when(workAttendanceRepository.findAllByScheduleIn(anyList())).thenReturn(Collections.emptyList());
 
         // When
         workAttendanceService.checkIn(1L, "valid");
 
         // Then
-        verify(workAttendanceRepository).save(any(WorkAttendance.class));
+        verify(workAttendanceRepository).saveAll(anyList());
     }
 
     @Test
@@ -173,11 +174,57 @@ class WorkAttendanceServiceTest {
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(schedule));
         // No attendance records
-        when(workAttendanceRepository.findBySchedule_ScheduleId(1L)).thenReturn(Collections.emptyList());
+        when(workAttendanceRepository.findAllByScheduleIn(anyList())).thenReturn(Collections.emptyList());
 
         // When & Then
         assertThatThrownBy(() -> workAttendanceService.checkOut(1L, "valid"))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(AttendanceErrorCode.CHECK_IN_REQUIRED.getMessage());
+    }
+
+    @Test
+    @DisplayName("연속 슬롯 근무 - 첫 슬롯에 출근한 뒤 마지막 슬롯에서 퇴근할 수 있다")
+    void checkOut_ConsecutiveSlots_SucceedsWithCheckInOnFirstSlot() {
+        LocalDateTime now = LocalDateTime.now();
+        User user = User.builder().userId(1L).build();
+        WorkSchedule firstSlot = WorkSchedule.builder()
+                .scheduleId(1L)
+                .user(user)
+                .date(now.toLocalDate())
+                .startTime(now.minusMinutes(58).toLocalTime())
+                .endTime(now.minusMinutes(28).toLocalTime())
+                .statusCode(CodeType.WS02)
+                .build();
+        WorkSchedule lastSlot = WorkSchedule.builder()
+                .scheduleId(2L)
+                .user(user)
+                .date(now.toLocalDate())
+                .startTime(now.minusMinutes(28).toLocalTime())
+                .endTime(now.plusMinutes(2).toLocalTime())
+                .statusCode(CodeType.WS02)
+                .build();
+        WorkAttendance checkIn = WorkAttendance.builder()
+                .schedule(firstSlot)
+                .checkTypeCode(CodeType.CT01)
+                .checkTime(now.minusMinutes(58))
+                .build();
+
+        when(qrTokenManager.validateToken("valid")).thenReturn(true);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        // Repository 반환 순서와 무관하게 연속 근무 묶음으로 처리되어야 한다.
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                anyLong(), any(), any(), anyList()))
+                .thenReturn(List.of(lastSlot, firstSlot));
+        when(workAttendanceRepository.findAllByScheduleIn(anyList())).thenReturn(List.of(checkIn));
+
+        assertThatCode(() -> workAttendanceService.checkOut(1L, "valid"))
+                .doesNotThrowAnyException();
+        verify(workAttendanceRepository).saveAll(argThat(attendances -> {
+            List<WorkAttendance> saved = java.util.stream.StreamSupport
+                    .stream(attendances.spliterator(), false)
+                    .toList();
+            return saved.size() == 2 && saved.stream()
+                    .allMatch(attendance -> attendance.getCheckTypeCode() == CodeType.CT02);
+        }));
     }
 }

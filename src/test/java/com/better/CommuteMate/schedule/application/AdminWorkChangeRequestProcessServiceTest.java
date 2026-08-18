@@ -75,12 +75,17 @@ class AdminWorkChangeRequestProcessServiceTest {
                 .user(request.getUser())
                 .date(LocalDate.of(2026, 6, 15))
                 .startTime(LocalTime.of(9, 0))
-                .endTime(LocalTime.of(11, 0))
+                .endTime(LocalTime.of(9, 30))
                 .statusCode(CodeType.WS02)
                 .build();
-        WorkChangeRequestItem deleteItem = item(
-                request, CodeType.CR02, deletedSchedule, 15, 9, 11
-        );
+        WorkChangeRequestItem deleteItem = WorkChangeRequestItem.builder()
+                .request(request)
+                .changeTypeCode(CodeType.CR02)
+                .schedule(deletedSchedule)
+                .date(LocalDate.of(2026, 6, 15))
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(9, 30))
+                .build();
         WorkChangeRequestItem addItem = WorkChangeRequestItem.builder()
                 .request(request)
                 .changeTypeCode(CodeType.CR01)
@@ -103,8 +108,10 @@ class AdminWorkChangeRequestProcessServiceTest {
                 .thenReturn(Optional.of(Workplace.builder().workplaceId(1L).build()));
         when(settingRepository.findForUpdate(10L, 2026, 6))
                 .thenReturn(Optional.of(setting));
-        when(scheduleRepository.findByUser_UserIdAndDateAndStartTimeAndEndTime(
-                any(), any(), any(), any())).thenReturn(Optional.of(deletedSchedule));
+        when(scheduleRepository
+                .findFirstByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeInOrderByUpdatedAtDesc(
+                        any(), any(), any(), any(), anyList()))
+                .thenReturn(Optional.of(deletedSchedule));
         when(scheduleValidator.isScheduleInsertable(
                 any(WorkScheduleSlotCommand.class), anyInt(), anyList()
         )).thenReturn(true);

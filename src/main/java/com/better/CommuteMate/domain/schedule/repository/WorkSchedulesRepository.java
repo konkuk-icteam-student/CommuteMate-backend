@@ -80,6 +80,14 @@ public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Lon
             LocalTime endTime
     );
 
+    Optional<WorkSchedule> findFirstByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeInOrderByUpdatedAtDesc(
+            Long userId,
+            LocalDate date,
+            LocalTime startTime,
+            LocalTime endTime,
+            List<CodeType> statusCodes
+    );
+
     /**
      * 특정 사용자의 특정 날짜, 시작 시간, 종료 시간이 일치하면서
      * 취소되지 않은 근무 일정이 존재하는지 확인

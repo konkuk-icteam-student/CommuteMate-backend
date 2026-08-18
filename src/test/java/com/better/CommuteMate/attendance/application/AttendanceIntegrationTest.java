@@ -75,13 +75,15 @@ class AttendanceIntegrationTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(anyLong(), any(), any(), anyList()))
                 .thenReturn(List.of(testSchedule));
-        when(workAttendanceRepository.findBySchedule_ScheduleId(100L)).thenReturn(Collections.emptyList());
+        when(workAttendanceRepository.findAllByScheduleIn(List.of(testSchedule))).thenReturn(Collections.emptyList());
 
         workAttendanceService.checkIn(1L, token);
         
-        verify(workAttendanceRepository, times(1)).save(argThat(a -> 
-            a.getCheckTypeCode() == CodeType.CT01 && a.getSchedule().getScheduleId().equals(100L)
-        ));
+        verify(workAttendanceRepository, times(1)).saveAll(argThat(attendances -> {
+            WorkAttendance attendance = attendances.iterator().next();
+            return attendance.getCheckTypeCode() == CodeType.CT01
+                    && attendance.getSchedule().getScheduleId().equals(100L);
+        }));
 
         // 3. Check Out
         // Mock state: User is now checked in
@@ -93,7 +95,7 @@ class AttendanceIntegrationTest {
                 .checkTime(LocalDateTime.now())
                 .build();
         
-        when(workAttendanceRepository.findBySchedule_ScheduleId(100L)).thenReturn(List.of(checkInRecord));
+        when(workAttendanceRepository.findAllByScheduleIn(List.of(testSchedule))).thenReturn(List.of(checkInRecord));
         
         // Generate new token for checkout (simulating time passing or fresh token)
         QrTokenResponse tokenResponse2 = workAttendanceService.generateQrToken();
@@ -101,9 +103,15 @@ class AttendanceIntegrationTest {
 
         workAttendanceService.checkOut(1L, token2);
 
-        verify(workAttendanceRepository, times(1)).save(argThat(a -> 
-            a.getCheckTypeCode() == CodeType.CT02 && a.getSchedule().getScheduleId().equals(100L)
-        ));
+        verify(workAttendanceRepository, times(2)).saveAll(argThat(attendances -> {
+            WorkAttendance attendance = attendances.iterator().next();
+            return attendance.getSchedule().getScheduleId().equals(100L);
+        }));
+
+        verify(workAttendanceRepository).saveAll(argThat(attendances -> {
+            WorkAttendance attendance = attendances.iterator().next();
+            return attendance.getCheckTypeCode() == CodeType.CT02;
+        }));
     }
 
     @Test

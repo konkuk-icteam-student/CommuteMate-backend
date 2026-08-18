@@ -20,6 +20,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Service
@@ -82,21 +84,23 @@ public class WorkAttendanceService {
             throw new CustomException(AttendanceErrorCode.NOT_WORK_TIME);
         }
 
-        checkIfAlreadyCheckedIn(targetSchedule);
+        List<WorkSchedule> consecutiveSchedules = findConsecutiveGroup(schedules, targetSchedule);
+        checkIfAlreadyCheckedIn(consecutiveSchedules);
 
-        WorkAttendance attendance = WorkAttendance.builder()
-                .user(user)
-                .schedule(targetSchedule)
-                .checkTime(now)
-                .checkTypeCode(CodeType.CT01)
-                .verified(true)
-                .build();
+        List<WorkAttendance> attendances = consecutiveSchedules.stream()
+                .map(schedule -> WorkAttendance.builder()
+                        .user(user)
+                        .schedule(schedule)
+                        .checkTime(now)
+                        .checkTypeCode(CodeType.CT01)
+                        .verified(true)
+                        .build())
+                .toList();
 
-        workAttendanceRepository.save(attendance);
-        targetSchedule.markWorking(
-                now.isAfter(toDateTime(targetSchedule, targetSchedule.getStartTime()).plusMinutes(10)),
-                String.valueOf(userId)
-        );
+        workAttendanceRepository.saveAll(attendances);
+        WorkSchedule firstSchedule = consecutiveSchedules.get(0);
+        boolean late = now.isAfter(toDateTime(firstSchedule, firstSchedule.getStartTime()).plusMinutes(10));
+        consecutiveSchedules.forEach(schedule -> schedule.markWorking(late, String.valueOf(userId)));
     }
 
     /**
@@ -132,22 +136,25 @@ public class WorkAttendanceService {
             throw new CustomException(AttendanceErrorCode.NOT_WORK_TIME);
         }
 
-        if (!hasCheckedIn(targetSchedule)) {
+        List<WorkSchedule> consecutiveSchedules = findConsecutiveGroup(schedules, targetSchedule);
+        if (!hasCheckedIn(consecutiveSchedules)) {
             throw new CustomException(AttendanceErrorCode.CHECK_IN_REQUIRED);
         }
 
-        checkIfAlreadyCheckedOut(targetSchedule);
+        checkIfAlreadyCheckedOut(consecutiveSchedules);
 
-        WorkAttendance attendance = WorkAttendance.builder()
-                .user(user)
-                .schedule(targetSchedule)
-                .checkTime(now)
-                .checkTypeCode(CodeType.CT02)
-                .verified(true)
-                .build();
+        List<WorkAttendance> attendances = consecutiveSchedules.stream()
+                .map(schedule -> WorkAttendance.builder()
+                        .user(user)
+                        .schedule(schedule)
+                        .checkTime(now)
+                        .checkTypeCode(CodeType.CT02)
+                        .verified(true)
+                        .build())
+                .toList();
 
-        workAttendanceRepository.save(attendance);
-        targetSchedule.markCompleted(String.valueOf(userId));
+        workAttendanceRepository.saveAll(attendances);
+        consecutiveSchedules.forEach(schedule -> schedule.markCompleted(String.valueOf(userId)));
     }
 
     /**
@@ -191,9 +198,8 @@ public class WorkAttendanceService {
         return null;
     }
 
-    private void checkIfAlreadyCheckedIn(WorkSchedule schedule) {
-        List<WorkAttendance> attendances =
-                workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+    private void checkIfAlreadyCheckedIn(List<WorkSchedule> schedules) {
+        List<WorkAttendance> attendances = workAttendanceRepository.findAllByScheduleIn(schedules);
 
         boolean exists = attendances.stream()
                 .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT01);
@@ -203,9 +209,8 @@ public class WorkAttendanceService {
         }
     }
 
-    private void checkIfAlreadyCheckedOut(WorkSchedule schedule) {
-        List<WorkAttendance> attendances =
-                workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+    private void checkIfAlreadyCheckedOut(List<WorkSchedule> schedules) {
+        List<WorkAttendance> attendances = workAttendanceRepository.findAllByScheduleIn(schedules);
 
         boolean exists = attendances.stream()
                 .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT02);
@@ -215,12 +220,32 @@ public class WorkAttendanceService {
         }
     }
 
-    private boolean hasCheckedIn(WorkSchedule schedule) {
-        List<WorkAttendance> attendances =
-                workAttendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+    private boolean hasCheckedIn(List<WorkSchedule> schedules) {
+        List<WorkAttendance> attendances = workAttendanceRepository.findAllByScheduleIn(schedules);
 
         return attendances.stream()
                 .anyMatch(a -> a.getCheckTypeCode() == CodeType.CT01);
+    }
+
+    private List<WorkSchedule> findConsecutiveGroup(
+            List<WorkSchedule> schedules,
+            WorkSchedule targetSchedule
+    ) {
+        List<WorkSchedule> sorted = new ArrayList<>(schedules);
+        sorted.sort(Comparator.comparing(WorkSchedule::getStartTime));
+
+        int targetIndex = sorted.indexOf(targetSchedule);
+        int startIndex = targetIndex;
+        int endIndex = targetIndex;
+        while (startIndex > 0
+                && sorted.get(startIndex - 1).getEndTime().equals(sorted.get(startIndex).getStartTime())) {
+            startIndex--;
+        }
+        while (endIndex < sorted.size() - 1
+                && sorted.get(endIndex).getEndTime().equals(sorted.get(endIndex + 1).getStartTime())) {
+            endIndex++;
+        }
+        return new ArrayList<>(sorted.subList(startIndex, endIndex + 1));
     }
 
     private AttendanceHistoryResponse toHistoryResponse(WorkAttendance attendance) {
