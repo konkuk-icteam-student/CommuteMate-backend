@@ -55,7 +55,7 @@ class AdminUserSearchServiceTest {
         var response = service.search(10L, "  박  ");
 
         assertThat(response.users).hasSize(2);
-        assertThat(response.users.get(0).userId()).isEqualTo("2");
+        assertThat(response.users.get(0).userId()).isEqualTo(2L);
         assertThat(response.users.get(0).userName()).isEqualTo("박보검");
         assertThat(response.users.get(0).department()).isEqualTo("컴퓨터공학과");
         assertThat(response.users.get(0).studentId()).isEqualTo("202211414");
