@@ -41,6 +41,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class AdminWorkChangeRequestProcessService {
 
+    private static final List<CodeType> ACTIVE_STATUSES = List.of(CodeType.WS01, CodeType.WS02);
     private static final int SLOT_MINUTES = 30;
     private static final LocalTime WORK_START_TIME = LocalTime.of(9, 0);
     private static final LocalTime WORK_END_TIME   = LocalTime.of(18, 0);
@@ -109,11 +110,11 @@ public class AdminWorkChangeRequestProcessService {
 
             for (WorkScheduleSlotCommand unitSlot : unitSlots) {
                 Optional<WorkSchedule> scheduleOpt = scheduleRepository
-                        .findByUser_UserIdAndDateAndStartTimeAndEndTime(
+                        .findFirstByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeInOrderByUpdatedAtDesc(
                                 request.getUser().getUserId(),
-                                unitSlot.date(), unitSlot.start(), unitSlot.end());
+                                unitSlot.date(), unitSlot.start(), unitSlot.end(), ACTIVE_STATUSES);
 
-                if (scheduleOpt.isEmpty() || scheduleOpt.get().getStatusCode() == CodeType.WS04) {
+                if (scheduleOpt.isEmpty()) {
                     continue;
                 }
                 WorkSchedule schedule = scheduleOpt.get();
