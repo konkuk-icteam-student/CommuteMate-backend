@@ -7,6 +7,8 @@ import com.better.CommuteMate.domain.schedule.repository.WorkScheduleSettingRepo
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
 import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
+import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,13 +34,14 @@ class AdminWorkScheduleQueryServiceTest {
     @Mock WorkScheduleSettingRepository settingRepository;
     @Mock WorkSchedulesRepository scheduleRepository;
     @Mock WorkUnavailableTimeRepository unavailableTimeRepository;
+    @Mock WorkAttendanceRepository attendanceRepository;
 
     AdminWorkScheduleQueryService service;
 
     @BeforeEach
     void setUp() {
         service = new AdminWorkScheduleQueryService(
-                settingRepository, scheduleRepository, unavailableTimeRepository
+                settingRepository, scheduleRepository, unavailableTimeRepository, attendanceRepository
         );
     }
 
@@ -217,6 +220,85 @@ class AdminWorkScheduleQueryServiceTest {
         assertThat(response.hasPrev).isTrue();
         assertThat(response.hasNext).isFalse();
         assertThat(response.days).isEmpty();
+    }
+
+    @Test
+    @DisplayName("관리자 근로시간표 조회 - 출퇴근 기록에 따라 근무 중, 완료, 미출근 상태를 반환한다")
+    void returnsWorkStatusFromAttendanceRecords() {
+        LocalDate date = LocalDate.now().minusDays(1);
+        WorkScheduleSetting setting = setting();
+        WorkSchedule checkedIn = schedule(101L, 1L, "근무중", date, setting);
+        WorkSchedule checkedOut = schedule(102L, 2L, "완료", date, setting);
+        WorkSchedule absent = schedule(103L, 3L, "미출근", date, setting);
+        WorkAttendance checkIn = attendance(checkedIn, CodeType.CT01);
+        WorkAttendance checkOut = attendance(checkedOut, CodeType.CT02);
+
+        when(settingRepository.findByOrganizationIdAndYearAndMonth(
+                10L, date.getYear(), date.getMonthValue()))
+                .thenReturn(Optional.of(setting));
+        when(scheduleRepository.findAllBySettingAndDateBetweenAndStatusCodeIn(
+                setting, date, date, List.of(CodeType.WS01, CodeType.WS02)))
+                .thenReturn(List.of(checkedIn, checkedOut, absent));
+        when(unavailableTimeRepository.findBySettingAndDateBetween(setting, date, date))
+                .thenReturn(List.of());
+        when(attendanceRepository.findAllByScheduleIn(List.of(checkedIn, checkedOut, absent)))
+                .thenReturn(List.of(checkIn, checkOut));
+
+        var response = service.getSchedules(10L, date.toString(), date.toString(), null);
+
+        assertThat(response.days.get(0).slots().get(0).users())
+                .extracting(worker -> worker.workStatusCode())
+                .containsExactlyInAnyOrder("WK02", "WK03", "WK04");
+    }
+
+    @Test
+    @DisplayName("관리자 근로시간표 조회 - 근무 전 출근 기록이 없으면 근무 예정 상태를 반환한다")
+    void returnsScheduledStatusBeforeWork() {
+        LocalDate date = LocalDate.now().plusDays(1);
+        WorkScheduleSetting setting = setting();
+        WorkSchedule scheduled = schedule(101L, 1L, "근무예정", date, setting);
+
+        when(settingRepository.findByOrganizationIdAndYearAndMonth(
+                10L, date.getYear(), date.getMonthValue()))
+                .thenReturn(Optional.of(setting));
+        when(scheduleRepository.findAllBySettingAndDateBetweenAndStatusCodeIn(
+                setting, date, date, List.of(CodeType.WS01, CodeType.WS02)))
+                .thenReturn(List.of(scheduled));
+        when(unavailableTimeRepository.findBySettingAndDateBetween(setting, date, date))
+                .thenReturn(List.of());
+        when(attendanceRepository.findAllByScheduleIn(List.of(scheduled))).thenReturn(List.of());
+
+        var response = service.getSchedules(10L, date.toString(), date.toString(), null);
+
+        assertThat(response.days.get(0).slots().get(0).users().get(0).workStatusCode())
+                .isEqualTo("WK01");
+    }
+
+    private WorkSchedule schedule(
+            Long scheduleId,
+            Long userId,
+            String userName,
+            LocalDate date,
+            WorkScheduleSetting setting
+    ) {
+        return WorkSchedule.builder()
+                .scheduleId(scheduleId)
+                .setting(setting)
+                .user(User.builder().userId(userId).name(userName).build())
+                .date(date)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(9, 30))
+                .statusCode(CodeType.WS02)
+                .build();
+    }
+
+    private WorkAttendance attendance(WorkSchedule schedule, CodeType checkTypeCode) {
+        return WorkAttendance.builder()
+                .schedule(schedule)
+                .user(schedule.getUser())
+                .checkTypeCode(checkTypeCode)
+                .checkTime(LocalDateTime.of(schedule.getDate(), schedule.getStartTime()))
+                .build();
     }
 
     private WorkScheduleSetting setting() {

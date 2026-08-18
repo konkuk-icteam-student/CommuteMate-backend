@@ -7,6 +7,8 @@ import com.better.CommuteMate.schedule.application.WorkSlotUtils.SlotKey;
 import com.better.CommuteMate.domain.schedule.repository.WorkScheduleSettingRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
+import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
+import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
@@ -35,6 +38,7 @@ public class AdminWorkScheduleQueryService {
     private final WorkScheduleSettingRepository settingRepository;
     private final WorkSchedulesRepository scheduleRepository;
     private final WorkUnavailableTimeRepository unavailableTimeRepository;
+    private final WorkAttendanceRepository attendanceRepository;
 
     public AdminScheduleRangeResponse getSchedules(
             Long organizationId,
@@ -75,8 +79,16 @@ public class AdminWorkScheduleQueryService {
         List<WorkUnavailableTime> unavailableTimes =
                 unavailableTimeRepository.findBySettingAndDateBetween(setting, startDate, endDate);
 
+        List<WorkAttendance> attendances = schedules.isEmpty()
+                ? List.of()
+                : attendanceRepository.findAllByScheduleIn(schedules);
+        Map<Long, List<WorkAttendance>> attendancesByScheduleId = attendances.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        attendance -> attendance.getSchedule().getScheduleId()
+                ));
+
         Map<SlotKey, LinkedHashMap<Long, AdminScheduleRangeResponse.Worker>> workersBySlot =
-                buildWorkersBySlot(schedules);
+                buildWorkersBySlot(schedules, attendancesByScheduleId, LocalDateTime.now());
         Set<SlotKey> unavailableSlots = WorkSlotUtils.buildUnavailableSlotKeys(
                 unavailableTimes, WORK_START_TIME, WORK_END_TIME, SLOT_MINUTES);
 
@@ -144,7 +156,9 @@ public class AdminWorkScheduleQueryService {
     }
 
     private Map<SlotKey, LinkedHashMap<Long, AdminScheduleRangeResponse.Worker>> buildWorkersBySlot(
-            List<WorkSchedule> schedules
+            List<WorkSchedule> schedules,
+            Map<Long, List<WorkAttendance>> attendancesByScheduleId,
+            LocalDateTime referenceTime
     ) {
         Map<SlotKey, LinkedHashMap<Long, AdminScheduleRangeResponse.Worker>> result = new HashMap<>();
         schedules.stream()
@@ -159,10 +173,40 @@ public class AdminWorkScheduleQueryService {
                                 new AdminScheduleRangeResponse.Worker(
                                         String.valueOf(schedule.getUser().getUserId()),
                                         schedule.getUser().getName(),
-                                        schedule.getScheduleId()
+                                        schedule.getScheduleId(),
+                                        resolveWorkStatus(
+                                                schedule,
+                                                attendancesByScheduleId.getOrDefault(
+                                                        schedule.getScheduleId(), List.of()
+                                                ),
+                                                referenceTime
+                                        )
                                 )
                         )));
         return result;
+    }
+
+    private String resolveWorkStatus(
+            WorkSchedule schedule,
+            List<WorkAttendance> attendances,
+            LocalDateTime referenceTime
+    ) {
+        boolean checkedOut = attendances.stream()
+                .anyMatch(attendance -> attendance.getCheckTypeCode() == CodeType.CT02);
+        if (checkedOut) {
+            return CodeType.WK03.name();
+        }
+
+        boolean checkedIn = attendances.stream()
+                .anyMatch(attendance -> attendance.getCheckTypeCode() == CodeType.CT01);
+        if (checkedIn) {
+            return CodeType.WK02.name();
+        }
+
+        LocalDateTime scheduledEnd = LocalDateTime.of(schedule.getDate(), schedule.getEndTime());
+        return referenceTime.isAfter(scheduledEnd)
+                ? CodeType.WK04.name()
+                : CodeType.WK01.name();
     }
 
     private boolean matchesUserName(

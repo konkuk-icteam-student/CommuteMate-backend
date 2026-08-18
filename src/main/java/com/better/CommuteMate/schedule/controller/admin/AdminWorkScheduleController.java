@@ -521,8 +521,8 @@ public class AdminWorkScheduleController {
                                                     "currentCount": 2,
                                                     "isOverLimit": false,
                                                     "users": [
-                                                      {"userId": "1", "userName": "학생A", "scheduleId": 101},
-                                                      {"userId": "2", "userName": "학생B", "scheduleId": 102}
+                                                      {"userId": "1", "userName": "학생A", "scheduleId": 101, "workStatusCode": "WK03"},
+                                                      {"userId": "2", "userName": "학생B", "scheduleId": 102, "workStatusCode": "WK01"}
                                                     ]
                                                   }]
                                                 }]

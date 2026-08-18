@@ -70,7 +70,12 @@ public class AdminScheduleRangeResponse extends ResponseDetail {
                             """,
                     example = "101"
             )
-            Long scheduleId
+            Long scheduleId,
+            @Schema(
+                    description = "근태 상태 코드: WK01 근무 예정, WK02 근무 중, WK03 근무 완료, WK04 미출근",
+                    example = "WK03"
+            )
+            String workStatusCode
     ) {
     }
 }
