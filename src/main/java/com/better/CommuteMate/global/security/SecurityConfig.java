@@ -13,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -99,6 +100,9 @@ public class SecurityConfig {
                                 "/api/v1/notifications/**",
                                 "/api/v1/home/**",
                                 "/api/home/**",
+                                "/api/attendance/**",
+                                "/api/users/**",
+                                "/api/v1/mypage/**",
                                 "/api/mypage/**"
                         ).hasRole("RL01")
                         .requestMatchers(
@@ -109,9 +113,15 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler())
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return new JwtAccessDeniedHandler();
     }
 
     @Bean
