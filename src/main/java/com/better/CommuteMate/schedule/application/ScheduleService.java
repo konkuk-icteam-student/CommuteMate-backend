@@ -817,7 +817,9 @@ public class ScheduleService {
         SlotViewContext ctx = buildSlotViewContext(userId, setting, startDate, endDate, monthStart, monthEnd);
         List<WorkMonthlyScheduleResponse.DaySchedule> days = buildDaySlotList(startDate, endDate, ctx);
 
-        Integer maxConcurrent = setting != null ? setting.getMaxConcurrentWorkers() : DEFAULT_SETTING_MAX_CONCURRENT;
+        Integer maxConcurrent = setting != null && setting.getMaxConcurrentWorkers() != null
+                ? setting.getMaxConcurrentWorkers()
+                : DEFAULT_SETTING_MAX_CONCURRENT;
         Integer totalLimitHours = setting != null ? setting.getMonthlyRequiredMinutes() / 60 : null;
 
         return WorkScheduleRangeResponse.builder()

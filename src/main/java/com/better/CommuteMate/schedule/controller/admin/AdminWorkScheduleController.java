@@ -55,9 +55,73 @@ public class AdminWorkScheduleController {
             description = "관리자가 같은 조직에 소속된 사용자의 근로 시간표를 지정한 날짜 범위로 조회합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "사용자 근로 시간표 조회 성공"),
-            @ApiResponse(responseCode = "400", description = "조회 기간이 올바르지 않음"),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "사용자 근로 시간표 조회 성공",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {
+                              "isSuccess": true,
+                              "message": "홍길동의 근로 시간표를 조회했습니다.",
+                              "details": {
+                                "startDate": "2026-05-18",
+                                "endDate": "2026-05-22",
+                                "maxConcurrentWorkers": 10,
+                                "totalLimitHours": 27,
+                                "usedHours": 10,
+                                "days": [
+                                  {
+                                    "date": "2026-05-18",
+                                    "slots": [
+                                      {
+                                        "start": "13:00",
+                                        "end": "13:30",
+                                        "status": "MY_SCHEDULE",
+                                        "currentCount": 3
+                                      },
+                                      {
+                                        "start": "13:30",
+                                        "end": "14:00",
+                                        "status": "EMPTY",
+                                        "currentCount": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                            """))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "조회 기간이 올바르지 않음",
+                    content = @Content(mediaType = "application/json", examples = {
+                            @ExampleObject(name = "시작일이 종료일보다 늦음", value = """
+                                    {
+                                      "isSuccess": false,
+                                      "message": "시작 날짜는 종료 날짜보다 늦을 수 없습니다.",
+                                      "details": null
+                                    }
+                                    """),
+                            @ExampleObject(name = "서로 다른 달", value = """
+                                    {
+                                      "isSuccess": false,
+                                      "message": "조회 기간은 같은 달 이내여야 합니다.",
+                                      "details": null
+                                    }
+                                    """)
+                    })
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "사용자를 찾을 수 없음",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {
+                              "isSuccess": false,
+                              "message": "사용자를 찾을 수 없습니다.",
+                              "details": null
+                            }
+                            """))
+            ),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
             @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
     })
