@@ -1136,6 +1136,8 @@ class ScheduleServiceTest {
         assertThat(response.getApplyEndDate()).isNull();
         assertThat(response.getIsApplyAvailable()).isFalse();
         assertThat(response.getIsEditAvailable()).isTrue();
+    }
+
     // ── 조회 시 PENDING 상태 우선순위 (resolveSlotStatus) ────────────────
     // 배경: 삭제 대기(CR02) 대상 슬롯은 관리자 승인 전까지 work_schedule에
     // WS01/WS02(활성)로 남아있어 myScheduleSlots에도 포함된다.
