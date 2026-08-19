@@ -153,6 +153,9 @@ public class AdminWorkScheduleController {
             description = """
                     관리자가 소속 조직의 사용자를 30분 근로 슬롯에 직접 배치합니다.
                     생성된 일정은 승인 절차 없이 WS02(승인) 상태가 되며,
+                    종료 시각이 지난 과거 슬롯은 슬롯 시작·종료 시각으로 CT01(출근), CT02(퇴근) 기록을
+                    자동 생성하여 근무 완료 및 근무시간 집계에 포함합니다.
+                    현재 또는 미래 슬롯은 출퇴근 기록을 자동 생성하지 않습니다.
                     현재 인원이 최대 동시 근무 인원을 초과하더라도 배치할 수 있습니다.
                     """,
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -186,7 +189,7 @@ public class AdminWorkScheduleController {
                                               "isSuccess": true,
                                               "message": "근로 시간표가 추가되었습니다.",
                                               "details": {
-                                                "scheduleId": "9f36a98d-1377-4f44-86bb-f87ff47e39ac",
+                                                "scheduleId": 101,
                                                 "userId": "1",
                                                 "userName": "홍길동",
                                                 "date": "2026-09-08",
@@ -275,8 +278,20 @@ public class AdminWorkScheduleController {
                             }
                     )
             ),
-            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청", content = @Content),
-            @ApiResponse(responseCode = "403", description = "관리자 권한 없음", content = @Content)
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 요청",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {"isSuccess":false,"message":"인증이 필요합니다.","details":null}
+                            """))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "관리자 권한 없음",
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                            {"isSuccess":false,"message":"해당 작업을 수행할 권한이 없습니다.","details":null}
+                            """))
+            )
     })
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<Response> assignSchedule(
