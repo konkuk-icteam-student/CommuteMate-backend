@@ -5,9 +5,12 @@ import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.code.CodeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+가import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -152,4 +155,13 @@ public interface WorkSchedulesRepository extends JpaRepository<WorkSchedule, Lon
             LocalDate endDate,
             List<CodeType> statusCodes
     );
+
+    /**
+     * 특정 사용자의 apply(직접 신청, created_request_id IS NULL) 근무 일정 중
+     * 가장 마지막 신청 시각을 조회. edit(CR01 승인) row는 created_request_id가
+     * 채워지므로 자동 제외됨. apply 이력이 없으면 null 반환.
+     */
+    @Query("SELECT MAX(ws.createdAt) FROM WorkSchedule ws " +
+            "WHERE ws.user.userId = :userId AND ws.createdRequestId IS NULL")
+    LocalDateTime findLastAppliedCreatedAtByUserId(@Param("userId") Long userId);
 }

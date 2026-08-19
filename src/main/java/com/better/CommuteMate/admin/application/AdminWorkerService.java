@@ -121,7 +121,8 @@ public class AdminWorkerService {
                 setting.getMonthlyMaxMinutes(),
                 changeRequestRepository.countByUser_UserId(userId),
                 changeRequestRepository.countByUser_UserIdAndStatusCode(userId, CodeType.CS02),
-                submittedMinutes(monthlySchedules)
+                submittedMinutes(monthlySchedules),
+                scheduleRepository.findLastAppliedCreatedAtByUserId(userId)
         );
     }
 

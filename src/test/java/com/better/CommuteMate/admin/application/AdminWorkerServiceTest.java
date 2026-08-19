@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +81,7 @@ class AdminWorkerServiceTest {
         lenient().when(attendanceRepository.findAllByScheduleIn(anyList())).thenReturn(List.of());
         when(changeRequestRepository.countByUser_UserId(USER_ID)).thenReturn(0L);
         when(changeRequestRepository.countByUser_UserIdAndStatusCode(USER_ID, CodeType.CS02)).thenReturn(0L);
+        lenient().when(scheduleRepository.findLastAppliedCreatedAtByUserId(USER_ID)).thenReturn(null);
     }
 
     private WorkSchedule ws02(LocalDate date, LocalTime start, LocalTime end) {
@@ -141,6 +143,27 @@ class AdminWorkerServiceTest {
     }
 
     @Test
+    void lastRequestedAt_mapsRepositoryValueIntoResponse() {
+        stubCommon(sampleUser(), null, 2026, 7, List.of());
+        LocalDateTime lastApplied = LocalDateTime.of(2026, 7, 10, 13, 0);
+        when(scheduleRepository.findLastAppliedCreatedAtByUserId(USER_ID)).thenReturn(lastApplied);
+
+        AdminWorkerDetailResponse response = service.getWorker(ORG_ID, USER_ID, "2026-07-15");
+
+        assertThat(response.lastRequestedAt).isEqualTo(lastApplied);
+    }
+
+    @Test
+    void lastRequestedAt_nullWhenNoApplyHistory() {
+        stubCommon(sampleUser(), null, 2026, 7, List.of());
+        when(scheduleRepository.findLastAppliedCreatedAtByUserId(USER_ID)).thenReturn(null);
+
+        AdminWorkerDetailResponse response = service.getWorker(ORG_ID, USER_ID, "2026-07-15");
+
+        assertThat(response.lastRequestedAt).isNull();
+    }
+
+    @Test
     void existingFields_regressionCheck() {
         User user = sampleUser();
         UserProfile profile = UserProfile.builder().userId(USER_ID).user(user)
@@ -159,5 +182,6 @@ class AdminWorkerServiceTest {
         assertThat(response.weeklyLimitMinutes).isEqualTo(780);
         assertThat(response.monthlyLimitMinutes).isEqualTo(1620);
         assertThat(response.submittedMinutes).isEqualTo(0L);
+        assertThat(response.lastRequestedAt).isNull();
     }
 }
