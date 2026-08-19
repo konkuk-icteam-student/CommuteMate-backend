@@ -280,7 +280,7 @@ class ScheduleServiceTest {
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
         when(workScheduleSettingService.getSetting(10L, 2026, 8))
-                .thenReturn(Optional.of(setting60()));
+                .thenReturn(Optional.of(setting60Expired()));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
                 .thenReturn(List.of());
         when(workChangeRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -448,7 +448,7 @@ class ScheduleServiceTest {
                 .statusCode(CodeType.WS02).build();
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
-        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60()));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60Expired()));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
                 eq(1L), eq(date), eq(date), anyList())).thenReturn(List.of(db1, db2));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(
@@ -471,7 +471,7 @@ class ScheduleServiceTest {
         LocalDate date = LocalDate.of(2026, 8, 10);
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
-        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60()));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60Expired()));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
                 eq(1L), eq(date), eq(date), anyList()))
                 .thenReturn(List.of(workSchedule(user, date, LocalTime.of(9, 0), LocalTime.of(9, 30))));
@@ -742,6 +742,174 @@ class ScheduleServiceTest {
         assertThat(scheduleService.submitEditRequest(1L, request)).isNotNull();
     }
 
+    // ── edit 신청 기간 차단 (B: #178-B) ─────────────────────────────────
+
+    @Test
+    @DisplayName("수정 신청 - 대상 슬롯 월이 신청 기간 중이면 add 요청이 차단된다")
+    void submitEditRequest_AddSlotMonthInApplyPeriod_ThrowsEditNotAllowed() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting()));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("신청 기간 중에는 수정 요청을 할 수 없습니다.");
+        verify(workChangeRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 대상 슬롯 월이 신청 기간 중이면 delete 요청도 차단된다")
+    void submitEditRequest_DeleteSlotMonthInApplyPeriod_ThrowsEditNotAllowed() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting()));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                List.of(),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("신청 기간 중에는 수정 요청을 할 수 없습니다.");
+        verify(workChangeRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 대상 슬롯 월이 신청 기간이 아니면 정상적으로 요청이 생성된다")
+    void submitEditRequest_MonthNotInApplyPeriod_Passes() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(settingExpired()));
+        when(workChangeRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThat(scheduleService.submitEditRequest(1L, request)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 여러 월이 섞인 요청 중 한 달이라도 신청 기간이면 요청 전체가 거부된다")
+    void submitEditRequest_MultiMonth_OneMonthInApplyPeriod_ThrowsForEntireRequest() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        // 8월: 신청 기간 중 / 9월: 신청 기간 아님 → 9월 슬롯만 있었다면 통과했을 요청이지만
+        // 8월 슬롯이 섞여 있으므로 전체가 거부되어야 한다.
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting()));
+        when(workScheduleSettingService.getSetting(10L, 2026, 9)).thenReturn(Optional.of(settingExpired()));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(
+                        new WorkScheduleEditRequest.Slot(
+                                LocalDate.of(2026, 9, 10), LocalTime.of(9, 0), LocalTime.of(10, 0)),
+                        new WorkScheduleEditRequest.Slot(
+                                LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))
+                ),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("신청 기간 중에는 수정 요청을 할 수 없습니다.");
+        verify(workChangeRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 신청 기간 종료일 당일에도 여전히 수정이 차단된다 (경계 확인)")
+    void submitEditRequest_OnApplyEndDate_StillBlocked() {
+        LocalDate today = LocalDate.now();
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .maxConcurrentWorkers(3).minWorkUnitMinutes(30)
+                .monthlyRequiredMinutes(27 * 60).weeklyMaxMinutes(13 * 60)
+                .applyStartAt(today.minusDays(9).atStartOfDay())
+                .applyEndAt(today.atStartOfDay())
+                .build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("신청 기간 중에는 수정 요청을 할 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 신청 기간 종료 다음날부터는 수정이 허용된다")
+    void submitEditRequest_DayAfterApplyEndDate_Passes() {
+        LocalDate today = LocalDate.now();
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .maxConcurrentWorkers(3).minWorkUnitMinutes(30)
+                .monthlyRequiredMinutes(27 * 60).weeklyMaxMinutes(13 * 60)
+                .applyStartAt(today.minusDays(10).atStartOfDay())
+                .applyEndAt(today.minusDays(1).atStartOfDay())
+                .build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+        when(workChangeRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThat(scheduleService.submitEditRequest(1L, request)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("수정 신청 - A(isEditAvailable)와 B(실제 차단)가 동일 설정에서 같은 결론을 낸다")
+    void submitEditRequest_ApplyPeriodBlock_MatchesGetApplyPeriodIsEditAvailable() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting()));
+
+        WorkScheduleApplyPeriodResponse periodResponse = scheduleService.getApplyPeriod(10L, 2026, 8);
+        assertThat(periodResponse.getIsEditAvailable()).isFalse();
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class);
+    }
+
     // ── 신청 기간 검증 ────────────────────────────────────────────────
 
     @Test
@@ -995,6 +1163,23 @@ class ScheduleServiceTest {
                 .weeklyMaxMinutes(13 * 60)
                 .applyStartAt(LocalDateTime.of(2020, 1, 1, 0, 0))
                 .applyEndAt(LocalDateTime.of(2030, 1, 1, 0, 0))
+                .build();
+    }
+
+    // minWorkUnitMinutes=60이면서 "지금" 신청 기간이 아닌(과거) setting.
+    // edit 신청 기간 차단(validateNotInApplyPeriodForEdit)이 다른 단위/하한 검증을
+    // 가리지 않도록, edit 성공 케이스 테스트에서 setting60() 대신 사용한다.
+    private WorkScheduleSetting setting60Expired() {
+        return WorkScheduleSetting.builder()
+                .organizationId(10L)
+                .year(2026)
+                .month(8)
+                .maxConcurrentWorkers(3)
+                .minWorkUnitMinutes(60)
+                .monthlyRequiredMinutes(27 * 60)
+                .weeklyMaxMinutes(13 * 60)
+                .applyStartAt(LocalDateTime.of(2020, 1, 1, 0, 0))
+                .applyEndAt(LocalDateTime.of(2020, 12, 31, 23, 59))
                 .build();
     }
 
