@@ -28,6 +28,7 @@ import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlySched
 import com.better.CommuteMate.global.util.WorkWeekUtils;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditRequest;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleApplyPeriodResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleMonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleSummaryResponse;
@@ -530,6 +531,39 @@ public class ScheduleService {
                 .scheduleYear(year).scheduleMonth(month).maxConcurrentWorkers(maxConcurrent).build();
     }
 
+    /**
+     * 근로 신청 기간 조회 (프론트 "근로 신청"/"수정 요청" 버튼 활성화 판단용).
+     * isApplyAvailable은 setting.isApplyPeriod(now)를 그대로 사용한다
+     * (isApplyPeriod는 날짜 단위로 종료일 당일까지 포함해 판정한다).
+     */
+    @Transactional(readOnly = true)
+    public WorkScheduleApplyPeriodResponse getApplyPeriod(Long organizationId, Integer year, Integer month) {
+        validateYearMonth(year, month);
+
+        Optional<WorkScheduleSetting> settingOpt =
+                workScheduleSettingService.getSetting(organizationId, year, month);
+
+        if (settingOpt.isEmpty()) {
+            return WorkScheduleApplyPeriodResponse.builder()
+                    .applyStartDate(null)
+                    .applyEndDate(null)
+                    .isApplyAvailable(false)
+                    .isEditAvailable(true)
+                    .build();
+        }
+
+        WorkScheduleSetting setting = settingOpt.get();
+        boolean isApplyAvailable = setting.isApplyPeriod(LocalDateTime.now());
+        boolean isEditAvailable = !isApplyAvailable;
+
+        return WorkScheduleApplyPeriodResponse.builder()
+                .applyStartDate(setting.getApplyStartAt().toLocalDate())
+                .applyEndDate(setting.getApplyEndAt().toLocalDate())
+                .isApplyAvailable(isApplyAvailable)
+                .isEditAvailable(isEditAvailable)
+                .build();
+    }
+
     @Transactional
     public WorkScheduleEditResponse submitEditRequest(Long userId, WorkScheduleEditRequest request) {
         List<WorkScheduleEditRequest.Slot> deleteSlots = request.deleteSlotsOrEmpty();
@@ -563,6 +597,7 @@ public class ScheduleService {
 
         validateMonthlyLimitForEdit(userId, user.getOrganizationId(), addSlots, deleteSlots);
         validateUnavailableForEditAdd(addSlots, settingsForEdit);
+        validateNotInApplyPeriodForEdit(addSlots, deleteSlots, settingsForEdit);
 
         WorkChangeRequest changeRequest = WorkChangeRequest.builder()
                 .user(user).reason(request.reason()).statusCode(CodeType.CS01)
@@ -616,6 +651,31 @@ public class ScheduleService {
                 if (unavailable.contains(new SlotKey(unit.date(), unit.start(), unit.end()))) {
                     throw CustomException.of(ScheduleErrorCode.UNAVAILABLE_TIME_CONFLICT);
                 }
+            }
+        }
+    }
+
+    /**
+     * 대상 슬롯 date가 속한 월이 "지금" 신청 기간이면 그 월에 대한 수정 요청을 차단한다.
+     * 신청 기간 여부는 요청 시점(now)이 아니라 각 슬롯의 월 setting 기준으로 판정하며,
+     * 여러 월이 섞인 요청은 하나라도 걸리면 요청 전체를 거부한다(다른 edit 검증들과 동일하게
+     * 전체 실패 방식 — 부분 수용 시 일부만 WorkChangeRequestItem이 생성되는 혼란을 피한다).
+     * setting이 없는 월은 신청 기간이 아닌 것으로 간주해 허용한다(getApplyPeriod의
+     * isEditAvailable 기본값과 동일한 판단 기준).
+     */
+    private void validateNotInApplyPeriodForEdit(
+            List<WorkScheduleEditRequest.Slot> addSlots,
+            List<WorkScheduleEditRequest.Slot> deleteSlots,
+            Map<YearMonth, WorkScheduleSetting> settingsByMonth) {
+        LocalDateTime now = LocalDateTime.now();
+        Set<YearMonth> targetMonths = new HashSet<>();
+        addSlots.forEach(slot -> targetMonths.add(YearMonth.from(slot.date())));
+        deleteSlots.forEach(slot -> targetMonths.add(YearMonth.from(slot.date())));
+
+        for (YearMonth ym : targetMonths) {
+            WorkScheduleSetting setting = settingsByMonth.get(ym);
+            if (setting != null && setting.isApplyPeriod(now)) {
+                throw CustomException.of(ScheduleErrorCode.EDIT_NOT_ALLOWED_DURING_APPLY_PERIOD);
             }
         }
     }

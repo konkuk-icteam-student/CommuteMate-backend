@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
@@ -77,6 +78,8 @@ public class WorkScheduleSettingService {
 
     /**
      * 근무 신청 기간을 설정합니다.
+     * 저장 시각은 항상 시작일 00:00:00 ~ 종료일 23:59:59.999999999로 정규화한다
+     * (applyStartAt/applyEndAt에 어떤 시각이 담겨 들어와도 날짜 부분만 사용).
      */
     @Transactional
     public WorkScheduleSetting setApplyTerm(
@@ -87,7 +90,10 @@ public class WorkScheduleSettingService {
             LocalDateTime applyEndAt,
             String updatedBy
     ) {
-        if (!applyStartAt.isBefore(applyEndAt)) {
+        LocalDateTime normalizedStartAt = applyStartAt.toLocalDate().atStartOfDay();
+        LocalDateTime normalizedEndAt = applyEndAt.toLocalDate().atTime(LocalTime.MAX);
+
+        if (!normalizedStartAt.isBefore(normalizedEndAt)) {
             throw CustomException.of(ScheduleErrorCode.INVALID_APPLY_TERM);
         }
 
@@ -101,8 +107,8 @@ public class WorkScheduleSettingService {
         if (existingSetting.isPresent()) {
             WorkScheduleSetting setting = existingSetting.get();
             setting.updateApplyPeriod(
-                    applyStartAt,
-                    applyEndAt,
+                    normalizedStartAt,
+                    normalizedEndAt,
                     updatedBy
             );
             return setting;
@@ -112,8 +118,8 @@ public class WorkScheduleSettingService {
                 .organizationId(organizationId)
                 .year(year)
                 .month(month)
-                .applyStartAt(applyStartAt)
-                .applyEndAt(applyEndAt)
+                .applyStartAt(normalizedStartAt)
+                .applyEndAt(normalizedEndAt)
                 .applyEnabled(true)
                 .editEnabled(true)
                 .autoApproveEnabled(false)
@@ -176,12 +182,12 @@ public class WorkScheduleSettingService {
 
     /**
      * 신청 기간 기본값을 계산합니다.
-     * 규칙: 해당 월의 전달 27일 00:00
+     * 규칙: 해당 월의 전달 27일 23:59:59.999999999 (종료일 하루 전체 포함)
      */
     public LocalDateTime getDefaultApplyEndAt(Integer year, Integer month) {
         YearMonth targetMonth = YearMonth.of(year, month);
         return targetMonth.minusMonths(1)
                 .atDay(27)
-                .atStartOfDay();
+                .atTime(LocalTime.MAX);
     }
 }
