@@ -194,7 +194,7 @@ public class HandoverMemoController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         HandoverMemosResponse details = handoverMemoService.getMemos(
-                userDetails.getUser().getOrganizationId(), date
+                userDetails.getUser().getOrganizationId(), date, userDetails.getUserId()
         );
         return ResponseEntity.ok(Response.of(
                 true,
@@ -239,6 +239,7 @@ public class HandoverMemoController {
                   {
                     "memoId": 1,
                     "content": "다음 근무자가 쓰레기봉투 꼭 갈아주세요.",
+                    "isMine": true,
                     "createdBy": {
                       "userId": 7,
                       "name": "홍길동"
