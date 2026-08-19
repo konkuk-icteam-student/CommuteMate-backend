@@ -28,6 +28,7 @@ import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlySched
 import com.better.CommuteMate.global.util.WorkWeekUtils;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditRequest;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleApplyPeriodResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleMonthlyLimitResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleRangeResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleSummaryResponse;
@@ -528,6 +529,47 @@ public class ScheduleService {
                 ? setting.getMaxConcurrentWorkers() : DEFAULT_SETTING_MAX_CONCURRENT;
         return WorkScheduleMonthlyLimitResponse.builder()
                 .scheduleYear(year).scheduleMonth(month).maxConcurrentWorkers(maxConcurrent).build();
+    }
+
+    /**
+     * 근로 신청 기간 조회 (프론트 "근로 신청"/"수정 요청" 버튼 활성화 판단용).
+     * setting.isApplyPeriod(now)는 applyEndAt이 종료일 00:00으로 저장된 경우
+     * 종료일 당일을 신청 불가로 잘못 판정할 수 있어, 여기서는 날짜 단위로
+     * 직접 비교해 종료일 하루 전체를 신청 가능 구간에 포함시킨다.
+     * isApplyPeriod 자체의 경계 처리는 다른 검증(신청 제출 등)에 영향을 주므로 수정하지 않았다.
+     */
+    @Transactional(readOnly = true)
+    public WorkScheduleApplyPeriodResponse getApplyPeriod(Long organizationId, Integer year, Integer month) {
+        validateYearMonth(year, month);
+
+        Optional<WorkScheduleSetting> settingOpt =
+                workScheduleSettingService.getSetting(organizationId, year, month);
+
+        if (settingOpt.isEmpty()) {
+            return WorkScheduleApplyPeriodResponse.builder()
+                    .applyStartDate(null)
+                    .applyEndDate(null)
+                    .isApplyAvailable(false)
+                    .isEditAvailable(true)
+                    .build();
+        }
+
+        WorkScheduleSetting setting = settingOpt.get();
+        LocalDate startDate = setting.getApplyStartAt().toLocalDate();
+        LocalDate endDate = setting.getApplyEndAt().toLocalDate();
+        LocalDate today = LocalDate.now();
+
+        boolean isApplyAvailable = Boolean.TRUE.equals(setting.getApplyEnabled())
+                && !today.isBefore(startDate)
+                && !today.isAfter(endDate);
+        boolean isEditAvailable = !isApplyAvailable;
+
+        return WorkScheduleApplyPeriodResponse.builder()
+                .applyStartDate(startDate)
+                .applyEndDate(endDate)
+                .isApplyAvailable(isApplyAvailable)
+                .isEditAvailable(isEditAvailable)
+                .build();
     }
 
     @Transactional

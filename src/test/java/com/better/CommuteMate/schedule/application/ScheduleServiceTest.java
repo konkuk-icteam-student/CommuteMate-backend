@@ -17,6 +17,7 @@ import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResultCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleApplyPeriodResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditRequest;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -824,6 +825,98 @@ class ScheduleServiceTest {
                 .hasMessage("근로 신청 기간이 아닙니다.");
 
         verify(workSchedulesRepository, never()).saveAll(anyList());
+    }
+
+    // ── 근로 신청 기간 조회 ─────────────────────────────────────────────
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - 신청 기간 내이면 isApplyAvailable=true, isEditAvailable=false")
+    void getApplyPeriod_WithinPeriod_ApplyAvailableEditNotAvailable() {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(3);
+        LocalDate end = today.plusDays(3);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .applyStartAt(start.atStartOfDay())
+                .applyEndAt(end.atStartOfDay())
+                .build();
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getApplyStartDate()).isEqualTo(start);
+        assertThat(response.getApplyEndDate()).isEqualTo(end);
+        assertThat(response.getIsApplyAvailable()).isTrue();
+        assertThat(response.getIsEditAvailable()).isFalse();
+    }
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - 종료일 당일(applyEndAt이 종료일 00:00으로 저장)에도 신청 가능해야 한다 (경계 처리)")
+    void getApplyPeriod_OnEndDate_StillApplyAvailable() {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(9);
+        // 신청 종료 시각이 종료일 자정(00:00)으로 저장된 경우를 재현한다.
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .applyStartAt(start.atStartOfDay())
+                .applyEndAt(today.atStartOfDay())
+                .build();
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getIsApplyAvailable()).isTrue();
+        assertThat(response.getIsEditAvailable()).isFalse();
+    }
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - 신청 기간 종료 후에는 isApplyAvailable=false, isEditAvailable=true")
+    void getApplyPeriod_AfterPeriod_ApplyNotAvailableEditAvailable() {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(10);
+        LocalDate end = today.minusDays(1);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .applyStartAt(start.atStartOfDay())
+                .applyEndAt(end.atStartOfDay())
+                .build();
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getIsApplyAvailable()).isFalse();
+        assertThat(response.getIsEditAvailable()).isTrue();
+    }
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - applyEnabled=false이면 기간 내라도 isApplyAvailable=false")
+    void getApplyPeriod_ApplyDisabled_ApplyNotAvailable() {
+        LocalDate today = LocalDate.now();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .applyStartAt(today.minusDays(3).atStartOfDay())
+                .applyEndAt(today.plusDays(3).atStartOfDay())
+                .applyEnabled(false)
+                .build();
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getIsApplyAvailable()).isFalse();
+        assertThat(response.getIsEditAvailable()).isTrue();
+    }
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - 해당 월 설정이 없으면 날짜는 null, isApplyAvailable=false, isEditAvailable=true")
+    void getApplyPeriod_NoSetting_DefaultsToUnavailableApplyEditableTrue() {
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.empty());
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getApplyStartDate()).isNull();
+        assertThat(response.getApplyEndDate()).isNull();
+        assertThat(response.getIsApplyAvailable()).isFalse();
+        assertThat(response.getIsEditAvailable()).isTrue();
     }
 
     // ── 헬퍼 ─────────────────────────────────────────────────────────
