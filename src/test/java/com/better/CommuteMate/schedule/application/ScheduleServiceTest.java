@@ -827,6 +827,37 @@ class ScheduleServiceTest {
         verify(workSchedulesRepository, never()).saveAll(anyList());
     }
 
+    @Test
+    @DisplayName("근무 신청 - applyEndAt이 종료일 00:00으로 저장돼도 종료일 당일에는 신청이 거부되지 않는다 (경계 회귀)")
+    void changeWorkSchedules_OnApplyEndDateStoredAtMidnight_DoesNotRejectApplyPeriod() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate today = LocalDate.now();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .maxConcurrentWorkers(3)
+                .minWorkUnitMinutes(30)
+                .monthlyRequiredMinutes(27 * 60)
+                .weeklyMaxMinutes(13 * 60)
+                .applyStartAt(today.minusDays(9).atStartOfDay())
+                .applyEndAt(today.atStartOfDay())
+                .build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting);
+        when(scheduleValidator.isScheduleInsertable(any(WorkScheduleSlotCommand.class), anyInt(), anyList())).thenReturn(true);
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().organizationId(10L).name("본사").build()));
+
+        WorkScheduleChangeResultCommand result = scheduleService.changeWorkSchedules(
+                new WorkScheduleChangeCommand(1L, List.of(slot), List.of())
+        );
+
+        assertThat(result.success()).hasSize(1);
+        assertThat(result.failure()).isEmpty();
+    }
+
     // ── 근로 신청 기간 조회 ─────────────────────────────────────────────
 
     @Test
@@ -860,6 +891,24 @@ class ScheduleServiceTest {
                 .organizationId(10L).year(2026).month(8)
                 .applyStartAt(start.atStartOfDay())
                 .applyEndAt(today.atStartOfDay())
+                .build();
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getIsApplyAvailable()).isTrue();
+        assertThat(response.getIsEditAvailable()).isFalse();
+    }
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - applyEndAt이 종료일 23:59:59로 저장된 경우(Monthly 경로)에도 종료일 당일 신청 가능하다")
+    void getApplyPeriod_OnEndDate_EndOfDayStorage_StillApplyAvailable() {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(9);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .applyStartAt(start.atStartOfDay())
+                .applyEndAt(today.atTime(23, 59, 59))
                 .build();
         when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
 
