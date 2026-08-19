@@ -18,6 +18,8 @@ import java.time.LocalTime;
 @Builder
 public class Todo {
 
+    private static final LocalDate RECURRING_TODO_LEGACY_DATE = LocalDate.of(1970, 1, 1);
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "todo_id")
@@ -68,10 +70,7 @@ public class Todo {
         updatedAt = LocalDateTime.now();
     }
 
-    public void update(LocalDate date, LocalTime timeSlot, String description, Long updatedBy) {
-        if (date != null) {
-            this.date = date;
-        }
+    public void update(LocalTime timeSlot, String description, Long updatedBy) {
         if (timeSlot != null) {
             this.timeSlot = timeSlot;
         }
@@ -95,12 +94,12 @@ public class Todo {
         this.updatedBy = updatedBy;
     }
 
-    public static Todo create(Long organizationId, String description, LocalDate date,
+    public static Todo create(Long organizationId, String description,
             LocalTime timeSlot, Long createdBy) {
         return Todo.builder()
                 .organizationId(organizationId)
                 .description(description)
-                .date(date)
+                .date(RECURRING_TODO_LEGACY_DATE)
                 .timeSlot(timeSlot)
                 .isCompleted(false)
                 .createdBy(createdBy)

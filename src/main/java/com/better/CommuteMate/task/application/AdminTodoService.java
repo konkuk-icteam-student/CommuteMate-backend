@@ -1,6 +1,8 @@
 package com.better.CommuteMate.task.application;
 
 import com.better.CommuteMate.domain.todo.entity.Todo;
+import com.better.CommuteMate.domain.todo.entity.TodoCompletion;
+import com.better.CommuteMate.domain.todo.repository.TodoCompletionRepository;
 import com.better.CommuteMate.domain.todo.repository.TodoRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
@@ -33,6 +35,7 @@ public class AdminTodoService {
     private static final LocalTime NOON = LocalTime.NOON;
 
     private final TodoRepository todoRepository;
+    private final TodoCompletionRepository todoCompletionRepository;
     private final UserRepository userRepository;
 
     @Transactional
@@ -41,10 +44,8 @@ public class AdminTodoService {
             Long adminId,
             Long organizationId
     ) {
-        LocalDate date;
         LocalTime timeSlot;
         try {
-            date = LocalDate.parse(request.date());
             timeSlot = LocalTime.parse(request.timeSlot());
         } catch (DateTimeParseException e) {
             throw CustomException.of(TodoErrorCode.INVALID_TODO_INFORMATION);
@@ -53,7 +54,6 @@ public class AdminTodoService {
         Todo todo = Todo.create(
                 organizationId,
                 request.description().trim(),
-                date,
                 timeSlot,
                 adminId
         );
@@ -71,17 +71,15 @@ public class AdminTodoService {
                 .orElseThrow(() -> CustomException.of(TodoErrorCode.TODO_NOT_FOUND));
         validateUpdateAccess(todo, organizationId);
 
-        if (request.date() == null
-                && request.timeSlot() == null
+        if (request.timeSlot() == null
                 && request.description() == null) {
             throw CustomException.of(TodoErrorCode.INVALID_TODO_INFORMATION);
         }
 
-        LocalDate date = parseOptionalDate(request.date());
         LocalTime timeSlot = parseOptionalTime(request.timeSlot());
         String description = parseOptionalDescription(request.description());
 
-        todo.update(date, timeSlot, description, adminId);
+        todo.update(timeSlot, description, adminId);
         return UpdateAdminTodoResponse.from(todoRepository.saveAndFlush(todo));
     }
 
@@ -90,12 +88,14 @@ public class AdminTodoService {
         Todo todo = todoRepository.findById(todoId)
                 .orElseThrow(() -> CustomException.of(TodoErrorCode.TODO_NOT_FOUND));
         validateDeleteAccess(todo, organizationId);
+        todoCompletionRepository.deleteAllByTodo_TodoId(todoId);
         todoRepository.delete(todo);
     }
 
     @Transactional
     public UpdateTodoCompletionResponse checkTodo(
             Long todoId,
+            String dateValue,
             Boolean isCompleted,
             Long userId,
             Long organizationId,
@@ -108,32 +108,54 @@ public class AdminTodoService {
             throw CustomException.of(TodoErrorCode.TODO_CHECK_ACCESS_DENIED);
         }
 
+        LocalDate date = parseDate(dateValue);
+        TodoCompletion completion = todoCompletionRepository
+                .findByTodo_TodoIdAndDate(todoId, date)
+                .orElse(null);
+
         if (Boolean.TRUE.equals(isCompleted)) {
-            todo.complete(userName, LocalTime.now(), userId);
+            if (completion == null) {
+                completion = TodoCompletion.builder()
+                        .todo(todo)
+                        .date(date)
+                        .completedByName(userName)
+                        .completedTime(LocalTime.now())
+                        .completedBy(userId)
+                        .build();
+            } else {
+                completion.update(userName, LocalTime.now(), userId);
+            }
+            completion = todoCompletionRepository.save(completion);
         } else {
-            todo.uncomplete(userId);
+            if (completion != null) {
+                todoCompletionRepository.delete(completion);
+                completion = null;
+            }
         }
-        todoRepository.save(todo);
 
-        long totalCount = todoRepository.countByOrganizationIdAndDate(organizationId, todo.getDate());
-        long completedCount = todoRepository.countByOrganizationIdAndDateAndIsCompleted(
-                organizationId, todo.getDate(), true);
+        int totalCount = todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(organizationId).size();
+        int completedCount = todoCompletionRepository
+                .findAllByTodo_OrganizationIdAndDate(organizationId, date).size();
 
-        return UpdateTodoCompletionResponse.of(todo, (int) completedCount, (int) totalCount);
+        return UpdateTodoCompletionResponse.of(todo, date, completion, completedCount, totalCount);
     }
 
     public AdminTodosResponse getTodos(Long organizationId, String dateValue) {
         LocalDate date = parseDate(dateValue);
-        List<Todo> todos = todoRepository.findByOrganizationIdAndDate(organizationId, date);
+        List<Todo> todos = todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(organizationId);
+        Map<Long, TodoCompletion> completions = todoCompletionRepository
+                .findAllByTodo_OrganizationIdAndDate(organizationId, date)
+                .stream()
+                .collect(Collectors.toMap(completion -> completion.getTodo().getTodoId(), Function.identity()));
         Map<Long, User> creators = findCreators(todos);
 
         List<AdminTodosResponse.TodoItem> morningTodos = todos.stream()
                 .filter(todo -> todo.getTimeSlot().isBefore(NOON))
-                .map(todo -> AdminTodosResponse.toItem(todo, creators))
+                .map(todo -> AdminTodosResponse.toItem(todo, completions.get(todo.getTodoId()), creators))
                 .toList();
         List<AdminTodosResponse.TodoItem> afternoonTodos = todos.stream()
                 .filter(todo -> !todo.getTimeSlot().isBefore(NOON))
-                .map(todo -> AdminTodosResponse.toItem(todo, creators))
+                .map(todo -> AdminTodosResponse.toItem(todo, completions.get(todo.getTodoId()), creators))
                 .toList();
 
         return new AdminTodosResponse(date, morningTodos, afternoonTodos);
@@ -147,17 +169,6 @@ public class AdminTodoService {
             return LocalDate.parse(value);
         } catch (DateTimeParseException e) {
             throw CustomException.of(TodoErrorCode.INVALID_TODO_DATE);
-        }
-    }
-
-    private LocalDate parseOptionalDate(String value) {
-        if (value == null) {
-            return null;
-        }
-        try {
-            return LocalDate.parse(value);
-        } catch (DateTimeParseException e) {
-            throw CustomException.of(TodoErrorCode.INVALID_TODO_INFORMATION);
         }
     }
 

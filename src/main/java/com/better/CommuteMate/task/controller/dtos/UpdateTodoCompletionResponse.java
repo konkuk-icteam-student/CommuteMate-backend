@@ -1,6 +1,7 @@
 package com.better.CommuteMate.task.controller.dtos;
 
 import com.better.CommuteMate.domain.todo.entity.Todo;
+import com.better.CommuteMate.domain.todo.entity.TodoCompletion;
 import com.better.CommuteMate.global.controller.dtos.ResponseDetail;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -19,18 +20,24 @@ public class UpdateTodoCompletionResponse extends ResponseDetail {
         this.summary = summary;
     }
 
-    public static UpdateTodoCompletionResponse of(Todo todo, int completedCount, int totalCount) {
-        boolean completed = Boolean.TRUE.equals(todo.getIsCompleted());
+    public static UpdateTodoCompletionResponse of(
+            Todo todo,
+            LocalDate date,
+            TodoCompletion completion,
+            int completedCount,
+            int totalCount
+    ) {
+        boolean completed = completion != null;
         TodoDetail detail = new TodoDetail(
                 todo.getTodoId(),
                 todo.getDescription(),
                 todo.getTimeSlot(),
                 completed ? "COMPLETED" : "PENDING",
-                todo.getCompletedByName(),
-                todo.getCompletedTime()
+                completed ? completion.getCompletedByName() : null,
+                completed ? completion.getCompletedTime() : null
         );
         return new UpdateTodoCompletionResponse(
-                todo.getDate(),
+                date,
                 detail,
                 new Summary(completedCount, totalCount)
         );
