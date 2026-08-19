@@ -6,6 +6,8 @@ import com.better.CommuteMate.domain.schedule.repository.WorkScheduleSettingRepo
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
+import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
+import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.domain.workplace.entity.Workplace;
 import com.better.CommuteMate.domain.workplace.repository.WorkplaceRepository;
 import com.better.CommuteMate.global.code.CodeType;
@@ -19,7 +21,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,13 +40,15 @@ class AdminWorkAssignmentServiceTest {
     @Mock WorkScheduleSettingRepository settingRepository;
     @Mock WorkplaceRepository workplaceRepository;
     @Mock WorkSchedulesRepository scheduleRepository;
+    @Mock WorkAttendanceRepository attendanceRepository;
 
     AdminWorkAssignmentService service;
 
     @BeforeEach
     void setUp() {
         service = new AdminWorkAssignmentService(
-                userRepository, settingRepository, workplaceRepository, scheduleRepository
+                userRepository, settingRepository, workplaceRepository, scheduleRepository,
+                attendanceRepository
         );
     }
 
@@ -228,9 +234,83 @@ class AdminWorkAssignmentServiceTest {
         verify(scheduleRepository).saveAndFlush(cancelled);
     }
 
+    @Test
+    @DisplayName("관리자 직접 배치 - 종료된 과거 슬롯이면 출퇴근 기록을 자동 생성한다")
+    void createsAttendanceForPastAssignment() {
+        LocalDate date = LocalDate.now().minusDays(1);
+        LocalTime start = LocalTime.of(9, 0);
+        LocalTime end = LocalTime.of(9, 30);
+        User user = User.builder()
+                .userId(1L)
+                .organizationId(10L)
+                .name("홍길동")
+                .build();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L)
+                .year(date.getYear())
+                .month(date.getMonthValue())
+                .maxConcurrentWorkers(4)
+                .build();
+        Workplace workplace = Workplace.builder().build();
+        WorkSchedule saved = WorkSchedule.builder()
+                .scheduleId(100L)
+                .user(user)
+                .setting(setting)
+                .workplace(workplace)
+                .date(date)
+                .startTime(start)
+                .endTime(end)
+                .statusCode(CodeType.WS02)
+                .build();
+
+        when(userRepository.findByUserIdAndOrganizationId(1L, 10L))
+                .thenReturn(Optional.of(user));
+        when(settingRepository.findForUpdate(10L, date.getYear(), date.getMonthValue()))
+                .thenReturn(Optional.of(setting));
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(workplace));
+        when(scheduleRepository.existsByUser_UserIdAndDateAndStartTimeAndEndTimeAndStatusCodeIn(
+                1L, date, start, end, List.of(CodeType.WS01, CodeType.WS02)))
+                .thenReturn(false);
+        when(scheduleRepository.saveAndFlush(any(WorkSchedule.class))).thenReturn(saved);
+        when(attendanceRepository.findBySchedule_ScheduleId(100L)).thenReturn(List.of());
+        when(scheduleRepository.countBySettingAndDateAndStartTimeAndEndTimeAndStatusCode(
+                setting, date, start, end, CodeType.WS02)).thenReturn(1L);
+
+        service.assign(request(date, "09:00", "09:30"), 10L, 99L);
+
+        verify(attendanceRepository).saveAll(org.mockito.ArgumentMatchers.argThat(records -> {
+            List<WorkAttendance> attendances = new ArrayList<>();
+            records.forEach(attendances::add);
+            if (attendances.size() != 2) {
+                return false;
+            }
+            WorkAttendance checkIn = attendances.get(0);
+            WorkAttendance checkOut = attendances.get(1);
+            return checkIn.getCheckTypeCode() == CodeType.CT01
+                    && checkIn.getCheckTime().equals(LocalDateTime.of(date, start))
+                    && checkOut.getCheckTypeCode() == CodeType.CT02
+                    && checkOut.getCheckTime().equals(LocalDateTime.of(date, end))
+                    && Boolean.TRUE.equals(checkIn.getVerified())
+                    && Boolean.TRUE.equals(checkOut.getVerified())
+                    && checkIn.getCreatedBy().equals(99L)
+                    && checkOut.getCreatedBy().equals(99L);
+        }));
+    }
+
     private AdminWorkAssignmentRequest request(String startTime, String endTime) {
         return new AdminWorkAssignmentRequest(
                 "1", "2026-09-08", startTime, endTime
+        );
+    }
+
+    private AdminWorkAssignmentRequest request(
+            LocalDate date,
+            String startTime,
+            String endTime
+    ) {
+        return new AdminWorkAssignmentRequest(
+                "1", date.toString(), startTime, endTime
         );
     }
 }
