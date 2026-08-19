@@ -41,14 +41,13 @@ public class AdminTodoController {
     @PreAuthorize("hasRole('RL02')")
     @Operation(
             summary = "관리자 업무사항 등록",
-            description = "특정 날짜와 시간에 수행할 업무사항을 등록합니다.",
+            description = "매일 반복해서 노출되는 고정 업무사항을 등록합니다.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(value = """
                                     {
-                                      "date": "2026-04-15",
                                       "timeSlot": "09:00",
                                       "description": "신문지 가져오기"
                                     }
@@ -103,14 +102,13 @@ public class AdminTodoController {
     @PreAuthorize("hasRole('RL02')")
     @Operation(
             summary = "관리자 업무사항 수정",
-            description = "업무 날짜, 시간, 내용 중 전달된 필드만 수정합니다.",
+            description = "고정 업무의 시간과 내용 중 전달된 필드만 수정하며 모든 날짜에 반영됩니다.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(value = """
                                     {
-                                      "date": "2026-04-15",
                                       "timeSlot": "14:00",
                                       "description": "회의실 청소"
                                     }
@@ -195,7 +193,7 @@ public class AdminTodoController {
     @PreAuthorize("hasRole('RL02')")
     @Operation(
             summary = "관리자 업무사항 삭제",
-            description = "업무사항을 삭제합니다. 같은 조직의 관리자만 삭제할 수 있습니다."
+            description = "고정 업무와 모든 날짜의 완료 기록을 삭제합니다. 같은 조직의 관리자만 삭제할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -262,11 +260,8 @@ public class AdminTodoController {
               "message": "업무사항 등록에 성공했습니다.",
               "details": {
                 "todoId": 1,
-                "date": "2026-04-15",
                 "timeSlot": "09:00:00",
                 "description": "신문지 가져오기",
-                "status": "PENDING",
-                "completed": false,
                 "createdAt": "2026-04-15T08:30:00"
               }
             }
@@ -278,11 +273,8 @@ public class AdminTodoController {
               "message": "업무사항 수정에 성공했습니다.",
               "details": {
                 "todoId": 1,
-                "date": "2026-04-15",
                 "timeSlot": "14:00:00",
                 "description": "회의실 청소",
-                "status": "PENDING",
-                "completed": false,
                 "updatedAt": "2026-04-15T10:40:00"
               }
             }

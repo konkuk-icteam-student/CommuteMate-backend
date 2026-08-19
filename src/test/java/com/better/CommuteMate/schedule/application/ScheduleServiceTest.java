@@ -8,6 +8,7 @@ import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepo
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
+import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequestItem;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestItemRepository;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestRepository;
 import com.better.CommuteMate.domain.workplace.entity.Workplace;
@@ -18,6 +19,7 @@ import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeComman
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResultCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleApplyPeriodResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditRequest;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -1134,6 +1136,144 @@ class ScheduleServiceTest {
         assertThat(response.getApplyEndDate()).isNull();
         assertThat(response.getIsApplyAvailable()).isFalse();
         assertThat(response.getIsEditAvailable()).isTrue();
+    // ── 조회 시 PENDING 상태 우선순위 (resolveSlotStatus) ────────────────
+    // 배경: 삭제 대기(CR02) 대상 슬롯은 관리자 승인 전까지 work_schedule에
+    // WS01/WS02(활성)로 남아있어 myScheduleSlots에도 포함된다.
+    // resolveSlotStatus가 PENDING_DELETE를 MY_SCHEDULE보다 먼저 체크해야
+    // 삭제 대기 슬롯이 올바르게 PENDING_DELETE로 표시된다.
+
+    @Test
+    @DisplayName("월별 조회 - 삭제-only 요청: 삭제 대기 슬롯은 아직 활성(WS01/WS02)이라도 PENDING_DELETE로 표시된다 (버그 재현/우선순위 핵심 케이스)")
+    void getMonthlyScheduleView_DeleteOnlyPendingSlot_ShowsPendingDelete() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+        LocalDate monthStart = LocalDate.of(2026, 8, 1);
+        LocalDate monthEnd = LocalDate.of(2026, 8, 31);
+        LocalTime slotStart = LocalTime.of(9, 0);
+        LocalTime slotEnd = LocalTime.of(9, 30);
+
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting());
+
+        // 삭제 대상 슬롯은 승인 전까지 여전히 활성(WS01/WS02)으로 myScheduleSlots에 잡힌다
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(monthStart), eq(monthEnd), anyList()))
+                .thenReturn(List.of(workSchedule(user, date, slotStart, slotEnd)));
+
+        // 같은 슬롯을 가리키는 CR02 아이템만 존재 (CR01 없음 = 삭제-only)
+        WorkChangeRequestItem cr02Item = WorkChangeRequestItem.builder()
+                .changeTypeCode(CodeType.CR02).date(date).startTime(slotStart).endTime(slotEnd).build();
+        when(workChangeRequestItemRepository
+                .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
+                        eq(1L), eq(CodeType.CS01), eq(CodeType.CR02), eq(monthStart), eq(monthEnd)))
+                .thenReturn(List.of(cr02Item));
+
+        WorkMonthlyScheduleResponse response =
+                scheduleService.getMonthlyScheduleView(1L, 10L, 2026, 8);
+
+        assertThat(findSlotStatus(response, date, slotStart)).isEqualTo("PENDING_DELETE");
+    }
+
+    @Test
+    @DisplayName("월별 조회 - 추가+삭제 혼합 요청: 삭제 대상은 PENDING_DELETE, 추가 대상은 PENDING_ADD로 각각 표시된다 (회귀)")
+    void getMonthlyScheduleView_MixedAddDelete_ShowsBothPendingStatuses() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+        LocalDate monthStart = LocalDate.of(2026, 8, 1);
+        LocalDate monthEnd = LocalDate.of(2026, 8, 31);
+        LocalTime deleteStart = LocalTime.of(9, 0);
+        LocalTime deleteEnd = LocalTime.of(9, 30);
+        LocalTime addStart = LocalTime.of(13, 0);
+        LocalTime addEnd = LocalTime.of(13, 30);
+
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting());
+
+        // 삭제 대상 슬롯만 활성 스케줄로 존재 (추가 대상 슬롯은 아직 미생성)
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(monthStart), eq(monthEnd), anyList()))
+                .thenReturn(List.of(workSchedule(user, date, deleteStart, deleteEnd)));
+
+        WorkChangeRequestItem cr02Item = WorkChangeRequestItem.builder()
+                .changeTypeCode(CodeType.CR02).date(date).startTime(deleteStart).endTime(deleteEnd).build();
+        when(workChangeRequestItemRepository
+                .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
+                        eq(1L), eq(CodeType.CS01), eq(CodeType.CR02), eq(monthStart), eq(monthEnd)))
+                .thenReturn(List.of(cr02Item));
+
+        WorkChangeRequestItem cr01Item = WorkChangeRequestItem.builder()
+                .changeTypeCode(CodeType.CR01).date(date).startTime(addStart).endTime(addEnd).build();
+        when(workChangeRequestItemRepository
+                .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
+                        eq(1L), eq(CodeType.CS01), eq(CodeType.CR01), eq(monthStart), eq(monthEnd)))
+                .thenReturn(List.of(cr01Item));
+
+        WorkMonthlyScheduleResponse response =
+                scheduleService.getMonthlyScheduleView(1L, 10L, 2026, 8);
+
+        assertThat(findSlotStatus(response, date, deleteStart)).isEqualTo("PENDING_DELETE");
+        assertThat(findSlotStatus(response, date, addStart)).isEqualTo("PENDING_ADD");
+    }
+
+    @Test
+    @DisplayName("월별 조회 - 삭제 요청이 없는 일반 내 근무 슬롯은 여전히 MY_SCHEDULE로 표시된다 (부작용 없음 회귀)")
+    void getMonthlyScheduleView_NoDeleteRequest_StillShowsMySchedule() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+        LocalDate monthStart = LocalDate.of(2026, 8, 1);
+        LocalDate monthEnd = LocalDate.of(2026, 8, 31);
+        LocalTime slotStart = LocalTime.of(9, 0);
+        LocalTime slotEnd = LocalTime.of(9, 30);
+
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting());
+
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(monthStart), eq(monthEnd), anyList()))
+                .thenReturn(List.of(workSchedule(user, date, slotStart, slotEnd)));
+        // 삭제 요청(CR02) 없음 → buildItemSlots가 빈 리스트 반환 (기본 Mockito 동작)
+
+        WorkMonthlyScheduleResponse response =
+                scheduleService.getMonthlyScheduleView(1L, 10L, 2026, 8);
+
+        assertThat(findSlotStatus(response, date, slotStart)).isEqualTo("MY_SCHEDULE");
+    }
+
+    @Test
+    @DisplayName("월별 조회 - 추가-only 요청: 추가 대상 슬롯은 PENDING_ADD로 표시된다 (회귀)")
+    void getMonthlyScheduleView_AddOnly_ShowsPendingAdd() {
+        LocalDate date = LocalDate.of(2026, 8, 10);
+        LocalDate monthStart = LocalDate.of(2026, 8, 1);
+        LocalDate monthEnd = LocalDate.of(2026, 8, 31);
+        LocalTime addStart = LocalTime.of(13, 0);
+        LocalTime addEnd = LocalTime.of(13, 30);
+
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting());
+
+        // CR02 없음(추가-only) — buildItemSlots가 CR01/CR02 둘 다 조회하므로 명시적으로 빈 리스트를 반환하도록 스텁
+        when(workChangeRequestItemRepository
+                .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
+                        eq(1L), eq(CodeType.CS01), eq(CodeType.CR02), eq(monthStart), eq(monthEnd)))
+                .thenReturn(List.of());
+
+        WorkChangeRequestItem cr01Item = WorkChangeRequestItem.builder()
+                .changeTypeCode(CodeType.CR01).date(date).startTime(addStart).endTime(addEnd).build();
+        when(workChangeRequestItemRepository
+                .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
+                        eq(1L), eq(CodeType.CS01), eq(CodeType.CR01), eq(monthStart), eq(monthEnd)))
+                .thenReturn(List.of(cr01Item));
+
+        WorkMonthlyScheduleResponse response =
+                scheduleService.getMonthlyScheduleView(1L, 10L, 2026, 8);
+
+        assertThat(findSlotStatus(response, date, addStart)).isEqualTo("PENDING_ADD");
+    }
+
+    private String findSlotStatus(WorkMonthlyScheduleResponse response, LocalDate date, LocalTime start) {
+        return response.getDays().stream()
+                .filter(d -> d.getDate().equals(date))
+                .flatMap(d -> d.getSlots().stream())
+                .filter(s -> s.getStart().equals(start))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("슬롯을 찾을 수 없음: " + date + " " + start))
+                .getStatus();
     }
 
     // ── 헬퍼 ─────────────────────────────────────────────────────────

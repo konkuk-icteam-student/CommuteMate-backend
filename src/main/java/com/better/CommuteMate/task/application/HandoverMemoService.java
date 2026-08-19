@@ -44,7 +44,7 @@ public class HandoverMemoService {
         return CreateHandoverMemoResponse.from(handoverMemoRepository.save(memo));
     }
 
-    public HandoverMemosResponse getMemos(Long organizationId, String dateValue) {
+    public HandoverMemosResponse getMemos(Long organizationId, String dateValue, Long currentUserId) {
         LocalDate date = parseDate(dateValue);
         List<HandoverMemo> memos = handoverMemoRepository.findDailyMemos(
                 organizationId,
@@ -53,7 +53,7 @@ public class HandoverMemoService {
         );
         return new HandoverMemosResponse(
                 date,
-                memos.stream().map(HandoverMemosResponse::toItem).toList()
+                memos.stream().map(memo -> HandoverMemosResponse.toItem(memo, currentUserId)).toList()
         );
     }
 

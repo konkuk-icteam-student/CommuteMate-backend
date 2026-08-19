@@ -973,8 +973,8 @@ public class ScheduleService {
 
     private String resolveSlotStatus(SlotKey key, Set<SlotKey> myScheduleSlots,
             Set<SlotKey> pendingDeleteSlots, Set<SlotKey> pendingAddSlots, Set<SlotKey> unavailableSlots) {
-        if (myScheduleSlots.contains(key)) return "MY_SCHEDULE";
         if (pendingDeleteSlots.contains(key)) return "PENDING_DELETE";
+        if (myScheduleSlots.contains(key)) return "MY_SCHEDULE";
         if (pendingAddSlots.contains(key)) return "PENDING_ADD";
         if (unavailableSlots.contains(key)) return "UNAVAILABLE";
         return "EMPTY";
