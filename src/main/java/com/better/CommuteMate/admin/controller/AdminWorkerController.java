@@ -112,7 +112,8 @@ public class AdminWorkerController {
                                 "monthlyWorkedMinutes": 780,
                                 "monthlyLimitMinutes": 1620,
                                 "totalChangeRequestCount": 7,
-                                "approvedChangeRequestCount": 3
+                                "approvedChangeRequestCount": 3,
+                                "submittedMinutes": 1620
                               }
                             }
                             """))),
