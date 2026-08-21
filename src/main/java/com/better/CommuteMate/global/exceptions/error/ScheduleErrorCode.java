@@ -3,6 +3,7 @@ package com.better.CommuteMate.global.exceptions.error;
 import org.springframework.http.HttpStatus;
 
 public enum ScheduleErrorCode implements CustomErrorCode {
+    ADMIN_WORK_SCHEDULE_TARGET_USER_NOT_FOUND("사용자를 찾을 수 없습니다.", "[Error] : admin work schedule target user not found", HttpStatus.NOT_FOUND),
     INVALID_ADMIN_WORK_ASSIGNMENT_TIME("근로 시간은 30분 단위로만 지정할 수 있습니다.", "[Error] : invalid admin work assignment time", HttpStatus.BAD_REQUEST),
     ADMIN_WORK_ASSIGNMENT_USER_NOT_FOUND("사용자를 찾을 수 없습니다.", "[Error] : admin work assignment user not found", HttpStatus.BAD_REQUEST),
     ADMIN_WORK_ASSIGNMENT_DUPLICATED("이미 해당 시간에 배치된 사용자입니다.", "[Error] : duplicated admin work assignment", HttpStatus.CONFLICT),
@@ -49,7 +50,8 @@ public enum ScheduleErrorCode implements CustomErrorCode {
     INVALID_SLOT_UNIT("근무 시간은 최소 근무 단위 기준으로 신청해야 합니다.", "[Error] : 최소 근무 단위 미준수", HttpStatus.BAD_REQUEST),
     INVALID_SLOT_BOUNDARY("근무 시간은 30분 단위로 신청해야 합니다.", "[Error] : 30분 경계 정렬 위반", HttpStatus.BAD_REQUEST),
     INVALID_SLOT_DURATION("근무 시간은 최소 근무 시간 이상으로 신청해야 합니다.", "[Error] : 최소 근무 시간 미충족", HttpStatus.BAD_REQUEST),
-    UNAVAILABLE_TIME_CONFLICT("근무 불가 시간대에 신청할 수 없습니다.", "[Error] : 근무 불가 시간대 신청 시도", HttpStatus.UNPROCESSABLE_ENTITY);
+    UNAVAILABLE_TIME_CONFLICT("근무 불가 시간대에 신청할 수 없습니다.", "[Error] : 근무 불가 시간대 신청 시도", HttpStatus.UNPROCESSABLE_ENTITY),
+    EDIT_NOT_ALLOWED_DURING_APPLY_PERIOD("신청 기간 중에는 수정 요청을 할 수 없습니다.", "[Error] : 신청 기간 중 수정 요청 시도", HttpStatus.BAD_REQUEST);
 
 
     private final String message;

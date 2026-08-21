@@ -6,6 +6,8 @@ import com.better.CommuteMate.domain.schedule.repository.WorkScheduleSettingRepo
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
+import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
+import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.domain.workplace.entity.Workplace;
 import com.better.CommuteMate.domain.workplace.repository.WorkplaceRepository;
 import com.better.CommuteMate.global.code.CodeType;
@@ -18,10 +20,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -39,6 +43,7 @@ public class AdminWorkAssignmentService {
     private final WorkScheduleSettingRepository settingRepository;
     private final WorkplaceRepository workplaceRepository;
     private final WorkSchedulesRepository scheduleRepository;
+    private final WorkAttendanceRepository attendanceRepository;
 
     @Transactional
     public AdminWorkAssignmentResponse assign(
@@ -106,6 +111,7 @@ public class AdminWorkAssignmentService {
                         .updatedBy(String.valueOf(adminId))
                         .build());
         schedule = scheduleRepository.saveAndFlush(schedule);
+        createAttendanceForPastAssignment(schedule, user, adminId, LocalDateTime.now());
 
         long currentCount = scheduleRepository
                 .countBySettingAndDateAndStartTimeAndEndTimeAndStatusCode(
@@ -137,6 +143,61 @@ public class AdminWorkAssignmentService {
         } catch (NumberFormatException e) {
             throw CustomException.of(ScheduleErrorCode.ADMIN_WORK_ASSIGNMENT_USER_NOT_FOUND);
         }
+    }
+
+    private void createAttendanceForPastAssignment(
+            WorkSchedule schedule,
+            User user,
+            Long adminId,
+            LocalDateTime now
+    ) {
+        LocalDateTime scheduledEnd = LocalDateTime.of(
+                schedule.getDate(), schedule.getEndTime()
+        );
+        if (!scheduledEnd.isBefore(now)) {
+            return;
+        }
+
+        List<WorkAttendance> existingAttendances =
+                attendanceRepository.findBySchedule_ScheduleId(schedule.getScheduleId());
+        boolean hasCheckIn = existingAttendances.stream()
+                .anyMatch(attendance -> attendance.getCheckTypeCode() == CodeType.CT01);
+        boolean hasCheckOut = existingAttendances.stream()
+                .anyMatch(attendance -> attendance.getCheckTypeCode() == CodeType.CT02);
+
+        List<WorkAttendance> newAttendances = new ArrayList<>();
+        if (!hasCheckIn) {
+            newAttendances.add(buildAttendance(
+                    schedule, user, CodeType.CT01,
+                    LocalDateTime.of(schedule.getDate(), schedule.getStartTime()), adminId
+            ));
+        }
+        if (!hasCheckOut) {
+            newAttendances.add(buildAttendance(
+                    schedule, user, CodeType.CT02, scheduledEnd, adminId
+            ));
+        }
+        if (!newAttendances.isEmpty()) {
+            attendanceRepository.saveAll(newAttendances);
+        }
+    }
+
+    private WorkAttendance buildAttendance(
+            WorkSchedule schedule,
+            User user,
+            CodeType checkTypeCode,
+            LocalDateTime checkTime,
+            Long adminId
+    ) {
+        return WorkAttendance.builder()
+                .user(user)
+                .schedule(schedule)
+                .checkTime(checkTime)
+                .checkTypeCode(checkTypeCode)
+                .verified(true)
+                .createdBy(adminId)
+                .updatedBy(adminId)
+                .build();
     }
 
     private ParsedAssignment parseAndValidate(AdminWorkAssignmentRequest request) {

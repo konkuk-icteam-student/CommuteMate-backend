@@ -19,10 +19,11 @@ public class HandoverMemosResponse extends ResponseDetail {
         this.memos = memos;
     }
 
-    public static MemoItem toItem(HandoverMemo memo) {
+    public static MemoItem toItem(HandoverMemo memo, Long currentUserId) {
         return new MemoItem(
                 memo.getMemoId(),
                 memo.getContent(),
+                memo.getCreatedBy().getUserId().equals(currentUserId),
                 new CreatedBy(
                         memo.getCreatedBy().getUserId(),
                         memo.getCreatedBy().getName()
@@ -40,6 +41,7 @@ public class HandoverMemosResponse extends ResponseDetail {
     public record MemoItem(
             Long memoId,
             String content,
+            boolean isMine,
             CreatedBy createdBy,
             LocalDateTime createdAt
     ) {

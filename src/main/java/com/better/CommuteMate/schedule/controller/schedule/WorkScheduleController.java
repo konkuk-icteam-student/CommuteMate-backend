@@ -6,6 +6,7 @@ import com.better.CommuteMate.schedule.application.ScheduleService;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResultCommand;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleApplyPeriodResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleChangeRequest;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditRequest;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditResponse;
@@ -322,6 +323,44 @@ public class WorkScheduleController {
                 "월별 스케줄 제한을 조회했습니다.",
                 scheduleService.getMonthlyLimit(organizationId, year, month)
         ));
+    }
+
+    /**
+     * 근로 신청 기간 조회 API
+     */
+    @Operation(
+            summary = "근로 신청 기간 조회",
+            description = "특정 연/월의 근로 신청 기간과 신청/수정 가능 여부를 조회합니다. "
+                    + "해당 연월의 설정이 없으면 신청 기간 미설정으로 간주해 isApplyAvailable=false, isEditAvailable=true를 반환합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "근로 신청 기간 조회 성공",
+                    content = @Content(mediaType = "application/json", examples = {
+                            @ExampleObject(name = "신청 기간 내", value = """
+                                    {"isSuccess":true,"message":"근로 신청 기간 조회에 성공했습니다.","details":{"applyStartDate":"2026-08-01","applyEndDate":"2026-08-10","isApplyAvailable":true,"isEditAvailable":false}}
+                                    """),
+                            @ExampleObject(name = "설정 없음", value = """
+                                    {"isSuccess":true,"message":"근로 신청 기간 조회에 성공했습니다.","details":{"applyStartDate":null,"applyEndDate":null,"isApplyAvailable":false,"isEditAvailable":true}}
+                                    """)
+                    })),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {"isSuccess":false,"message":"인증이 필요합니다.","details":null}
+                                    """)))
+    })
+    @GetMapping("/apply-period")
+    public ResponseEntity<Response> getApplyPeriod(
+            @Parameter(description = "조회 연도", example = "2026", required = true)
+            @RequestParam Integer year,
+            @Parameter(description = "조회 월", example = "8", required = true)
+            @RequestParam Integer month,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long organizationId = userDetails.getUser().getOrganizationId();
+        WorkScheduleApplyPeriodResponse response =
+                scheduleService.getApplyPeriod(organizationId, year, month);
+        return ResponseEntity.ok(Response.of(true, "근로 신청 기간 조회에 성공했습니다.", response));
     }
 
     /**

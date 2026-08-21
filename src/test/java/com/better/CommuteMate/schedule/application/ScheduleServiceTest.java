@@ -8,6 +8,7 @@ import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepo
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
+import com.better.CommuteMate.domain.workchangerequest.entity.WorkChangeRequestItem;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestItemRepository;
 import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequestRepository;
 import com.better.CommuteMate.domain.workplace.entity.Workplace;
@@ -17,6 +18,8 @@ import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleChangeResultCommand;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleApplyPeriodResponse;
+import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkMonthlyScheduleResponse;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditRequest;
 import com.better.CommuteMate.schedule.controller.schedule.dtos.WorkScheduleEditResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -279,7 +282,7 @@ class ScheduleServiceTest {
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
         when(workScheduleSettingService.getSetting(10L, 2026, 8))
-                .thenReturn(Optional.of(setting60()));
+                .thenReturn(Optional.of(setting60Expired()));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
                 .thenReturn(List.of());
         when(workChangeRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -447,7 +450,7 @@ class ScheduleServiceTest {
                 .statusCode(CodeType.WS02).build();
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
-        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60()));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60Expired()));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
                 eq(1L), eq(date), eq(date), anyList())).thenReturn(List.of(db1, db2));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(
@@ -470,7 +473,7 @@ class ScheduleServiceTest {
         LocalDate date = LocalDate.of(2026, 8, 10);
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
-        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60()));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting60Expired()));
         when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
                 eq(1L), eq(date), eq(date), anyList()))
                 .thenReturn(List.of(workSchedule(user, date, LocalTime.of(9, 0), LocalTime.of(9, 30))));
@@ -741,6 +744,174 @@ class ScheduleServiceTest {
         assertThat(scheduleService.submitEditRequest(1L, request)).isNotNull();
     }
 
+    // ── edit 신청 기간 차단 (B: #178-B) ─────────────────────────────────
+
+    @Test
+    @DisplayName("수정 신청 - 대상 슬롯 월이 신청 기간 중이면 add 요청이 차단된다")
+    void submitEditRequest_AddSlotMonthInApplyPeriod_ThrowsEditNotAllowed() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting()));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("신청 기간 중에는 수정 요청을 할 수 없습니다.");
+        verify(workChangeRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 대상 슬롯 월이 신청 기간 중이면 delete 요청도 차단된다")
+    void submitEditRequest_DeleteSlotMonthInApplyPeriod_ThrowsEditNotAllowed() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting()));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                List.of(),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("신청 기간 중에는 수정 요청을 할 수 없습니다.");
+        verify(workChangeRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 대상 슬롯 월이 신청 기간이 아니면 정상적으로 요청이 생성된다")
+    void submitEditRequest_MonthNotInApplyPeriod_Passes() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(settingExpired()));
+        when(workChangeRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThat(scheduleService.submitEditRequest(1L, request)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 여러 월이 섞인 요청 중 한 달이라도 신청 기간이면 요청 전체가 거부된다")
+    void submitEditRequest_MultiMonth_OneMonthInApplyPeriod_ThrowsForEntireRequest() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        // 8월: 신청 기간 중 / 9월: 신청 기간 아님 → 9월 슬롯만 있었다면 통과했을 요청이지만
+        // 8월 슬롯이 섞여 있으므로 전체가 거부되어야 한다.
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting()));
+        when(workScheduleSettingService.getSetting(10L, 2026, 9)).thenReturn(Optional.of(settingExpired()));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(
+                        new WorkScheduleEditRequest.Slot(
+                                LocalDate.of(2026, 9, 10), LocalTime.of(9, 0), LocalTime.of(10, 0)),
+                        new WorkScheduleEditRequest.Slot(
+                                LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))
+                ),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("신청 기간 중에는 수정 요청을 할 수 없습니다.");
+        verify(workChangeRequestRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 신청 기간 종료일 당일에도 여전히 수정이 차단된다 (경계 확인)")
+    void submitEditRequest_OnApplyEndDate_StillBlocked() {
+        LocalDate today = LocalDate.now();
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .maxConcurrentWorkers(3).minWorkUnitMinutes(30)
+                .monthlyRequiredMinutes(27 * 60).weeklyMaxMinutes(13 * 60)
+                .applyStartAt(today.minusDays(9).atStartOfDay())
+                .applyEndAt(today.atStartOfDay())
+                .build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("신청 기간 중에는 수정 요청을 할 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("수정 신청 - 신청 기간 종료 다음날부터는 수정이 허용된다")
+    void submitEditRequest_DayAfterApplyEndDate_Passes() {
+        LocalDate today = LocalDate.now();
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .maxConcurrentWorkers(3).minWorkUnitMinutes(30)
+                .monthlyRequiredMinutes(27 * 60).weeklyMaxMinutes(13 * 60)
+                .applyStartAt(today.minusDays(10).atStartOfDay())
+                .applyEndAt(today.minusDays(1).atStartOfDay())
+                .build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+        when(workChangeRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThat(scheduleService.submitEditRequest(1L, request)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("수정 신청 - A(isEditAvailable)와 B(실제 차단)가 동일 설정에서 같은 결론을 낸다")
+    void submitEditRequest_ApplyPeriodBlock_MatchesGetApplyPeriodIsEditAvailable() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting()));
+
+        WorkScheduleApplyPeriodResponse periodResponse = scheduleService.getApplyPeriod(10L, 2026, 8);
+        assertThat(periodResponse.getIsEditAvailable()).isFalse();
+
+        WorkScheduleEditRequest request = new WorkScheduleEditRequest(
+                List.of(),
+                List.of(new WorkScheduleEditRequest.Slot(
+                        LocalDate.of(2026, 8, 10), LocalTime.of(9, 0), LocalTime.of(10, 0))),
+                "사유"
+        );
+
+        assertThatThrownBy(() -> scheduleService.submitEditRequest(1L, request))
+                .isInstanceOf(CustomException.class);
+    }
+
     // ── 신청 기간 검증 ────────────────────────────────────────────────
 
     @Test
@@ -826,6 +997,287 @@ class ScheduleServiceTest {
         verify(workSchedulesRepository, never()).saveAll(anyList());
     }
 
+    @Test
+    @DisplayName("근무 신청 - applyEndAt이 종료일 00:00으로 저장돼도 종료일 당일에는 신청이 거부되지 않는다 (경계 회귀)")
+    void changeWorkSchedules_OnApplyEndDateStoredAtMidnight_DoesNotRejectApplyPeriod() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate today = LocalDate.now();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .maxConcurrentWorkers(3)
+                .minWorkUnitMinutes(30)
+                .monthlyRequiredMinutes(27 * 60)
+                .weeklyMaxMinutes(13 * 60)
+                .applyStartAt(today.minusDays(9).atStartOfDay())
+                .applyEndAt(today.atStartOfDay())
+                .build();
+
+        when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeNot(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting);
+        when(scheduleValidator.isScheduleInsertable(any(WorkScheduleSlotCommand.class), anyInt(), anyList())).thenReturn(true);
+        when(workplaceRepository.findFirstByOrganizationId(10L))
+                .thenReturn(Optional.of(Workplace.builder().organizationId(10L).name("본사").build()));
+
+        WorkScheduleChangeResultCommand result = scheduleService.changeWorkSchedules(
+                new WorkScheduleChangeCommand(1L, List.of(slot), List.of())
+        );
+
+        assertThat(result.success()).hasSize(1);
+        assertThat(result.failure()).isEmpty();
+    }
+
+    // ── 근로 신청 기간 조회 ─────────────────────────────────────────────
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - 신청 기간 내이면 isApplyAvailable=true, isEditAvailable=false")
+    void getApplyPeriod_WithinPeriod_ApplyAvailableEditNotAvailable() {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(3);
+        LocalDate end = today.plusDays(3);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .applyStartAt(start.atStartOfDay())
+                .applyEndAt(end.atStartOfDay())
+                .build();
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getApplyStartDate()).isEqualTo(start);
+        assertThat(response.getApplyEndDate()).isEqualTo(end);
+        assertThat(response.getIsApplyAvailable()).isTrue();
+        assertThat(response.getIsEditAvailable()).isFalse();
+    }
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - 종료일 당일(applyEndAt이 종료일 00:00으로 저장)에도 신청 가능해야 한다 (경계 처리)")
+    void getApplyPeriod_OnEndDate_StillApplyAvailable() {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(9);
+        // 신청 종료 시각이 종료일 자정(00:00)으로 저장된 경우를 재현한다.
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .applyStartAt(start.atStartOfDay())
+                .applyEndAt(today.atStartOfDay())
+                .build();
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getIsApplyAvailable()).isTrue();
+        assertThat(response.getIsEditAvailable()).isFalse();
+    }
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - applyEndAt이 종료일 23:59:59로 저장된 경우(Monthly 경로)에도 종료일 당일 신청 가능하다")
+    void getApplyPeriod_OnEndDate_EndOfDayStorage_StillApplyAvailable() {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(9);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .applyStartAt(start.atStartOfDay())
+                .applyEndAt(today.atTime(23, 59, 59))
+                .build();
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getIsApplyAvailable()).isTrue();
+        assertThat(response.getIsEditAvailable()).isFalse();
+    }
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - 신청 기간 종료 후에는 isApplyAvailable=false, isEditAvailable=true")
+    void getApplyPeriod_AfterPeriod_ApplyNotAvailableEditAvailable() {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(10);
+        LocalDate end = today.minusDays(1);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .applyStartAt(start.atStartOfDay())
+                .applyEndAt(end.atStartOfDay())
+                .build();
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getIsApplyAvailable()).isFalse();
+        assertThat(response.getIsEditAvailable()).isTrue();
+    }
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - applyEnabled=false이면 기간 내라도 isApplyAvailable=false")
+    void getApplyPeriod_ApplyDisabled_ApplyNotAvailable() {
+        LocalDate today = LocalDate.now();
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .organizationId(10L).year(2026).month(8)
+                .applyStartAt(today.minusDays(3).atStartOfDay())
+                .applyEndAt(today.plusDays(3).atStartOfDay())
+                .applyEnabled(false)
+                .build();
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.of(setting));
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getIsApplyAvailable()).isFalse();
+        assertThat(response.getIsEditAvailable()).isTrue();
+    }
+
+    @Test
+    @DisplayName("근로 신청 기간 조회 - 해당 월 설정이 없으면 날짜는 null, isApplyAvailable=false, isEditAvailable=true")
+    void getApplyPeriod_NoSetting_DefaultsToUnavailableApplyEditableTrue() {
+        when(workScheduleSettingService.getSetting(10L, 2026, 8)).thenReturn(Optional.empty());
+
+        WorkScheduleApplyPeriodResponse response = scheduleService.getApplyPeriod(10L, 2026, 8);
+
+        assertThat(response.getApplyStartDate()).isNull();
+        assertThat(response.getApplyEndDate()).isNull();
+        assertThat(response.getIsApplyAvailable()).isFalse();
+        assertThat(response.getIsEditAvailable()).isTrue();
+    }
+
+    // ── 조회 시 PENDING 상태 우선순위 (resolveSlotStatus) ────────────────
+    // 배경: 삭제 대기(CR02) 대상 슬롯은 관리자 승인 전까지 work_schedule에
+    // WS01/WS02(활성)로 남아있어 myScheduleSlots에도 포함된다.
+    // resolveSlotStatus가 PENDING_DELETE를 MY_SCHEDULE보다 먼저 체크해야
+    // 삭제 대기 슬롯이 올바르게 PENDING_DELETE로 표시된다.
+
+    @Test
+    @DisplayName("월별 조회 - 삭제-only 요청: 삭제 대기 슬롯은 아직 활성(WS01/WS02)이라도 PENDING_DELETE로 표시된다 (버그 재현/우선순위 핵심 케이스)")
+    void getMonthlyScheduleView_DeleteOnlyPendingSlot_ShowsPendingDelete() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+        LocalDate monthStart = LocalDate.of(2026, 8, 1);
+        LocalDate monthEnd = LocalDate.of(2026, 8, 31);
+        LocalTime slotStart = LocalTime.of(9, 0);
+        LocalTime slotEnd = LocalTime.of(9, 30);
+
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting());
+
+        // 삭제 대상 슬롯은 승인 전까지 여전히 활성(WS01/WS02)으로 myScheduleSlots에 잡힌다
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(monthStart), eq(monthEnd), anyList()))
+                .thenReturn(List.of(workSchedule(user, date, slotStart, slotEnd)));
+
+        // 같은 슬롯을 가리키는 CR02 아이템만 존재 (CR01 없음 = 삭제-only)
+        WorkChangeRequestItem cr02Item = WorkChangeRequestItem.builder()
+                .changeTypeCode(CodeType.CR02).date(date).startTime(slotStart).endTime(slotEnd).build();
+        when(workChangeRequestItemRepository
+                .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
+                        eq(1L), eq(CodeType.CS01), eq(CodeType.CR02), eq(monthStart), eq(monthEnd)))
+                .thenReturn(List.of(cr02Item));
+
+        WorkMonthlyScheduleResponse response =
+                scheduleService.getMonthlyScheduleView(1L, 10L, 2026, 8);
+
+        assertThat(findSlotStatus(response, date, slotStart)).isEqualTo("PENDING_DELETE");
+    }
+
+    @Test
+    @DisplayName("월별 조회 - 추가+삭제 혼합 요청: 삭제 대상은 PENDING_DELETE, 추가 대상은 PENDING_ADD로 각각 표시된다 (회귀)")
+    void getMonthlyScheduleView_MixedAddDelete_ShowsBothPendingStatuses() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+        LocalDate monthStart = LocalDate.of(2026, 8, 1);
+        LocalDate monthEnd = LocalDate.of(2026, 8, 31);
+        LocalTime deleteStart = LocalTime.of(9, 0);
+        LocalTime deleteEnd = LocalTime.of(9, 30);
+        LocalTime addStart = LocalTime.of(13, 0);
+        LocalTime addEnd = LocalTime.of(13, 30);
+
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting());
+
+        // 삭제 대상 슬롯만 활성 스케줄로 존재 (추가 대상 슬롯은 아직 미생성)
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(monthStart), eq(monthEnd), anyList()))
+                .thenReturn(List.of(workSchedule(user, date, deleteStart, deleteEnd)));
+
+        WorkChangeRequestItem cr02Item = WorkChangeRequestItem.builder()
+                .changeTypeCode(CodeType.CR02).date(date).startTime(deleteStart).endTime(deleteEnd).build();
+        when(workChangeRequestItemRepository
+                .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
+                        eq(1L), eq(CodeType.CS01), eq(CodeType.CR02), eq(monthStart), eq(monthEnd)))
+                .thenReturn(List.of(cr02Item));
+
+        WorkChangeRequestItem cr01Item = WorkChangeRequestItem.builder()
+                .changeTypeCode(CodeType.CR01).date(date).startTime(addStart).endTime(addEnd).build();
+        when(workChangeRequestItemRepository
+                .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
+                        eq(1L), eq(CodeType.CS01), eq(CodeType.CR01), eq(monthStart), eq(monthEnd)))
+                .thenReturn(List.of(cr01Item));
+
+        WorkMonthlyScheduleResponse response =
+                scheduleService.getMonthlyScheduleView(1L, 10L, 2026, 8);
+
+        assertThat(findSlotStatus(response, date, deleteStart)).isEqualTo("PENDING_DELETE");
+        assertThat(findSlotStatus(response, date, addStart)).isEqualTo("PENDING_ADD");
+    }
+
+    @Test
+    @DisplayName("월별 조회 - 삭제 요청이 없는 일반 내 근무 슬롯은 여전히 MY_SCHEDULE로 표시된다 (부작용 없음 회귀)")
+    void getMonthlyScheduleView_NoDeleteRequest_StillShowsMySchedule() {
+        User user = User.builder().userId(1L).organizationId(10L).build();
+        LocalDate date = LocalDate.of(2026, 8, 10);
+        LocalDate monthStart = LocalDate.of(2026, 8, 1);
+        LocalDate monthEnd = LocalDate.of(2026, 8, 31);
+        LocalTime slotStart = LocalTime.of(9, 0);
+        LocalTime slotEnd = LocalTime.of(9, 30);
+
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting());
+
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                eq(1L), eq(monthStart), eq(monthEnd), anyList()))
+                .thenReturn(List.of(workSchedule(user, date, slotStart, slotEnd)));
+        // 삭제 요청(CR02) 없음 → buildItemSlots가 빈 리스트 반환 (기본 Mockito 동작)
+
+        WorkMonthlyScheduleResponse response =
+                scheduleService.getMonthlyScheduleView(1L, 10L, 2026, 8);
+
+        assertThat(findSlotStatus(response, date, slotStart)).isEqualTo("MY_SCHEDULE");
+    }
+
+    @Test
+    @DisplayName("월별 조회 - 추가-only 요청: 추가 대상 슬롯은 PENDING_ADD로 표시된다 (회귀)")
+    void getMonthlyScheduleView_AddOnly_ShowsPendingAdd() {
+        LocalDate date = LocalDate.of(2026, 8, 10);
+        LocalDate monthStart = LocalDate.of(2026, 8, 1);
+        LocalDate monthEnd = LocalDate.of(2026, 8, 31);
+        LocalTime addStart = LocalTime.of(13, 0);
+        LocalTime addEnd = LocalTime.of(13, 30);
+
+        when(workScheduleSettingService.getRequiredSetting(10L, 2026, 8)).thenReturn(setting());
+
+        // CR02 없음(추가-only) — buildItemSlots가 CR01/CR02 둘 다 조회하므로 명시적으로 빈 리스트를 반환하도록 스텁
+        when(workChangeRequestItemRepository
+                .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
+                        eq(1L), eq(CodeType.CS01), eq(CodeType.CR02), eq(monthStart), eq(monthEnd)))
+                .thenReturn(List.of());
+
+        WorkChangeRequestItem cr01Item = WorkChangeRequestItem.builder()
+                .changeTypeCode(CodeType.CR01).date(date).startTime(addStart).endTime(addEnd).build();
+        when(workChangeRequestItemRepository
+                .findByRequest_User_UserIdAndRequest_StatusCodeAndChangeTypeCodeAndDateBetween(
+                        eq(1L), eq(CodeType.CS01), eq(CodeType.CR01), eq(monthStart), eq(monthEnd)))
+                .thenReturn(List.of(cr01Item));
+
+        WorkMonthlyScheduleResponse response =
+                scheduleService.getMonthlyScheduleView(1L, 10L, 2026, 8);
+
+        assertThat(findSlotStatus(response, date, addStart)).isEqualTo("PENDING_ADD");
+    }
+
+    private String findSlotStatus(WorkMonthlyScheduleResponse response, LocalDate date, LocalTime start) {
+        return response.getDays().stream()
+                .filter(d -> d.getDate().equals(date))
+                .flatMap(d -> d.getSlots().stream())
+                .filter(s -> s.getStart().equals(start))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("슬롯을 찾을 수 없음: " + date + " " + start))
+                .getStatus();
+    }
+
     // ── 헬퍼 ─────────────────────────────────────────────────────────
 
     private WorkScheduleSetting setting() {
@@ -853,6 +1305,23 @@ class ScheduleServiceTest {
                 .weeklyMaxMinutes(13 * 60)
                 .applyStartAt(LocalDateTime.of(2020, 1, 1, 0, 0))
                 .applyEndAt(LocalDateTime.of(2030, 1, 1, 0, 0))
+                .build();
+    }
+
+    // minWorkUnitMinutes=60이면서 "지금" 신청 기간이 아닌(과거) setting.
+    // edit 신청 기간 차단(validateNotInApplyPeriodForEdit)이 다른 단위/하한 검증을
+    // 가리지 않도록, edit 성공 케이스 테스트에서 setting60() 대신 사용한다.
+    private WorkScheduleSetting setting60Expired() {
+        return WorkScheduleSetting.builder()
+                .organizationId(10L)
+                .year(2026)
+                .month(8)
+                .maxConcurrentWorkers(3)
+                .minWorkUnitMinutes(60)
+                .monthlyRequiredMinutes(27 * 60)
+                .weeklyMaxMinutes(13 * 60)
+                .applyStartAt(LocalDateTime.of(2020, 1, 1, 0, 0))
+                .applyEndAt(LocalDateTime.of(2020, 12, 31, 23, 59))
                 .build();
     }
 

@@ -120,8 +120,16 @@ public class AdminWorkerService {
                 workedMinutes(monthlySchedules, attendancesBySchedule, s -> true, referenceTime),
                 setting.getMonthlyMaxMinutes(),
                 changeRequestRepository.countByUser_UserId(userId),
-                changeRequestRepository.countByUser_UserIdAndStatusCode(userId, CodeType.CS02)
+                changeRequestRepository.countByUser_UserIdAndStatusCode(userId, CodeType.CS02),
+                submittedMinutes(monthlySchedules),
+                scheduleRepository.findLastAppliedCreatedAtByUserId(userId)
         );
+    }
+
+    private long submittedMinutes(List<WorkSchedule> monthlySchedules) {
+        return monthlySchedules.stream()
+                .mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes())
+                .sum();
     }
 
     public AdminWorkerPageResponse getWorkers(Long organizationId, String dateValue, String keyword,

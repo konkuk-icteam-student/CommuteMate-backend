@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -411,11 +412,17 @@ public class HomeService {
      */
     private double calculateCompletedHours(List<WorkSchedule> schedules) {
         long totalMinutes = schedules.stream()
-                .filter(this::hasCheckOut)
+                .collect(Collectors.groupingBy(WorkSchedule::getDate))
+                .values().stream()
+                .flatMap(daySchedules -> {
+                    List<WorkSchedule> sorted = new ArrayList<>(daySchedules);
+                    sorted.sort(Comparator.comparing(WorkSchedule::getStartTime));
+                    return ScheduleSlotUtils.mergeConsecutiveSlots(sorted).stream();
+                })
+                .filter(group -> group.stream().anyMatch(this::hasCheckOut))
+                .flatMap(List::stream)
                 .mapToLong(schedule -> Duration.between(
-                        schedule.getStartTime(),
-                        schedule.getEndTime()
-                ).toMinutes())
+                        schedule.getStartTime(), schedule.getEndTime()).toMinutes())
                 .sum();
 
         return totalMinutes / 60.0;

@@ -24,6 +24,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,6 +87,51 @@ class MonthlyScheduleSettingServiceTest {
         assertThat(setting.getMonthlyRequiredMinutes()).isEqualTo(1620);
         verify(unavailableTimeRepository).deleteAllBySetting(setting);
         verify(unavailableTimeRepository).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("근로신청 설정 저장 - 기존 설정 갱신 시 applyStartAt/applyEndAt이 시작일 00:00 / 종료일 23:59:59.999999999로 저장된다")
+    void save_ExistingSetting_NormalizesApplyPeriod() {
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .settingId(1L)
+                .organizationId(10L)
+                .year(2026)
+                .month(4)
+                .applyStartAt(LocalDateTime.of(2020, 1, 1, 0, 0))
+                .applyEndAt(LocalDateTime.of(2020, 1, 2, 0, 0))
+                .maxConcurrentWorkers(5)
+                .minWorkUnitMinutes(30)
+                .monthlyRequiredMinutes(1620)
+                .build();
+        SaveScheduleSettingRequest request = validRequest();
+
+        when(settingRepository.findByOrganizationIdAndYearAndMonth(10L, 2026, 4))
+                .thenReturn(Optional.of(setting));
+        when(scheduleRepository.findAllBySettingAndStatusCodeIn(setting, List.of(CodeType.WS01, CodeType.WS02)))
+                .thenReturn(List.of());
+
+        service.save(10L, 2026, 4, request, "99");
+
+        assertThat(setting.getApplyStartAt()).isEqualTo(LocalDate.of(2026, 4, 1).atStartOfDay());
+        assertThat(setting.getApplyEndAt()).isEqualTo(LocalDate.of(2026, 4, 10).atTime(LocalTime.MAX));
+    }
+
+    @Test
+    @DisplayName("근로신청 설정 저장 - 신규 설정 생성 시 applyStartAt/applyEndAt이 시작일 00:00 / 종료일 23:59:59.999999999로 저장된다")
+    void save_NewSetting_NormalizesApplyPeriod() {
+        SaveScheduleSettingRequest request = validRequest();
+
+        when(settingRepository.findByOrganizationIdAndYearAndMonth(10L, 2026, 4))
+                .thenReturn(Optional.empty());
+        when(settingRepository.save(any(WorkScheduleSetting.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.save(10L, 2026, 4, request, "99");
+
+        var captor = org.mockito.ArgumentCaptor.forClass(WorkScheduleSetting.class);
+        verify(settingRepository).save(captor.capture());
+        assertThat(captor.getValue().getApplyStartAt()).isEqualTo(LocalDate.of(2026, 4, 1).atStartOfDay());
+        assertThat(captor.getValue().getApplyEndAt()).isEqualTo(LocalDate.of(2026, 4, 10).atTime(LocalTime.MAX));
     }
 
     @Test

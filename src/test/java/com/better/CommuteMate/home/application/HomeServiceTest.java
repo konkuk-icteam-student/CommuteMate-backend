@@ -11,6 +11,7 @@ import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse.AttendanceStatus;
 import com.better.CommuteMate.home.controller.dto.HomeWorkTimeResponse;
+import com.better.CommuteMate.home.controller.dto.WeeklyWorkSummaryResponse;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -133,5 +136,59 @@ class HomeServiceTest {
         HomeAttendanceStatusResponse response = homeService.getAttendanceStatus(1L);
 
         assertThat(response.getStatus()).isEqualTo(AttendanceStatus.BEFORE_WORK);
+    }
+
+    @Test
+    @DisplayName("연속 슬롯 근무 - 마지막 슬롯의 퇴근 기록으로 전체 근무시간을 완료 처리한다")
+    void getWorkSummary_CheckOutOnLastSlot_CompletesEntireConsecutiveWork() {
+        User user = User.builder().userId(1L).build();
+        LocalDate today = LocalDate.now();
+        List<WorkSchedule> slots = List.of(
+                schedule(1L, user, today, 9, 0, 9, 30),
+                schedule(2L, user, today, 9, 30, 10, 0),
+                schedule(3L, user, today, 10, 0, 10, 30),
+                schedule(4L, user, today, 10, 30, 11, 0)
+        );
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                anyLong(), any(), any(), anyList())).thenReturn(slots);
+        for (WorkSchedule slot : slots) {
+            WorkAttendance checkIn = WorkAttendance.builder()
+                    .schedule(slot)
+                    .checkTypeCode(CodeType.CT01)
+                    .checkTime(today.atTime(9, 0))
+                    .build();
+            if (slot.getScheduleId().equals(4L)) {
+                WorkAttendance checkOut = WorkAttendance.builder()
+                        .schedule(slot)
+                        .checkTypeCode(CodeType.CT02)
+                        .checkTime(today.atTime(11, 0))
+                        .build();
+                when(workAttendanceRepository.findBySchedule_ScheduleId(4L))
+                        .thenReturn(List.of(checkIn, checkOut));
+            } else {
+                when(workAttendanceRepository.findBySchedule_ScheduleId(slot.getScheduleId()))
+                        .thenReturn(List.of(checkIn));
+            }
+        }
+
+        WeeklyWorkSummaryResponse response = homeService.getWorkSummary(1L);
+
+        assertThat(response.getTotalWeeklyHours()).isEqualTo(2.0);
+        assertThat(response.getCompletedWeeklyHours()).isEqualTo(2.0);
+        assertThat(response.getCompletedMonthlyHours()).isEqualTo(2.0);
+    }
+
+    private WorkSchedule schedule(Long id, User user, LocalDate date,
+                                  int startHour, int startMinute, int endHour, int endMinute) {
+        return WorkSchedule.builder()
+                .scheduleId(id)
+                .user(user)
+                .date(date)
+                .startTime(LocalTime.of(startHour, startMinute))
+                .endTime(LocalTime.of(endHour, endMinute))
+                .statusCode(CodeType.WS02)
+                .build();
     }
 }
