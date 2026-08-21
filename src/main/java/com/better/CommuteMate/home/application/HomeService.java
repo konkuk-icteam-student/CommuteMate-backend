@@ -11,6 +11,7 @@ import com.better.CommuteMate.global.exceptions.error.GlobalErrorCode;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.AttendanceErrorCode;
+import com.better.CommuteMate.global.util.DisplayTimeZoneUtils;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse.AttendanceStatus;
 import com.better.CommuteMate.home.controller.dto.HomeCheckInResponse;
@@ -144,7 +145,10 @@ public class HomeService {
 
         return HomeCheckInResponse.builder()
                 .scheduleIds(scheduleIds)
-                .checkInTime(now)
+                // [임시] 전역 타임존(UTC) 미해결로 인한 출력 KST 보정. 전역 타임존 KST 전환 시 제거할 것.
+                // 주의: 위 WorkAttendance 저장(checkTime)과 지각 판정(lateThreshold)은 now(UTC)를
+                // 그대로 써야 한다 — 이 응답 지점에서만 보정해서 넣는다.
+                .checkInTime(DisplayTimeZoneUtils.toKstForDisplay(now))
                 .build();
     }
 

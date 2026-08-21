@@ -4,6 +4,7 @@ import com.better.CommuteMate.domain.notification.entity.Notification;
 import com.better.CommuteMate.domain.notification.entity.NotificationCheckState;
 import com.better.CommuteMate.domain.notification.repository.NotificationCheckStateRepository;
 import com.better.CommuteMate.domain.notification.repository.NotificationRepository;
+import com.better.CommuteMate.global.util.DisplayTimeZoneUtils;
 import com.better.CommuteMate.notification.controller.dtos.CheckNotificationResponse;
 import com.better.CommuteMate.notification.controller.dtos.NewNotificationResponse;
 import com.better.CommuteMate.notification.controller.dtos.NotificationListResponse;
@@ -79,7 +80,8 @@ public class NotificationService {
                 notification.getTitle(),
                 notification.getContent(),
                 notification.getRefId(),
-                notification.getCreatedAt(),
+                // [임시] 전역 타임존(UTC) 미해결로 인한 출력 KST 보정. 전역 타임존 KST 전환 시 제거할 것.
+                DisplayTimeZoneUtils.toKstForDisplay(notification.getCreatedAt()),
                 isNew
         );
     }

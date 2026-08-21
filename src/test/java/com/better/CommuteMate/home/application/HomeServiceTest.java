@@ -10,12 +10,14 @@ import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse.AttendanceStatus;
+import com.better.CommuteMate.home.controller.dto.HomeCheckInResponse;
 import com.better.CommuteMate.home.controller.dto.HomeWorkTimeResponse;
 import com.better.CommuteMate.home.controller.dto.WeeklyWorkSummaryResponse;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -178,6 +181,41 @@ class HomeServiceTest {
         assertThat(response.getTotalWeeklyHours()).isEqualTo(2.0);
         assertThat(response.getCompletedWeeklyHours()).isEqualTo(2.0);
         assertThat(response.getCompletedMonthlyHours()).isEqualTo(2.0);
+    }
+
+    @Test
+    @DisplayName("체크인 응답의 checkInTime은 KST(+9h)로 보정되지만, 저장되는 WorkAttendance.checkTime과 지각 판정은 UTC(now()) 그대로다")
+    void checkIn_appliesKstOffsetOnlyToResponseCheckInTime() {
+        User user = User.builder().userId(1L).build();
+        LocalDateTime beforeCall = LocalDateTime.now();
+        WorkSchedule schedule = WorkSchedule.builder()
+                .scheduleId(1L)
+                .user(user)
+                .date(beforeCall.toLocalDate())
+                .startTime(beforeCall.toLocalTime())
+                .endTime(beforeCall.toLocalTime().plusHours(1))
+                .statusCode(CodeType.WS02)
+                .build();
+
+        when(workSchedulesRepository.findAllById(List.of(1L)))
+                .thenReturn(new java.util.ArrayList<>(List.of(schedule)));
+        when(workAttendanceRepository.findAllByScheduleIn(List.of(schedule))).thenReturn(List.of());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(workAttendanceRepository.saveAll(anyList()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        HomeCheckInResponse response = homeService.checkIn(1L, List.of(1L));
+        LocalDateTime afterCall = LocalDateTime.now();
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<WorkAttendance>> captor = ArgumentCaptor.forClass(List.class);
+        verify(workAttendanceRepository).saveAll(captor.capture());
+        LocalDateTime storedCheckTime = captor.getValue().get(0).getCheckTime();
+
+        // 저장값(checkTime)은 now()(UTC) 그대로 — 보정되지 않아야 한다
+        assertThat(storedCheckTime).isBetween(beforeCall, afterCall);
+        // 응답의 checkInTime만 저장값보다 정확히 9시간 앞서 있어야 한다(보정)
+        assertThat(response.getCheckInTime()).isEqualTo(storedCheckTime.plusHours(9));
     }
 
     private WorkSchedule schedule(Long id, User user, LocalDate date,

@@ -19,6 +19,7 @@ import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequ
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.AdminWorkerErrorCode;
+import com.better.CommuteMate.global.util.DisplayTimeZoneUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -122,7 +123,8 @@ public class AdminWorkerService {
                 changeRequestRepository.countByUser_UserId(userId),
                 changeRequestRepository.countByUser_UserIdAndStatusCode(userId, CodeType.CS02),
                 submittedMinutes(monthlySchedules),
-                scheduleRepository.findLastAppliedCreatedAtByUserId(userId)
+                // [임시] 전역 타임존(UTC) 미해결로 인한 출력 KST 보정. 전역 타임존 KST 전환 시 제거할 것.
+                DisplayTimeZoneUtils.toKstForDisplay(scheduleRepository.findLastAppliedCreatedAtByUserId(userId))
         );
     }
 
