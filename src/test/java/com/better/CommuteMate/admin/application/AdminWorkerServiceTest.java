@@ -143,14 +143,16 @@ class AdminWorkerServiceTest {
     }
 
     @Test
-    void lastRequestedAt_mapsRepositoryValueIntoResponse() {
+    void lastRequestedAt_mapsRepositoryValueIntoResponseWithKstDisplayOffset() {
         stubCommon(sampleUser(), null, 2026, 7, List.of());
         LocalDateTime lastApplied = LocalDateTime.of(2026, 7, 10, 13, 0);
         when(scheduleRepository.findLastAppliedCreatedAtByUserId(USER_ID)).thenReturn(lastApplied);
 
         AdminWorkerDetailResponse response = service.getWorker(ORG_ID, USER_ID, "2026-07-15");
 
-        assertThat(response.lastRequestedAt).isEqualTo(lastApplied);
+        // [임시] 출력 KST 보정(+9h) 적용 확인. 전역 타임존 KST 전환 시 이 보정이 제거되면
+        // 아래 기대값도 lastApplied로 되돌려야 한다.
+        assertThat(response.lastRequestedAt).isEqualTo(lastApplied.plusHours(9));
     }
 
     @Test
