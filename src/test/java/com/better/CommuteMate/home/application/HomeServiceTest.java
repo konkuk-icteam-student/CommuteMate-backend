@@ -120,13 +120,14 @@ class HomeServiceTest {
     @DisplayName("출퇴근 상태 조회 - 출근 전 (10분 이상 남음)")
     void getAttendanceStatus_BeforeWork() {
         User user = User.builder().userId(1L).build();
+        // 자정 근처(now)에 offset을 더해도 자정을 넘지 않도록 30~90분 이내로 최소화한다.
         LocalDateTime now = LocalDateTime.now();
-        // Starts in 1 hour
+        // Starts in 30 minutes
         WorkSchedule schedule = WorkSchedule.builder()
                 .scheduleId(1L)
                 .date(now.toLocalDate())
-                .startTime(now.plusHours(1).toLocalTime())
-                .endTime(now.plusHours(4).toLocalTime())
+                .startTime(now.plusMinutes(30).toLocalTime())
+                .endTime(now.plusMinutes(90).toLocalTime())
                 .statusCode(CodeType.WS02)
                 .build();
 

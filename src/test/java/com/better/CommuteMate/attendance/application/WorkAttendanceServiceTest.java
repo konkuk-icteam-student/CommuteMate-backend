@@ -81,12 +81,13 @@ class WorkAttendanceServiceTest {
     @DisplayName("출근 체크 - 근무 시간 아님 (1시간 전)")
     void checkIn_NotWorkTime() {
         // Given
+        // 자정 근처(now)에 offset을 더해도 자정을 넘지 않도록 30~90분 이내로 최소화한다.
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
                 .scheduleId(1L)
                 .date(now.toLocalDate())
-                .startTime(now.plusHours(1).toLocalTime()) // 1 hour later
-                .endTime(now.plusHours(4).toLocalTime())
+                .startTime(now.plusMinutes(30).toLocalTime()) // 30분 후 시작
+                .endTime(now.plusMinutes(90).toLocalTime())
                 .statusCode(CodeType.WS02)
                 .build();
 
@@ -105,15 +106,16 @@ class WorkAttendanceServiceTest {
     @DisplayName("출근 체크 - 이미 출근함 예외")
     void checkIn_AlreadyCheckedIn() {
         // Given
+        // 자정 근처(now)에 offset을 더해도 자정을 넘지 않도록 종료 offset을 최소화한다.
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
                 .scheduleId(1L)
                 .date(now.toLocalDate())
                 .startTime(now.minusMinutes(5).toLocalTime()) // Started 5 mins ago
-                .endTime(now.plusHours(3).toLocalTime())
+                .endTime(now.plusMinutes(25).toLocalTime())
                 .statusCode(CodeType.WS02)
                 .build();
-        
+
         WorkAttendance existing = WorkAttendance.builder()
                 .checkTypeCode(CodeType.CT01)
                 .build();
@@ -134,12 +136,13 @@ class WorkAttendanceServiceTest {
     @DisplayName("출근 체크 - 성공")
     void checkIn_Success() {
         // Given
+        // 자정 근처(now)에 offset을 더해도 자정을 넘지 않도록 종료 offset을 최소화한다.
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
                 .scheduleId(1L)
                 .date(now.toLocalDate())
                 .startTime(now.minusMinutes(5).toLocalTime())
-                .endTime(now.plusHours(3).toLocalTime())
+                .endTime(now.plusMinutes(25).toLocalTime())
                 .statusCode(CodeType.WS02)
                 .build();
 
@@ -160,11 +163,12 @@ class WorkAttendanceServiceTest {
     @DisplayName("퇴근 체크 - 출근 안함 예외")
     void checkOut_NotCheckedIn() {
         // Given
+        // 자정 근처(now)에 offset을 빼도 자정을 넘지 않도록 시작 offset을 최소화한다.
         LocalDateTime now = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
                 .scheduleId(1L)
                 .date(now.toLocalDate())
-                .startTime(now.minusHours(3).toLocalTime())
+                .startTime(now.minusMinutes(40).toLocalTime())
                 .endTime(now.minusMinutes(1).toLocalTime())
                 .statusCode(CodeType.WS02)
                 .build();
