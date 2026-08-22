@@ -200,6 +200,67 @@ class AdminTodoServiceTest {
                 .isInstanceOf(CustomException.class);
     }
 
+    @Test
+    void completedTime_appliesKstDisplayOffsetUsingCompletionDate() {
+        LocalDate date = LocalDate.of(2026, 4, 15);
+        Todo todo = todo(1L, "신문지 가져오기", LocalTime.of(9, 0), 10L, 7L);
+        TodoCompletion completion = completion(todo, date, "홍길동"); // 저장값: completedTime = 09:13(UTC)
+        when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
+                .thenReturn(List.of(todo));
+        when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
+                .thenReturn(List.of(completion));
+        when(userRepository.findAllById(List.of(7L))).thenReturn(List.of());
+
+        var response = service.getTodos(10L, "2026-04-15");
+
+        // [임시] 출력 KST 보정(+9h) 확인. 전역 타임존 KST 전환 시 이 보정이 제거되면
+        // 기대값도 09:13로 되돌려야 한다.
+        assertThat(response.morningTodos).singleElement()
+                .extracting(item -> item.completedTime())
+                .isEqualTo(LocalTime.of(18, 13));
+        // 저장값(엔티티)은 그대로여야 한다 — 응답 출력만 보정.
+        assertThat(completion.getCompletedTime()).isEqualTo(LocalTime.of(9, 13));
+    }
+
+    @Test
+    void completedTime_midnightCrossing_kstOffsetCarriesOverToNextDay() {
+        LocalDate date = LocalDate.of(2026, 4, 15);
+        Todo todo = todo(1L, "야간 업무", LocalTime.of(23, 0), 10L, 7L);
+        TodoCompletion completion = TodoCompletion.builder()
+                .todo(todo).date(date).completedByName("홍길동")
+                .completedTime(LocalTime.of(23, 0)).completedBy(7L).build();
+        when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
+                .thenReturn(List.of(todo));
+        when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
+                .thenReturn(List.of(completion));
+        when(userRepository.findAllById(List.of(7L))).thenReturn(List.of());
+
+        var response = service.getTodos(10L, "2026-04-15");
+
+        // UTC 23:00(completion_date=D) + 9h = KST 익일 08:00 -> 응답엔 시각(08:00)만 노출됨.
+        // completion_date 자체는 응답에 포함되지 않으므로(top-level date는 조회 파라미터) 날짜 불일치 영향 없음.
+        assertThat(response.afternoonTodos).singleElement()
+                .extracting(item -> item.completedTime())
+                .isEqualTo(LocalTime.of(8, 0));
+    }
+
+    @Test
+    void completedTime_nullWhenNotCompleted() {
+        LocalDate date = LocalDate.of(2026, 4, 15);
+        Todo todo = todo(1L, "커피머신 청소", LocalTime.of(9, 0), 10L, 7L);
+        when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
+                .thenReturn(List.of(todo));
+        when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
+                .thenReturn(List.of());
+        when(userRepository.findAllById(List.of(7L))).thenReturn(List.of());
+
+        var response = service.getTodos(10L, "2026-04-15");
+
+        assertThat(response.morningTodos).singleElement()
+                .extracting(item -> item.completedTime())
+                .isNull();
+    }
+
     private Todo todo(Long id, String description, LocalTime time,
             Long organizationId, Long createdBy) {
         return Todo.builder()
