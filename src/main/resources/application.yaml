@@ -73,3 +73,7 @@ openai:
   api-key: ${OPENAI_API_KEY:your-api-key}
   url: https://api.openai.com/v1/chat/completions
   embedding-url: https://api.openai.com/v1/embeddings
+rag-service:
+  url: ${RAG_SERVICE_URL:http://203.252.168.117:8000}
+  timeout-ms: 10000
+  llm-timeout-ms: 120000
