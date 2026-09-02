@@ -12,6 +12,7 @@ import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse;
 import com.better.CommuteMate.home.controller.dto.HomeAttendanceStatusResponse.AttendanceStatus;
 import com.better.CommuteMate.home.controller.dto.HomeCheckInResponse;
 import com.better.CommuteMate.home.controller.dto.HomeWorkTimeResponse;
+import com.better.CommuteMate.home.controller.dto.TodayScheduleResponse;
 import com.better.CommuteMate.home.controller.dto.WeeklyWorkSummaryResponse;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -217,6 +218,32 @@ class HomeServiceTest {
         assertThat(storedCheckTime).isBetween(beforeCall, afterCall);
         // 응답의 checkInTime만 저장값보다 정확히 9시간 앞서 있어야 한다(보정)
         assertThat(response.getCheckInTime()).isEqualTo(storedCheckTime.plusHours(9));
+    }
+
+    @Test
+    @DisplayName("오늘 일정 조회의 checkInTime은 저장된 UTC 출근 시각보다 9시간 보정된다")
+    void getTodaySchedules_appliesKstOffsetToCheckInTime() {
+        User user = User.builder().userId(1L).build();
+        LocalDate today = LocalDate.now();
+        WorkSchedule schedule = schedule(1L, user, today, 9, 0, 9, 30);
+        LocalDateTime storedCheckInTime = today.atTime(0, 2);
+        WorkAttendance checkIn = WorkAttendance.builder()
+                .schedule(schedule)
+                .checkTypeCode(CodeType.CT01)
+                .checkTime(storedCheckInTime)
+                .build();
+
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                anyLong(), any(), any(), anyList()))
+                .thenReturn(new java.util.ArrayList<>(List.of(schedule)));
+        when(workAttendanceRepository.findAllByScheduleIn(anyList()))
+                .thenReturn(List.of(checkIn));
+
+        TodayScheduleResponse response = homeService.getTodaySchedules(1L);
+
+        assertThat(response.getSchedules()).hasSize(1);
+        assertThat(response.getSchedules().get(0).getCheckInTime())
+                .isEqualTo(storedCheckInTime.plusHours(9));
     }
 
     private WorkSchedule schedule(Long id, User user, LocalDate date,

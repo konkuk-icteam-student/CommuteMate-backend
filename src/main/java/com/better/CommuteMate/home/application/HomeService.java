@@ -89,7 +89,11 @@ public class HomeService {
                             .workStatusCode(resolveWorkStatusCode(
                                     today, first.getStartTime(), last.getEndTime(), checkedIn, now))
                             .checkedIn(checkedIn)
-                            .checkInTime(checkedIn ? earliest.get().getCheckTime() : null)
+                            // [임시] 저장된 출근 시각은 UTC이므로 화면 표시 응답에서만 KST로 보정한다.
+                            // 전역 타임존을 KST로 전환할 때 이 보정은 제거해야 한다.
+                            .checkInTime(checkedIn
+                                    ? DisplayTimeZoneUtils.toKstForDisplay(earliest.get().getCheckTime())
+                                    : null)
                             .build();
                 })
                 .toList();
