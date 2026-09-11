@@ -159,6 +159,47 @@ class AdminTodoServiceTest {
     }
 
     @Test
+    void checkTodo_createsCompletion_truncatesNanosToZero() {
+        LocalDate date = LocalDate.of(2026, 4, 15);
+        Todo todo = todo(1L, "커피머신 청소", LocalTime.of(9, 0), 10L, 7L);
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(todo));
+        when(todoCompletionRepository.findByTodo_TodoIdAndDate(1L, date))
+                .thenReturn(Optional.empty());
+        when(todoCompletionRepository.save(any(TodoCompletion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
+                .thenReturn(List.of(todo));
+        when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
+                .thenReturn(List.of());
+
+        service.checkTodo(1L, "2026-04-15", true, 7L, 10L, "홍길동");
+
+        ArgumentCaptor<TodoCompletion> captor = ArgumentCaptor.forClass(TodoCompletion.class);
+        verify(todoCompletionRepository).save(captor.capture());
+        assertThat(captor.getValue().getCompletedTime().getNano()).isZero();
+    }
+
+    @Test
+    void checkTodo_updatesExistingCompletion_truncatesNanosToZero() {
+        LocalDate date = LocalDate.of(2026, 4, 15);
+        Todo todo = todo(1L, "커피머신 청소", LocalTime.of(9, 0), 10L, 7L);
+        TodoCompletion existing = completion(todo, date, "김철수");
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(todo));
+        when(todoCompletionRepository.findByTodo_TodoIdAndDate(1L, date))
+                .thenReturn(Optional.of(existing));
+        when(todoCompletionRepository.save(any(TodoCompletion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
+                .thenReturn(List.of(todo));
+        when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
+                .thenReturn(List.of(existing));
+
+        service.checkTodo(1L, "2026-04-15", true, 7L, 10L, "홍길동");
+
+        assertThat(existing.getCompletedTime().getNano()).isZero();
+    }
+
+    @Test
     void uncompletesTodoOnlyForRequestedDate() {
         LocalDate date = LocalDate.of(2026, 4, 15);
         Todo todo = todo(1L, "커피머신 청소", LocalTime.of(9, 0), 10L, 7L);
@@ -201,10 +242,10 @@ class AdminTodoServiceTest {
     }
 
     @Test
-    void completedTime_appliesKstDisplayOffsetUsingCompletionDate() {
+    void completedTime_returnsRawStoredValueWithoutOffset() {
         LocalDate date = LocalDate.of(2026, 4, 15);
         Todo todo = todo(1L, "신문지 가져오기", LocalTime.of(9, 0), 10L, 7L);
-        TodoCompletion completion = completion(todo, date, "홍길동"); // 저장값: completedTime = 09:13(UTC)
+        TodoCompletion completion = completion(todo, date, "홍길동"); // 저장값: completedTime = 09:13
         when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
                 .thenReturn(List.of(todo));
         when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
@@ -213,17 +254,15 @@ class AdminTodoServiceTest {
 
         var response = service.getTodos(10L, "2026-04-15");
 
-        // [임시] 출력 KST 보정(+9h) 확인. 전역 타임존 KST 전환 시 이 보정이 제거되면
-        // 기대값도 09:13로 되돌려야 한다.
+        // 응답의 completedTime은 저장값과 동일해야 한다(보정 없음).
         assertThat(response.morningTodos).singleElement()
                 .extracting(item -> item.completedTime())
-                .isEqualTo(LocalTime.of(18, 13));
-        // 저장값(엔티티)은 그대로여야 한다 — 응답 출력만 보정.
+                .isEqualTo(LocalTime.of(9, 13));
         assertThat(completion.getCompletedTime()).isEqualTo(LocalTime.of(9, 13));
     }
 
     @Test
-    void completedTime_midnightCrossing_kstOffsetCarriesOverToNextDay() {
+    void completedTime_nearMidnight_returnsRawValueWithoutCarryingOverToNextDay() {
         LocalDate date = LocalDate.of(2026, 4, 15);
         Todo todo = todo(1L, "야간 업무", LocalTime.of(23, 0), 10L, 7L);
         TodoCompletion completion = TodoCompletion.builder()
@@ -237,11 +276,10 @@ class AdminTodoServiceTest {
 
         var response = service.getTodos(10L, "2026-04-15");
 
-        // UTC 23:00(completion_date=D) + 9h = KST 익일 08:00 -> 응답엔 시각(08:00)만 노출됨.
-        // completion_date 자체는 응답에 포함되지 않으므로(top-level date는 조회 파라미터) 날짜 불일치 영향 없음.
+        // 보정이 없으므로 23:00 저장값은 그대로 23:00으로 노출되어야 한다(익일로 넘어가지 않음).
         assertThat(response.afternoonTodos).singleElement()
                 .extracting(item -> item.completedTime())
-                .isEqualTo(LocalTime.of(8, 0));
+                .isEqualTo(LocalTime.of(23, 0));
     }
 
     @Test
