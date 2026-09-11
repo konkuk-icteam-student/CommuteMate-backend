@@ -33,7 +33,7 @@ class NotificationServiceTest {
     }
 
     @Test
-    void getNotifications_returnsCreatedAtWithKstDisplayOffset() {
+    void getNotifications_returnsCreatedAtWithoutOffset() {
         LocalDateTime storedCreatedAt = LocalDateTime.of(2026, 3, 20, 16, 21);
         Notification notification = Notification.builder()
                 .notificationId(1L)
@@ -48,11 +48,9 @@ class NotificationServiceTest {
 
         NotificationListResponse response = service.getNotifications(7L);
 
-        // [임시] 출력 KST 보정(+9h) 확인. 전역 타임존 KST 전환 시 이 보정이 제거되면
-        // 기대값도 storedCreatedAt으로 되돌려야 한다.
         assertThat(response.notifications).singleElement()
                 .extracting(NotificationListResponse.NotificationItem::createdAt)
-                .isEqualTo(storedCreatedAt.plusHours(9));
+                .isEqualTo(storedCreatedAt);
     }
 
     @Test
