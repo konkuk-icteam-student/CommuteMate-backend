@@ -159,6 +159,47 @@ class AdminTodoServiceTest {
     }
 
     @Test
+    void checkTodo_createsCompletion_truncatesNanosToZero() {
+        LocalDate date = LocalDate.of(2026, 4, 15);
+        Todo todo = todo(1L, "커피머신 청소", LocalTime.of(9, 0), 10L, 7L);
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(todo));
+        when(todoCompletionRepository.findByTodo_TodoIdAndDate(1L, date))
+                .thenReturn(Optional.empty());
+        when(todoCompletionRepository.save(any(TodoCompletion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
+                .thenReturn(List.of(todo));
+        when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
+                .thenReturn(List.of());
+
+        service.checkTodo(1L, "2026-04-15", true, 7L, 10L, "홍길동");
+
+        ArgumentCaptor<TodoCompletion> captor = ArgumentCaptor.forClass(TodoCompletion.class);
+        verify(todoCompletionRepository).save(captor.capture());
+        assertThat(captor.getValue().getCompletedTime().getNano()).isZero();
+    }
+
+    @Test
+    void checkTodo_updatesExistingCompletion_truncatesNanosToZero() {
+        LocalDate date = LocalDate.of(2026, 4, 15);
+        Todo todo = todo(1L, "커피머신 청소", LocalTime.of(9, 0), 10L, 7L);
+        TodoCompletion existing = completion(todo, date, "김철수");
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(todo));
+        when(todoCompletionRepository.findByTodo_TodoIdAndDate(1L, date))
+                .thenReturn(Optional.of(existing));
+        when(todoCompletionRepository.save(any(TodoCompletion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
+                .thenReturn(List.of(todo));
+        when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
+                .thenReturn(List.of(existing));
+
+        service.checkTodo(1L, "2026-04-15", true, 7L, 10L, "홍길동");
+
+        assertThat(existing.getCompletedTime().getNano()).isZero();
+    }
+
+    @Test
     void uncompletesTodoOnlyForRequestedDate() {
         LocalDate date = LocalDate.of(2026, 4, 15);
         Todo todo = todo(1L, "커피머신 청소", LocalTime.of(9, 0), 10L, 7L);

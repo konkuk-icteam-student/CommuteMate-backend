@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -114,16 +115,17 @@ public class AdminTodoService {
                 .orElse(null);
 
         if (Boolean.TRUE.equals(isCompleted)) {
+            LocalTime completedNow = LocalTime.now().truncatedTo(ChronoUnit.SECONDS);
             if (completion == null) {
                 completion = TodoCompletion.builder()
                         .todo(todo)
                         .date(date)
                         .completedByName(userName)
-                        .completedTime(LocalTime.now())
+                        .completedTime(completedNow)
                         .completedBy(userId)
                         .build();
             } else {
-                completion.update(userName, LocalTime.now(), userId);
+                completion.update(userName, completedNow, userId);
             }
             completion = todoCompletionRepository.save(completion);
         } else {
