@@ -186,8 +186,8 @@ class HomeServiceTest {
     }
 
     @Test
-    @DisplayName("체크인 응답의 checkInTime은 KST(+9h)로 보정되지만, 저장되는 WorkAttendance.checkTime과 지각 판정은 UTC(now()) 그대로다")
-    void checkIn_appliesKstOffsetOnlyToResponseCheckInTime() {
+    @DisplayName("체크인 응답의 checkInTime은 저장되는 WorkAttendance.checkTime과 동일한 now() 원본 값이다")
+    void checkIn_returnsRawCheckTimeWithoutOffset() {
         User user = User.builder().userId(1L).build();
         LocalDateTime beforeCall = LocalDateTime.now();
         WorkSchedule schedule = WorkSchedule.builder()
@@ -214,15 +214,15 @@ class HomeServiceTest {
         verify(workAttendanceRepository).saveAll(captor.capture());
         LocalDateTime storedCheckTime = captor.getValue().get(0).getCheckTime();
 
-        // 저장값(checkTime)은 now()(UTC) 그대로 — 보정되지 않아야 한다
+        // 저장값(checkTime)은 now() 그대로다
         assertThat(storedCheckTime).isBetween(beforeCall, afterCall);
-        // 응답의 checkInTime만 저장값보다 정확히 9시간 앞서 있어야 한다(보정)
-        assertThat(response.getCheckInTime()).isEqualTo(storedCheckTime.plusHours(9));
+        // 응답의 checkInTime도 저장값과 동일해야 한다(보정 없음)
+        assertThat(response.getCheckInTime()).isEqualTo(storedCheckTime);
     }
 
     @Test
-    @DisplayName("오늘 일정 조회의 checkInTime은 저장된 UTC 출근 시각보다 9시간 보정된다")
-    void getTodaySchedules_appliesKstOffsetToCheckInTime() {
+    @DisplayName("오늘 일정 조회의 checkInTime은 저장된 출근 시각 원본 그대로다")
+    void getTodaySchedules_returnsRawCheckInTime() {
         User user = User.builder().userId(1L).build();
         LocalDate today = LocalDate.now();
         WorkSchedule schedule = schedule(1L, user, today, 9, 0, 9, 30);
@@ -243,7 +243,7 @@ class HomeServiceTest {
 
         assertThat(response.getSchedules()).hasSize(1);
         assertThat(response.getSchedules().get(0).getCheckInTime())
-                .isEqualTo(storedCheckInTime.plusHours(9));
+                .isEqualTo(storedCheckInTime);
     }
 
     private WorkSchedule schedule(Long id, User user, LocalDate date,
