@@ -45,48 +45,12 @@
 ---
 
 ## 2. Attendance Module (`attendance`)
-QR 코드를 이용한 출퇴근 인증 및 이력 관리를 담당합니다.
 
-### 2.1 QR 토큰 발급 (Admin)
-- **Endpoint**: `GET /api/attendance/qr-token`
-- **설명**: 관리자 태블릿 등에서 띄울 QR 코드용 토큰을 생성합니다.
-- **특이사항**: 토큰은 60초간 유효합니다 (`validSeconds`).
-- **사용 시나리오**: 공용 태블릿 화면에서 1분마다 QR 코드를 갱신.
+출근은 학생 권한으로 POST /api/v1/home/check-in을 호출합니다.
+요청 본문은 {"scheduleIds": [1]}이며 GET /api/v1/home/today에서 받은 ID 목록을 사용합니다.
+출근 저장 확정 후 기관별 네이트온 알림이 전송됩니다.
 
-### 2.2 출근 체크 (User)
-- **Endpoint**: `POST /api/attendance/check-in`
-- **Body**: `{ "qrToken": "..." }`
-- **로직**:
-  1. 토큰 유효성 검증 (Redis/Memory 등).
-  2. 사용자의 오늘 스케줄 조회.
-  3. **Check-In 가능 시간 검증**: `now`가 `schedule.start - 10분` ~ `schedule.end` 사이여야 함.
-  4. 중복 체크인 검증 (`ALREADY_CHECKED_IN`).
-  5. `WorkAttendance` 생성 (타입 `CT01`).
-- **Edge Cases**:
-  - **QR 만료**: `INVALID_QR_TOKEN` 예외.
-  - **너무 이른 출근**: 스케줄 시작 10분 전보다 이르면 체크인 불가 (`NOT_WORK_TIME`).
-  - **스케줄 없음**: `NO_SCHEDULE_FOUND`.
-
-### 2.3 퇴근 체크 (User)
-- **Endpoint**: `POST /api/attendance/check-out`
-- **Body**: `{ "qrToken": "..." }`
-- **로직**:
-  1. 토큰 검증.
-  2. **Check-Out 가능 시간 검증**: `now`가 `schedule.end - 5분` ~ `schedule.end + 1시간` 사이여야 함.
-  3. **선행 조건**: 해당 스케줄에 `Check-In` 기록이 반드시 있어야 함 (`CHECK_IN_REQUIRED`).
-  4. 중복 체크아웃 검증.
-  5. `WorkAttendance` 생성 (타입 `CT02`).
-- **Edge Cases**:
-  - **출근 안하고 퇴근 시도**: 예외 발생.
-  - **너무 이른 퇴근**: 종료 5분 전보다 이르면 퇴근 불가.
-  - **너무 늦은 퇴근**: 종료 후 1시간 지나면 퇴근 불가 (자동 퇴근 처리 로직 필요 시 배치로 처리, 현재 API로는 불가).
-
-### 2.4 출퇴근 이력 조회 (User)
-- **Endpoint (오늘)**: `GET /api/attendance/today`
-  - 오늘 날짜의 출퇴근 이력 리스트 조회.
-- **Endpoint (특정일)**: `GET /api/attendance/history?date={yyyy-MM-dd}`
-  - 특정 날짜의 출퇴근 이력 리스트 조회.
-- **사용 시나리오**: 사용자 화면에서 내가 오늘 언제 찍었는지 확인용.
+출퇴근 기록은 GET /api/attendance/today 또는 GET /api/attendance/history?date=YYYY-MM-DD로 조회합니다.
 
 ---
 

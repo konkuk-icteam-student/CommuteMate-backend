@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum AttendanceErrorCode implements CustomErrorCode {
-    INVALID_QR_TOKEN(HttpStatus.BAD_REQUEST, "유효하지 않거나 만료된 QR 토큰입니다."),
     NOT_WORK_TIME(HttpStatus.BAD_REQUEST, "출퇴근 가능한 시간이 아닙니다."),
     NO_SCHEDULE_FOUND(HttpStatus.NOT_FOUND, "오늘 예정된 근무 일정이 없습니다."),
     ALREADY_CHECKED_IN(HttpStatus.CONFLICT, "이미 출근 처리된 근무입니다."),
