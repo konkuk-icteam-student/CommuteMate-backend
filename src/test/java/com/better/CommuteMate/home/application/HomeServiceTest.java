@@ -1,5 +1,8 @@
 package com.better.CommuteMate.home.application;
 
+import com.better.CommuteMate.attendance.application.CheckInCompleted;
+import org.springframework.context.ApplicationEventPublisher;
+
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.user.entity.User;
@@ -40,6 +43,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class HomeServiceTest {
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Mock
     private WorkSchedulesRepository workSchedulesRepository;
@@ -186,7 +191,7 @@ class HomeServiceTest {
     }
 
     @Test
-    @DisplayName("체크인 응답의 checkInTime은 저장되는 WorkAttendance.checkTime과 동일한 now() 원본 값이다")
+    @DisplayName("홈 출근 성공 시 저장 시각을 반환하고 같은 시각의 알림 이벤트를 한 번 발행한다")
     void checkIn_returnsRawCheckTimeWithoutOffset() {
         User user = User.builder().userId(1L).build();
         LocalDateTime beforeCall = LocalDateTime.now();
@@ -218,6 +223,8 @@ class HomeServiceTest {
         assertThat(storedCheckTime).isBetween(beforeCall, afterCall);
         // 응답의 checkInTime도 저장값과 동일해야 한다(보정 없음)
         assertThat(response.getCheckInTime()).isEqualTo(storedCheckTime);
+        verify(eventPublisher).publishEvent(new CheckInCompleted(
+                user.getOrganizationId(), user.getName(), storedCheckTime));
     }
 
     @Test
@@ -256,5 +263,44 @@ class HomeServiceTest {
                 .endTime(LocalTime.of(endHour, endMinute))
                 .statusCode(CodeType.WS02)
                 .build();
+    }
+    @Test
+    @DisplayName("홈 출근 - 연속 슬롯 여러 개를 저장해도 기관과 학생 정보로 알림을 한 번 발행")
+    void checkIn_publishesOneNotificationForMultipleSlots() {
+        User student = User.builder().userId(1L).organizationId(17L).name("홍길동").build();
+        LocalDate today = LocalDate.now();
+        WorkSchedule first = WorkSchedule.builder().scheduleId(1L).user(student).date(today)
+                .startTime(LocalTime.of(23, 50)).endTime(LocalTime.of(23, 55))
+                .statusCode(CodeType.WS02).build();
+        WorkSchedule second = WorkSchedule.builder().scheduleId(2L).user(student).date(today)
+                .startTime(LocalTime.of(23, 55)).endTime(LocalTime.of(23, 59))
+                .statusCode(CodeType.WS02).build();
+        when(workSchedulesRepository.findAllById(List.of(1L, 2L)))
+                .thenReturn(new java.util.ArrayList<>(List.of(first, second)));
+        when(workAttendanceRepository.findAllByScheduleIn(anyList())).thenReturn(List.of());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(student));
+
+        HomeCheckInResponse response = homeService.checkIn(1L, List.of(1L, 2L));
+
+        verify(eventPublisher).publishEvent(new CheckInCompleted(17L, "홍길동", response.getCheckInTime()));
+        org.mockito.Mockito.verifyNoMoreInteractions(eventPublisher);
+        verify(workAttendanceRepository).saveAll(org.mockito.ArgumentMatchers.argThat(
+                records -> java.util.stream.StreamSupport.stream(records.spliterator(), false).count() == 2));
+    }
+
+    @Test
+    @DisplayName("홈 출근 - 이미 출근한 일정이면 알림 이벤트를 발행하지 않음")
+    void checkIn_doesNotNotifyOnDuplicate() {
+        User student = User.builder().userId(1L).build();
+        WorkSchedule schedule = WorkSchedule.builder().scheduleId(1L).user(student).date(LocalDate.now())
+                .startTime(LocalTime.NOON).endTime(LocalTime.of(12, 30)).statusCode(CodeType.WS02).build();
+        when(workSchedulesRepository.findAllById(List.of(1L)))
+                .thenReturn(new java.util.ArrayList<>(List.of(schedule)));
+        when(workAttendanceRepository.findAllByScheduleIn(anyList()))
+                .thenReturn(List.of(WorkAttendance.builder().checkTypeCode(CodeType.CT01).build()));
+
+        assertThatThrownBy(() -> homeService.checkIn(1L, List.of(1L))).isInstanceOf(CustomException.class);
+        org.mockito.Mockito.verifyNoInteractions(eventPublisher);
+        verify(workAttendanceRepository, org.mockito.Mockito.never()).saveAll(anyList());
     }
 }

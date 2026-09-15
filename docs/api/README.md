@@ -66,7 +66,6 @@ Authorization: Bearer <token>
 
 **인증 미필요**:
 - `/api/auth/*`: 회원가입, 로그인, 토큰 갱신 등
-- `/api/attendance/qr-token`: QR 토큰 발급 (관리자용)
 - 그 외 모든 경로: `permitAll`
 
 ※ **중요**: 선택적 인증 API의 경우, SecurityConfig에서 인증을 강제하지 않으므로 `curl`이나 테스트 도구에서는 헤더 없이 호출 가능하지만,
@@ -163,13 +162,12 @@ Authorization: Bearer <token>
 ---
 
 ### ⏰ [출퇴근 API](./attendance.md) (`/api/attendance`)
-QR 코드 기반 출퇴근 체크 API
+출퇴근 이력 조회 API. 출근은 POST /api/v1/home/check-in을 사용합니다.
 
 | 엔드포인트 | 메서드 | 설명 |
 |----------|--------|------|
-| `/qr-token` | GET | QR 토큰 발급 (관리자용) |
-| `/check-in` | POST | 출근 체크 |
-| `/check-out` | POST | 퇴근 체크 |
+
+
 | `/today` | GET | 오늘의 출퇴근 기록 조회 |
 | `/history` | GET | 특정 날짜 출퇴근 기록 조회 |
 
@@ -297,8 +295,7 @@ FAQ 관리 API (일부 엔드포인트는 구현 진행 중)
 | **로그인** | `POST /api/auth/login` | [auth.md#로그인](./auth.md#14-login) |
 | **근무 일정 신청** | `POST /api/work-schedules/apply` | [schedule.md#일정-신청](./schedule.md#211-apply-work-schedule) |
 | **나의 일정 조회** | `GET /api/work-schedules?year={year}&month={month}` | [schedule.md#일정-조회](./schedule.md#213-get-my-schedules) |
-| **출근 체크** | `POST /api/attendance/check-in` | [attendance.md#출근](./attendance.md#32-check-in) |
-| **퇴근 체크** | `POST /api/attendance/check-out` | [attendance.md#퇴근](./attendance.md#33-check-out) |
+| **출근 체크** | `POST /api/v1/home/check-in` | [attendance.md#출근](./attendance.md#홈-출근) |
 | **홈 화면 데이터** | `GET /api/home/work-summary` | [home.md#근무-요약](./home.md#53-get-work-summary) |
 | **월별 제한 설정** | `POST /api/admin/schedule/monthly-limit` | [admin.md](./admin.md) |
 

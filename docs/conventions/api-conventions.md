@@ -250,7 +250,7 @@ GET /api/work-schedules?year=2025&month=11  # 필터링 조회
 ```
 POST /api/auth/register      # 회원가입
 POST /api/work-schedules          # 일정 신청 (배치 가능)
-POST /api/attendance/check-in  # 출근 체크
+POST /api/v1/home/check-in  # 홈 출근 처리
 ```
 
 **PUT - 전체 수정**:
@@ -549,7 +549,7 @@ Content-Type: application/json
 ### 도메인별 API 문서
 - [인증 API](../api/auth.md) - JWT 인증 흐름
 - [근무 일정 API](../api/schedule.md) - 일정 신청 및 조회
-- [출퇴근 API](../api/attendance.md) - QR 체크인/체크아웃
+- [출퇴근 API](../api/attendance.md) - 홈 출근
 - [관리자 API](../api/admin.md) - 월별 제한 관리
 
 ### 관련 파일
