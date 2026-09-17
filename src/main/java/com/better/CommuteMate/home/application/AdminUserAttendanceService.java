@@ -227,8 +227,9 @@ public class AdminUserAttendanceService {
             String attendanceCode = checkIn.get().isAfter(start.plusMinutes(10))
                     ? CodeType.AT02.name()
                     : CodeType.AT01.name();
+            boolean completed = checkedOut || referenceTime.isAfter(end);
             return new ScheduleStatus(
-                    checkedOut ? CodeType.WK03.name() : CodeType.WK02.name(),
+                    completed ? CodeType.WK03.name() : CodeType.WK02.name(),
                     attendanceCode
             );
         }
