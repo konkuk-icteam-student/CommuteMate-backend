@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,5 +76,35 @@ class NotificationServiceTest {
         assertThat(response.notifications).hasSize(2);
         assertThat(response.notifications.get(0).isNew()).isTrue();
         assertThat(response.notifications.get(1).isNew()).isFalse();
+    }
+
+    @Test
+    void notify_savesSingleNotificationWithGivenFields() {
+        service.notify(7L, CodeType.NT01, "근무 시간 수정이 승인되었습니다.", "[]", "42");
+
+        var captor = org.mockito.ArgumentCaptor.forClass(Notification.class);
+        verify(notificationRepository).save(captor.capture());
+        Notification saved = captor.getValue();
+        assertThat(saved.getUserId()).isEqualTo(7L);
+        assertThat(saved.getTypeCode()).isEqualTo(CodeType.NT01);
+        assertThat(saved.getTitle()).isEqualTo("근무 시간 수정이 승인되었습니다.");
+        assertThat(saved.getContent()).isEqualTo("[]");
+        assertThat(saved.getRefId()).isEqualTo("42");
+    }
+
+    @Test
+    void notifyAll_savesOneNotificationPerUserIdViaSaveAll() {
+        service.notifyAll(
+                List.of(1L, 2L, 3L), CodeType.NT03,
+                "근무 신청이 시작되었습니다.", "2026년 4월 신청 기간", null
+        );
+
+        var captor = org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(notificationRepository).saveAll(captor.capture());
+        @SuppressWarnings("unchecked")
+        List<Notification> saved = captor.getValue();
+        assertThat(saved).hasSize(3);
+        assertThat(saved).extracting(Notification::getUserId).containsExactly(1L, 2L, 3L);
+        assertThat(saved).allMatch(n -> n.getTypeCode() == CodeType.NT03);
     }
 }

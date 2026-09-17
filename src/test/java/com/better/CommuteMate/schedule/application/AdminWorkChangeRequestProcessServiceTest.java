@@ -15,6 +15,8 @@ import com.better.CommuteMate.domain.workplace.entity.Workplace;
 import com.better.CommuteMate.domain.workplace.repository.WorkplaceRepository;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.notification.application.NotificationContentSerializer;
+import com.better.CommuteMate.notification.application.NotificationService;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,6 +52,8 @@ class AdminWorkChangeRequestProcessServiceTest {
     @Mock ScheduleValidator scheduleValidator;
     @Mock SimpMessagingTemplate messagingTemplate;
     @Mock WorkUnavailableTimeRepository unavailableTimeRepository;
+    @Mock NotificationService notificationService;
+    @Mock NotificationContentSerializer notificationContentSerializer;
 
     AdminWorkChangeRequestProcessService service;
 
@@ -62,7 +67,9 @@ class AdminWorkChangeRequestProcessServiceTest {
                 workplaceRepository,
                 scheduleValidator,
                 messagingTemplate,
-                unavailableTimeRepository
+                unavailableTimeRepository,
+                notificationService,
+                notificationContentSerializer
         );
     }
 
@@ -131,13 +138,20 @@ class AdminWorkChangeRequestProcessServiceTest {
                 org.mockito.ArgumentMatchers.eq("/topic/notifications/2"),
                 any(Object.class)
         );
+        // DB 알림함에도 NT01로 저장되어야 한다 (기존 WebSocket 발행은 위에서 별도 유지 확인).
+        verify(notificationService).notify(
+                eq(2L), eq(CodeType.NT01), eq("근무 시간 수정이 승인되었습니다."),
+                any(), eq("1")
+        );
     }
 
     @Test
     @DisplayName("수정 요청 거절 - 스케줄을 변경하지 않고 거절 사유를 저장한다")
     void rejectsWithoutChangingSchedules() {
         WorkChangeRequest request = pendingRequest();
+        WorkChangeRequestItem item = item(request, CodeType.CR01, null, 6, 13, 14);
         when(requestRepository.findForProcessing(1L)).thenReturn(Optional.of(request));
+        when(itemRepository.findAllByRequest_RequestId(1L)).thenReturn(List.of(item));
 
         var response = service.process(
                 1L,
@@ -150,6 +164,42 @@ class AdminWorkChangeRequestProcessServiceTest {
         assertThat(request.getRejectReason()).isEqualTo("정원 초과");
         assertThat(response.rejectReason).isEqualTo("정원 초과");
         assertThat(response.addSchedules).isNull();
+        // 반려 분기도 승인과 동일하게 items를 조회해 알림에 항목 정보를 담아야 한다 (4-a 수정 확인).
+        verify(notificationService).notify(
+                eq(2L), eq(CodeType.NT02), eq("근무 시간 수정이 거절되었습니다."),
+                any(), eq("1")
+        );
+    }
+
+    @Test
+    @DisplayName("수정 요청 거절 - 알림 콘텐츠 직렬화에 날짜/시간/소요시간/변경유형이 담긴 항목 리스트가 전달된다")
+    void rejectPassesExtractedChangeItemsToSerializer() {
+        WorkChangeRequest request = pendingRequest();
+        WorkChangeRequestItem thirtyMinItem = WorkChangeRequestItem.builder()
+                .request(request)
+                .changeTypeCode(CodeType.CR01)
+                .schedule(null)
+                .date(LocalDate.of(2026, 4, 6))
+                .startTime(LocalTime.of(13, 0))
+                .endTime(LocalTime.of(13, 30))
+                .build();
+        when(requestRepository.findForProcessing(1L)).thenReturn(Optional.of(request));
+        when(itemRepository.findAllByRequest_RequestId(1L)).thenReturn(List.of(thirtyMinItem));
+
+        service.process(1L, new ProcessWorkChangeRequest("CS03", "정원 초과"), 99L, 10L);
+
+        var captor = org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(notificationContentSerializer).serialize(captor.capture());
+        @SuppressWarnings("unchecked")
+        List<com.better.CommuteMate.notification.application.dtos.NotificationChangeItem> captured =
+                captor.getValue();
+        assertThat(captured).singleElement().satisfies(changeItem -> {
+            assertThat(changeItem.date()).isEqualTo(LocalDate.of(2026, 4, 6));
+            assertThat(changeItem.startTime()).isEqualTo(LocalTime.of(13, 0));
+            assertThat(changeItem.endTime()).isEqualTo(LocalTime.of(13, 30));
+            assertThat(changeItem.durationMinutes()).isEqualTo(30L);
+            assertThat(changeItem.changeTypeCode()).isEqualTo(CodeType.CR01);
+        });
     }
 
     @Test

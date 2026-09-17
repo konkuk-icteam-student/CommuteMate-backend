@@ -5,7 +5,9 @@ import com.better.CommuteMate.domain.schedule.entity.WorkUnavailableTime;
 import com.better.CommuteMate.domain.schedule.repository.WorkScheduleSettingRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
+import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.notification.application.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,13 +30,16 @@ class MonthlyScheduleSettingQueryTest {
     @Mock WorkScheduleSettingRepository settingRepository;
     @Mock WorkSchedulesRepository scheduleRepository;
     @Mock WorkUnavailableTimeRepository unavailableTimeRepository;
+    @Mock UserRepository userRepository;
+    @Mock NotificationService notificationService;
 
     private MonthlyScheduleSettingService service;
 
     @BeforeEach
     void setUp() {
         service = new MonthlyScheduleSettingService(
-                settingRepository, scheduleRepository, unavailableTimeRepository
+                settingRepository, scheduleRepository, unavailableTimeRepository,
+                userRepository, notificationService
         );
     }
 
