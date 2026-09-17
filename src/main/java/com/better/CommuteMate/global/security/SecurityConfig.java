@@ -47,7 +47,8 @@ public class SecurityConfig {
                 frontendUrl,
                 "http://localhost:3000",
                 "http://localhost:5173",
-                "https://commute-worklog-fe-deploy.vercel.app"
+                "https://commute-worklog-fe-deploy.vercel.app",
+                "https://commute-fe.vercel.app"
         ));
         // 환경변수로 추가 origin 설정 (쉼표로 구분)
         if (additionalOrigins != null && !additionalOrigins.isBlank()) {
