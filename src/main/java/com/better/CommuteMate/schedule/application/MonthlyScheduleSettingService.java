@@ -11,6 +11,7 @@ import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
+import com.better.CommuteMate.notification.application.NotificationContentSerializer;
 import com.better.CommuteMate.notification.application.NotificationService;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingResponse;
@@ -41,6 +42,7 @@ public class MonthlyScheduleSettingService {
     private final WorkUnavailableTimeRepository unavailableTimeRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final NotificationContentSerializer notificationContentSerializer;
 
     @Transactional(readOnly = true)
     public ScheduleSettingResponse get(Long organizationId, int year, int month) {
@@ -110,7 +112,7 @@ public class MonthlyScheduleSettingService {
                 .count();
 
         if (isNewOpen) {
-            notifyStudentsOfNewOpen(organizationId, year, month, setting, request);
+            notifyStudentsOfNewOpen(organizationId, setting);
         }
 
         return new SaveScheduleSettingResponse(
@@ -123,13 +125,7 @@ public class MonthlyScheduleSettingService {
      * 같은 월의 신규 오픈(insert)은 평생 1회만 발생한다 — 재저장(update) 시에는
      * isNewOpen이 항상 false이므로 이 메서드가 재호출되지 않는다.
      */
-    private void notifyStudentsOfNewOpen(
-            Long organizationId,
-            int year,
-            int month,
-            WorkScheduleSetting setting,
-            SaveScheduleSettingRequest request
-    ) {
+    private void notifyStudentsOfNewOpen(Long organizationId, WorkScheduleSetting setting) {
         List<Long> studentIds = userRepository
                 .findAllByOrganizationIdAndRoleCode(organizationId, CodeType.RL01)
                 .stream()
@@ -142,15 +138,12 @@ public class MonthlyScheduleSettingService {
         String refId = setting.getSettingId() != null
                 ? String.valueOf(setting.getSettingId())
                 : null;
-        String content = String.format(
-                "%d년 %d월 근무 신청 기간: %s ~ %s",
-                year, month, request.applyStartDate(), request.applyEndDate()
-        );
+        // NT03은 변경 항목이 없으므로 content는 항상 빈 배열이다 (다른 타입과 형태 통일).
         notificationService.notifyAll(
                 studentIds,
                 CodeType.NT03,
                 "근무 신청이 시작되었습니다.",
-                content,
+                notificationContentSerializer.serialize(List.of()),
                 refId
         );
     }

@@ -38,6 +38,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -139,9 +140,10 @@ class AdminWorkChangeRequestProcessServiceTest {
                 any(Object.class)
         );
         // DB 알림함에도 NT01로 저장되어야 한다 (기존 WebSocket 발행은 위에서 별도 유지 확인).
+        // 승인은 반려 사유가 없으므로 rejectReason은 null이어야 한다.
         verify(notificationService).notify(
                 eq(2L), eq(CodeType.NT01), eq("근무 시간 수정이 승인되었습니다."),
-                any(), eq("1")
+                any(), eq("1"), isNull()
         );
     }
 
@@ -165,9 +167,10 @@ class AdminWorkChangeRequestProcessServiceTest {
         assertThat(response.rejectReason).isEqualTo("정원 초과");
         assertThat(response.addSchedules).isNull();
         // 반려 분기도 승인과 동일하게 items를 조회해 알림에 항목 정보를 담아야 한다 (4-a 수정 확인).
+        // 반려 사유는 request에 저장된 값 그대로 알림에도 실려야 한다.
         verify(notificationService).notify(
                 eq(2L), eq(CodeType.NT02), eq("근무 시간 수정이 거절되었습니다."),
-                any(), eq("1")
+                any(), eq("1"), eq("정원 초과")
         );
     }
 

@@ -22,6 +22,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationCheckStateRepository checkStateRepository;
+    private final NotificationContentSerializer notificationContentSerializer;
 
     public NotificationListResponse getNotifications(Long userId) {
         List<Notification> notifications = notificationRepository
@@ -63,13 +64,16 @@ public class NotificationService {
     }
 
     @Transactional
-    public void notify(Long userId, CodeType typeCode, String title, String content, String refId) {
+    public void notify(
+            Long userId, CodeType typeCode, String title, String content, String refId, String rejectReason
+    ) {
         notificationRepository.save(Notification.builder()
                 .userId(userId)
                 .typeCode(typeCode)
                 .title(title)
                 .content(content)
                 .refId(refId)
+                .rejectReason(rejectReason)
                 .build());
     }
 
@@ -103,7 +107,8 @@ public class NotificationService {
                 notification.getTypeCode().name(),
                 notification.getTypeCode().getCodeValue(),
                 notification.getTitle(),
-                notification.getContent(),
+                notificationContentSerializer.parse(notification.getContent()),
+                notification.getRejectReason(),
                 notification.getRefId(),
                 notification.getCreatedAt(),
                 isNew

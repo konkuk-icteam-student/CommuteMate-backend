@@ -7,6 +7,7 @@ import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository
 import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.notification.application.NotificationContentSerializer;
 import com.better.CommuteMate.notification.application.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ class MonthlyScheduleSettingQueryTest {
     @Mock WorkUnavailableTimeRepository unavailableTimeRepository;
     @Mock UserRepository userRepository;
     @Mock NotificationService notificationService;
+    @Mock NotificationContentSerializer notificationContentSerializer;
 
     private MonthlyScheduleSettingService service;
 
@@ -39,7 +41,7 @@ class MonthlyScheduleSettingQueryTest {
     void setUp() {
         service = new MonthlyScheduleSettingService(
                 settingRepository, scheduleRepository, unavailableTimeRepository,
-                userRepository, notificationService
+                userRepository, notificationService, notificationContentSerializer
         );
     }
 

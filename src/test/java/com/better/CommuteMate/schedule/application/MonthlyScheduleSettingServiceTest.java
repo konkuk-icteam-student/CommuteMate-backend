@@ -9,6 +9,7 @@ import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.notification.application.NotificationContentSerializer;
 import com.better.CommuteMate.notification.application.NotificationService;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,7 @@ class MonthlyScheduleSettingServiceTest {
     @Mock WorkUnavailableTimeRepository unavailableTimeRepository;
     @Mock UserRepository userRepository;
     @Mock NotificationService notificationService;
+    @Mock NotificationContentSerializer notificationContentSerializer;
 
     MonthlyScheduleSettingService service;
 
@@ -49,7 +51,7 @@ class MonthlyScheduleSettingServiceTest {
     void setUp() {
         service = new MonthlyScheduleSettingService(
                 settingRepository, scheduleRepository, unavailableTimeRepository,
-                userRepository, notificationService
+                userRepository, notificationService, notificationContentSerializer
         );
     }
 
@@ -123,7 +125,7 @@ class MonthlyScheduleSettingServiceTest {
         assertThat(setting.getApplyStartAt()).isEqualTo(LocalDate.of(2026, 4, 1).atStartOfDay());
         assertThat(setting.getApplyEndAt()).isEqualTo(LocalDate.of(2026, 4, 10).atTime(LocalTime.MAX));
         // 기존 설정 갱신이므로 NT03("근무 신청 시작")이 재발송되면 안 된다.
-        verifyNoInteractions(userRepository, notificationService);
+        verifyNoInteractions(userRepository, notificationService, notificationContentSerializer);
     }
 
     @Test
@@ -159,12 +161,14 @@ class MonthlyScheduleSettingServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(userRepository.findAllByOrganizationIdAndRoleCode(10L, CodeType.RL01))
                 .thenReturn(List.of(student1, student2));
+        when(notificationContentSerializer.serialize(List.of())).thenReturn("[]");
 
         service.save(10L, 2026, 4, request, "99");
 
+        // NT03은 변경 항목이 없으므로 content가 항상 빈 배열("[]")로 고정되어야 한다.
         verify(notificationService).notifyAll(
                 eq(List.of(101L, 102L)), eq(CodeType.NT03),
-                any(), any(), any()
+                any(), eq("[]"), any()
         );
     }
 

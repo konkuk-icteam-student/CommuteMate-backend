@@ -259,7 +259,8 @@ public class AdminWorkChangeRequestProcessService {
                 approved ? CodeType.NT01 : CodeType.NT02,
                 approved ? "근무 시간 수정이 승인되었습니다." : "근무 시간 수정이 거절되었습니다.",
                 notificationContentSerializer.serialize(changeItems),
-                String.valueOf(request.getRequestId())
+                String.valueOf(request.getRequestId()),
+                approved ? null : request.getRejectReason()
         );
     }
 
