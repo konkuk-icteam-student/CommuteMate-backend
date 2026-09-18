@@ -12,6 +12,7 @@ import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
+import com.better.CommuteMate.home.controller.dto.AdminUserAttendancePageResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -118,6 +119,125 @@ class AdminUserAttendanceServiceTest {
         assertThat(response.users.get(0).lateMinutes()).isEqualTo(11);
         assertThat(response.users.get(0).weeklyLimitMinutes()).isEqualTo(540);
         assertThat(response.users.get(0).monthlyLimitMinutes()).isEqualTo(1620);
+    }
+
+    @Test
+    void checkedInOnly_beforeEndTime_staysWorking() {
+        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime start = now.minusMinutes(30);
+        LocalTime end = now.plusMinutes(30);
+        WorkSchedule schedule = scheduleOf(start, end);
+        WorkAttendance checkIn = attendanceOf(schedule, CodeType.CT01, start);
+
+        var user = respondUser(schedule, List.of(checkIn));
+
+        assertThat(user.workStatusCode()).isEqualTo("WK02");
+        assertThat(user.attendanceStatusCode()).isEqualTo("AT01");
+        assertThat(user.weeklyWorkedMinutes()).isGreaterThanOrEqualTo(30);
+    }
+
+    @Test
+    void checkedInOnly_afterEndTimeWithoutCheckOut_completesAndCapsWorkedMinutes() {
+        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime start = now.minusMinutes(60);
+        LocalTime end = now.minusMinutes(30);
+        WorkSchedule schedule = scheduleOf(start, end);
+        WorkAttendance checkIn = attendanceOf(schedule, CodeType.CT01, start);
+
+        var user = respondUser(schedule, List.of(checkIn));
+
+        assertThat(user.workStatusCode()).isEqualTo("WK03");
+        assertThat(user.attendanceStatusCode()).isEqualTo("AT01");
+        assertThat(user.weeklyWorkedMinutes()).isEqualTo(30);
+        assertThat(user.monthlyWorkedMinutes()).isEqualTo(30);
+    }
+
+    @Test
+    void checkedOut_alwaysCompletesUsingActualCheckOutTime() {
+        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime start = now.minusMinutes(60);
+        LocalTime end = now.minusMinutes(10);
+        WorkSchedule schedule = scheduleOf(start, end);
+        WorkAttendance checkIn = attendanceOf(schedule, CodeType.CT01, start);
+        WorkAttendance checkOut = attendanceOf(schedule, CodeType.CT02, now.minusMinutes(20));
+
+        var user = respondUser(schedule, List.of(checkIn, checkOut));
+
+        assertThat(user.workStatusCode()).isEqualTo("WK03");
+        assertThat(user.attendanceStatusCode()).isEqualTo("AT01");
+        assertThat(user.weeklyWorkedMinutes()).isEqualTo(40);
+        assertThat(user.monthlyWorkedMinutes()).isEqualTo(40);
+    }
+
+    @Test
+    void noCheckIn_afterEndTime_staysAbsentWithZeroWorkedMinutes() {
+        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime start = now.minusMinutes(60);
+        LocalTime end = now.minusMinutes(30);
+        WorkSchedule schedule = scheduleOf(start, end);
+
+        var user = respondUser(schedule, List.of());
+
+        assertThat(user.workStatusCode()).isEqualTo("WK04");
+        assertThat(user.attendanceStatusCode()).isEqualTo("AT03");
+        assertThat(user.weeklyWorkedMinutes()).isZero();
+        assertThat(user.monthlyWorkedMinutes()).isZero();
+    }
+
+    private WorkSchedule scheduleOf(LocalTime start, LocalTime end) {
+        User user = User.builder()
+                .userId(1L)
+                .organizationId(10L)
+                .name("최지훈")
+                .roleCode(CodeType.RL01)
+                .build();
+        return WorkSchedule.builder()
+                .scheduleId(1L)
+                .user(user)
+                .date(LocalDate.now())
+                .startTime(start)
+                .endTime(end)
+                .statusCode(CodeType.WS02)
+                .build();
+    }
+
+    private WorkAttendance attendanceOf(WorkSchedule schedule, CodeType checkTypeCode, LocalTime time) {
+        return WorkAttendance.builder()
+                .schedule(schedule)
+                .user(schedule.getUser())
+                .checkTypeCode(checkTypeCode)
+                .checkTime(LocalDateTime.of(schedule.getDate(), time))
+                .build();
+    }
+
+    private AdminUserAttendancePageResponse.UserAttendance respondUser(
+            WorkSchedule schedule, List<WorkAttendance> attendances
+    ) {
+        LocalDate date = schedule.getDate();
+        User user = schedule.getUser();
+        PageRequest pageable = PageRequest.of(0, 6);
+        WorkScheduleSetting setting = WorkScheduleSetting.builder()
+                .weeklyMaxMinutes(540)
+                .monthlyMaxMinutes(1620)
+                .build();
+
+        when(userRepository.findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCase(
+                10L, CodeType.RL01, "", pageable
+        )).thenReturn(new PageImpl<>(List.of(user), pageable, 1));
+        when(userProfileRepository.findAllByUserIdIn(List.of(1L)))
+                .thenReturn(List.of());
+        when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+                List.of(1L), date.withDayOfMonth(1), date.withDayOfMonth(date.lengthOfMonth()), CodeType.WS02
+        )).thenReturn(List.of(schedule));
+        when(attendanceRepository.findAllByScheduleIn(List.of(schedule)))
+                .thenReturn(attendances);
+        when(settingRepository.findByOrganizationIdAndYearAndMonth(
+                10L, date.getYear(), date.getMonthValue()
+        )).thenReturn(Optional.of(setting));
+
+        var response = service.getUserAttendance(10L, date.toString(), null, null, null);
+        assertThat(response.users).hasSize(1);
+        return response.users.get(0);
     }
 
     @Test
