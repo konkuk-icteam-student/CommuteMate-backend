@@ -15,6 +15,9 @@ import com.better.CommuteMate.domain.workplace.repository.WorkplaceRepository;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
+import com.better.CommuteMate.notification.application.NotificationContentSerializer;
+import com.better.CommuteMate.notification.application.NotificationService;
+import com.better.CommuteMate.notification.application.dtos.NotificationChangeItem;
 import com.better.CommuteMate.schedule.application.dtos.WorkScheduleSlotCommand;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ProcessWorkChangeResponse;
@@ -24,6 +27,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -54,6 +58,8 @@ public class AdminWorkChangeRequestProcessService {
     private final ScheduleValidator scheduleValidator;
     private final SimpMessagingTemplate messagingTemplate;
     private final WorkUnavailableTimeRepository unavailableTimeRepository;
+    private final NotificationService notificationService;
+    private final NotificationContentSerializer notificationContentSerializer;
 
     @Transactional
     public ProcessWorkChangeResponse process(
@@ -77,10 +83,14 @@ public class AdminWorkChangeRequestProcessService {
         request.setProcessedBy(adminId);
         request.setUpdatedBy(adminId);
 
+        // 승인/반려 알림 콘텐츠에 변경 항목을 담기 위해 분기 이전에 공통으로 조회한다 (읽기 전용, 부작용 없음).
+        List<WorkChangeRequestItem> items =
+                itemRepository.findAllByRequest_RequestId(requestId);
+
         if (targetStatus == CodeType.CS03) {
             String rejectReason = command.rejectReason().trim();
             request.setRejectReason(rejectReason);
-            sendNotification(request, false);
+            sendNotification(request, false, items);
             return new ProcessWorkChangeResponse(
                     requestId, targetStatus.name(), processedAt,
                     rejectReason, null, null
@@ -88,8 +98,6 @@ public class AdminWorkChangeRequestProcessService {
         }
 
         request.setRejectReason(null);
-        List<WorkChangeRequestItem> items =
-                itemRepository.findAllByRequest_RequestId(requestId);
         List<ProcessWorkChangeResponse.ScheduleResult> deleted = new ArrayList<>();
         List<ProcessWorkChangeResponse.ScheduleResult> added = new ArrayList<>();
 
@@ -189,7 +197,7 @@ public class AdminWorkChangeRequestProcessService {
         }
         toSave.forEach(s -> added.add(toResult(s)));
 
-        sendNotification(request, true);
+        sendNotification(request, true, items);
         return new ProcessWorkChangeResponse(
                 requestId, targetStatus.name(), processedAt,
                 null, deleted, added
@@ -228,7 +236,8 @@ public class AdminWorkChangeRequestProcessService {
         );
     }
 
-    private void sendNotification(WorkChangeRequest request, boolean approved) {
+    private void sendNotification(WorkChangeRequest request, boolean approved, List<WorkChangeRequestItem> items) {
+        // 기존 실시간 토스트 발행은 그대로 유지한다.
         NotificationMessage notification = NotificationMessage.builder()
                 .type(approved ? "SCHEDULE_APPROVED" : "SCHEDULE_REJECTED")
                 .message(approved
@@ -239,6 +248,27 @@ public class AdminWorkChangeRequestProcessService {
         messagingTemplate.convertAndSend(
                 "/topic/notifications/" + request.getUser().getUserId(),
                 notification
+        );
+
+        // 알림함(DB)에도 별도로 저장한다.
+        List<NotificationChangeItem> changeItems = items.stream()
+                .map(this::toNotificationChangeItem)
+                .toList();
+        notificationService.notify(
+                request.getUser().getUserId(),
+                approved ? CodeType.NT01 : CodeType.NT02,
+                approved ? "근무 시간 수정이 승인되었습니다." : "근무 시간 수정이 거절되었습니다.",
+                notificationContentSerializer.serialize(changeItems),
+                String.valueOf(request.getRequestId()),
+                approved ? null : request.getRejectReason()
+        );
+    }
+
+    private NotificationChangeItem toNotificationChangeItem(WorkChangeRequestItem item) {
+        long durationMinutes = Duration.between(item.getStartTime(), item.getEndTime()).toMinutes();
+        return new NotificationChangeItem(
+                item.getDate(), item.getStartTime(), item.getEndTime(),
+                durationMinutes, item.getChangeTypeCode()
         );
     }
 }
