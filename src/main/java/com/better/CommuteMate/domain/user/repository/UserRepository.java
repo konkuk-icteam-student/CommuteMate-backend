@@ -20,6 +20,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
             CodeType roleCode,
             String name
     );
+
+    List<User> findAllByOrganizationIdAndRoleCode(
+            Long organizationId,
+            CodeType roleCode
+    );
+
     boolean existsByEmail(String email);
 
     Page<User> findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCase(

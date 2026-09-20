@@ -6,9 +6,13 @@ import com.better.CommuteMate.domain.schedule.entity.WorkUnavailableTime;
 import com.better.CommuteMate.domain.schedule.repository.WorkScheduleSettingRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.schedule.repository.WorkUnavailableTimeRepository;
+import com.better.CommuteMate.domain.user.entity.User;
+import com.better.CommuteMate.domain.user.repository.UserRepository;
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.ScheduleErrorCode;
+import com.better.CommuteMate.notification.application.NotificationContentSerializer;
+import com.better.CommuteMate.notification.application.NotificationService;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingRequest;
 import com.better.CommuteMate.schedule.controller.admin.dtos.SaveScheduleSettingResponse;
 import com.better.CommuteMate.schedule.controller.admin.dtos.ScheduleSettingResponse;
@@ -36,6 +40,9 @@ public class MonthlyScheduleSettingService {
     private final WorkScheduleSettingRepository settingRepository;
     private final WorkSchedulesRepository scheduleRepository;
     private final WorkUnavailableTimeRepository unavailableTimeRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final NotificationContentSerializer notificationContentSerializer;
 
     @Transactional(readOnly = true)
     public ScheduleSettingResponse get(Long organizationId, int year, int month) {
@@ -73,8 +80,10 @@ public class MonthlyScheduleSettingService {
     ) {
         validate(year, month, request);
 
-        WorkScheduleSetting setting = settingRepository
-                .findByOrganizationIdAndYearAndMonth(organizationId, year, month)
+        Optional<WorkScheduleSetting> existingSetting = settingRepository
+                .findByOrganizationIdAndYearAndMonth(organizationId, year, month);
+        boolean isNewOpen = existingSetting.isEmpty();
+        WorkScheduleSetting setting = existingSetting
                 .orElseGet(() -> newSetting(organizationId, year, month, request, updatedBy));
 
         List<WorkSchedule> schedules = setting.getSettingId() == null
@@ -102,8 +111,40 @@ public class MonthlyScheduleSettingService {
                 .distinct()
                 .count();
 
+        if (isNewOpen) {
+            notifyStudentsOfNewOpen(organizationId, setting);
+        }
+
         return new SaveScheduleSettingResponse(
                 year, month, request, affected.size(), affectedUsers
+        );
+    }
+
+    /**
+     * (organization_id, year, month) 유니크 제약과 설정 삭제 엔드포인트 부재로 인해
+     * 같은 월의 신규 오픈(insert)은 평생 1회만 발생한다 — 재저장(update) 시에는
+     * isNewOpen이 항상 false이므로 이 메서드가 재호출되지 않는다.
+     */
+    private void notifyStudentsOfNewOpen(Long organizationId, WorkScheduleSetting setting) {
+        List<Long> studentIds = userRepository
+                .findAllByOrganizationIdAndRoleCode(organizationId, CodeType.RL01)
+                .stream()
+                .map(User::getUserId)
+                .toList();
+        if (studentIds.isEmpty()) {
+            return;
+        }
+
+        String refId = setting.getSettingId() != null
+                ? String.valueOf(setting.getSettingId())
+                : null;
+        // NT03은 변경 항목이 없으므로 content는 항상 빈 배열이다 (다른 타입과 형태 통일).
+        notificationService.notifyAll(
+                studentIds,
+                CodeType.NT03,
+                "근무 신청이 시작되었습니다.",
+                notificationContentSerializer.serialize(List.of()),
+                refId
         );
     }
 
