@@ -708,7 +708,7 @@ curl -X PATCH "http://localhost:8080/api/work-schedules/modify" \
 
 ### 연관 API
 - [관리자 API](./admin.md) - 월별 제한 설정, 변경 요청 처리
-- [출퇴근 API](./attendance.md) - QR 체크인/아웃
+- [출퇴근 API](./attendance.md) - 홈 출근 및 이력 조회
 - [대시보드 API](./home.md) - 근무 시간 요약
 
 ### 규약 및 시스템

@@ -1,5 +1,8 @@
 package com.better.CommuteMate.home.application;
 
+import com.better.CommuteMate.attendance.application.CheckInCompleted;
+import org.springframework.context.ApplicationEventPublisher;
+
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
 import com.better.CommuteMate.domain.user.repository.UserRepository;
@@ -42,6 +45,7 @@ public class HomeService {
     private final WorkSchedulesRepository workSchedulesRepository;
     private final WorkAttendanceRepository workAttendanceRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final List<CodeType> VALID_STATUS_CODES = List.of(CodeType.WS01, CodeType.WS02);
     private static final int CHECK_IN_GRACE_MINUTES = 10;
@@ -141,6 +145,7 @@ public class HomeService {
                         .build())
                 .toList();
         workAttendanceRepository.saveAll(records);
+        eventPublisher.publishEvent(new CheckInCompleted(user.getOrganizationId(), user.getName(), now));
 
         return HomeCheckInResponse.builder()
                 .scheduleIds(scheduleIds)

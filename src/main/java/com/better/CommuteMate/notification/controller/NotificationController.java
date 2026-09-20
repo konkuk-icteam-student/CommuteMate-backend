@@ -35,7 +35,9 @@ public class NotificationController {
             summary = "알림 목록 조회",
             description = "로그인한 사용자의 알림 목록을 생성 시각 기준 최신순으로 조회합니다. " +
                     "새 알림 여부(isNew)는 마지막 알림함 확인 시각을 기준으로 계산하며, " +
-                    "확인 이력이 없는 경우 모든 알림을 새 알림으로 처리합니다."
+                    "확인 이력이 없는 경우 모든 알림을 새 알림으로 처리합니다. " +
+                    "content는 항상 배열이며(NT01/NT02는 변경 항목 목록, NT03은 빈 배열), " +
+                    "rejectReason은 NT02(반려)에서만 값이 있고 그 외에는 null입니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -168,23 +170,41 @@ public class NotificationController {
               "details": {
                 "notifications": [
                   {
-                    "notificationId": "550e8400-e29b-41d4-a716-446655440000",
+                    "notificationId": 12,
                     "typeCode": "NT02",
                     "typeName": "근무 변경 요청 거절",
                     "title": "근무 시간 수정이 거절되었습니다.",
-                    "content": "4월 6일 13:00-14:30 (1.5h)",
-                    "refId": "9a1b2c3d-e29b-41d4-a716-446655440000",
+                    "content": [
+                      { "date": "2026-04-06", "startTime": "13:00", "endTime": "13:30", "durationMinutes": 30, "changeTypeCode": "CR01" },
+                      { "date": "2026-04-06", "startTime": "14:00", "endTime": "14:30", "durationMinutes": 30, "changeTypeCode": "CR01" }
+                    ],
+                    "rejectReason": "정원 초과로 반려합니다.",
+                    "refId": "37",
                     "createdAt": "2026-03-20T16:21:00",
                     "isNew": true
                   },
                   {
-                    "notificationId": "660e8400-e29b-41d4-a716-446655440001",
+                    "notificationId": 11,
                     "typeCode": "NT01",
                     "typeName": "근무 변경 요청 승인",
                     "title": "근무 시간 수정이 승인되었습니다.",
-                    "content": "4월 9일 13:00-14:30 (1.5h)",
-                    "refId": "8b2c3d4e-e29b-41d4-a716-446655440001",
+                    "content": [
+                      { "date": "2026-04-09", "startTime": "13:00", "endTime": "14:30", "durationMinutes": 90, "changeTypeCode": "CR01" }
+                    ],
+                    "rejectReason": null,
+                    "refId": "36",
                     "createdAt": "2026-03-19T10:00:00",
+                    "isNew": false
+                  },
+                  {
+                    "notificationId": 10,
+                    "typeCode": "NT03",
+                    "typeName": "근무 신청 시작",
+                    "title": "근무 신청이 시작되었습니다.",
+                    "content": [],
+                    "rejectReason": null,
+                    "refId": "5",
+                    "createdAt": "2026-03-15T09:00:00",
                     "isNew": false
                   }
                 ]

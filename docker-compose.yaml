@@ -26,6 +26,9 @@ services:
     image: ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
     container_name: commutemate-backend
     restart: unless-stopped
+    # 기관별 NATEON_WEBHOOK_ORG_<기관ID>도 컨테이너에 전달합니다.
+    env_file:
+      - .env
     volumes:
       - ${UPLOAD_DIR}:/uploads
     environment:

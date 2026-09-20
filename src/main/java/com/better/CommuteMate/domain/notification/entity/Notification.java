@@ -39,6 +39,9 @@ public class Notification {
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "reject_reason", columnDefinition = "TEXT")
+    private String rejectReason;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

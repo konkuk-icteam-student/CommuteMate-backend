@@ -7,6 +7,7 @@ import com.better.CommuteMate.domain.notification.repository.NotificationReposit
 import com.better.CommuteMate.notification.controller.dtos.CheckNotificationResponse;
 import com.better.CommuteMate.notification.controller.dtos.NewNotificationResponse;
 import com.better.CommuteMate.notification.controller.dtos.NotificationListResponse;
+import com.better.CommuteMate.global.code.CodeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationCheckStateRepository checkStateRepository;
+    private final NotificationContentSerializer notificationContentSerializer;
 
     public NotificationListResponse getNotifications(Long userId) {
         List<Notification> notifications = notificationRepository
@@ -61,6 +63,34 @@ public class NotificationService {
         return new CheckNotificationResponse(now);
     }
 
+    @Transactional
+    public void notify(
+            Long userId, CodeType typeCode, String title, String content, String refId, String rejectReason
+    ) {
+        notificationRepository.save(Notification.builder()
+                .userId(userId)
+                .typeCode(typeCode)
+                .title(title)
+                .content(content)
+                .refId(refId)
+                .rejectReason(rejectReason)
+                .build());
+    }
+
+    @Transactional
+    public void notifyAll(List<Long> userIds, CodeType typeCode, String title, String content, String refId) {
+        List<Notification> notifications = userIds.stream()
+                .map(userId -> Notification.builder()
+                        .userId(userId)
+                        .typeCode(typeCode)
+                        .title(title)
+                        .content(content)
+                        .refId(refId)
+                        .build())
+                .toList();
+        notificationRepository.saveAll(notifications);
+    }
+
     private LocalDateTime resolveLastCheckedAt(Long userId) {
         return checkStateRepository.findById(userId)
                 .map(NotificationCheckState::getLastCheckedAt)
@@ -77,7 +107,8 @@ public class NotificationService {
                 notification.getTypeCode().name(),
                 notification.getTypeCode().getCodeValue(),
                 notification.getTitle(),
-                notification.getContent(),
+                notificationContentSerializer.parse(notification.getContent()),
+                notification.getRejectReason(),
                 notification.getRefId(),
                 notification.getCreatedAt(),
                 isNew

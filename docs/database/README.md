@@ -43,7 +43,7 @@ CommuteMate 백엔드 시스템은 다양한 데이터베이스를 지원합니�
 | 2 | `organization` | Organization | 조직/그룹 정의 | [user.md](./schema/user.md#organization-테이블) |
 | 3 | `work_schedule` | Schedule | 근무 일정 슬롯 | [schedule.md](./schema/schedule.md#work_schedule-테이블) |
 | 4 | `monthly_schedule_config` | Schedule | 월별 최대 동시 근무 인원 및 신청 기간 | [schedule.md](./schema/schedule.md#monthly_schedule_config-테이블) |
-| 5 | `work_attendance` | Attendance | 출퇴근 기록 (QR 체크) | [attendance.md](./schema/attendance.md#work_attendance-테이블) |
+| 5 | `work_attendance` | Attendance | 출퇴근 기록 (홈 출근) | [attendance.md](./schema/attendance.md#work_attendance-테이블) |
 | 6 | `work_change_request` | ChangeRequest | 일정 변경/삭제 요청 | [schedule.md](./schema/schedule.md#work_change_request-테이블) |
 | 7 | `task` | Task | 일일 업무 관리 | [task.md](./schema/task.md#task-테이블) |
 | 8 | `task_template` | Task | 업무 템플릿 | [task.md](./schema/task.md#task_template-테이블) |
@@ -72,7 +72,7 @@ CommuteMate 백엔드 시스템은 다양한 데이터베이스를 지원합니�
 - **work_change_request**: 일정 변경/삭제 요청 로그
 
 ### ⏰ 출퇴근 ([attendance.md](./schema/attendance.md))
-- **work_attendance**: QR 코드 기반 출퇴근 기록
+- **work_attendance**: 출퇴근 기록
 
 ### 📋 업무 관리 ([task.md](./schema/task.md))
 - **task**: 일일 업무
@@ -129,7 +129,7 @@ CommuteMate 백엔드 시스템은 다양한 데이터베이스를 지원합니�
 `work_attendance` 테이블 구조
 
 **주요 내용**:
-- QR 코드 기반 출퇴근 체크
+- 홈 화면 출근 처리
 - checkTypeCode를 통한 출근/퇴근 구분
 - 근무 시간 계산
 

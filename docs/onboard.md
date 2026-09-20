@@ -73,7 +73,7 @@ docker-compose up -d --build
 src/main/java/com/better/CommuteMate/
 ├── auth/          # 로그인, 회원가입 (JWT)
 ├── schedule/      # 근무 일정 로직
-├── attendance/    # QR 출퇴근
+├── attendance/    # 출퇴근 이력 및 알림
 ├── domain/        # 엔티티 (User, Organization 등)
 ├── global/        # 공통 설정, 예외 처리
 └── ...
@@ -110,7 +110,7 @@ src/main/java/com/better/CommuteMate/
    - 도메인별 API 상세:
      - [인증 API](docs/api/auth.md) - 로그인, 회원가입, 토큰 관리
      - [근무 일정 API](docs/api/schedule.md) - 일정 신청, 수정, 조회
-     - [출퇴근 API](docs/api/attendance.md) - QR 체크인/아웃
+     - [출퇴근 API](docs/api/attendance.md) - 홈 출근
      - [관리자 API](docs/api/admin.md) - 월별 제한, 변경 요청 처리
      - [대시보드 API](docs/api/home.md) - 홈 화면 데이터
 
@@ -130,7 +130,7 @@ src/main/java/com/better/CommuteMate/
 - **상세 문서**:
   - [인증 API](docs/api/auth.md) - 로그인, 회원가입, 토큰 재발급, 로그아웃
   - [근무 일정 API](docs/api/schedule.md) - 일정 신청, 수정, 조회, 월별 제한 관리
-  - [출퇴근 API](docs/api/attendance.md) - QR 체크인/체크아웃, 출퇴근 이력 조회
+  - [출퇴근 API](docs/api/attendance.md) - 홈 출근, 출퇴근 이력 조회
   - [관리자 API](docs/api/admin.md) - 월별 제한 설정, 신청 기간 설정, 변경 요청 처리
   - [대시보드 API](docs/api/home.md) - 홈 화면 데이터, 근무 시간 요약
 
