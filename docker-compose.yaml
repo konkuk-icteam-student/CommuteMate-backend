@@ -50,6 +50,8 @@ services:
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HmacSHA256}
 
       # Mail Configuration
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
 
