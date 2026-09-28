@@ -854,11 +854,11 @@ public class ScheduleService {
                 .minWorkUnitMinutes(minWorkUnitMinutes)
                 .week(WorkScheduleSummaryResponse.PeriodSummary.builder()
                         .label(weekNumber + "주차")
-                        .usedHours((int) (weekUsedMinutes / 60))
+                        .usedHours(weekUsedMinutes / 60.0)
                         .minHours(weekMinHours).maxHours(weekMaxHours).build())
                 .month(WorkScheduleSummaryResponse.PeriodSummary.builder()
                         .label(startDate.getMonthValue() + "월 전체")
-                        .usedHours((int) (monthUsedMinutes / 60))
+                        .usedHours(monthUsedMinutes / 60.0)
                         .minHours(monthMinHours).maxHours(monthMaxHours).build())
                 .build();
     }
@@ -947,7 +947,7 @@ public class ScheduleService {
                 .stream().mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes()).sum();
 
         return new SlotViewContext(currentCountMap, myScheduleSlots, pendingDeleteSlots,
-                pendingAddSlots, unavailableSlots, (int) (usedMinutes / 60));
+                pendingAddSlots, unavailableSlots, usedMinutes / 60.0);
     }
 
     private List<WorkMonthlyScheduleResponse.DaySchedule> buildDaySlotList(
@@ -986,7 +986,7 @@ public class ScheduleService {
             Set<SlotKey> pendingDeleteSlots,
             Set<SlotKey> pendingAddSlots,
             Set<SlotKey> unavailableSlots,
-            int usedHours) {}
+            double usedHours) {}
 
     @Getter
     @AllArgsConstructor

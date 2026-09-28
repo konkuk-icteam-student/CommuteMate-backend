@@ -67,7 +67,7 @@ public class AdminWorkScheduleController {
                                 "endDate": "2026-05-22",
                                 "maxConcurrentWorkers": 10,
                                 "totalLimitHours": 27,
-                                "usedHours": 10,
+                                "usedHours": 10.5,
                                 "days": [
                                   {
                                     "date": "2026-05-18",
