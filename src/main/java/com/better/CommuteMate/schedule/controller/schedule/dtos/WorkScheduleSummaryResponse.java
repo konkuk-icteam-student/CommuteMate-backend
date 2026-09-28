@@ -40,8 +40,8 @@ public class WorkScheduleSummaryResponse extends ResponseDetail {
     public static class PeriodSummary {
         @Schema(description = "기간 레이블", example = "1주차")
         private final String label;
-        @Schema(description = "실제 사용 시간 (시간)", example = "3")
-        private final int usedHours;
+        @Schema(description = "실제 사용 시간 (시간, 소수점 포함)", example = "3.5")
+        private final double usedHours;
         @Schema(description = "최소 근무 시간 (시간)", example = "5")
         private final int minHours;
         @Schema(description = "최대 근무 시간 (시간)", example = "13")

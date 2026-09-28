@@ -17,7 +17,7 @@ public class WorkScheduleRangeResponse extends ResponseDetail {
     private final LocalDate endDate;
     private final Integer maxConcurrentWorkers;
     private final Integer totalLimitHours;
-    private final Integer usedHours;
+    private final Double usedHours;
     private final List<WorkMonthlyScheduleResponse.DaySchedule> days;
 
     @Builder
@@ -26,7 +26,7 @@ public class WorkScheduleRangeResponse extends ResponseDetail {
             LocalDate endDate,
             Integer maxConcurrentWorkers,
             Integer totalLimitHours,
-            Integer usedHours,
+            Double usedHours,
             List<WorkMonthlyScheduleResponse.DaySchedule> days
     ) {
         this.startDate = startDate;

@@ -218,7 +218,7 @@ public class WorkScheduleController {
             @ApiResponse(responseCode = "200", description = "근로시간 요약 조회 성공",
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(name = "조회 성공", value = """
-                                    {"isSuccess":true,"message":"근로시간 요약을 조회했습니다.","details":{"startDate":"2026-04-06","endDate":"2026-04-10","minWorkUnitMinutes":30,"week":{"label":"1주차","usedHours":0,"minHours":5,"maxHours":13},"month":{"label":"4월 전체","usedHours":3,"minHours":20,"maxHours":27}}}
+                                    {"isSuccess":true,"message":"근로시간 요약을 조회했습니다.","details":{"startDate":"2026-04-06","endDate":"2026-04-10","minWorkUnitMinutes":30,"week":{"label":"1주차","usedHours":0.5,"minHours":5,"maxHours":13},"month":{"label":"4월 전체","usedHours":3.5,"minHours":20,"maxHours":27}}}
                                     """))),
             @ApiResponse(responseCode = "400", description = "잘못된 조회 기간",
                     content = @Content(mediaType = "application/json", examples = {
@@ -376,7 +376,7 @@ public class WorkScheduleController {
             @ApiResponse(responseCode = "200", description = "월별 근로 시간표 조회 성공",
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(name = "조회 성공", value = """
-                                    {"isSuccess":true,"message":"근로 시간표를 조회했습니다.","details":{"year":2026,"month":4,"maxConcurrentWorkers":10,"totalLimitHours":27,"usedHours":10,"days":[{"date":"2026-04-06","slots":[{"start":"13:00","end":"13:30","status":"MY_SCHEDULE","currentCount":3}]}]}}
+                                    {"isSuccess":true,"message":"근로 시간표를 조회했습니다.","details":{"year":2026,"month":4,"maxConcurrentWorkers":10,"totalLimitHours":27,"usedHours":10.5,"days":[{"date":"2026-04-06","slots":[{"start":"13:00","end":"13:30","status":"MY_SCHEDULE","currentCount":3}]}]}}
                                     """))),
             @ApiResponse(responseCode = "404", description = "해당 월의 스케줄 설정 없음",
                     content = @Content(mediaType = "application/json",
@@ -414,7 +414,7 @@ public class WorkScheduleController {
             @ApiResponse(responseCode = "200", description = "기간별 근로 시간표 조회 성공",
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(name = "조회 성공", value = """
-                                    {"isSuccess":true,"message":"근로 시간표를 조회했습니다.","details":{"startDate":"2026-05-18","endDate":"2026-05-22","maxConcurrentWorkers":10,"totalLimitHours":27,"usedHours":10,"days":[{"date":"2026-05-18","slots":[{"start":"13:00","end":"13:30","status":"MY_SCHEDULE","currentCount":3},{"start":"13:30","end":"14:00","status":"EMPTY","currentCount":0}]}]}}
+                                    {"isSuccess":true,"message":"근로 시간표를 조회했습니다.","details":{"startDate":"2026-05-18","endDate":"2026-05-22","maxConcurrentWorkers":10,"totalLimitHours":27,"usedHours":10.5,"days":[{"date":"2026-05-18","slots":[{"start":"13:00","end":"13:30","status":"MY_SCHEDULE","currentCount":3},{"start":"13:30","end":"14:00","status":"EMPTY","currentCount":0}]}]}}
                                     """))),
             @ApiResponse(responseCode = "400", description = "잘못된 조회 기간",
                     content = @Content(mediaType = "application/json", examples = {

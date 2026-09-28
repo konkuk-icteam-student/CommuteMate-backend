@@ -53,7 +53,7 @@ class AdminUserWorkScheduleQueryServiceTest {
                 .endDate(endDate)
                 .maxConcurrentWorkers(4)
                 .totalLimitHours(27)
-                .usedHours(10)
+                .usedHours(10.0)
                 .days(List.of())
                 .build();
 

@@ -16,7 +16,7 @@ public class WorkMonthlyScheduleResponse extends ResponseDetail {
     private final Integer month;
     private final Integer maxConcurrentWorkers;
     private final Integer totalLimitHours;
-    private final Integer usedHours;
+    private final Double usedHours;
     private final List<DaySchedule> days;
 
     @Builder
@@ -25,7 +25,7 @@ public class WorkMonthlyScheduleResponse extends ResponseDetail {
             Integer month,
             Integer maxConcurrentWorkers,
             Integer totalLimitHours,
-            Integer usedHours,
+            Double usedHours,
             List<DaySchedule> days
     ) {
         this.year = year;
