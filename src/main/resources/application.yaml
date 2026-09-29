@@ -19,10 +19,10 @@ spring:
 
   # Gmail SMTP 설정
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME:1}  # Gmail 계정 (예: your-email@gmail.com)
-    password: ${MAIL_PASSWORD:1}  # Gmail 앱 비밀번호 (16자리)
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}  # 발신 계정 (예: your-email@gmail.com)
+    password: ${MAIL_PASSWORD}  # 발신 계정의 앱 비밀번호
     properties:
       mail:
         smtp:
