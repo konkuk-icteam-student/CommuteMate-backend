@@ -14,6 +14,7 @@ import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.AdminHomeErrorCode;
 import com.better.CommuteMate.home.controller.dto.AdminUserAttendancePageResponse;
+import com.better.CommuteMate.global.util.AttendancePolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -224,7 +225,7 @@ public class AdminUserAttendanceService {
         LocalDateTime end = LocalDateTime.of(schedule.getDate(), schedule.getEndTime());
 
         if (checkIn.isPresent()) {
-            String attendanceCode = checkIn.get().isAfter(start.plusMinutes(10))
+            String attendanceCode = AttendancePolicy.isLate(start, checkIn.get())
                     ? CodeType.AT02.name()
                     : CodeType.AT01.name();
             boolean completed = checkedOut || referenceTime.isAfter(end);
@@ -252,7 +253,7 @@ public class AdminUserAttendanceService {
                     .map(WorkAttendance::getCheckTime)
                     .min(Comparator.naturalOrder());
             LocalDateTime start = LocalDateTime.of(schedule.getDate(), schedule.getStartTime());
-            if (checkIn.isPresent() && checkIn.get().isAfter(start.plusMinutes(10))) {
+            if (checkIn.isPresent() && AttendancePolicy.isLate(start, checkIn.get())) {
                 count++;
                 minutes += (int) Duration.between(start, checkIn.get()).toMinutes();
             }

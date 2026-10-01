@@ -95,7 +95,7 @@ public class HomeTodayController {
             description = """
                     조회 API(`GET /api/v1/home/today`)에서 받은 병합 근무의 scheduleIds를 그대로 전달하면,
                     해당 슬롯 전체에 출근 기록을 한 번에 남깁니다.
-                    - 출근 가능 시간: 병합 근무의 마지막 슬롯 종료 전까지
+                    - 출근 가능 시간: 병합 근무의 마지막 슬롯 종료 전까지 (시작 5분 경과부터 지각)
                     - 이미 출근되었거나 시간이 지난 경우 409 반환
                     """
     )

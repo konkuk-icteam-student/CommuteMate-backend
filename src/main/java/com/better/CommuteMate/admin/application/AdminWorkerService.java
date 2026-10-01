@@ -19,6 +19,7 @@ import com.better.CommuteMate.domain.workchangerequest.repository.WorkChangeRequ
 import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.AdminWorkerErrorCode;
+import com.better.CommuteMate.global.util.AttendancePolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -210,7 +211,7 @@ public class AdminWorkerService {
         Optional<LocalDateTime> checkIn = bySchedule.getOrDefault(schedule.getScheduleId(), List.of()).stream()
                 .filter(a -> a.getCheckTypeCode() == CodeType.CT01).map(WorkAttendance::getCheckTime).min(Comparator.naturalOrder());
         LocalDateTime start = LocalDateTime.of(schedule.getDate(), schedule.getStartTime());
-        if (checkIn.isPresent()) return checkIn.get().isAfter(start.plusMinutes(10)) ? CodeType.AT02 : CodeType.AT01;
+        if (checkIn.isPresent()) return AttendancePolicy.isLate(start, checkIn.get()) ? CodeType.AT02 : CodeType.AT01;
         return referenceTime.isAfter(LocalDateTime.of(schedule.getDate(), schedule.getEndTime())) ? CodeType.AT03 : null;
     }
 
