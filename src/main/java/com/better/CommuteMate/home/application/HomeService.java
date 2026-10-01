@@ -48,7 +48,6 @@ public class HomeService {
     private final ApplicationEventPublisher eventPublisher;
 
     private static final List<CodeType> VALID_STATUS_CODES = List.of(CodeType.WS01, CodeType.WS02);
-    private static final int CHECK_IN_GRACE_MINUTES = 10;
 
     @Transactional(readOnly = true)
     public TodayScheduleResponse getTodaySchedules(Long userId) {
@@ -102,6 +101,9 @@ public class HomeService {
 
     @Transactional
     public HomeCheckInResponse checkIn(Long userId, List<Long> scheduleIds) {
+        if (scheduleIds == null || scheduleIds.isEmpty()) {
+            throw CustomException.of(AttendanceErrorCode.SCHEDULE_NOT_FOUND);
+        }
         List<WorkSchedule> schedules = workSchedulesRepository.findAllById(scheduleIds);
         LocalDate today = LocalDate.now();
 
@@ -125,10 +127,9 @@ public class HomeService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        WorkSchedule firstSlot = schedules.get(0);
-        LocalDateTime lateThreshold = LocalDateTime.of(firstSlot.getDate(), firstSlot.getStartTime())
-                .plusMinutes(CHECK_IN_GRACE_MINUTES);
-        if (now.isAfter(lateThreshold)) {
+        WorkSchedule lastSlot = schedules.get(schedules.size() - 1);
+        LocalDateTime end = LocalDateTime.of(lastSlot.getDate(), lastSlot.getEndTime());
+        if (!now.isBefore(end)) {
             throw CustomException.of(AttendanceErrorCode.CHECK_IN_LATE);
         }
 
@@ -156,11 +157,10 @@ public class HomeService {
     private String resolveWorkStatusCode(LocalDate date, LocalTime mergedStart, LocalTime mergedEnd,
                                           boolean checkedIn, LocalDateTime now) {
         LocalDateTime end = LocalDateTime.of(date, mergedEnd);
-        LocalDateTime lateThreshold = LocalDateTime.of(date, mergedStart).plusMinutes(CHECK_IN_GRACE_MINUTES);
         if (checkedIn) {
             return now.isBefore(end) ? CodeType.WK02.getFullCode() : CodeType.WK03.getFullCode();
         } else {
-            return now.isAfter(lateThreshold) ? CodeType.WK04.getFullCode() : CodeType.WK01.getFullCode();
+            return !now.isBefore(end) ? CodeType.WK04.getFullCode() : CodeType.WK01.getFullCode();
         }
     }
 

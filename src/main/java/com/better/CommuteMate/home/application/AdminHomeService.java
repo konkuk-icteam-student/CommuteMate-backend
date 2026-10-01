@@ -10,6 +10,7 @@ import com.better.CommuteMate.global.code.CodeType;
 import com.better.CommuteMate.global.exceptions.CustomException;
 import com.better.CommuteMate.global.exceptions.error.AdminHomeErrorCode;
 import com.better.CommuteMate.home.controller.dto.AdminAttendanceSummaryResponse;
+import com.better.CommuteMate.global.util.AttendancePolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -119,6 +120,6 @@ public class AdminHomeService {
         return attendances.stream()
                 .filter(attendance -> attendance.getCheckTypeCode() == CodeType.CT01)
                 .map(WorkAttendance::getCheckTime)
-                .anyMatch(checkIn -> checkIn.isAfter(scheduledStart.plusMinutes(10)));
+                .anyMatch(checkIn -> AttendancePolicy.isLate(scheduledStart, checkIn));
     }
 }
