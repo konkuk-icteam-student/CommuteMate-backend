@@ -236,9 +236,6 @@ public class AdminUserAttendanceService {
         if (referenceTime.isAfter(end)) {
             return new ScheduleStatus(CodeType.WK04.name(), CodeType.AT03.name());
         }
-        if (referenceTime.isAfter(start.plusMinutes(10))) {
-            return new ScheduleStatus(CodeType.WK04.name(), null);
-        }
         return new ScheduleStatus(CodeType.WK01.name(), null);
     }
 

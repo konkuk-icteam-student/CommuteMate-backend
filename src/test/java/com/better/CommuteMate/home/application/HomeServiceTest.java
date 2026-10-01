@@ -253,6 +253,60 @@ class HomeServiceTest {
                 .isEqualTo(storedCheckInTime);
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = {25, 45})
+    void lateCheckInIsAllowedUntilMergedShiftEnds(int minute) {
+        User user = User.builder().userId(1L).build();
+        LocalDate date = LocalDate.now();
+        WorkSchedule first = schedule(1L, user, date, 10, 0, 10, 30);
+        WorkSchedule second = schedule(2L, user, date, 10, 30, 11, 0);
+        List<WorkSchedule> slots = new java.util.ArrayList<>(List.of(first, second));
+        when(workSchedulesRepository.findAllById(List.of(1L, 2L))).thenReturn(slots);
+        when(workAttendanceRepository.findAllByScheduleIn(anyList())).thenReturn(List.of());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        LocalDateTime now = date.atTime(10, minute);
+        try (var time = org.mockito.Mockito.mockStatic(LocalDateTime.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            time.when(LocalDateTime::now).thenReturn(now);
+            assertThat(homeService.checkIn(1L, List.of(1L, 2L)).getCheckInTime()).isEqualTo(now);
+        }
+        verify(workAttendanceRepository).saveAll(anyList());
+    }
+
+    @Test
+    void checkInIsRejectedAtShiftEnd() {
+        User user = User.builder().userId(1L).build();
+        LocalDate date = LocalDate.now();
+        WorkSchedule slot = schedule(1L, user, date, 10, 0, 11, 0);
+        when(workSchedulesRepository.findAllById(List.of(1L)))
+                .thenReturn(new java.util.ArrayList<>(List.of(slot)));
+        when(workAttendanceRepository.findAllByScheduleIn(anyList())).thenReturn(List.of());
+        LocalDateTime now = date.atTime(11, 0);
+        try (var time = org.mockito.Mockito.mockStatic(LocalDateTime.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            time.when(LocalDateTime::now).thenReturn(now);
+            assertThatThrownBy(() -> homeService.checkIn(1L, List.of(1L))).isInstanceOf(CustomException.class);
+        }
+        verify(workAttendanceRepository, org.mockito.Mockito.never()).saveAll(anyList());
+    }
+
+    @Test
+    void missedMorningDoesNotExpireAfternoonShift() {
+        User user = User.builder().userId(1L).build();
+        LocalDate date = LocalDate.now();
+        List<WorkSchedule> slots = new java.util.ArrayList<>(List.of(
+                schedule(1L, user, date, 10, 0, 11, 0),
+                schedule(2L, user, date, 14, 0, 15, 0)));
+        when(workSchedulesRepository.findAllByUser_UserIdAndDateBetweenAndStatusCodeIn(
+                anyLong(), any(), any(), anyList())).thenReturn(slots);
+        when(workAttendanceRepository.findAllByScheduleIn(anyList())).thenReturn(List.of());
+        LocalDateTime now = date.atTime(14, 25);
+        try (var time = org.mockito.Mockito.mockStatic(LocalDateTime.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            time.when(LocalDateTime::now).thenReturn(now);
+            var items = homeService.getTodaySchedules(1L).getSchedules();
+            assertThat(items.get(0).getWorkStatusCode()).isEqualTo("WK04");
+            assertThat(items.get(1).getWorkStatusCode()).isEqualTo("WK01");
+        }
+    }
+
     private WorkSchedule schedule(Long id, User user, LocalDate date,
                                   int startHour, int startMinute, int endHour, int endMinute) {
         return WorkSchedule.builder()
