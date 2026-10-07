@@ -77,7 +77,7 @@ class AdminHomeServiceTest {
         WorkAttendance onTimeCheckIn = attendance(
                 completedSchedule,
                 CodeType.CT01,
-                LocalDateTime.of(date, endedStart.plusMinutes(10))
+                LocalDateTime.of(date, endedStart.plusMinutes(4))
         );
         WorkAttendance checkOut = attendance(
                 completedSchedule,
@@ -87,7 +87,7 @@ class AdminHomeServiceTest {
         WorkAttendance endedWithoutCheckOut = attendance(
                 endedWithoutCheckOutSchedule,
                 CodeType.CT01,
-                LocalDateTime.of(date, endedStart.plusMinutes(5))
+                LocalDateTime.of(date, endedStart.plusMinutes(4))
         );
         List<WorkAttendance> attendances = List.of(
                 lateCheckIn, onTimeCheckIn, checkOut, endedWithoutCheckOut
