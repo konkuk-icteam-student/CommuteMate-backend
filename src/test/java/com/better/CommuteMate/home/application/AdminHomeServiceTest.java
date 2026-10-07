@@ -43,37 +43,49 @@ class AdminHomeServiceTest {
                 attendanceRepository,
                 taskRepository
         );
-        LocalDate date = LocalDate.of(2026, 4, 15);
-        LocalTime start = LocalTime.of(9, 0);
+        LocalDate date = LocalDate.now();
+        LocalTime activeStart = LocalTime.now().minusHours(1).withSecond(0).withNano(0);
+        LocalTime endedStart = LocalTime.now().minusHours(4).withSecond(0).withNano(0);
 
         User workingUser = user(1L);
         User notCheckedInUser = user(2L);
         User completedUser = user(3L);
-        WorkSchedule workingSchedule = schedule(11L, workingUser, date, start);
-        WorkSchedule notCheckedInSchedule = schedule(12L, notCheckedInUser, date, start);
-        WorkSchedule completedSchedule = schedule(13L, completedUser, date, start);
+        User endedWithoutCheckOutUser = user(4L);
+        WorkSchedule workingSchedule = schedule(11L, workingUser, date, activeStart);
+        WorkSchedule notCheckedInSchedule = schedule(12L, notCheckedInUser, date, activeStart);
+        WorkSchedule completedSchedule = schedule(13L, completedUser, date, endedStart);
+        WorkSchedule endedWithoutCheckOutSchedule =
+                schedule(14L, endedWithoutCheckOutUser, date, endedStart);
         List<WorkSchedule> schedules = List.of(
                 workingSchedule,
                 notCheckedInSchedule,
-                completedSchedule
+                completedSchedule,
+                endedWithoutCheckOutSchedule
         );
 
         WorkAttendance lateCheckIn = attendance(
                 workingSchedule,
                 CodeType.CT01,
-                LocalDateTime.of(date, start.plusMinutes(11))
+                LocalDateTime.of(date, activeStart.plusMinutes(11))
         );
         WorkAttendance onTimeCheckIn = attendance(
                 completedSchedule,
                 CodeType.CT01,
-                LocalDateTime.of(date, start.plusMinutes(10))
+                LocalDateTime.of(date, endedStart.plusMinutes(10))
         );
         WorkAttendance checkOut = attendance(
                 completedSchedule,
                 CodeType.CT02,
-                LocalDateTime.of(date, start.plusHours(3))
+                LocalDateTime.of(date, endedStart.plusHours(3))
         );
-        List<WorkAttendance> attendances = List.of(lateCheckIn, onTimeCheckIn, checkOut);
+        WorkAttendance endedWithoutCheckOut = attendance(
+                endedWithoutCheckOutSchedule,
+                CodeType.CT01,
+                LocalDateTime.of(date, endedStart.plusMinutes(5))
+        );
+        List<WorkAttendance> attendances = List.of(
+                lateCheckIn, onTimeCheckIn, checkOut, endedWithoutCheckOut
+        );
         List<Task> tasks = List.of(
                 Task.builder().isCompleted(true).build(),
                 Task.builder().isCompleted(false).build()

@@ -51,11 +51,14 @@ public class AdminHomeService {
                 ));
         Map<Long, List<WorkSchedule>> schedulesByUser = schedules.stream()
                 .collect(Collectors.groupingBy(schedule -> schedule.getUser().getUserId()));
+        LocalDateTime referenceTime = referenceTime(date);
 
         int currentWorkingCount = (int) schedulesByUser.values().stream()
                 .filter(userSchedules -> userSchedules.stream()
-                        .anyMatch(schedule -> hasCheckInWithoutCheckOut(
-                                attendanceBySchedule.getOrDefault(schedule.getScheduleId(), List.of())
+                        .anyMatch(schedule -> isCurrentlyWorking(
+                                schedule,
+                                attendanceBySchedule.getOrDefault(schedule.getScheduleId(), List.of()),
+                                referenceTime
                         )))
                 .count();
         int notCheckedInCount = (int) schedulesByUser.values().stream()
@@ -106,11 +109,35 @@ public class AdminHomeService {
                 .anyMatch(attendance -> attendance.getCheckTypeCode() == CodeType.CT01);
     }
 
-    private boolean hasCheckInWithoutCheckOut(List<WorkAttendance> attendances) {
-        boolean checkedIn = hasCheckIn(attendances);
+    private boolean isCurrentlyWorking(
+            WorkSchedule schedule,
+            List<WorkAttendance> attendances,
+            LocalDateTime referenceTime
+    ) {
+        LocalDateTime scheduledStart = LocalDateTime.of(schedule.getDate(), schedule.getStartTime());
+        LocalDateTime scheduledEnd = LocalDateTime.of(schedule.getDate(), schedule.getEndTime());
+        boolean checkedIn = attendances.stream()
+                .filter(attendance -> attendance.getCheckTypeCode() == CodeType.CT01)
+                .anyMatch(attendance -> !attendance.getCheckTime().isAfter(referenceTime));
         boolean checkedOut = attendances.stream()
-                .anyMatch(attendance -> attendance.getCheckTypeCode() == CodeType.CT02);
-        return checkedIn && !checkedOut;
+                .filter(attendance -> attendance.getCheckTypeCode() == CodeType.CT02)
+                .anyMatch(attendance -> !attendance.getCheckTime().isAfter(referenceTime));
+
+        return checkedIn
+                && !checkedOut
+                && !referenceTime.isBefore(scheduledStart)
+                && referenceTime.isBefore(scheduledEnd);
+    }
+
+    private LocalDateTime referenceTime(LocalDate date) {
+        LocalDate today = LocalDate.now();
+        if (date.isBefore(today)) {
+            return date.plusDays(1).atStartOfDay();
+        }
+        if (date.isAfter(today)) {
+            return date.atStartOfDay();
+        }
+        return LocalDateTime.now();
     }
 
     private boolean isLate(WorkSchedule schedule, List<WorkAttendance> attendances) {
