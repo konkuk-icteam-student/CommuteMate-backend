@@ -92,9 +92,12 @@ class AdminHomeServiceTest {
         List<WorkAttendance> attendances = List.of(
                 lateCheckIn, onTimeCheckIn, checkOut, endedWithoutCheckOut
         );
-        List<Task> tasks = List.of(
-                Task.builder().isCompleted(true).build(),
-                Task.builder().isCompleted(false).build()
+        List<Todo> todos = List.of(
+                Todo.builder().todoId(1L).organizationId(10L).build(),
+                Todo.builder().todoId(2L).organizationId(10L).build()
+        );
+        List<TodoCompletion> completions = List.of(
+                TodoCompletion.builder().todoCompletionId(1L).date(date).build()
         );
 
         when(scheduleRepository.findAllByUser_OrganizationIdAndDateAndStatusCode(
@@ -107,7 +110,7 @@ class AdminHomeServiceTest {
                 .thenReturn(completions);
 
         AdminAttendanceSummaryResponse response =
-                service.getAttendanceSummary(10L, "2026-04-15");
+                service.getAttendanceSummary(10L, date.toString());
 
         assertThat(response.date).isEqualTo(date);
         assertThat(response.currentWorkingCount).isEqualTo(1);
