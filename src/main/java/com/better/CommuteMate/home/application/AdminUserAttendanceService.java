@@ -142,11 +142,11 @@ public class AdminUserAttendanceService {
                     UserProfile profile = profiles.get(user.getUserId());
                     List<WorkSchedule> userSchedules =
                             schedulesByUser.getOrDefault(user.getUserId(), List.of());
-                    List<WorkSchedule> dailySchedules = userSchedules.stream()
+                    List<WorkSchedule> userDailySchedulesForDate = userSchedules.stream()
                             .filter(schedule -> schedule.getDate().equals(date))
                             .toList();
                     Status status = determineStatus(
-                            dailySchedules, attendancesBySchedule, referenceTime
+                            userDailySchedulesForDate, attendancesBySchedule, referenceTime
                     );
                     LateSummary late = calculateLateSummary(
                             userSchedules, attendancesBySchedule
