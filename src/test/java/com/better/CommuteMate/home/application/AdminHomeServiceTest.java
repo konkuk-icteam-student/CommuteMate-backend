@@ -2,8 +2,10 @@ package com.better.CommuteMate.home.application;
 
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
-import com.better.CommuteMate.domain.task.entity.Task;
-import com.better.CommuteMate.domain.task.repository.TaskRepository;
+import com.better.CommuteMate.domain.todo.entity.Todo;
+import com.better.CommuteMate.domain.todo.entity.TodoCompletion;
+import com.better.CommuteMate.domain.todo.repository.TodoCompletionRepository;
+import com.better.CommuteMate.domain.todo.repository.TodoRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
@@ -34,14 +36,18 @@ class AdminHomeServiceTest {
     private WorkAttendanceRepository attendanceRepository;
 
     @Mock
-    private TaskRepository taskRepository;
+    private TodoRepository todoRepository;
+
+    @Mock
+    private TodoCompletionRepository todoCompletionRepository;
 
     @Test
     void returnsAttendanceAndTaskSummary() {
         AdminHomeService service = new AdminHomeService(
                 scheduleRepository,
                 attendanceRepository,
-                taskRepository
+                todoRepository,
+                todoCompletionRepository
         );
         LocalDate date = LocalDate.now();
         LocalTime activeStart = LocalTime.now().minusHours(1).withSecond(0).withNano(0);
@@ -95,8 +101,10 @@ class AdminHomeServiceTest {
                 10L, date, CodeType.WS02
         )).thenReturn(schedules);
         when(attendanceRepository.findAllByScheduleIn(schedules)).thenReturn(attendances);
-        when(taskRepository.findAllByAssignee_OrganizationIdAndTaskDate(10L, date))
-                .thenReturn(tasks);
+        when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
+                .thenReturn(todos);
+        when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
+                .thenReturn(completions);
 
         AdminAttendanceSummaryResponse response =
                 service.getAttendanceSummary(10L, "2026-04-15");
@@ -114,7 +122,8 @@ class AdminHomeServiceTest {
         AdminHomeService service = new AdminHomeService(
                 scheduleRepository,
                 attendanceRepository,
-                taskRepository
+                todoRepository,
+                todoCompletionRepository
         );
 
         assertThatThrownBy(() -> service.getAttendanceSummary(10L, "2026-02-30"))

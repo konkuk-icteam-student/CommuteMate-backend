@@ -16,8 +16,6 @@ import com.better.CommuteMate.global.exceptions.error.AdminHomeErrorCode;
 import com.better.CommuteMate.home.controller.dto.AdminUserAttendancePageResponse;
 import com.better.CommuteMate.global.util.AttendancePolicy;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +27,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,14 +59,56 @@ public class AdminUserAttendanceService {
             throw CustomException.of(AdminHomeErrorCode.INVALID_PAGE);
         }
 
-        Page<User> users = userRepository
-                .findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCase(
+        List<User> allUsers = userRepository
+                .findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCaseOrderByNameAscUserIdAsc(
                         organizationId,
                         CodeType.RL01,
-                        userName == null ? "" : userName.trim(),
-                        PageRequest.of(page, size)
+                        userName == null ? "" : userName.trim()
                 );
-        List<Long> userIds = users.getContent().stream().map(User::getUserId).toList();
+        List<Long> allUserIds = allUsers.stream().map(User::getUserId).toList();
+        LocalDateTime referenceTime = referenceTime(date);
+        List<WorkSchedule> dailySchedules = allUserIds.isEmpty()
+                ? List.of()
+                : scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+                        allUserIds, date, date, CodeType.WS02
+                );
+        List<WorkAttendance> dailyAttendances = dailySchedules.isEmpty()
+                ? List.of()
+                : attendanceRepository.findAllByScheduleIn(dailySchedules);
+        Map<Long, List<WorkAttendance>> dailyAttendancesBySchedule = dailyAttendances.stream()
+                .collect(Collectors.groupingBy(
+                        attendance -> attendance.getSchedule().getScheduleId()
+                ));
+        Map<Long, List<WorkSchedule>> dailySchedulesByUser = dailySchedules.stream()
+                .collect(Collectors.groupingBy(schedule -> schedule.getUser().getUserId()));
+
+        Map<Long, Integer> attendancePriorities = new HashMap<>();
+        for (User user : allUsers) {
+            List<WorkSchedule> userDailySchedules = dailySchedulesByUser.getOrDefault(
+                    user.getUserId(), List.of()
+            );
+            Status status = determineStatus(
+                    userDailySchedules, dailyAttendancesBySchedule, referenceTime
+            );
+            attendancePriorities.put(user.getUserId(), attendancePriority(
+                    status, userDailySchedules, dailyAttendancesBySchedule, referenceTime
+            ));
+        }
+
+        List<User> sortedUsers = allUsers.stream()
+                .sorted(Comparator
+                        .comparingInt((User user) -> attendancePriorities.get(user.getUserId()))
+                        .thenComparing(User::getName, Comparator.nullsLast(String::compareTo))
+                        .thenComparing(User::getUserId))
+                .toList();
+        int totalElements = sortedUsers.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        long pageStartLong = (long) page * size;
+        List<User> pageUsers = pageStartLong >= totalElements
+                ? List.of()
+                : sortedUsers.subList((int) pageStartLong,
+                        (int) Math.min(pageStartLong + size, totalElements));
+        List<Long> userIds = pageUsers.stream().map(User::getUserId).toList();
         Map<Long, UserProfile> profiles = userProfileRepository.findAllByUserIdIn(userIds).stream()
                 .collect(Collectors.toMap(UserProfile::getUserId, profile -> profile));
 
@@ -96,18 +137,16 @@ public class AdminUserAttendanceService {
                 );
         int weeklyLimit = setting.map(WorkScheduleSetting::getWeeklyMaxMinutes).orElse(0);
         int monthlyLimit = setting.map(WorkScheduleSetting::getMonthlyMaxMinutes).orElse(0);
-        LocalDateTime referenceTime = referenceTime(date);
-
-        List<AdminUserAttendancePageResponse.UserAttendance> details = users.getContent().stream()
+        List<AdminUserAttendancePageResponse.UserAttendance> details = pageUsers.stream()
                 .map(user -> {
                     UserProfile profile = profiles.get(user.getUserId());
                     List<WorkSchedule> userSchedules =
                             schedulesByUser.getOrDefault(user.getUserId(), List.of());
-                    List<WorkSchedule> dailySchedules = userSchedules.stream()
+                    List<WorkSchedule> userDailySchedulesForDate = userSchedules.stream()
                             .filter(schedule -> schedule.getDate().equals(date))
                             .toList();
                     Status status = determineStatus(
-                            dailySchedules, attendancesBySchedule, referenceTime
+                            userDailySchedulesForDate, attendancesBySchedule, referenceTime
                     );
                     LateSummary late = calculateLateSummary(
                             userSchedules, attendancesBySchedule
@@ -147,9 +186,41 @@ public class AdminUserAttendanceService {
                 details,
                 page,
                 size,
-                users.getTotalElements(),
-                users.getTotalPages()
+                totalElements,
+                totalPages
         );
+    }
+
+    private int attendancePriority(
+            Status status,
+            List<WorkSchedule> schedules,
+            Map<Long, List<WorkAttendance>> attendancesBySchedule,
+            LocalDateTime referenceTime
+    ) {
+        if (CodeType.WK02.name().equals(status.workStatusCode)) {
+            return 0; // 근무 중
+        }
+        if (CodeType.WK01.name().equals(status.workStatusCode)) {
+            boolean hasStartedWithoutCheckIn = schedules.stream().anyMatch(schedule -> {
+                LocalDateTime start = LocalDateTime.of(schedule.getDate(), schedule.getStartTime());
+                LocalDateTime end = LocalDateTime.of(schedule.getDate(), schedule.getEndTime());
+                boolean checkedIn = attendancesBySchedule
+                        .getOrDefault(schedule.getScheduleId(), List.of()).stream()
+                        .anyMatch(attendance -> attendance.getCheckTypeCode() == CodeType.CT01);
+                return !checkedIn && !referenceTime.isBefore(start) && !referenceTime.isAfter(end);
+            });
+            // WK01 represents both a shift that has not started and an active shift without
+            // check-in. Keep the latter ahead of future shifts; the API has no separate code
+            // for the two future-facing labels in the requested UI order.
+            return hasStartedWithoutCheckIn ? 1 : 2;
+        }
+        if (CodeType.WK04.name().equals(status.workStatusCode)) {
+            return 4; // 결근/미출근 확정
+        }
+        if (CodeType.WK03.name().equals(status.workStatusCode)) {
+            return 5; // 근무 완료
+        }
+        return 6; // 오늘 근무 없음
     }
 
     private LocalDate parseDate(String value) {

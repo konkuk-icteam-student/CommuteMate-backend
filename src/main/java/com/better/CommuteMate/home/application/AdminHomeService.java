@@ -2,8 +2,9 @@ package com.better.CommuteMate.home.application;
 
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
-import com.better.CommuteMate.domain.task.entity.Task;
-import com.better.CommuteMate.domain.task.repository.TaskRepository;
+import com.better.CommuteMate.domain.todo.entity.Todo;
+import com.better.CommuteMate.domain.todo.repository.TodoCompletionRepository;
+import com.better.CommuteMate.domain.todo.repository.TodoRepository;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
 import com.better.CommuteMate.global.code.CodeType;
@@ -30,7 +31,8 @@ public class AdminHomeService {
 
     private final WorkSchedulesRepository scheduleRepository;
     private final WorkAttendanceRepository attendanceRepository;
-    private final TaskRepository taskRepository;
+    private final TodoRepository todoRepository;
+    private final TodoCompletionRepository todoCompletionRepository;
 
     public AdminAttendanceSummaryResponse getAttendanceSummary(
             Long organizationId,
@@ -76,11 +78,10 @@ public class AdminHomeService {
                         )))
                 .count();
 
-        List<Task> tasks =
-                taskRepository.findAllByAssignee_OrganizationIdAndTaskDate(organizationId, date);
-        int completedTaskCount = (int) tasks.stream()
-                .filter(task -> Boolean.TRUE.equals(task.getIsCompleted()))
-                .count();
+        List<Todo> todos = todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(organizationId);
+        int completedTaskCount = todoCompletionRepository
+                .findAllByTodo_OrganizationIdAndDate(organizationId, date)
+                .size();
 
         return new AdminAttendanceSummaryResponse(
                 date,
@@ -89,7 +90,7 @@ public class AdminHomeService {
                 lateCount,
                 new AdminAttendanceSummaryResponse.TodayTask(
                         completedTaskCount,
-                        tasks.size()
+                        todos.size()
                 )
         );
     }

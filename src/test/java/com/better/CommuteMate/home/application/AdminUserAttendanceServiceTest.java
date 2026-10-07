@@ -18,8 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -90,11 +88,15 @@ class AdminUserAttendanceServiceTest {
                 .weeklyMaxMinutes(540)
                 .monthlyMaxMinutes(1620)
                 .build();
-        PageRequest pageable = PageRequest.of(0, 6);
-
-        when(userRepository.findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCase(
-                10L, CodeType.RL01, "", pageable
-        )).thenReturn(new PageImpl<>(List.of(user), pageable, 1));
+        when(userRepository
+                .findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCaseOrderByNameAscUserIdAsc(
+                        10L, CodeType.RL01, ""
+                )).thenReturn(List.of(user));
+        when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+                List.of(1L), date, date, CodeType.WS02
+        )).thenReturn(List.of(schedule));
+        when(attendanceRepository.findAllByScheduleIn(List.of(schedule)))
+                .thenReturn(List.of(checkIn));
         when(userProfileRepository.findAllByUserIdIn(List.of(1L)))
                 .thenReturn(List.of(profile));
         when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
@@ -184,6 +186,55 @@ class AdminUserAttendanceServiceTest {
         assertThat(user.monthlyWorkedMinutes()).isZero();
     }
 
+    @Test
+    void sortsAllUsersByAttendancePriorityBeforeApplyingPagination() {
+        LocalDate date = LocalDate.now();
+        User absentUser = user(1L, "가나다");
+        User scheduledUser = user(2L, "나다라");
+        User workingUser = user(3L, "다라마");
+        List<User> nameSortedUsers = List.of(absentUser, scheduledUser, workingUser);
+
+        WorkSchedule absentSchedule = schedule(absentUser, date,
+                LocalTime.now().minusHours(2), LocalTime.now().minusHours(1), 1L);
+        WorkSchedule scheduledSchedule = schedule(scheduledUser, date,
+                LocalTime.now().plusHours(1), LocalTime.now().plusHours(2), 2L);
+        WorkSchedule workingSchedule = schedule(workingUser, date,
+                LocalTime.now().minusMinutes(30), LocalTime.now().plusMinutes(30), 3L);
+        WorkAttendance checkIn = attendanceOf(
+                workingSchedule, CodeType.CT01, LocalTime.now().minusMinutes(20)
+        );
+
+        when(userRepository
+                .findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCaseOrderByNameAscUserIdAsc(
+                        10L, CodeType.RL01, ""
+                )).thenReturn(nameSortedUsers);
+        when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+                List.of(1L, 2L, 3L), date, date, CodeType.WS02
+        )).thenReturn(List.of(absentSchedule, scheduledSchedule, workingSchedule));
+        when(attendanceRepository.findAllByScheduleIn(
+                List.of(absentSchedule, scheduledSchedule, workingSchedule)
+        )).thenReturn(List.of(checkIn));
+        when(userProfileRepository.findAllByUserIdIn(List.of(3L, 2L)))
+                .thenReturn(List.of());
+        when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+                List.of(3L, 2L), date.withDayOfMonth(1),
+                date.withDayOfMonth(date.lengthOfMonth()), CodeType.WS02
+        )).thenReturn(List.of(workingSchedule, scheduledSchedule));
+        when(attendanceRepository.findAllByScheduleIn(List.of(workingSchedule, scheduledSchedule)))
+                .thenReturn(List.of(checkIn));
+        when(settingRepository.findByOrganizationIdAndYearAndMonth(
+                10L, date.getYear(), date.getMonthValue()
+        )).thenReturn(Optional.empty());
+
+        var response = service.getUserAttendance(10L, date.toString(), null, 0, 2);
+
+        assertThat(response.users)
+                .extracting(AdminUserAttendancePageResponse.UserAttendance::userId)
+                .containsExactly("3", "2");
+        assertThat(response.totalElements).isEqualTo(3);
+        assertThat(response.totalPages).isEqualTo(2);
+    }
+
     private WorkSchedule scheduleOf(LocalTime start, LocalTime end) {
         User user = User.builder()
                 .userId(1L)
@@ -215,15 +266,18 @@ class AdminUserAttendanceServiceTest {
     ) {
         LocalDate date = schedule.getDate();
         User user = schedule.getUser();
-        PageRequest pageable = PageRequest.of(0, 6);
         WorkScheduleSetting setting = WorkScheduleSetting.builder()
                 .weeklyMaxMinutes(540)
                 .monthlyMaxMinutes(1620)
                 .build();
 
-        when(userRepository.findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCase(
-                10L, CodeType.RL01, "", pageable
-        )).thenReturn(new PageImpl<>(List.of(user), pageable, 1));
+        when(userRepository
+                .findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCaseOrderByNameAscUserIdAsc(
+                        10L, CodeType.RL01, ""
+                )).thenReturn(List.of(user));
+        when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+                List.of(1L), date, date, CodeType.WS02
+        )).thenReturn(List.of(schedule));
         when(userProfileRepository.findAllByUserIdIn(List.of(1L)))
                 .thenReturn(List.of());
         when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
@@ -238,6 +292,28 @@ class AdminUserAttendanceServiceTest {
         var response = service.getUserAttendance(10L, date.toString(), null, null, null);
         assertThat(response.users).hasSize(1);
         return response.users.get(0);
+    }
+
+    private User user(Long userId, String name) {
+        return User.builder()
+                .userId(userId)
+                .organizationId(10L)
+                .name(name)
+                .roleCode(CodeType.RL01)
+                .build();
+    }
+
+    private WorkSchedule schedule(
+            User user, LocalDate date, LocalTime start, LocalTime end, Long scheduleId
+    ) {
+        return WorkSchedule.builder()
+                .scheduleId(scheduleId)
+                .user(user)
+                .date(date)
+                .startTime(start)
+                .endTime(end)
+                .statusCode(CodeType.WS02)
+                .build();
     }
 
     @Test
