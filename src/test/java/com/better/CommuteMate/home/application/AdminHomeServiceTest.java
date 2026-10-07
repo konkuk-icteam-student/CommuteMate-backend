@@ -2,8 +2,10 @@ package com.better.CommuteMate.home.application;
 
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
-import com.better.CommuteMate.domain.task.entity.Task;
-import com.better.CommuteMate.domain.task.repository.TaskRepository;
+import com.better.CommuteMate.domain.todo.entity.Todo;
+import com.better.CommuteMate.domain.todo.entity.TodoCompletion;
+import com.better.CommuteMate.domain.todo.repository.TodoCompletionRepository;
+import com.better.CommuteMate.domain.todo.repository.TodoRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
@@ -34,14 +36,18 @@ class AdminHomeServiceTest {
     private WorkAttendanceRepository attendanceRepository;
 
     @Mock
-    private TaskRepository taskRepository;
+    private TodoRepository todoRepository;
+
+    @Mock
+    private TodoCompletionRepository todoCompletionRepository;
 
     @Test
     void returnsAttendanceAndTaskSummary() {
         AdminHomeService service = new AdminHomeService(
                 scheduleRepository,
                 attendanceRepository,
-                taskRepository
+                todoRepository,
+                todoCompletionRepository
         );
         LocalDate date = LocalDate.of(2026, 4, 15);
         LocalTime start = LocalTime.of(9, 0);
@@ -74,17 +80,22 @@ class AdminHomeServiceTest {
                 LocalDateTime.of(date, start.plusHours(3))
         );
         List<WorkAttendance> attendances = List.of(lateCheckIn, onTimeCheckIn, checkOut);
-        List<Task> tasks = List.of(
-                Task.builder().isCompleted(true).build(),
-                Task.builder().isCompleted(false).build()
+        List<Todo> todos = List.of(
+                Todo.builder().todoId(1L).organizationId(10L).build(),
+                Todo.builder().todoId(2L).organizationId(10L).build()
+        );
+        List<TodoCompletion> completions = List.of(
+                TodoCompletion.builder().todoCompletionId(1L).date(date).build()
         );
 
         when(scheduleRepository.findAllByUser_OrganizationIdAndDateAndStatusCode(
                 10L, date, CodeType.WS02
         )).thenReturn(schedules);
         when(attendanceRepository.findAllByScheduleIn(schedules)).thenReturn(attendances);
-        when(taskRepository.findAllByAssignee_OrganizationIdAndTaskDate(10L, date))
-                .thenReturn(tasks);
+        when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
+                .thenReturn(todos);
+        when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
+                .thenReturn(completions);
 
         AdminAttendanceSummaryResponse response =
                 service.getAttendanceSummary(10L, "2026-04-15");
@@ -102,7 +113,8 @@ class AdminHomeServiceTest {
         AdminHomeService service = new AdminHomeService(
                 scheduleRepository,
                 attendanceRepository,
-                taskRepository
+                todoRepository,
+                todoCompletionRepository
         );
 
         assertThatThrownBy(() -> service.getAttendanceSummary(10L, "2026-02-30"))
