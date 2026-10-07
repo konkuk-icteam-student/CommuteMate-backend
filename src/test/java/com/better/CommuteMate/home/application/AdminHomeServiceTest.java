@@ -77,7 +77,7 @@ class AdminHomeServiceTest {
         WorkAttendance onTimeCheckIn = attendance(
                 completedSchedule,
                 CodeType.CT01,
-                LocalDateTime.of(date, endedStart.plusMinutes(10))
+                LocalDateTime.of(date, endedStart.plusMinutes(4))
         );
         WorkAttendance checkOut = attendance(
                 completedSchedule,
