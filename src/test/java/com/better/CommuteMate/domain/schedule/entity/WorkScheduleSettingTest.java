@@ -11,6 +11,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WorkScheduleSettingTest {
 
     @Test
+    @DisplayName("isApplyPeriod - 종료일 00:00으로 저장된 과거 설정도 종료일 전체를 포함한다")
+    void isApplyPeriod_EndDateStoredAtMidnight_TrueOnEndDate() {
+        LocalDate today = LocalDate.now();
+        WorkScheduleSetting setting = settingOf(
+                today.minusDays(9).atTime(19, 0),
+                today.atStartOfDay()
+        );
+
+        boolean result = setting.isApplyPeriod(today.atTime(14, 0));
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
     @DisplayName("isApplyPeriod - 시작 시각 전에는 false다")
     void isApplyPeriod_BeforeStartTime_False() {
         LocalDate today = LocalDate.now();

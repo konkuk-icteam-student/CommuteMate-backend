@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(
@@ -165,9 +166,13 @@ public class WorkScheduleSetting {
      * 신청 기간은 저장된 시작/종료 시각을 포함해 판정한다.
      */
     public boolean isApplyPeriod(LocalDateTime now) {
+        // 과거에 종료일 00:00으로 저장된 설정은 종료일 전체를 포함하도록 호환한다.
+        LocalDateTime effectiveApplyEndAt = LocalTime.MIN.equals(applyEndAt.toLocalTime())
+                ? applyEndAt.toLocalDate().atTime(LocalTime.MAX)
+                : applyEndAt;
         return applyEnabled
                 && !now.isBefore(applyStartAt)
-                && !now.isAfter(applyEndAt);
+                && !now.isAfter(effectiveApplyEndAt);
     }
 
     @PrePersist
