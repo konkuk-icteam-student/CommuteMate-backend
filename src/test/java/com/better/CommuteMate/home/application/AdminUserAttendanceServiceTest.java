@@ -18,12 +18,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +34,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AdminUserAttendanceServiceTest {
+
+    private static final Clock FIXED_CLOCK = Clock.fixed(
+            Instant.parse("2026-10-28T03:00:00Z"), ZoneId.of("Asia/Seoul")
+    );
 
     @Mock UserRepository userRepository;
     @Mock UserProfileRepository userProfileRepository;
@@ -49,15 +54,16 @@ class AdminUserAttendanceServiceTest {
                 userProfileRepository,
                 scheduleRepository,
                 attendanceRepository,
-                settingRepository
+                settingRepository,
+                FIXED_CLOCK
         );
     }
 
     @Test
     void returnsWorkingAndLateCodesWithProfileAndPagination() {
-        LocalDate date = LocalDate.now();
-        LocalTime start = LocalTime.now().minusMinutes(30).withSecond(0).withNano(0);
-        LocalTime end = LocalTime.now().plusMinutes(30).withSecond(0).withNano(0);
+        LocalDate date = today();
+        LocalTime start = now().minusMinutes(30);
+        LocalTime end = now().plusMinutes(30);
         User user = User.builder()
                 .userId(1L)
                 .organizationId(10L)
@@ -90,11 +96,15 @@ class AdminUserAttendanceServiceTest {
                 .weeklyMaxMinutes(540)
                 .monthlyMaxMinutes(1620)
                 .build();
-        PageRequest pageable = PageRequest.of(0, 6);
-
-        when(userRepository.findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCase(
-                10L, CodeType.RL01, "", pageable
-        )).thenReturn(new PageImpl<>(List.of(user), pageable, 1));
+        when(userRepository
+                .findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCaseOrderByNameAscUserIdAsc(
+                        10L, CodeType.RL01, ""
+                )).thenReturn(List.of(user));
+        when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+                List.of(1L), date, date, CodeType.WS02
+        )).thenReturn(List.of(schedule));
+        when(attendanceRepository.findAllByScheduleIn(List.of(schedule)))
+                .thenReturn(List.of(checkIn));
         when(userProfileRepository.findAllByUserIdIn(List.of(1L)))
                 .thenReturn(List.of(profile));
         when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
@@ -123,7 +133,7 @@ class AdminUserAttendanceServiceTest {
 
     @Test
     void checkedInOnly_beforeEndTime_staysWorking() {
-        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime now = now();
         LocalTime start = now.minusMinutes(30);
         LocalTime end = now.plusMinutes(30);
         WorkSchedule schedule = scheduleOf(start, end);
@@ -138,7 +148,7 @@ class AdminUserAttendanceServiceTest {
 
     @Test
     void checkedInOnly_afterEndTimeWithoutCheckOut_completesAndCapsWorkedMinutes() {
-        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime now = now();
         LocalTime start = now.minusMinutes(60);
         LocalTime end = now.minusMinutes(30);
         WorkSchedule schedule = scheduleOf(start, end);
@@ -154,7 +164,7 @@ class AdminUserAttendanceServiceTest {
 
     @Test
     void checkedOut_alwaysCompletesUsingActualCheckOutTime() {
-        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime now = now();
         LocalTime start = now.minusMinutes(60);
         LocalTime end = now.minusMinutes(10);
         WorkSchedule schedule = scheduleOf(start, end);
@@ -171,7 +181,7 @@ class AdminUserAttendanceServiceTest {
 
     @Test
     void noCheckIn_afterEndTime_staysAbsentWithZeroWorkedMinutes() {
-        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime now = now();
         LocalTime start = now.minusMinutes(60);
         LocalTime end = now.minusMinutes(30);
         WorkSchedule schedule = scheduleOf(start, end);
@@ -184,6 +194,55 @@ class AdminUserAttendanceServiceTest {
         assertThat(user.monthlyWorkedMinutes()).isZero();
     }
 
+    @Test
+    void sortsAllUsersByAttendancePriorityBeforeApplyingPagination() {
+        LocalDate date = today();
+        User absentUser = user(1L, "가나다");
+        User scheduledUser = user(2L, "나다라");
+        User workingUser = user(3L, "다라마");
+        List<User> nameSortedUsers = List.of(absentUser, scheduledUser, workingUser);
+
+        WorkSchedule absentSchedule = schedule(absentUser, date,
+                now().minusHours(2), now().minusHours(1), 1L);
+        WorkSchedule scheduledSchedule = schedule(scheduledUser, date,
+                now().plusHours(1), now().plusHours(2), 2L);
+        WorkSchedule workingSchedule = schedule(workingUser, date,
+                now().minusMinutes(30), now().plusMinutes(30), 3L);
+        WorkAttendance checkIn = attendanceOf(
+                workingSchedule, CodeType.CT01, now().minusMinutes(20)
+        );
+
+        when(userRepository
+                .findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCaseOrderByNameAscUserIdAsc(
+                        10L, CodeType.RL01, ""
+                )).thenReturn(nameSortedUsers);
+        when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+                List.of(1L, 2L, 3L), date, date, CodeType.WS02
+        )).thenReturn(List.of(absentSchedule, scheduledSchedule, workingSchedule));
+        when(attendanceRepository.findAllByScheduleIn(
+                List.of(absentSchedule, scheduledSchedule, workingSchedule)
+        )).thenReturn(List.of(checkIn));
+        when(userProfileRepository.findAllByUserIdIn(List.of(3L, 2L)))
+                .thenReturn(List.of());
+        when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+                List.of(3L, 2L), date.withDayOfMonth(1),
+                date.withDayOfMonth(date.lengthOfMonth()), CodeType.WS02
+        )).thenReturn(List.of(workingSchedule, scheduledSchedule));
+        when(attendanceRepository.findAllByScheduleIn(List.of(workingSchedule, scheduledSchedule)))
+                .thenReturn(List.of(checkIn));
+        when(settingRepository.findByOrganizationIdAndYearAndMonth(
+                10L, date.getYear(), date.getMonthValue()
+        )).thenReturn(Optional.empty());
+
+        var response = service.getUserAttendance(10L, date.toString(), null, 0, 2);
+
+        assertThat(response.users)
+                .extracting(AdminUserAttendancePageResponse.UserAttendance::userId)
+                .containsExactly("3", "2");
+        assertThat(response.totalElements).isEqualTo(3);
+        assertThat(response.totalPages).isEqualTo(2);
+    }
+
     private WorkSchedule scheduleOf(LocalTime start, LocalTime end) {
         User user = User.builder()
                 .userId(1L)
@@ -194,7 +253,7 @@ class AdminUserAttendanceServiceTest {
         return WorkSchedule.builder()
                 .scheduleId(1L)
                 .user(user)
-                .date(LocalDate.now())
+                .date(today())
                 .startTime(start)
                 .endTime(end)
                 .statusCode(CodeType.WS02)
@@ -215,15 +274,18 @@ class AdminUserAttendanceServiceTest {
     ) {
         LocalDate date = schedule.getDate();
         User user = schedule.getUser();
-        PageRequest pageable = PageRequest.of(0, 6);
         WorkScheduleSetting setting = WorkScheduleSetting.builder()
                 .weeklyMaxMinutes(540)
                 .monthlyMaxMinutes(1620)
                 .build();
 
-        when(userRepository.findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCase(
-                10L, CodeType.RL01, "", pageable
-        )).thenReturn(new PageImpl<>(List.of(user), pageable, 1));
+        when(userRepository
+                .findAllByOrganizationIdAndRoleCodeAndNameContainingIgnoreCaseOrderByNameAscUserIdAsc(
+                        10L, CodeType.RL01, ""
+                )).thenReturn(List.of(user));
+        when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
+                List.of(1L), date, date, CodeType.WS02
+        )).thenReturn(List.of(schedule));
         when(userProfileRepository.findAllByUserIdIn(List.of(1L)))
                 .thenReturn(List.of());
         when(scheduleRepository.findAllByUser_UserIdInAndDateBetweenAndStatusCode(
@@ -238,6 +300,36 @@ class AdminUserAttendanceServiceTest {
         var response = service.getUserAttendance(10L, date.toString(), null, null, null);
         assertThat(response.users).hasSize(1);
         return response.users.get(0);
+    }
+
+    private User user(Long userId, String name) {
+        return User.builder()
+                .userId(userId)
+                .organizationId(10L)
+                .name(name)
+                .roleCode(CodeType.RL01)
+                .build();
+    }
+
+    private LocalDate today() {
+        return LocalDate.now(FIXED_CLOCK);
+    }
+
+    private LocalTime now() {
+        return LocalTime.now(FIXED_CLOCK);
+    }
+
+    private WorkSchedule schedule(
+            User user, LocalDate date, LocalTime start, LocalTime end, Long scheduleId
+    ) {
+        return WorkSchedule.builder()
+                .scheduleId(scheduleId)
+                .user(user)
+                .date(date)
+                .startTime(start)
+                .endTime(end)
+                .statusCode(CodeType.WS02)
+                .build();
     }
 
     @Test

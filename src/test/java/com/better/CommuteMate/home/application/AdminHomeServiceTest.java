@@ -2,8 +2,10 @@ package com.better.CommuteMate.home.application;
 
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
-import com.better.CommuteMate.domain.task.entity.Task;
-import com.better.CommuteMate.domain.task.repository.TaskRepository;
+import com.better.CommuteMate.domain.todo.entity.Todo;
+import com.better.CommuteMate.domain.todo.entity.TodoCompletion;
+import com.better.CommuteMate.domain.todo.repository.TodoCompletionRepository;
+import com.better.CommuteMate.domain.todo.repository.TodoRepository;
 import com.better.CommuteMate.domain.user.entity.User;
 import com.better.CommuteMate.domain.workattendance.entity.WorkAttendance;
 import com.better.CommuteMate.domain.workattendance.repository.WorkAttendanceRepository;
@@ -18,6 +20,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +32,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AdminHomeServiceTest {
 
+    private static final Clock FIXED_CLOCK = Clock.fixed(
+            Instant.parse("2026-10-28T03:00:00Z"), ZoneId.of("Asia/Seoul")
+    );
+
     @Mock
     private WorkSchedulesRepository scheduleRepository;
 
@@ -34,60 +43,82 @@ class AdminHomeServiceTest {
     private WorkAttendanceRepository attendanceRepository;
 
     @Mock
-    private TaskRepository taskRepository;
+    private TodoRepository todoRepository;
+
+    @Mock
+    private TodoCompletionRepository todoCompletionRepository;
 
     @Test
     void returnsAttendanceAndTaskSummary() {
         AdminHomeService service = new AdminHomeService(
                 scheduleRepository,
                 attendanceRepository,
-                taskRepository
+                todoRepository,
+                todoCompletionRepository,
+                FIXED_CLOCK
         );
-        LocalDate date = LocalDate.of(2026, 4, 15);
-        LocalTime start = LocalTime.of(9, 0);
+        LocalDate date = LocalDate.now(FIXED_CLOCK);
+        LocalTime activeStart = LocalTime.now(FIXED_CLOCK).minusHours(1);
+        LocalTime endedStart = LocalTime.now(FIXED_CLOCK).minusHours(4);
 
         User workingUser = user(1L);
         User notCheckedInUser = user(2L);
         User completedUser = user(3L);
-        WorkSchedule workingSchedule = schedule(11L, workingUser, date, start);
-        WorkSchedule notCheckedInSchedule = schedule(12L, notCheckedInUser, date, start);
-        WorkSchedule completedSchedule = schedule(13L, completedUser, date, start);
+        User endedWithoutCheckOutUser = user(4L);
+        WorkSchedule workingSchedule = schedule(11L, workingUser, date, activeStart);
+        WorkSchedule notCheckedInSchedule = schedule(12L, notCheckedInUser, date, activeStart);
+        WorkSchedule completedSchedule = schedule(13L, completedUser, date, endedStart);
+        WorkSchedule endedWithoutCheckOutSchedule =
+                schedule(14L, endedWithoutCheckOutUser, date, endedStart);
         List<WorkSchedule> schedules = List.of(
                 workingSchedule,
                 notCheckedInSchedule,
-                completedSchedule
+                completedSchedule,
+                endedWithoutCheckOutSchedule
         );
 
         WorkAttendance lateCheckIn = attendance(
                 workingSchedule,
                 CodeType.CT01,
-                LocalDateTime.of(date, start.plusMinutes(11))
+                LocalDateTime.of(date, activeStart.plusMinutes(11))
         );
         WorkAttendance onTimeCheckIn = attendance(
                 completedSchedule,
                 CodeType.CT01,
-                LocalDateTime.of(date, start.plusMinutes(10))
+                LocalDateTime.of(date, endedStart.plusMinutes(4))
         );
         WorkAttendance checkOut = attendance(
                 completedSchedule,
                 CodeType.CT02,
-                LocalDateTime.of(date, start.plusHours(3))
+                LocalDateTime.of(date, endedStart.plusHours(3))
         );
-        List<WorkAttendance> attendances = List.of(lateCheckIn, onTimeCheckIn, checkOut);
-        List<Task> tasks = List.of(
-                Task.builder().isCompleted(true).build(),
-                Task.builder().isCompleted(false).build()
+        WorkAttendance endedWithoutCheckOut = attendance(
+                endedWithoutCheckOutSchedule,
+                CodeType.CT01,
+                LocalDateTime.of(date, endedStart.plusMinutes(4))
+        );
+        List<WorkAttendance> attendances = List.of(
+                lateCheckIn, onTimeCheckIn, checkOut, endedWithoutCheckOut
+        );
+        List<Todo> todos = List.of(
+                Todo.builder().todoId(1L).organizationId(10L).build(),
+                Todo.builder().todoId(2L).organizationId(10L).build()
+        );
+        List<TodoCompletion> completions = List.of(
+                TodoCompletion.builder().todoCompletionId(1L).date(date).build()
         );
 
         when(scheduleRepository.findAllByUser_OrganizationIdAndDateAndStatusCode(
                 10L, date, CodeType.WS02
         )).thenReturn(schedules);
         when(attendanceRepository.findAllByScheduleIn(schedules)).thenReturn(attendances);
-        when(taskRepository.findAllByAssignee_OrganizationIdAndTaskDate(10L, date))
-                .thenReturn(tasks);
+        when(todoRepository.findAllByOrganizationIdOrderByTimeSlotAscTodoIdAsc(10L))
+                .thenReturn(todos);
+        when(todoCompletionRepository.findAllByTodo_OrganizationIdAndDate(10L, date))
+                .thenReturn(completions);
 
         AdminAttendanceSummaryResponse response =
-                service.getAttendanceSummary(10L, "2026-04-15");
+                service.getAttendanceSummary(10L, date.toString());
 
         assertThat(response.date).isEqualTo(date);
         assertThat(response.currentWorkingCount).isEqualTo(1);
@@ -102,7 +133,9 @@ class AdminHomeServiceTest {
         AdminHomeService service = new AdminHomeService(
                 scheduleRepository,
                 attendanceRepository,
-                taskRepository
+                todoRepository,
+                todoCompletionRepository,
+                FIXED_CLOCK
         );
 
         assertThatThrownBy(() -> service.getAttendanceSummary(10L, "2026-02-30"))
