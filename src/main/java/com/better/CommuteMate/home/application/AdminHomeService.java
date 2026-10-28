@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Clock;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ public class AdminHomeService {
     private final WorkAttendanceRepository attendanceRepository;
     private final TodoRepository todoRepository;
     private final TodoCompletionRepository todoCompletionRepository;
+    private final Clock clock;
 
     public AdminAttendanceSummaryResponse getAttendanceSummary(
             Long organizationId,
@@ -132,14 +134,14 @@ public class AdminHomeService {
     }
 
     private LocalDateTime referenceTime(LocalDate date) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         if (date.isBefore(today)) {
             return date.plusDays(1).atStartOfDay();
         }
         if (date.isAfter(today)) {
             return date.atStartOfDay();
         }
-        return LocalDateTime.now();
+        return LocalDateTime.now(clock);
     }
 
     private boolean isLate(WorkSchedule schedule, List<WorkAttendance> attendances) {

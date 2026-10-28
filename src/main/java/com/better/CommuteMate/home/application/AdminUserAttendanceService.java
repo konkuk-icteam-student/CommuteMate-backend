@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -44,6 +45,7 @@ public class AdminUserAttendanceService {
     private final WorkSchedulesRepository scheduleRepository;
     private final WorkAttendanceRepository attendanceRepository;
     private final WorkScheduleSettingRepository settingRepository;
+    private final Clock clock;
 
     public AdminUserAttendancePageResponse getUserAttendance(
             Long organizationId,
@@ -235,14 +237,14 @@ public class AdminUserAttendanceService {
     }
 
     private LocalDateTime referenceTime(LocalDate date) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         if (date.isBefore(today)) {
             return date.plusDays(1).atStartOfDay();
         }
         if (date.isAfter(today)) {
             return date.atStartOfDay();
         }
-        return LocalDateTime.now();
+        return LocalDateTime.now(clock);
     }
 
     private Status determineStatus(
