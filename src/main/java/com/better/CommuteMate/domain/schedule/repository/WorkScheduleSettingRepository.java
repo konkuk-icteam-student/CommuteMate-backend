@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface WorkScheduleSettingRepository extends JpaRepository<WorkScheduleSetting, Long> {
@@ -41,5 +43,17 @@ public interface WorkScheduleSettingRepository extends JpaRepository<WorkSchedul
             @Param("organizationId") Long organizationId,
             @Param("year") Integer year,
             @Param("month") Integer month
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select setting
+            from WorkScheduleSetting setting
+            where setting.applyEnabled = true
+              and setting.applyStartAt <= :now
+              and setting.applyStartNotifiedAt is null
+            """)
+    List<WorkScheduleSetting> findUnnotifiedStartedSettingsForUpdate(
+            @Param("now") LocalDateTime now
     );
 }

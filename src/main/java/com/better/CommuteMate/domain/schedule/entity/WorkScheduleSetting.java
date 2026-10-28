@@ -41,6 +41,9 @@ public class WorkScheduleSetting {
     @Column(name = "apply_end_at", nullable = false)
     private LocalDateTime applyEndAt;
 
+    @Column(name = "apply_start_notified_at")
+    private LocalDateTime applyStartNotifiedAt;
+
     @Column(name = "apply_enabled", nullable = false)
     @Builder.Default
     private Boolean applyEnabled = true;
@@ -110,6 +113,10 @@ public class WorkScheduleSetting {
         this.editEnabled = editEnabled;
         this.autoApproveEnabled = autoApproveEnabled;
         this.updatedBy = updatedBy;
+    }
+
+    public void markApplyStartNotified(LocalDateTime notifiedAt) {
+        this.applyStartNotifiedAt = notifiedAt;
     }
 
     public void updateWorkRule(
