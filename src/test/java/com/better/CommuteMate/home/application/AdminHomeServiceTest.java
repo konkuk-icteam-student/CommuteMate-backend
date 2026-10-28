@@ -20,6 +20,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +31,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AdminHomeServiceTest {
+
+    private static final Clock FIXED_CLOCK = Clock.fixed(
+            Instant.parse("2026-10-28T03:00:00Z"), ZoneId.of("Asia/Seoul")
+    );
 
     @Mock
     private WorkSchedulesRepository scheduleRepository;
@@ -47,11 +54,12 @@ class AdminHomeServiceTest {
                 scheduleRepository,
                 attendanceRepository,
                 todoRepository,
-                todoCompletionRepository
+                todoCompletionRepository,
+                FIXED_CLOCK
         );
-        LocalDate date = LocalDate.now();
-        LocalTime activeStart = LocalTime.now().minusHours(1).withSecond(0).withNano(0);
-        LocalTime endedStart = LocalTime.now().minusHours(4).withSecond(0).withNano(0);
+        LocalDate date = LocalDate.now(FIXED_CLOCK);
+        LocalTime activeStart = LocalTime.now(FIXED_CLOCK).minusHours(1);
+        LocalTime endedStart = LocalTime.now(FIXED_CLOCK).minusHours(4);
 
         User workingUser = user(1L);
         User notCheckedInUser = user(2L);
@@ -126,7 +134,8 @@ class AdminHomeServiceTest {
                 scheduleRepository,
                 attendanceRepository,
                 todoRepository,
-                todoCompletionRepository
+                todoCompletionRepository,
+                FIXED_CLOCK
         );
 
         assertThatThrownBy(() -> service.getAttendanceSummary(10L, "2026-02-30"))

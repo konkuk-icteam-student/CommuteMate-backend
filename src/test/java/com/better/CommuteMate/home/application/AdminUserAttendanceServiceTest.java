@@ -22,6 +22,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +34,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AdminUserAttendanceServiceTest {
+
+    private static final Clock FIXED_CLOCK = Clock.fixed(
+            Instant.parse("2026-10-28T03:00:00Z"), ZoneId.of("Asia/Seoul")
+    );
 
     @Mock UserRepository userRepository;
     @Mock UserProfileRepository userProfileRepository;
@@ -47,15 +54,16 @@ class AdminUserAttendanceServiceTest {
                 userProfileRepository,
                 scheduleRepository,
                 attendanceRepository,
-                settingRepository
+                settingRepository,
+                FIXED_CLOCK
         );
     }
 
     @Test
     void returnsWorkingAndLateCodesWithProfileAndPagination() {
-        LocalDate date = LocalDate.now();
-        LocalTime start = LocalTime.now().minusMinutes(30).withSecond(0).withNano(0);
-        LocalTime end = LocalTime.now().plusMinutes(30).withSecond(0).withNano(0);
+        LocalDate date = today();
+        LocalTime start = now().minusMinutes(30);
+        LocalTime end = now().plusMinutes(30);
         User user = User.builder()
                 .userId(1L)
                 .organizationId(10L)
@@ -125,7 +133,7 @@ class AdminUserAttendanceServiceTest {
 
     @Test
     void checkedInOnly_beforeEndTime_staysWorking() {
-        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime now = now();
         LocalTime start = now.minusMinutes(30);
         LocalTime end = now.plusMinutes(30);
         WorkSchedule schedule = scheduleOf(start, end);
@@ -140,7 +148,7 @@ class AdminUserAttendanceServiceTest {
 
     @Test
     void checkedInOnly_afterEndTimeWithoutCheckOut_completesAndCapsWorkedMinutes() {
-        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime now = now();
         LocalTime start = now.minusMinutes(60);
         LocalTime end = now.minusMinutes(30);
         WorkSchedule schedule = scheduleOf(start, end);
@@ -156,7 +164,7 @@ class AdminUserAttendanceServiceTest {
 
     @Test
     void checkedOut_alwaysCompletesUsingActualCheckOutTime() {
-        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime now = now();
         LocalTime start = now.minusMinutes(60);
         LocalTime end = now.minusMinutes(10);
         WorkSchedule schedule = scheduleOf(start, end);
@@ -173,7 +181,7 @@ class AdminUserAttendanceServiceTest {
 
     @Test
     void noCheckIn_afterEndTime_staysAbsentWithZeroWorkedMinutes() {
-        LocalTime now = LocalTime.now().withNano(0);
+        LocalTime now = now();
         LocalTime start = now.minusMinutes(60);
         LocalTime end = now.minusMinutes(30);
         WorkSchedule schedule = scheduleOf(start, end);
@@ -188,20 +196,20 @@ class AdminUserAttendanceServiceTest {
 
     @Test
     void sortsAllUsersByAttendancePriorityBeforeApplyingPagination() {
-        LocalDate date = LocalDate.now();
+        LocalDate date = today();
         User absentUser = user(1L, "가나다");
         User scheduledUser = user(2L, "나다라");
         User workingUser = user(3L, "다라마");
         List<User> nameSortedUsers = List.of(absentUser, scheduledUser, workingUser);
 
         WorkSchedule absentSchedule = schedule(absentUser, date,
-                LocalTime.now().minusHours(2), LocalTime.now().minusHours(1), 1L);
+                now().minusHours(2), now().minusHours(1), 1L);
         WorkSchedule scheduledSchedule = schedule(scheduledUser, date,
-                LocalTime.now().plusHours(1), LocalTime.now().plusHours(2), 2L);
+                now().plusHours(1), now().plusHours(2), 2L);
         WorkSchedule workingSchedule = schedule(workingUser, date,
-                LocalTime.now().minusMinutes(30), LocalTime.now().plusMinutes(30), 3L);
+                now().minusMinutes(30), now().plusMinutes(30), 3L);
         WorkAttendance checkIn = attendanceOf(
-                workingSchedule, CodeType.CT01, LocalTime.now().minusMinutes(20)
+                workingSchedule, CodeType.CT01, now().minusMinutes(20)
         );
 
         when(userRepository
@@ -245,7 +253,7 @@ class AdminUserAttendanceServiceTest {
         return WorkSchedule.builder()
                 .scheduleId(1L)
                 .user(user)
-                .date(LocalDate.now())
+                .date(today())
                 .startTime(start)
                 .endTime(end)
                 .statusCode(CodeType.WS02)
@@ -301,6 +309,14 @@ class AdminUserAttendanceServiceTest {
                 .name(name)
                 .roleCode(CodeType.RL01)
                 .build();
+    }
+
+    private LocalDate today() {
+        return LocalDate.now(FIXED_CLOCK);
+    }
+
+    private LocalTime now() {
+        return LocalTime.now(FIXED_CLOCK);
     }
 
     private WorkSchedule schedule(
