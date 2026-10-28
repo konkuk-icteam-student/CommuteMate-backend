@@ -100,7 +100,7 @@ class MonthlyScheduleSettingServiceTest {
     }
 
     @Test
-    @DisplayName("근로신청 설정 저장 - 기존 설정 갱신 시 applyStartAt/applyEndAt이 시작일 00:00 / 종료일 23:59:59.999999999로 저장된다")
+    @DisplayName("근로신청 설정 저장 - 기존 설정 갱신 시 applyStartAt/applyEndAt이 시작일 19:00 / 종료일 23:59:59.999999999로 저장된다")
     void save_ExistingSetting_NormalizesApplyPeriod() {
         WorkScheduleSetting setting = WorkScheduleSetting.builder()
                 .settingId(1L)
@@ -122,14 +122,14 @@ class MonthlyScheduleSettingServiceTest {
 
         service.save(10L, 2026, 4, request, "99");
 
-        assertThat(setting.getApplyStartAt()).isEqualTo(LocalDate.of(2026, 4, 1).atStartOfDay());
+        assertThat(setting.getApplyStartAt()).isEqualTo(LocalDate.of(2026, 4, 1).atTime(19, 0));
         assertThat(setting.getApplyEndAt()).isEqualTo(LocalDate.of(2026, 4, 10).atTime(LocalTime.MAX));
         // 기존 설정 갱신이므로 NT03("근무 신청 시작")이 재발송되면 안 된다.
         verifyNoInteractions(userRepository, notificationService, notificationContentSerializer);
     }
 
     @Test
-    @DisplayName("근로신청 설정 저장 - 신규 설정 생성 시 applyStartAt/applyEndAt이 시작일 00:00 / 종료일 23:59:59.999999999로 저장된다")
+    @DisplayName("근로신청 설정 저장 - 신규 설정 생성 시 applyStartAt/applyEndAt이 시작일 19:00 / 종료일 23:59:59.999999999로 저장된다")
     void save_NewSetting_NormalizesApplyPeriod() {
         SaveScheduleSettingRequest request = validRequest();
 
@@ -144,7 +144,7 @@ class MonthlyScheduleSettingServiceTest {
 
         var captor = org.mockito.ArgumentCaptor.forClass(WorkScheduleSetting.class);
         verify(settingRepository).save(captor.capture());
-        assertThat(captor.getValue().getApplyStartAt()).isEqualTo(LocalDate.of(2026, 4, 1).atStartOfDay());
+        assertThat(captor.getValue().getApplyStartAt()).isEqualTo(LocalDate.of(2026, 4, 1).atTime(19, 0));
         assertThat(captor.getValue().getApplyEndAt()).isEqualTo(LocalDate.of(2026, 4, 10).atTime(LocalTime.MAX));
     }
 

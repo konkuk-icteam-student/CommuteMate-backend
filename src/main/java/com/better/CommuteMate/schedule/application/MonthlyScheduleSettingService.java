@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 public class MonthlyScheduleSettingService {
 
     private static final List<CodeType> ACTIVE_STATUSES = List.of(CodeType.WS01, CodeType.WS02);
+    private static final LocalTime APPLY_START_TIME = LocalTime.of(19, 0);
 
     private final WorkScheduleSettingRepository settingRepository;
     private final WorkSchedulesRepository scheduleRepository;
@@ -92,7 +93,7 @@ public class MonthlyScheduleSettingService {
         Set<WorkSchedule> affected = findAffected(schedules, request);
 
         setting.updateMonthlySetting(
-                request.applyStartDate().atStartOfDay(),
+                request.applyStartDate().atTime(APPLY_START_TIME),
                 request.applyEndDate().atTime(LocalTime.MAX),
                 request.maxConcurrentWorkers(),
                 request.minWorkUnitMinutes(),
@@ -182,7 +183,7 @@ public class MonthlyScheduleSettingService {
                 .organizationId(organizationId)
                 .year(year)
                 .month(month)
-                .applyStartAt(request.applyStartDate().atStartOfDay())
+                .applyStartAt(request.applyStartDate().atTime(APPLY_START_TIME))
                 .applyEndAt(request.applyEndDate().atTime(LocalTime.MAX))
                 .maxConcurrentWorkers(request.maxConcurrentWorkers())
                 .minWorkUnitMinutes(request.minWorkUnitMinutes())
