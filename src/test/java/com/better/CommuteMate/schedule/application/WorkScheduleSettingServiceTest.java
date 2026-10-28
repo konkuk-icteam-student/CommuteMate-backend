@@ -31,8 +31,8 @@ class WorkScheduleSettingServiceTest {
     private WorkScheduleSettingService workScheduleSettingService;
 
     @Test
-    @DisplayName("setApplyTerm - 신규 설정 저장 시 applyStartAt은 시작일 00:00, applyEndAt은 종료일 23:59:59.999999999로 정규화된다")
-    void setApplyTerm_NewSetting_NormalizesToStartOfDayAndEndOfDay() throws Exception {
+    @DisplayName("setApplyTerm - 신규 설정 저장 시 applyStartAt은 시작일 19:00, applyEndAt은 종료일 23:59:59.999999999로 정규화된다")
+    void setApplyTerm_NewSetting_NormalizesToSevenPmAndEndOfDay() throws Exception {
         setDefaultMaxConcurrent(workScheduleSettingService, 4);
         when(workScheduleSettingRepository.findByOrganizationIdAndYearAndMonth(10L, 2026, 8))
                 .thenReturn(Optional.empty());
@@ -46,13 +46,13 @@ class WorkScheduleSettingServiceTest {
         WorkScheduleSetting result = workScheduleSettingService.setApplyTerm(
                 10L, 2026, 8, rawStart, rawEnd, "admin1");
 
-        assertThat(result.getApplyStartAt()).isEqualTo(LocalDate.of(2026, 8, 1).atStartOfDay());
+        assertThat(result.getApplyStartAt()).isEqualTo(LocalDate.of(2026, 8, 1).atTime(19, 0));
         assertThat(result.getApplyEndAt()).isEqualTo(LocalDate.of(2026, 8, 10).atTime(LocalTime.MAX));
     }
 
     @Test
-    @DisplayName("setApplyTerm - 기존 설정 갱신 시에도 동일하게 시작일 00:00 / 종료일 23:59:59.999999999로 정규화된다")
-    void setApplyTerm_ExistingSetting_NormalizesToStartOfDayAndEndOfDay() {
+    @DisplayName("setApplyTerm - 기존 설정 갱신 시에도 동일하게 시작일 19:00 / 종료일 23:59:59.999999999로 정규화된다")
+    void setApplyTerm_ExistingSetting_NormalizesToSevenPmAndEndOfDay() {
         WorkScheduleSetting existing = WorkScheduleSetting.builder()
                 .organizationId(10L).year(2026).month(8)
                 .applyStartAt(LocalDateTime.of(2020, 1, 1, 0, 0))
@@ -69,7 +69,7 @@ class WorkScheduleSettingServiceTest {
         WorkScheduleSetting result = workScheduleSettingService.setApplyTerm(
                 10L, 2026, 8, rawStart, rawEnd, "admin1");
 
-        assertThat(result.getApplyStartAt()).isEqualTo(LocalDate.of(2026, 8, 1).atStartOfDay());
+        assertThat(result.getApplyStartAt()).isEqualTo(LocalDate.of(2026, 8, 1).atTime(19, 0));
         assertThat(result.getApplyEndAt()).isEqualTo(LocalDate.of(2026, 8, 10).atTime(LocalTime.MAX));
     }
 
@@ -106,11 +106,11 @@ class WorkScheduleSettingServiceTest {
     }
 
     @Test
-    @DisplayName("getDefaultApplyStartAt - 대상 월 전달 23일 00:00을 반환한다")
-    void getDefaultApplyStartAt_ReturnsPreviousMonth23rdMidnight() {
+    @DisplayName("getDefaultApplyStartAt - 대상 월 전달 23일 19:00을 반환한다")
+    void getDefaultApplyStartAt_ReturnsPreviousMonth23rdAtSevenPm() {
         LocalDateTime result = workScheduleSettingService.getDefaultApplyStartAt(2026, 8);
 
-        assertThat(result).isEqualTo(LocalDateTime.of(2026, 7, 23, 0, 0));
+        assertThat(result).isEqualTo(LocalDateTime.of(2026, 7, 23, 19, 0));
     }
 
     @Test

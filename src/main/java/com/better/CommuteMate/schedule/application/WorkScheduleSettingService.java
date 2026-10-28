@@ -78,8 +78,7 @@ public class WorkScheduleSettingService {
 
     /**
      * 근무 신청 기간을 설정합니다.
-     * 저장 시각은 항상 시작일 00:00:00 ~ 종료일 23:59:59.999999999로 정규화한다
-     * (applyStartAt/applyEndAt에 어떤 시각이 담겨 들어와도 날짜 부분만 사용).
+     * 저장 시각은 항상 시작일 19:00:00 ~ 종료일 23:59:59.999999999로 정규화한다.
      */
     @Transactional
     public WorkScheduleSetting setApplyTerm(
@@ -90,7 +89,7 @@ public class WorkScheduleSettingService {
             LocalDateTime applyEndAt,
             String updatedBy
     ) {
-        LocalDateTime normalizedStartAt = applyStartAt.toLocalDate().atStartOfDay();
+        LocalDateTime normalizedStartAt = applyStartAt.toLocalDate().atTime(19, 0);
         LocalDateTime normalizedEndAt = applyEndAt.toLocalDate().atTime(LocalTime.MAX);
 
         if (!normalizedStartAt.isBefore(normalizedEndAt)) {
@@ -171,13 +170,13 @@ public class WorkScheduleSettingService {
 
     /**
      * 신청 기간 기본값을 계산합니다.
-     * 규칙: 해당 월의 전달 23일 00:00 ~ 전달 27일 00:00
+     * 규칙: 해당 월의 전달 23일 19:00
      */
     public LocalDateTime getDefaultApplyStartAt(Integer year, Integer month) {
         YearMonth targetMonth = YearMonth.of(year, month);
         return targetMonth.minusMonths(1)
                 .atDay(23)
-                .atStartOfDay();
+                .atTime(19, 0);
     }
 
     /**

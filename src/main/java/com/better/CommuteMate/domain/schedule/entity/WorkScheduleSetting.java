@@ -3,8 +3,8 @@ package com.better.CommuteMate.domain.schedule.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(
@@ -41,6 +41,9 @@ public class WorkScheduleSetting {
 
     @Column(name = "apply_end_at", nullable = false)
     private LocalDateTime applyEndAt;
+
+    @Column(name = "apply_start_notified_at")
+    private LocalDateTime applyStartNotifiedAt;
 
     @Column(name = "apply_enabled", nullable = false)
     @Builder.Default
@@ -113,6 +116,10 @@ public class WorkScheduleSetting {
         this.updatedBy = updatedBy;
     }
 
+    public void markApplyStartNotified(LocalDateTime notifiedAt) {
+        this.applyStartNotifiedAt = notifiedAt;
+    }
+
     public void updateWorkRule(
             Integer maxConcurrentWorkers,
             Integer minWorkUnitMinutes,
@@ -156,15 +163,16 @@ public class WorkScheduleSetting {
     }
 
     /**
-     * 신청 기간은 일자 단위로 판정한다: 시작일 00:00:00부터 종료일 23:59:59까지 포함.
-     * applyStartAt/applyEndAt에 저장된 시각 부분(자정이든 23:59:59든)에 관계없이
-     * 날짜만 비교해, 종료일 당일 저장 시각에 따라 신청 가능 여부가 갈리지 않도록 한다.
+     * 신청 기간은 저장된 시작/종료 시각을 포함해 판정한다.
      */
     public boolean isApplyPeriod(LocalDateTime now) {
-        LocalDate today = now.toLocalDate();
+        // 과거에 종료일 00:00으로 저장된 설정은 종료일 전체를 포함하도록 호환한다.
+        LocalDateTime effectiveApplyEndAt = LocalTime.MIN.equals(applyEndAt.toLocalTime())
+                ? applyEndAt.toLocalDate().atTime(LocalTime.MAX)
+                : applyEndAt;
         return applyEnabled
-                && !today.isBefore(applyStartAt.toLocalDate())
-                && !today.isAfter(applyEndAt.toLocalDate());
+                && !now.isBefore(applyStartAt)
+                && !now.isAfter(effectiveApplyEndAt);
     }
 
     @PrePersist
