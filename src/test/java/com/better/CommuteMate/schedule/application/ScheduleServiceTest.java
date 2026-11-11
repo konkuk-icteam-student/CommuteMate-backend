@@ -1,5 +1,6 @@
 package com.better.CommuteMate.schedule.application;
 
+import com.better.CommuteMate.attendance.application.WorkScheduleChangeRequested;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
 import com.better.CommuteMate.domain.schedule.entity.WorkUnavailableTime;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -61,6 +63,7 @@ class ScheduleServiceTest {
     @Mock private ScheduleValidator scheduleValidator;
     @Mock private WorkScheduleSettingService workScheduleSettingService;
     @Mock private SimpMessagingTemplate messagingTemplate;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     private ScheduleService scheduleService;
 
@@ -77,7 +80,7 @@ class ScheduleServiceTest {
                 workSchedulesRepository, workAttendanceRepository,
                 workChangeRequestItemRepository, workChangeRequestRepository,
                 workUnavailableTimeRepository, userRepository, workplaceRepository,
-                scheduleValidator, workScheduleSettingService, messagingTemplate
+                scheduleValidator, workScheduleSettingService, messagingTemplate, eventPublisher
         );
     }
 
@@ -278,7 +281,7 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("수정 신청 - minWorkUnitMinutes=60 설정에서 90분(09:00~10:30) 추가 신청이 통과된다")
     void submitEditRequest_90minAdd_WithMin60_Passes() {
-        User user = User.builder().userId(1L).organizationId(10L).build();
+        User user = User.builder().userId(1L).organizationId(10L).name("홍길동").build();
 
         when(userRepository.findByUserId(1L)).thenReturn(Optional.of(user));
         when(workScheduleSettingService.getSetting(10L, 2026, 8))
@@ -297,6 +300,7 @@ class ScheduleServiceTest {
 
         WorkScheduleEditResponse result = scheduleService.submitEditRequest(1L, request);
         assertThat(result).isNotNull();
+        verify(eventPublisher).publishEvent(new WorkScheduleChangeRequested(10L, "홍길동"));
     }
 
     @Test
