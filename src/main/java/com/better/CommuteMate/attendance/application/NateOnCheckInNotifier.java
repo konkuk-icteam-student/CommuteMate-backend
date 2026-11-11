@@ -42,12 +42,29 @@ public class NateOnCheckInNotifier {
             String content = "[출근 알림] " + event.studentName() + " 학생이 "
                     + event.checkTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
                     + "에 출근했습니다.";
-            client.post().uri(uri)
+            long startedAt = System.nanoTime();
+
+            client.post()
+                    .uri(uri)
                     .body(BodyInserters.fromFormData("content", content))
-                    .retrieve().toBodilessEntity()
-                    .timeout(Duration.ofSeconds(5))
-                    .subscribe(response -> { }, error -> log.warn(
-                            "NateOn notification failed ({})", error.getClass().getSimpleName()));
+                    .retrieve()
+                    .toBodilessEntity()
+                    .timeout(Duration.ofSeconds(15))
+                    .subscribe(
+                            response -> log.info(
+                                    "NateOn check-in notification sent: organizationId={}, status={}, elapsedMs={}",
+                                    event.organizationId(),
+                                    response.getStatusCode().value(),
+                                    (System.nanoTime() - startedAt) / 1_000_000
+                            ),
+                            error -> log.warn(
+                                    "NateOn check-in notification failed: organizationId={}, elapsedMs={}, errorType={}, message={}",
+                                    event.organizationId(),
+                                    (System.nanoTime() - startedAt) / 1_000_000,
+                                    error.getClass().getSimpleName(),
+                                    error.getMessage()
+                            )
+                    );
         } catch (RuntimeException error) {
             log.warn("NateOn notification could not be sent ({})", error.getClass().getSimpleName());
         }
