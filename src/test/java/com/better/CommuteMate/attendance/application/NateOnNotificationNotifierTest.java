@@ -18,13 +18,13 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class NateOnCheckInNotifierTest {
+class NateOnNotificationNotifierTest {
     private final ExchangeFunction exchange = mock(ExchangeFunction.class);
     private final MockEnvironment environment = new MockEnvironment();
-    private final NateOnCheckInNotifier notifier = new NateOnCheckInNotifier(
+    private final NateOnNotificationNotifier notifier = new NateOnNotificationNotifier(
             WebClient.builder().exchangeFunction(exchange), environment);
 
-    private CheckInCompleted event(Long organizationId) {
+    private CheckInCompleted checkInEvent(Long organizationId) {
         return new CheckInCompleted(organizationId, "홍길동", LocalDateTime.now());
     }
 
@@ -35,8 +35,8 @@ class NateOnCheckInNotifierTest {
         environment.setProperty("NATEON_WEBHOOK_ORG_42", "https://teamroom.nate.com/api/webhook/team-b");
         when(exchange.exchange(any())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK).build()));
 
-        notifier.onCheckIn(event(17L));
-        notifier.onCheckIn(event(42L));
+        notifier.onCheckIn(checkInEvent(17L));
+        notifier.onCheckIn(checkInEvent(42L));
 
         ArgumentCaptor<ClientRequest> requests = ArgumentCaptor.forClass(ClientRequest.class);
         verify(exchange, times(2)).exchange(requests.capture());
@@ -46,11 +46,25 @@ class NateOnCheckInNotifierTest {
     }
 
     @Test
+    @DisplayName("일정 수정 요청 알림 - 출근 알림과 같은 기관 팀룸으로 전송")
+    void sendsScheduleChangeRequestToOrganizationsWebhook() {
+        environment.setProperty("NATEON_WEBHOOK_ORG_17", "https://teamroom.nate.com/api/webhook/team-a");
+        when(exchange.exchange(any())).thenReturn(Mono.just(ClientResponse.create(HttpStatus.OK).build()));
+
+        notifier.onWorkScheduleChangeRequested(new WorkScheduleChangeRequested(17L, "홍길동"));
+
+        ArgumentCaptor<ClientRequest> request = ArgumentCaptor.forClass(ClientRequest.class);
+        verify(exchange).exchange(request.capture());
+        assertThat(request.getValue().url().toString())
+                .isEqualTo("https://teamroom.nate.com/api/webhook/team-a");
+    }
+
+    @Test
     @DisplayName("출근 알림 - 설정이 없거나 다른 기관만 설정되어 있으면 전송하지 않음")
     void skipsUnconfiguredOrganization() {
-        notifier.onCheckIn(event(17L));
+        notifier.onCheckIn(checkInEvent(17L));
         environment.setProperty("NATEON_WEBHOOK_ORG_42", "https://teamroom.nate.com/api/webhook/team-b");
-        notifier.onCheckIn(event(17L));
+        notifier.onCheckIn(checkInEvent(17L));
         verifyNoInteractions(exchange);
     }
 
@@ -58,9 +72,9 @@ class NateOnCheckInNotifierTest {
     @DisplayName("출근 알림 - 기관 ID가 없거나 양수가 아니면 전송하지 않음")
     void skipsInvalidOrganizationId() {
         environment.setProperty("NATEON_WEBHOOK_ORG_0", "https://teamroom.nate.com/api/webhook/test");
-        notifier.onCheckIn(event(null));
-        notifier.onCheckIn(event(0L));
-        notifier.onCheckIn(event(-1L));
+        notifier.onCheckIn(checkInEvent(null));
+        notifier.onCheckIn(checkInEvent(0L));
+        notifier.onCheckIn(checkInEvent(-1L));
         verifyNoInteractions(exchange);
     }
 
@@ -68,7 +82,7 @@ class NateOnCheckInNotifierTest {
     @DisplayName("출근 알림 - 웹훅 주소가 공백이면 전송하지 않음")
     void skipsBlankWebhook() {
         environment.setProperty("NATEON_WEBHOOK_ORG_17", "   ");
-        notifier.onCheckIn(event(17L));
+        notifier.onCheckIn(checkInEvent(17L));
         verifyNoInteractions(exchange);
     }
 
@@ -76,7 +90,7 @@ class NateOnCheckInNotifierTest {
     @DisplayName("출근 알림 - 허용되지 않은 웹훅 주소이면 전송하지 않음")
     void rejectsUntrustedWebhookDestination() {
         environment.setProperty("NATEON_WEBHOOK_ORG_17", "https://example.com/api/webhook/test");
-        notifier.onCheckIn(event(17L));
+        notifier.onCheckIn(checkInEvent(17L));
         verifyNoInteractions(exchange);
     }
 
@@ -85,7 +99,7 @@ class NateOnCheckInNotifierTest {
     void failureDoesNotEscapeToAttendanceRequest() {
         environment.setProperty("NATEON_WEBHOOK_ORG_17", "https://teamroom.nate.com/api/webhook/test");
         when(exchange.exchange(any())).thenReturn(Mono.error(new IllegalStateException("failed")));
-        assertThatCode(() -> notifier.onCheckIn(event(17L))).doesNotThrowAnyException();
+        assertThatCode(() -> notifier.onCheckIn(checkInEvent(17L))).doesNotThrowAnyException();
         verify(exchange).exchange(any());
     }
 }

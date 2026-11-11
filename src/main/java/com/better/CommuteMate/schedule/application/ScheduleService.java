@@ -1,5 +1,6 @@
 package com.better.CommuteMate.schedule.application;
 
+import com.better.CommuteMate.attendance.application.WorkScheduleChangeRequested;
 import com.better.CommuteMate.domain.schedule.entity.WorkSchedule;
 import com.better.CommuteMate.domain.schedule.entity.WorkScheduleSetting;
 import com.better.CommuteMate.domain.schedule.repository.WorkSchedulesRepository;
@@ -39,6 +40,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,6 +73,7 @@ public class ScheduleService {
     private final ScheduleValidator scheduleValidator;
     private final WorkScheduleSettingService workScheduleSettingService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final int MONTHLY_LIMIT_HOURS = 27;
     private static final int MONTHLY_LIMIT_MINUTES = MONTHLY_LIMIT_HOURS * 60;
@@ -628,6 +631,9 @@ public class ScheduleService {
                     .schedule(null)
                     .date(slot.date()).startTime(slot.start()).endTime(slot.end()).build());
         }
+
+        eventPublisher.publishEvent(new WorkScheduleChangeRequested(
+                user.getOrganizationId(), user.getName()));
 
         return WorkScheduleEditResponse.builder()
                 .requestId(changeRequest.getRequestId())
